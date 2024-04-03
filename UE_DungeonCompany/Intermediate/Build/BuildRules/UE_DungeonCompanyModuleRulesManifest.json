@@ -1,0 +1,8 @@
+{
+	"SourceFiles": [
+		"C:\\Users\\oleor\\Documents\\GitHub\\UniStuff\\Projects\\DungeonCompany\\UE_DungeonCompany\\Source\\UE_DungeonCompany\\UE_DungeonCompany.Build.cs",
+		"C:\\Users\\oleor\\Documents\\GitHub\\UniStuff\\Projects\\DungeonCompany\\UE_DungeonCompany\\Source\\UE_DungeonCompany.Target.cs",
+		"C:\\Users\\oleor\\Documents\\GitHub\\UniStuff\\Projects\\DungeonCompany\\UE_DungeonCompany\\Source\\UE_DungeonCompanyEditor.Target.cs"
+	],
+	"EngineVersion": "5.3.2"
+}
