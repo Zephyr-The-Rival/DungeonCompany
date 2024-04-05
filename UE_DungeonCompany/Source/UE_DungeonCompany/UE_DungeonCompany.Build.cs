@@ -8,7 +8,7 @@ public class UE_DungeonCompany : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "OnlineSubsytem", "OnlineSubsystemSteam" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
