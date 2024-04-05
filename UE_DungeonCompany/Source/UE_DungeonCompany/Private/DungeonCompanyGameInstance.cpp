@@ -1,9 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+
 #include "UE_DungeonCompany/Public/DungeonCompanyGameInstance.h"
+#include "Engine/World.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
+#include "Online/OnlineSessionNames.h"
 
 UDungeonCompanyGameInstance::UDungeonCompanyGameInstance()
 {
@@ -13,11 +16,12 @@ void UDungeonCompanyGameInstance::Init()
 {
 	if (IOnlineSubsystem* SubSystem = IOnlineSubsystem::Get())
 	{
-		SessionInterface = SubSystem->GetSessionInterface();
-		if (SessionInterface.IsValid())
+		sessionInterface = SubSystem->GetSessionInterface();
+		if (sessionInterface.IsValid())
 		{
 			//Bind Delegates here
-			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UDungeonCompanyGameInstance::OnCreateSessionComplete);
+			sessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UDungeonCompanyGameInstance::OnCreateSessionComplete);
+			sessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UDungeonCompanyGameInstance::OnFindSessionComplete);
 		}
 	}
 }
@@ -25,12 +29,24 @@ void UDungeonCompanyGameInstance::Init()
 void UDungeonCompanyGameInstance::OnCreateSessionComplete(FName serverName, bool succeeded)
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnCreateSessionComplete Succeeded: %d"), succeeded);
+	if (succeeded)
+	{
+		GetWorld()->ServerTravel("/Game/_DungeonCompanyContent/Maps/TestMap?listen");
+	}
 }
 
-void UDungeonCompanyGameInstance::JoinServer()
+void UDungeonCompanyGameInstance::OnFindSessionComplete(bool succeeded)
 {
+	UE_LOG(LogTemp, Warning, TEXT("OnFindSessionComplete Succeeded: %d"), succeeded);
 
+	if (succeeded)
+	{
+		TArray<FOnlineSessionSearchResult> searchResults = sessionSearch->SearchResults;		
+		UE_LOG(LogTemp, Warning, TEXT("FoundServers: %d"), searchResults.Num());
+	}
 }
+
+
 
 void UDungeonCompanyGameInstance::CreateServer()
 {
@@ -42,5 +58,17 @@ void UDungeonCompanyGameInstance::CreateServer()
 	sessionSettings.bShouldAdvertise = true;
 	sessionSettings.bUsesPresence = true;
 	sessionSettings.NumPublicConnections = 5;
-	SessionInterface->CreateSession(0, FName("MySession"), sessionSettings);
+	sessionInterface->CreateSession(0, FName("MySession"), sessionSettings);
+}
+
+void UDungeonCompanyGameInstance::JoinServer()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Searching for Sessions..."));
+	sessionSearch = MakeShareable(new FOnlineSessionSearch());
+
+	sessionSearch->bIsLanQuery = true;
+	sessionSearch->MaxSearchResults = 10000;//big number because of other steam users with the same appId
+	sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+
+	sessionInterface->FindSessions(0, sessionSearch.ToSharedRef());
 }

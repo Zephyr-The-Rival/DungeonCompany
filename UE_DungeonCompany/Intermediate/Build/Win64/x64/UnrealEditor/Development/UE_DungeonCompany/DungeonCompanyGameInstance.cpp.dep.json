@@ -16,7 +16,8 @@
             "c:\\users\\oleor\\documents\\github\\unistuff\\projects\\dungeoncompany\\ue_dungeoncompany\\intermediate\\build\\win64\\unrealeditor\\inc\\ue_dungeoncompany\\uht\\dungeoncompanygameinstance.generated.h",
             "c:\\program files\\epic games\\ue_5.3\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinesubsystem.h",
             "c:\\program files\\epic games\\ue_5.3\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinesubsystemmodule.h",
-            "c:\\program files\\epic games\\ue_5.3\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinesessionsettings.h"
+            "c:\\program files\\epic games\\ue_5.3\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinesessionsettings.h",
+            "c:\\program files\\epic games\\ue_5.3\\engine\\plugins\\online\\onlinebase\\source\\public\\online\\onlinesessionnames.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []
