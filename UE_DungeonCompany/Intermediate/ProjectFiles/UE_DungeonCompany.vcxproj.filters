@@ -11,6 +11,7 @@
     <None Include="..\..\Source\UE_DungeonCompanyEditor.Target.cs">
       <Filter>Source</Filter>
     </None>
+    <None Include="..\..\.vsconfig" />
     <Filter Include="Config">
       <UniqueIdentifier>{FA535FFB-25E1-3D20-B416-52F9BE21E06E}</UniqueIdentifier>
     </Filter>
@@ -37,6 +38,18 @@
     </ClCompile>
     <ClInclude Include="..\..\Source\UE_DungeonCompany\UE_DungeonCompany.h">
       <Filter>Source\UE_DungeonCompany</Filter>
+    </ClInclude>
+    <Filter Include="Source\UE_DungeonCompany\Private">
+      <UniqueIdentifier>{0A06A882-ECA1-3D8A-859A-9AEF3028AB4A}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\UE_DungeonCompany\Private\DungeonCompanyGameInstance.cpp">
+      <Filter>Source\UE_DungeonCompany\Private</Filter>
+    </ClCompile>
+    <Filter Include="Source\UE_DungeonCompany\Public">
+      <UniqueIdentifier>{659BEA47-A7A8-35E4-9EE2-702E7BB11CA9}</UniqueIdentifier>
+    </Filter>
+    <ClInclude Include="..\..\Source\UE_DungeonCompany\Public\DungeonCompanyGameInstance.h">
+      <Filter>Source\UE_DungeonCompany\Public</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
