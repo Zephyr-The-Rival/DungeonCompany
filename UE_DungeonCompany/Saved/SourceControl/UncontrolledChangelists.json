@@ -5,7 +5,8 @@
 			"guid": "00000000000000000000000000000000",
 			"description": "Default Uncontrolled Changelist",
 			"files": [
-				"C:/Users/oleor/Documents/GitHub/UniStuff/Projects/DungeonCompany/UE_DungeonCompany/Content/StarterContent/Particles/P_Ambient_Dust.uasset"
+				"C:/Users/oleor/Documents/GitHub/UniStuff/Projects/DungeonCompany/UE_DungeonCompany/Content/StarterContent/Particles/P_Ambient_Dust.uasset",
+				"C:/Users/oleor/Documents/GitHub/UniStuff/Projects/DungeonCompany/UE_DungeonCompany/Content/_DungeonCompanyContent/Maps/TestMap.umap"
 			]
 		}
 	]
