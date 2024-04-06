@@ -3,7 +3,9 @@
 
 
 #include "UE_DungeonCompany/Public/DungeonCompanyGameInstance.h"
+
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include "Online/OnlineSessionNames.h"
@@ -53,9 +55,19 @@ void UDungeonCompanyGameInstance::OnFindSessionComplete(bool succeeded)
 	}
 }
 
-void UDungeonCompanyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJoinSessionCompleteResult::Type Result)
+void UDungeonCompanyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJoinSessionCompleteResult::Type result)
 {
-
+	UE_LOG(LogTemp, Warning, TEXT("OnJoinSessionComplete"));
+	if (APlayerController* PController = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+	{
+		FString JoinAdress="";
+		sessionInterface->GetResolvedConnectString(sessionName, JoinAdress);
+		if (JoinAdress != "")
+		{
+			PController->ClientTravel(JoinAdress, ETravelType::TRAVEL_Absolute);
+		}
+		
+	}
 }
 
 
