@@ -22,6 +22,7 @@ void UDungeonCompanyGameInstance::Init()
 			//Bind Delegates here
 			sessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UDungeonCompanyGameInstance::OnCreateSessionComplete);
 			sessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UDungeonCompanyGameInstance::OnFindSessionComplete);
+			sessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UDungeonCompanyGameInstance::OnJoinSessionComplete);
 		}
 	}
 }
@@ -43,7 +44,18 @@ void UDungeonCompanyGameInstance::OnFindSessionComplete(bool succeeded)
 	{
 		TArray<FOnlineSessionSearchResult> searchResults = sessionSearch->SearchResults;		
 		UE_LOG(LogTemp, Warning, TEXT("FoundServers: %d"), searchResults.Num());
+		if (searchResults.Num() != 0)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Joining Server : %s"), *searchResults[0].Session.OwningUserName);
+			sessionInterface->JoinSession(0, "MySession", searchResults[0]);
+		}
+		
 	}
+}
+
+void UDungeonCompanyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+
 }
 
 

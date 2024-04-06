@@ -27,6 +27,7 @@ protected:
 
 	virtual void OnCreateSessionComplete(FName serverName, bool succeeded);
 	virtual void OnFindSessionComplete(bool succeeded);
+	virtual void OnJoinSessionComplete(FName sessionName, EOnJoinSessionCompleteResult::Type Result);
 
 	UFUNCTION(BlueprintCallable)
 	void CreateServer();
