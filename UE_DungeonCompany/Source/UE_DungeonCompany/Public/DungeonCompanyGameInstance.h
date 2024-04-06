@@ -19,11 +19,14 @@ public:
 	UDungeonCompanyGameInstance();
 protected:
 
-	IOnlineSessionPtr SessionInterface;
+	IOnlineSessionPtr sessionInterface;
+
+	TSharedPtr<FOnlineSessionSearch> sessionSearch;
 
 	virtual void Init() override;
 
 	virtual void OnCreateSessionComplete(FName serverName, bool succeeded);
+	virtual void OnFindSessionComplete(bool succeeded);
 
 	UFUNCTION(BlueprintCallable)
 	void CreateServer();
