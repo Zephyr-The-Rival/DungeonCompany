@@ -7,6 +7,22 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "DungeonCompanyGameInstance.generated.h"
 
+USTRUCT(BlueprintType)
+struct FServerInfo
+{
+	GENERATED_BODY()
+	
+public:
+	UPROPERTY(BlueprintReadOnly)
+	FString ServerName;
+	UPROPERTY(BlueprintReadOnly)
+	int32 currentPlayers;
+	UPROPERTY(BlueprintReadOnly)
+	int32 MaxPlayers;
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerDel, FServerInfo, ServerListDel);
+
 /**
  * 
  */
@@ -18,6 +34,8 @@ class UE_DUNGEONCOMPANY_API UDungeonCompanyGameInstance : public UGameInstance
 public: 
 	UDungeonCompanyGameInstance();
 protected:
+	UPROPERTY(BlueprintAssignable)
+	FServerDel ServerListDel;
 
 	IOnlineSessionPtr sessionInterface;
 

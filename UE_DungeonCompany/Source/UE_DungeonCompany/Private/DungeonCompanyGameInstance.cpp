@@ -45,12 +45,29 @@ void UDungeonCompanyGameInstance::OnFindSessionComplete(bool succeeded)
 	if (succeeded)
 	{
 		TArray<FOnlineSessionSearchResult> searchResults = sessionSearch->SearchResults;		
-		UE_LOG(LogTemp, Warning, TEXT("FoundServers: %d"), searchResults.Num());
-		if (searchResults.Num() != 0)
+
+
+
+		for(FOnlineSessionSearchResult SR : searchResults)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Joining Server : %s"), *searchResults[0].Session.OwningUserName);
-			sessionInterface->JoinSession(0, "MySession", searchResults[0]);
+			if (SR.IsValid()) 
+			{
+				FServerInfo info;
+				info.ServerName = "Test Name";
+				info.MaxPlayers = SR.Session.SessionSettings.NumPublicConnections;
+				info.currentPlayers = info.MaxPlayers-SR.Session.NumOpenPublicConnections;
+
+				ServerListDel.Broadcast(info);
+			}
 		}
+
+
+		//UE_LOG(LogTemp, Warning, TEXT("FoundServers: %d"), searchResults.Num());
+		//if (searchResults.Num() != 0)
+		//{
+		//	UE_LOG(LogTemp, Warning, TEXT("Joining Server : %s"), *searchResults[0].Session.OwningUserName);
+		//	sessionInterface->JoinSession(0, "MySession", searchResults[0]);
+		//}
 		
 	}
 }
