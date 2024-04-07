@@ -87,6 +87,7 @@ void UDungeonCompanyGameInstance::CreateServer()
 	sessionSettings.bShouldAdvertise = true;
 	sessionSettings.bUsesPresence = true;
 	sessionSettings.NumPublicConnections = 5;
+	sessionSettings.bUseLobbiesIfAvailable = true;
 	sessionInterface->CreateSession(0, FName("MySession"), sessionSettings);
 }
 
