@@ -83,7 +83,7 @@ void UDungeonCompanyGameInstance::CreateServer()
 	FOnlineSessionSettings sessionSettings;
 	sessionSettings.bAllowJoinInProgress =true;
 	sessionSettings.bIsDedicated = false;
-	sessionSettings.bIsLANMatch = false;//if lan -> =true
+	sessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
 	sessionSettings.bShouldAdvertise = true;
 	sessionSettings.bUsesPresence = true;
 	sessionSettings.NumPublicConnections = 5;
@@ -96,7 +96,7 @@ void UDungeonCompanyGameInstance::JoinServer()
 	UE_LOG(LogTemp, Warning, TEXT("Searching for Sessions..."));
 	sessionSearch = MakeShareable(new FOnlineSessionSearch());
 
-	sessionSearch->bIsLanQuery = false;//if lan mach = true
+	sessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
 	sessionSearch->MaxSearchResults = 10000;//big number because of other steam users with the same appId
 	sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
