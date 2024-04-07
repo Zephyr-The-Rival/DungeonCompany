@@ -62,8 +62,13 @@ void UDungeonCompanyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJo
 	{
 		FString JoinAdress="";
 		sessionInterface->GetResolvedConnectString(sessionName, JoinAdress);
+
+		FString a = ":0";
+		FString b = ":7777";
+		JoinAdress=JoinAdress.Replace(*a,*b, ESearchCase::IgnoreCase);
 		if (JoinAdress != "")
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Traveling to: %s"), *JoinAdress);
 			PController->ClientTravel(JoinAdress, ETravelType::TRAVEL_Absolute);
 		}
 		
@@ -78,7 +83,7 @@ void UDungeonCompanyGameInstance::CreateServer()
 	FOnlineSessionSettings sessionSettings;
 	sessionSettings.bAllowJoinInProgress =true;
 	sessionSettings.bIsDedicated = false;
-	sessionSettings.bIsLANMatch = true;
+	sessionSettings.bIsLANMatch = false;//if lan -> =true
 	sessionSettings.bShouldAdvertise = true;
 	sessionSettings.bUsesPresence = true;
 	sessionSettings.NumPublicConnections = 5;
@@ -90,7 +95,7 @@ void UDungeonCompanyGameInstance::JoinServer()
 	UE_LOG(LogTemp, Warning, TEXT("Searching for Sessions..."));
 	sessionSearch = MakeShareable(new FOnlineSessionSearch());
 
-	sessionSearch->bIsLanQuery = true;
+	sessionSearch->bIsLanQuery = false;//if lan mach = true
 	sessionSearch->MaxSearchResults = 10000;//big number because of other steam users with the same appId
 	sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
