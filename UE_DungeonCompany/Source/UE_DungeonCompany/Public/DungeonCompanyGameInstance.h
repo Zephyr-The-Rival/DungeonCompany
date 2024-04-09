@@ -48,7 +48,7 @@ protected:
 	virtual void OnJoinSessionComplete(FName sessionName, EOnJoinSessionCompleteResult::Type result);
 
 	UFUNCTION(BlueprintCallable)
-	void CreateServer();
+	void CreateServer(FString serverName, FString hostName);
 
 	UFUNCTION(BlueprintCallable)
 	void JoinServer();

@@ -53,7 +53,13 @@ void UDungeonCompanyGameInstance::OnFindSessionComplete(bool succeeded)
 			if (SR.IsValid()) 
 			{
 				FServerInfo info;
-				info.ServerName = "Test Name";
+				FString serverName = "Empty server same";
+				FString hostName = "Empty host name";
+
+				SR.Session.SessionSettings.Get(FName("SERVER_NAME_KEY"),serverName);
+				SR.Session.SessionSettings.Get(FName("SERVER_HOSTNAME_KEY"),hostName);
+
+				info.ServerName = serverName;
 				info.MaxPlayers = SR.Session.SessionSettings.NumPublicConnections;
 				info.currentPlayers = info.MaxPlayers-SR.Session.NumOpenPublicConnections;
 
@@ -94,7 +100,7 @@ void UDungeonCompanyGameInstance::OnJoinSessionComplete(FName sessionName, EOnJo
 
 
 
-void UDungeonCompanyGameInstance::CreateServer()
+void UDungeonCompanyGameInstance::CreateServer(FString serverName, FString hostName)
 {
 	UE_LOG(LogTemp, Warning, TEXT("CreatingServer..."));
 	FOnlineSessionSettings sessionSettings;
@@ -105,6 +111,10 @@ void UDungeonCompanyGameInstance::CreateServer()
 	sessionSettings.bUsesPresence = true;
 	sessionSettings.NumPublicConnections = 5;
 	sessionSettings.bUseLobbiesIfAvailable = true;
+	sessionSettings.Set(FName("SERVER_NAME_KEY"), serverName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+	sessionSettings.Set(FName("SERVER_HOSTNAME_KEY"), hostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+
+
 	sessionInterface->CreateSession(0, FName("MySession"), sessionSettings);
 }
 
