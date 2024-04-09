@@ -16,9 +16,16 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FString ServerName;
 	UPROPERTY(BlueprintReadOnly)
+	FString PlayerCountString;//wtf is this? no idea why the guy made that
+	UPROPERTY(BlueprintReadOnly)
 	int32 currentPlayers;
 	UPROPERTY(BlueprintReadOnly)
 	int32 MaxPlayers;
+
+	void SetPlayerCount()
+	{
+		PlayerCountString= FString(FString::FromInt(currentPlayers) + "/" + FString::FromInt(MaxPlayers));
+	}
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerDel, FServerInfo, ServerListDel);

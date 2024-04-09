@@ -62,8 +62,10 @@ void UDungeonCompanyGameInstance::OnFindSessionComplete(bool succeeded)
 				info.ServerName = serverName;
 				info.MaxPlayers = SR.Session.SessionSettings.NumPublicConnections;
 				info.currentPlayers = info.MaxPlayers-SR.Session.NumOpenPublicConnections;
+				info.SetPlayerCount();
 
 				ServerListDel.Broadcast(info);
+
 			}
 		}
 
