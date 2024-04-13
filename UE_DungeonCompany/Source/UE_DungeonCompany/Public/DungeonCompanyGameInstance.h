@@ -7,6 +7,7 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "DungeonCompanyGameInstance.generated.h"
 
+
 USTRUCT(BlueprintType)
 struct FServerInfo
 {
