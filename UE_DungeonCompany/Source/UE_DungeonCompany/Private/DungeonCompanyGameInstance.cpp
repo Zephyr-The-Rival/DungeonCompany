@@ -29,7 +29,7 @@ void UDungeonCompanyGameInstance::Init()
 	}
 }
 
-void UDungeonCompanyGameInstance::OnCreateSessionComplete(FName serverName, bool succeeded)
+void UDungeonCompanyGameInstance::OnCreateSessionComplete(FName sessionName, bool succeeded)
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnCreateSessionComplete Succeeded: %d"), succeeded);
 	if (succeeded)
@@ -43,12 +43,10 @@ void UDungeonCompanyGameInstance::OnFindSessionComplete(bool succeeded)
 	UE_LOG(LogTemp, Warning, TEXT("OnFindSessionComplete Succeeded: %d"), succeeded);
 
 	if (succeeded)
-	{
-		TArray<FOnlineSessionSearchResult> searchResults = sessionSearch->SearchResults;		
-
-
-
-		for(FOnlineSessionSearchResult SR : searchResults)
+	{		
+		TArray<FServerInfo> infos;
+		int i = 0;
+		for(FOnlineSessionSearchResult SR : sessionSearch->SearchResults)
 		{
 			if (SR.IsValid()) 
 			{
@@ -63,20 +61,13 @@ void UDungeonCompanyGameInstance::OnFindSessionComplete(bool succeeded)
 				info.MaxPlayers = SR.Session.SessionSettings.NumPublicConnections;
 				info.currentPlayers = info.MaxPlayers-SR.Session.NumOpenPublicConnections;
 				info.SetPlayerCount();
+				info.ArrayIndex = i;
+				i++;
 
-				ServerListDel.Broadcast(info);
-
+				infos.Add(info);
 			}
 		}
-
-
-		//UE_LOG(LogTemp, Warning, TEXT("FoundServers: %d"), searchResults.Num());
-		//if (searchResults.Num() != 0)
-		//{
-		//	UE_LOG(LogTemp, Warning, TEXT("Joining Server : %s"), *searchResults[0].Session.OwningUserName);
-		//	sessionInterface->JoinSession(0, "MySession", searchResults[0]);
-		//}
-		
+		SearchComplete.Broadcast(infos);	
 	}
 }
 
@@ -111,16 +102,16 @@ void UDungeonCompanyGameInstance::CreateServer(FString serverName, FString hostN
 	sessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
 	sessionSettings.bShouldAdvertise = true;
 	sessionSettings.bUsesPresence = true;
-	sessionSettings.NumPublicConnections = 5;
+	sessionSettings.NumPublicConnections = 4;
 	sessionSettings.bUseLobbiesIfAvailable = true;
 	sessionSettings.Set(FName("SERVER_NAME_KEY"), serverName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	sessionSettings.Set(FName("SERVER_HOSTNAME_KEY"), hostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
 
-	sessionInterface->CreateSession(0, FName("MySession"), sessionSettings);
+	sessionInterface->CreateSession(0, MySessionName, sessionSettings);
 }
 
-void UDungeonCompanyGameInstance::JoinServer()
+void UDungeonCompanyGameInstance::FindServers()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Searching for Sessions..."));
 	sessionSearch = MakeShareable(new FOnlineSessionSearch());
@@ -130,4 +121,19 @@ void UDungeonCompanyGameInstance::JoinServer()
 	sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
 	sessionInterface->FindSessions(0, sessionSearch.ToSharedRef());
+}
+
+void UDungeonCompanyGameInstance::JoinServer(int32 index)
+{
+	FOnlineSessionSearchResult result = sessionSearch->SearchResults[index];
+
+	if (result.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Joining session at index %d ..."), index);
+		sessionInterface->JoinSession(0, MySessionName, result);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Joining session with index %d failed"), index);
+	}
 }

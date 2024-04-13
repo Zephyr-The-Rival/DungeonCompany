@@ -21,6 +21,8 @@ public:
 	int32 currentPlayers;
 	UPROPERTY(BlueprintReadOnly)
 	int32 MaxPlayers;
+	UPROPERTY(BlueprintReadOnly)
+	int32 ArrayIndex;
 
 	void SetPlayerCount()
 	{
@@ -28,7 +30,9 @@ public:
 	}
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerDel, FServerInfo, ServerListDel);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerDel, const TArray<FServerInfo>&, ServerList);
+
+
 
 /**
  * 
@@ -41,8 +45,11 @@ class UE_DUNGEONCOMPANY_API UDungeonCompanyGameInstance : public UGameInstance
 public: 
 	UDungeonCompanyGameInstance();
 protected:
+
+	FName MySessionName="Hallo";
+
 	UPROPERTY(BlueprintAssignable)
-	FServerDel ServerListDel;
+	FServerDel SearchComplete;
 
 	IOnlineSessionPtr sessionInterface;
 
@@ -50,7 +57,7 @@ protected:
 
 	virtual void Init() override;
 
-	virtual void OnCreateSessionComplete(FName serverName, bool succeeded);
+	virtual void OnCreateSessionComplete(FName sessionName, bool succeeded);
 	virtual void OnFindSessionComplete(bool succeeded);
 	virtual void OnJoinSessionComplete(FName sessionName, EOnJoinSessionCompleteResult::Type result);
 
@@ -58,6 +65,9 @@ protected:
 	void CreateServer(FString serverName, FString hostName);
 
 	UFUNCTION(BlueprintCallable)
-	void JoinServer();
+	void FindServers();
 
+
+	UFUNCTION(BlueprintCallable)
+	void JoinServer(int32 index);
 };
