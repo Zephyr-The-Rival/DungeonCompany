@@ -2,6 +2,7 @@
 
 
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "GameFramework/PlayerController.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -28,6 +29,9 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	FInputModeGameOnly InputMode;
+	PlayerController->SetInputMode(InputMode);
 }
 
 // Called every frame
