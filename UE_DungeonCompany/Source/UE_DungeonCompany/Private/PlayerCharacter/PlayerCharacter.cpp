@@ -29,9 +29,12 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	//APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	//FInputModeGameOnly InputMode;
-	//PlayerController->SetInputMode(InputMode);
+	if (HasAuthority)
+	{
+		FInputModeGameOnly InputMode;
+		Cast<APlayerController>(this->GetController())->SetInputMode(InputMode);
+	}
+	
 }
 
 // Called every frame
