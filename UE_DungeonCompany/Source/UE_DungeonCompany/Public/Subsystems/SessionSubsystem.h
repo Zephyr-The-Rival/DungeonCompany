@@ -1,0 +1,68 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Subsystems/GameInstanceSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "SessionSubsystem.generated.h"
+
+USTRUCT(BlueprintType)
+struct FServerInfo
+{
+	GENERATED_BODY()
+	
+public:
+	UPROPERTY(BlueprintReadOnly)
+	FString ServerName;
+	UPROPERTY(BlueprintReadOnly)
+	FString PlayerCountString;
+	UPROPERTY(BlueprintReadOnly)
+	int32 currentPlayers;
+	UPROPERTY(BlueprintReadOnly)
+	int32 MaxPlayers;
+	UPROPERTY(BlueprintReadOnly)
+	int32 ArrayIndex;
+
+	void SetPlayerCount()
+	{
+		PlayerCountString= FString(FString::FromInt(currentPlayers) + "/" + FString::FromInt(MaxPlayers));
+	}
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerDel, const TArray<FServerInfo>&, ServerList);
+
+UCLASS()
+class UE_DUNGEONCOMPANY_API USessionSubsystem : public UGameInstanceSubsystem
+{
+	GENERATED_BODY()
+
+private:
+	FName MySessionName;
+
+	UPROPERTY(BlueprintAssignable)
+	FServerDel SearchComplete;
+
+	IOnlineSessionPtr SessionInterface;
+
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+
+public:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+protected:
+	virtual void OnCreateSessionComplete(FName SessionName, bool Succeeded);
+	virtual void OnFindSessionComplete(bool Succeeded);
+	virtual void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void CreateServer(FString ServerName, FString HostName);
+
+	UFUNCTION(BlueprintCallable)
+	void FindServers();
+
+	UFUNCTION(BlueprintCallable)
+	void JoinServer(int32 Index);
+	
+};
