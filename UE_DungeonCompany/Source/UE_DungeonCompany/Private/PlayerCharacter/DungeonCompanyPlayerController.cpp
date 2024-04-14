@@ -6,12 +6,10 @@
 void ADungeonCompanyPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	if (this->HasAuthority())
-	{
-		
-		FInputModeGameOnly mode;
-		this->SetInputMode(mode);
-		UE_LOG(LogTemp, Warning, TEXT("Custom Player Controller BeginPlay called"));
-	}
+
+
+	FInputModeGameOnly mode;
+	this->SetInputMode(mode);
+
 	
 }
