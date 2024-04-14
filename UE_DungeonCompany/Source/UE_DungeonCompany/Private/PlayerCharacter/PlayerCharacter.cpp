@@ -29,12 +29,6 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (this->HasAuthority())
-	{
-		FInputModeGameOnly InputMode;
-		Cast<APlayerController>(this->GetController())->SetInputMode(InputMode);
-	}
-	
 }
 
 // Called every frame
@@ -72,7 +66,6 @@ void APlayerCharacter::VericalMovement(float value)
 void APlayerCharacter::ApplyMovement(FVector v)// to resolve faster diagonal movement
 {
 	v.Normalize(0.001);
-	UE_LOG(LogTemp, Log, TEXT("MovementVector: %s"), *v.ToString());
 	v *= WalkingSpeed;
 	AddMovementInput(GetActorForwardVector()*v.X);
 	AddMovementInput(GetActorRightVector()*v.Y);
