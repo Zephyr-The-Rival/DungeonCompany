@@ -23,6 +23,12 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	UCameraComponent* firstPersonCamera;
+
+	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -43,7 +49,7 @@ private:
 
 	void ApplyMovement(FVector movementVector);
 
-	UPROPERTY(EditAnywhere, Category="Camera")
-	UCameraComponent* camera;
+
+
 
 };
