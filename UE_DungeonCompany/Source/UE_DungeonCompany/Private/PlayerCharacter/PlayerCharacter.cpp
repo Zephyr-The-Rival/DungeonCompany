@@ -29,7 +29,7 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (HasAuthority)
+	if (this->HasAuthority())
 	{
 		FInputModeGameOnly InputMode;
 		Cast<APlayerController>(this->GetController())->SetInputMode(InputMode);
