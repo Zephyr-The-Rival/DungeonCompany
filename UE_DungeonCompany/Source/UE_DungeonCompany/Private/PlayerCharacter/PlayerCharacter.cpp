@@ -17,11 +17,11 @@ APlayerCharacter::APlayerCharacter()
 	this->firstPersonCamera->AttachToComponent(this->RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	this->firstPersonCamera->SetRelativeLocation(FVector(0, 0, 40));
 
-	this->WalkingSpeed = 1;
-
 
 	this->FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
 	this->FirstPersonMesh->AttachToComponent(this->firstPersonCamera, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	this->WalkingSpeed = 1;
 }
 
 // Called when the game starts or when spawned
@@ -65,7 +65,11 @@ void APlayerCharacter::VericalMovement(float value)
 
 void APlayerCharacter::ApplyMovement(FVector v)// to resolve faster diagonal movement
 {
-	v.Normalize(0.001);
+	if (v.Length() > 1)
+	{
+		v.Normalize(0.001);
+	}
+
 	v *= WalkingSpeed;
 	AddMovementInput(GetActorForwardVector()*v.X);
 	AddMovementInput(GetActorRightVector()*v.Y);
