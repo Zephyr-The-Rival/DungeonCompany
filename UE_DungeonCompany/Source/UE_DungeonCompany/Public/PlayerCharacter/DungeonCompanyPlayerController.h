@@ -29,4 +29,5 @@ protected:
 	virtual void OnPossess(APawn* InPawn) override;
 
 	void CreateVOIPTalker();
+	void SetupVOIPTalker();
 };

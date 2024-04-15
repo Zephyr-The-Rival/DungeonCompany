@@ -2,6 +2,7 @@
 
 
 #include "PlayerCharacter/DungeonCompanyPlayerController.h"
+#include "DungeonCompanyStatics.h"
 
 #include "UObject/ConstructorHelpers.h"
 #include "Net/VoiceConfig.h"
@@ -28,26 +29,41 @@ void ADungeonCompanyPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	if (IsValid(VOIPTalker))
-		VOIPTalker->Settings.ComponentToAttachTo = InPawn->GetRootComponent();
 }
 
 void ADungeonCompanyPlayerController::CreateVOIPTalker()
 {
 	APlayerState* playerState = GetPlayerState<APlayerState>();
 
-	if (!IsValid(VOIPTalker) && playerState)
-		VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(playerState);
-
-	if (!IsValid(VOIPTalker))
+	if (!playerState)
+	{
+		FTimerHandle timerHandle;
+		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &ADungeonCompanyPlayerController::CreateVOIPTalker, 0.1f);
 		return;
+	}
 
-	if (APawn* pawn = GetPawn())
-		VOIPTalker->Settings.ComponentToAttachTo = pawn->GetRootComponent();
+	VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(playerState);
 
+	SetupVOIPTalker();
+
+}
+
+void ADungeonCompanyPlayerController::SetupVOIPTalker()
+{
+	APawn* pawn = GetPawn();
+
+	if (!IsValid(VOIPTalker) || !pawn)
+	{
+		FTimerHandle timerHandle;
+		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &ADungeonCompanyPlayerController::SetupVOIPTalker, 0.1f);
+		return;
+	}
+
+	VOIPTalker->Settings.ComponentToAttachTo = pawn->GetRootComponent();
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 
 	UVOIPStatics::SetMicThreshold(-1.0);
 
 	ToggleSpeaking(true);
+
 }
