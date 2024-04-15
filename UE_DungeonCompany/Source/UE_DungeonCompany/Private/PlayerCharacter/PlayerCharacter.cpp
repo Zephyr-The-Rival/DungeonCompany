@@ -10,18 +10,18 @@ APlayerCharacter::APlayerCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//AutoPossessPlayer = EAutoReceiveInput::Player0;
 
 	bUseControllerRotationYaw = false;//nessecary?
 
-	this->camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	this->camera->AttachToComponent(this->RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-	camera->SetRelativeLocation(FVector(0, 0, 40));
+	this->firstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	this->firstPersonCamera->AttachToComponent(this->RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+	this->firstPersonCamera->SetRelativeLocation(FVector(0, 0, 40));
+
+
+	this->FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
+	this->FirstPersonMesh->AttachToComponent(this->firstPersonCamera, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 	this->WalkingSpeed = 1;
-
-
-
 }
 
 // Called when the game starts or when spawned
@@ -65,7 +65,11 @@ void APlayerCharacter::VericalMovement(float value)
 
 void APlayerCharacter::ApplyMovement(FVector v)// to resolve faster diagonal movement
 {
-	v.Normalize(0.001);
+	if (v.Length() > 1)
+	{
+		v.Normalize(0.001);
+	}
+
 	v *= WalkingSpeed;
 	AddMovementInput(GetActorForwardVector()*v.X);
 	AddMovementInput(GetActorRightVector()*v.Y);
@@ -79,11 +83,11 @@ void APlayerCharacter::HorizontalRotaion(float value)
 
 void APlayerCharacter::VerticalRotation(float value)
 {
-	float temp = camera->GetRelativeRotation().Pitch + value;
+	float temp = firstPersonCamera->GetRelativeRotation().Pitch + value;
 
 	if (temp<90 && temp>-90)
 	{
-		camera->AddLocalRotation(FRotator(value, 0, 0));
+		firstPersonCamera->AddLocalRotation(FRotator(value, 0, 0));
 	}
 }
 
