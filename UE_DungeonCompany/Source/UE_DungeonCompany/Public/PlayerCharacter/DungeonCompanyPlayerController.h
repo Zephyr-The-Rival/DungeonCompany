@@ -9,12 +9,24 @@
 /**
  * 
  */
+ class UVOIPTalker;
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADungeonCompanyPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
-protected:
 
+private:
+	UVOIPTalker* VOIPTalker;
+	USoundAttenuation* VoiceSA;
+	
+public:
+	ADungeonCompanyPlayerController();
+
+protected:
 	virtual void BeginPlay() override;
+
+	virtual void OnPossess(APawn* InPawn) override;
+
+	void CreateVOIPTalker();
 };
