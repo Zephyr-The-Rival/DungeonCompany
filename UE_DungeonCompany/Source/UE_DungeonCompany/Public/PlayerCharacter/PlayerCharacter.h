@@ -8,7 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "PlayerCharacter.generated.h"
 
-
+class UVOIPTalker;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
@@ -24,7 +24,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-	UCameraComponent* firstPersonCamera;
+	UCameraComponent* FirstPersonCamera;
 
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
@@ -38,18 +38,18 @@ public:
 
 private:
 
-	FVector movementVector;
-	float WalkingSpeed;
+	void MoveRight(float Value);
+	void MoveForward(float Value);
 
-	void HorizontalMovement(float value);
-	void VericalMovement(float value);
+	void Move(FVector MoveVector);
 
-	void HorizontalRotaion(float value);
-	void VerticalRotation(float value);
+private:
+	UVOIPTalker* VOIPTalker;
 
-	void ApplyMovement(FVector movementVector);
+	UPROPERTY(EditAnywhere)
+	USoundAttenuation* VoiceSA;
 
-
-
+public:
+	void SetupVOIPTalker();
 
 };
