@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerCharacter/PlayerCharacter.h"
-#include "PlayerCharacter/DungeonCompanyPlayerController.h"
+#include "DCGame/DC_PC.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
@@ -58,22 +58,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("MouseUp",this, &ACharacter::AddControllerPitchInput);
-
-}
-
-void APlayerCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-
-	auto DCPC = Cast<ADungeonCompanyPlayerController>(NewController);
-
-	if(!DCPC)
-		return;
-
-	if(!HasAuthority())
-		return;
-
-	//DCPC->AttachVOIPTalkerTo(GetRootComponent());
 
 }
 
