@@ -16,18 +16,23 @@ class UE_DUNGEONCOMPANY_API ADungeonCompanyPlayerController : public APlayerCont
 {
 	GENERATED_BODY()
 
-private:
-	UVOIPTalker* VOIPTalker;
-	USoundAttenuation* VoiceSA;
-	
 public:
 	ADungeonCompanyPlayerController();
 
 protected:
 	virtual void BeginPlay() override;
 
-	virtual void OnPossess(APawn* InPawn) override;
-
-	void CreateVOIPTalker();
 	void SetupVOIPTalker();
+
+private:
+	UVOIPTalker* VOIPTalker;
+
+	UPROPERTY(EditAnywhere)
+	USoundAttenuation* VoiceSA;
+
+	USceneComponent* TalkerAttachedTo;
+
+public:
+	void AttachVOIPTalkerTo(USceneComponent* AttachTo);
+
 };

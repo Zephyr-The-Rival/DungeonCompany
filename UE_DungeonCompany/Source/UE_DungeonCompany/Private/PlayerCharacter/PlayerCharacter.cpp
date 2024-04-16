@@ -1,9 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "PlayerCharacter/DungeonCompanyPlayerController.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Net/VoiceConfig.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -50,19 +52,19 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("MouseUp",this, &ACharacter::AddControllerPitchInput);
 
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 
 void APlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-}
+	auto DCPC = Cast<ADungeonCompanyPlayerController>(NewController);
 
-void APlayerCharacter::HorizontalMovement(float value)
-{
-	this->movementVector.Y = value;
+	if(!DCPC)
+		return;
+
+	DCPC->AttachVOIPTalkerTo(GetRootComponent());
+
 }
 
 void APlayerCharacter::MoveRight(float Value)

@@ -12,6 +12,9 @@ ADungeonCompanyPlayerController::ADungeonCompanyPlayerController()
 	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	
 	VoiceSA = voiceSA.Object;
+
+	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+
 }
 
 void ADungeonCompanyPlayerController::BeginPlay()
@@ -21,49 +24,40 @@ void ADungeonCompanyPlayerController::BeginPlay()
 	FInputModeGameOnly mode;
 	this->SetInputMode(mode);
 
-	CreateVOIPTalker();
-
-}
-
-void ADungeonCompanyPlayerController::OnPossess(APawn* InPawn)
-{
-	Super::OnPossess(InPawn);
-
-}
-
-void ADungeonCompanyPlayerController::CreateVOIPTalker()
-{
-	APlayerState* playerState = GetPlayerState<APlayerState>();
-
-	if (!playerState)
-	{
-		FTimerHandle timerHandle;
-		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &ADungeonCompanyPlayerController::CreateVOIPTalker, 0.1f);
-		return;
-	}
-
-	VOIPTalker = UVOIPTalker::CreateTalkerForPlayer(playerState);
-
 	SetupVOIPTalker();
 
 }
 
 void ADungeonCompanyPlayerController::SetupVOIPTalker()
 {
-	APawn* pawn = GetPawn();
+	APlayerState* playerState = GetPlayerState<APlayerState>();
 
-	if (!IsValid(VOIPTalker) || !pawn)
+	if (!playerState)
 	{
 		FTimerHandle timerHandle;
 		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &ADungeonCompanyPlayerController::SetupVOIPTalker, 0.1f);
 		return;
 	}
 
-	VOIPTalker->Settings.ComponentToAttachTo = pawn->GetRootComponent();
+	VOIPTalker->RegisterWithPlayerState(playerState);
+
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 
 	UVOIPStatics::SetMicThreshold(-1.0);
+	VOIPTalker->Settings.ComponentToAttachTo = TalkerAttachedTo;
 
+	if (!IsLocalController())
+		return;
+
+	GetWorld()->Exec(GetWorld(), TEXT("OSS.VoiceLoopback 1"));
 	ToggleSpeaking(true);
 
+}
+
+void ADungeonCompanyPlayerController::AttachVOIPTalkerTo(USceneComponent* AttachTo)
+{
+	TalkerAttachedTo = AttachTo;
+
+	if(IsValid(VOIPTalker))
+		VOIPTalker->Settings.ComponentToAttachTo = AttachTo;
 }
