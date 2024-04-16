@@ -9,11 +9,6 @@
 
 ADungeonCompanyPlayerController::ADungeonCompanyPlayerController()
 {
-	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
-	
-	VoiceSA = voiceSA.Object;
-
-	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
 }
 
@@ -24,7 +19,7 @@ void ADungeonCompanyPlayerController::BeginPlay()
 	FInputModeGameOnly mode;
 	this->SetInputMode(mode);
 
-	SetupVOIPTalker();
+	//SetupVOIPTalker();
 
 }
 

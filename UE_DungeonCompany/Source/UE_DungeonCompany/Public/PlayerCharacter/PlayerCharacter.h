@@ -8,7 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "PlayerCharacter.generated.h"
 
-
+class UVOIPTalker;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
@@ -45,5 +45,13 @@ private:
 
 	void Move(FVector MoveVector);
 
+private:
+	UVOIPTalker* VOIPTalker;
+
+	UPROPERTY(EditAnywhere)
+	USoundAttenuation* VoiceSA;
+
+public:
+	void SetupVOIPTalker();
 
 };

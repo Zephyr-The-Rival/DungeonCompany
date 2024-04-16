@@ -10,7 +10,10 @@
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
+
+	VoiceSA = voiceSA.Object;
+
 	PrimaryActorTick.bCanEverTick = true;
 
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
@@ -26,12 +29,16 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
+	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+
 }
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	SetupVOIPTalker();
 	
 }
 
@@ -63,7 +70,10 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 	if(!DCPC)
 		return;
 
-	DCPC->AttachVOIPTalkerTo(GetRootComponent());
+	if(!HasAuthority())
+		return;
+
+	//DCPC->AttachVOIPTalkerTo(GetRootComponent());
 
 }
 
@@ -83,4 +93,29 @@ void APlayerCharacter::Move(FVector MoveVector)
 {
 	AddMovementInput(MoveVector);
 
+}
+
+void APlayerCharacter::SetupVOIPTalker()
+{
+	APlayerState* playerState = GetPlayerState<APlayerState>();
+
+	if (!playerState)
+	{
+		FTimerHandle timerHandle;
+		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &APlayerCharacter::SetupVOIPTalker, 0.1f);
+		return;
+	}
+
+	VOIPTalker->RegisterWithPlayerState(playerState);
+
+	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
+	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
+
+	if (!IsLocallyControlled())
+		return;
+
+	UVOIPStatics::SetMicThreshold(-1.0);
+
+	GetWorld()->Exec(GetWorld(), TEXT("OSS.VoiceLoopback 1"));
+	GetController<APlayerController>()->ToggleSpeaking(true);
 }
