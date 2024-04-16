@@ -10,10 +10,6 @@
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
-	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
-
-	VoiceSA = voiceSA.Object;
-
 	PrimaryActorTick.bCanEverTick = true;
 
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
@@ -29,6 +25,9 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
+	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
+	VoiceSA = voiceSA.Object;
+
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
 }
@@ -38,7 +37,8 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetupVOIPTalker();
+	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
+	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
 	
 }
 
@@ -79,27 +79,11 @@ void APlayerCharacter::Move(FVector MoveVector)
 
 }
 
-void APlayerCharacter::SetupVOIPTalker()
+void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
-	APlayerState* playerState = GetPlayerState<APlayerState>();
+	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
 
-	if (!playerState)
-	{
-		FTimerHandle timerHandle;
-		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &APlayerCharacter::SetupVOIPTalker, 0.1f);
-		return;
-	}
+	if(NewPlayerState)
+		VOIPTalker->RegisterWithPlayerState(NewPlayerState);
 
-	VOIPTalker->RegisterWithPlayerState(playerState);
-
-	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
-	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
-
-	if (!IsLocallyControlled())
-		return;
-
-	UVOIPStatics::SetMicThreshold(-1.0);
-
-	GetWorld()->Exec(GetWorld(), TEXT("OSS.VoiceLoopback 1"));
-	GetController<APlayerController>()->ToggleSpeaking(true);
 }
