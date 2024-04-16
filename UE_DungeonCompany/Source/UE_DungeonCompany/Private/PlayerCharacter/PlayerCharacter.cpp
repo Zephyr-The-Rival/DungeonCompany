@@ -11,24 +11,18 @@ APlayerCharacter::APlayerCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	FirstPersonCamera->SetupAttachment(RootComponent);
+	FirstPersonCamera->SetRelativeLocation(FVector(0, 0, 40));
+	FirstPersonCamera->bUsePawnControlRotation = true;
+		   
 
-	bUseControllerRotationYaw = false;//nessecary?
+	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
+	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
 
-	this->firstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	this->firstPersonCamera->AttachToComponent(this->RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-	this->firstPersonCamera->SetRelativeLocation(FVector(0, 0, 40));
-
-
-	this->FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
-	this->FirstPersonMesh->AttachToComponent(this->firstPersonCamera, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-
-	this->WalkingSpeed = 1;
-
-	bUseControllerRotationRoll = false;
-	bUseControllerRotationPitch = true;
-	bUseControllerRotationYaw = true;
-
-	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
 }
 
@@ -44,16 +38,15 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	this->ApplyMovement(this->movementVector);
-
 }
 
 // Called to bind functionality to input
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::VericalMovement);
-	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::HorizontalMovement);
-	
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("MouseUp",this, &ACharacter::AddControllerPitchInput);
 
@@ -72,20 +65,20 @@ void APlayerCharacter::HorizontalMovement(float value)
 	this->movementVector.Y = value;
 }
 
-void APlayerCharacter::VericalMovement(float value)
+void APlayerCharacter::MoveRight(float Value)
 {
-	this->movementVector.X = value;
+	Move(GetActorRightVector() * Value);
+
 }
 
-void APlayerCharacter::ApplyMovement(FVector v)// to resolve faster diagonal movement
+void APlayerCharacter::MoveForward(float Value)
 {
-	if (v.Length() > 1)
-	{
-		v.Normalize(0.001);
-	}
+	Move(GetActorForwardVector() * Value);
 
-	v *= WalkingSpeed;
-	AddMovementInput(GetActorForwardVector()*v.X);
-	AddMovementInput(GetActorRightVector()*v.Y);
-	
+}
+
+void APlayerCharacter::Move(FVector MoveVector)
+{
+	AddMovementInput(MoveVector);
+
 }
