@@ -24,6 +24,8 @@ void USessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &USessionSubsystem::OnCreateSessionComplete);
 	SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &USessionSubsystem::OnFindSessionComplete);
 	SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &USessionSubsystem::OnJoinSessionComplete);
+	SessionInterface->OnSessionUserInviteAcceptedDelegates.AddUObject(this, &USessionSubsystem::OnSessionUserInviteAccepted);
+
 }
 
 void USessionSubsystem::OnCreateSessionComplete(FName SessionName, bool Succeeded)
@@ -94,6 +96,12 @@ void USessionSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionC
 	Controller->ClientTravel(JoinAdress, ETravelType::TRAVEL_Absolute);
 
 }
+
+void USessionSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult)
+{
+	SessionInterface->JoinSession(0, NAME_GameSession, InviteResult);
+}
+
 
 void USessionSubsystem::CreateServer(FString ServerName, FString HostName)
 {
