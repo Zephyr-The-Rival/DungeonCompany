@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "DungeonCompanyGameInstance.generated.h"
+#include "DC_GI.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE_DUNGEONCOMPANY_API UDungeonCompanyGameInstance : public UGameInstance
+class UE_DUNGEONCOMPANY_API UDC_GI : public UGameInstance
 {
 	GENERATED_BODY()
 
 public: 
-	UDungeonCompanyGameInstance();
+	UDC_GI();
 protected:
 
 	virtual void Init() override;
