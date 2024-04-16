@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Components/InputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "PlayerCharacter.generated.h"
 
@@ -49,7 +48,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* VoiceSA;
 
-public:
-	void SetupVOIPTalker();
+protected:
+	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
 };
