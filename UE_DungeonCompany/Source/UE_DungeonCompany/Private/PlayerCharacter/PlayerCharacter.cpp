@@ -2,7 +2,8 @@
 
 
 #include "PlayerCharacter/PlayerCharacter.h"
-#include "GameFramework/PlayerController.h"
+#include "PlayerCharacter/DungeonCompanyPlayerController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -22,6 +23,13 @@ APlayerCharacter::APlayerCharacter()
 	this->FirstPersonMesh->AttachToComponent(this->firstPersonCamera, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 	this->WalkingSpeed = 1;
+
+	bUseControllerRotationRoll = false;
+	bUseControllerRotationPitch = true;
+	bUseControllerRotationYaw = true;
+
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+
 }
 
 // Called when the game starts or when spawned
@@ -43,13 +51,19 @@ void APlayerCharacter::Tick(float DeltaTime)
 // Called to bind functionality to input
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::VericalMovement);
+	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::HorizontalMovement);
+	
+	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("MouseUp",this, &ACharacter::AddControllerPitchInput);
+
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	InputComponent->BindAxis("Forward", this, &APlayerCharacter::VericalMovement);
-	InputComponent->BindAxis("Right",this, &APlayerCharacter::HorizontalMovement);
-	
-	InputComponent->BindAxis("MouseRight",this, &APlayerCharacter::HorizontalRotaion);
-	InputComponent->BindAxis("MouseUp",this, &APlayerCharacter::VerticalRotation);
+}
+
+void APlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
 
 }
 
@@ -75,21 +89,3 @@ void APlayerCharacter::ApplyMovement(FVector v)// to resolve faster diagonal mov
 	AddMovementInput(GetActorRightVector()*v.Y);
 	
 }
-
-void APlayerCharacter::HorizontalRotaion(float value)
-{
-	RootComponent->AddLocalRotation(FRotator(0,value,0));
-}
-
-void APlayerCharacter::VerticalRotation(float value)
-{
-	float temp = firstPersonCamera->GetRelativeRotation().Pitch + value;
-
-	if (temp<90 && temp>-90)
-	{
-		firstPersonCamera->AddLocalRotation(FRotator(value, 0, 0));
-	}
-}
-
-
-

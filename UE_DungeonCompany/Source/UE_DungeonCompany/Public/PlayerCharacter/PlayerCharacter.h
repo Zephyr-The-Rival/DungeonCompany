@@ -44,12 +44,6 @@ private:
 	void HorizontalMovement(float value);
 	void VericalMovement(float value);
 
-	void HorizontalRotaion(float value);
-	void VerticalRotation(float value);
-
 	void ApplyMovement(FVector movementVector);
-
-
-
 
 };
