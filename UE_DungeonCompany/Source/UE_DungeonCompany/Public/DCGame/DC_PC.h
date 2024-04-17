@@ -4,17 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "DungeonCompanyPlayerController.generated.h"
+#include "DC_PC.generated.h"
 
 /**
  * 
  */
+ class UVOIPTalker;
+
 UCLASS()
-class UE_DUNGEONCOMPANY_API ADungeonCompanyPlayerController : public APlayerController
+class UE_DUNGEONCOMPANY_API ADC_PC : public APlayerController
 {
 	GENERATED_BODY()
-	
-protected:
 
+public:
+	ADC_PC();
+
+protected:
 	virtual void BeginPlay() override;
+
 };

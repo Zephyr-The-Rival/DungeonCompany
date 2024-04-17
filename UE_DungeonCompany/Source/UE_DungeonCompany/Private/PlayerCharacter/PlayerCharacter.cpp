@@ -1,33 +1,44 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "PlayerCharacter/PlayerCharacter.h"
-#include "GameFramework/PlayerController.h"
+#include "DCGame/DC_PC.h"
+
+#include "GameFramework/CharacterMovementComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Net/VoiceConfig.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	FirstPersonCamera->SetupAttachment(RootComponent);
+	FirstPersonCamera->SetRelativeLocation(FVector(0, 0, 40));
+	FirstPersonCamera->bUsePawnControlRotation = true;
+		   
 
-	bUseControllerRotationYaw = false;//nessecary?
+	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
+	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
 
-	this->firstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	this->firstPersonCamera->AttachToComponent(this->RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-	this->firstPersonCamera->SetRelativeLocation(FVector(0, 0, 40));
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
+	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
+	VoiceSA = voiceSA.Object;
 
-	this->FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
-	this->FirstPersonMesh->AttachToComponent(this->firstPersonCamera, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
-	this->WalkingSpeed = 1;
 }
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
+	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
 	
 }
 
@@ -36,8 +47,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	this->ApplyMovement(this->movementVector);
-
 }
 
 // Called to bind functionality to input
@@ -45,51 +54,36 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	InputComponent->BindAxis("Forward", this, &APlayerCharacter::VericalMovement);
-	InputComponent->BindAxis("Right",this, &APlayerCharacter::HorizontalMovement);
-	
-	InputComponent->BindAxis("MouseRight",this, &APlayerCharacter::HorizontalRotaion);
-	InputComponent->BindAxis("MouseUp",this, &APlayerCharacter::VerticalRotation);
+	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
+	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("MouseUp",this, &ACharacter::AddControllerPitchInput);
 
 }
 
-void APlayerCharacter::HorizontalMovement(float value)
+void APlayerCharacter::MoveRight(float Value)
 {
-	this->movementVector.Y = value;
+	Move(GetActorRightVector() * Value);
+
 }
 
-void APlayerCharacter::VericalMovement(float value)
+void APlayerCharacter::MoveForward(float Value)
 {
-	this->movementVector.X = value;
+	Move(GetActorForwardVector() * Value);
+
 }
 
-void APlayerCharacter::ApplyMovement(FVector v)// to resolve faster diagonal movement
+void APlayerCharacter::Move(FVector MoveVector)
 {
-	if (v.Length() > 1)
-	{
-		v.Normalize(0.001);
-	}
+	AddMovementInput(MoveVector);
 
-	v *= WalkingSpeed;
-	AddMovementInput(GetActorForwardVector()*v.X);
-	AddMovementInput(GetActorRightVector()*v.Y);
-	
 }
 
-void APlayerCharacter::HorizontalRotaion(float value)
+void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
-	RootComponent->AddLocalRotation(FRotator(0,value,0));
+	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+
+	if(NewPlayerState)
+		VOIPTalker->RegisterWithPlayerState(NewPlayerState);
+
 }
-
-void APlayerCharacter::VerticalRotation(float value)
-{
-	float temp = firstPersonCamera->GetRelativeRotation().Pitch + value;
-
-	if (temp<90 && temp>-90)
-	{
-		firstPersonCamera->AddLocalRotation(FRotator(value, 0, 0));
-	}
-}
-
-
-
