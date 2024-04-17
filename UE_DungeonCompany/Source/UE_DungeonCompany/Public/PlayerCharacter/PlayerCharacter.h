@@ -35,12 +35,13 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-private:
-
+protected:
 	void MoveRight(float Value);
 	void MoveForward(float Value);
 
 	void Move(FVector MoveVector);
+
+	void ToggleCrouch();
 
 private:
 	UVOIPTalker* VOIPTalker;

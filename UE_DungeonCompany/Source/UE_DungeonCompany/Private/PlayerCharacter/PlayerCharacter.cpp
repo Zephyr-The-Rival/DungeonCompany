@@ -24,6 +24,7 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 
 	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	VoiceSA = voiceSA.Object;
@@ -54,6 +55,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &APlayerCharacter::Jump);
+	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleCrouch);
 	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
@@ -77,6 +80,14 @@ void APlayerCharacter::Move(FVector MoveVector)
 {
 	AddMovementInput(MoveVector);
 
+}
+
+void APlayerCharacter::ToggleCrouch()
+{
+	if (GetCharacterMovement()->IsCrouching())
+		UnCrouch(true);
+	else
+		Crouch(true);
 }
 
 void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
