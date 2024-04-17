@@ -13,5 +13,8 @@ UCLASS()
 class UE_DUNGEONCOMPANY_API UDC_CMC : public UCharacterMovementComponent
 {
 	GENERATED_BODY()
+
+public:
+	virtual bool CanAttemptJump() const override;
 	
 };

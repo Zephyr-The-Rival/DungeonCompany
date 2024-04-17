@@ -3,3 +3,9 @@
 
 #include "PlayerCharacter/Components/DC_CMC.h"
 
+bool UDC_CMC::CanAttemptJump() const
+{
+	return IsJumpAllowed() &&
+		(IsMovingOnGround() || IsFalling());
+
+}
