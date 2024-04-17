@@ -17,11 +17,11 @@ struct FServerInfo
 	UPROPERTY(BlueprintReadOnly)
 	FString PlayerCountString;
 	UPROPERTY(BlueprintReadOnly)
-	int32 CurrentPlayers;
+	int32 CurrentPlayers = 0;
 	UPROPERTY(BlueprintReadOnly)
-	int32 MaxPlayers;
+	int32 MaxPlayers = 0;
 	UPROPERTY(BlueprintReadOnly)
-	int32 ArrayIndex;
+	int32 ArrayIndex = 0;
 
 	void SetPlayerCount()
 	{
