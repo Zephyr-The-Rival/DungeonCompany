@@ -37,8 +37,6 @@ class UE_DUNGEONCOMPANY_API USessionSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 private:
-	FName MySessionName;
-
 	UPROPERTY(BlueprintAssignable)
 	FServerDel SearchComplete;
 
@@ -64,5 +62,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void JoinServer(int32 Index);
+
+	UFUNCTION(BlueprintCallable)
+	void DestroyCurrentSession();
 	
 };

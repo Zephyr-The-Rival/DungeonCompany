@@ -100,6 +100,7 @@ void USessionSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionC
 void USessionSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult)
 {
 	SessionInterface->JoinSession(0, NAME_GameSession, InviteResult);
+
 }
 
 
@@ -118,7 +119,8 @@ void USessionSubsystem::CreateServer(FString ServerName, FString HostName)
 	sessionSettings.Set(FName("SERVER_NAME_KEY"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	sessionSettings.Set(FName("SERVER_HOSTNAME_KEY"), HostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
-	SessionInterface->CreateSession(0, MySessionName, sessionSettings);
+	SessionInterface->CreateSession(0, NAME_GameSession, sessionSettings);
+
 }
 
 void USessionSubsystem::FindServers()
@@ -131,6 +133,7 @@ void USessionSubsystem::FindServers()
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 	
 	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+
 }
 
 void USessionSubsystem::JoinServer(int32 Index)
@@ -144,6 +147,15 @@ void USessionSubsystem::JoinServer(int32 Index)
 	}
 	
 	UE_LOG(LogTemp, Warning, TEXT("Joining session at index %d ..."), Index);
-	SessionInterface->JoinSession(0, MySessionName, result);
+	SessionInterface->JoinSession(0, NAME_GameSession, result);
 	
+}
+
+void USessionSubsystem::DestroyCurrentSession()
+{
+	if(!SessionInterface->GetNamedSession(NAME_GameSession))
+		return;
+
+	SessionInterface->DestroySession(NAME_GameSession);
+
 }
