@@ -63,7 +63,7 @@ void USessionSubsystem::OnFindSessionComplete(bool Succeeded)
 
 		info.ServerName = serverName;
 		info.MaxPlayers = SR.Session.SessionSettings.NumPublicConnections;
-		info.currentPlayers = info.MaxPlayers - SR.Session.NumOpenPublicConnections;
+		info.CurrentPlayers = info.MaxPlayers - SR.Session.NumOpenPublicConnections;
 		info.SetPlayerCount();
 		info.ArrayIndex = i;
 		++i;

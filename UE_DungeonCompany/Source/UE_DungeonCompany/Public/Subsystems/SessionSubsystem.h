@@ -12,13 +12,12 @@ struct FServerInfo
 {
 	GENERATED_BODY()
 	
-public:
 	UPROPERTY(BlueprintReadOnly)
 	FString ServerName;
 	UPROPERTY(BlueprintReadOnly)
 	FString PlayerCountString;
 	UPROPERTY(BlueprintReadOnly)
-	int32 currentPlayers;
+	int32 CurrentPlayers;
 	UPROPERTY(BlueprintReadOnly)
 	int32 MaxPlayers;
 	UPROPERTY(BlueprintReadOnly)
@@ -26,7 +25,7 @@ public:
 
 	void SetPlayerCount()
 	{
-		PlayerCountString= FString(FString::FromInt(currentPlayers) + "/" + FString::FromInt(MaxPlayers));
+		PlayerCountString= FString(FString::FromInt(CurrentPlayers) + "/" + FString::FromInt(MaxPlayers));
 	}
 };
 
