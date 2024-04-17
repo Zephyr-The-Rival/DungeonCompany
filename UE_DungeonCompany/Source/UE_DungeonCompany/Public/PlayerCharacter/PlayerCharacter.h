@@ -43,6 +43,9 @@ protected:
 
 	void ToggleCrouch();
 
+public:
+	virtual bool CanJumpInternal_Implementation() const override;
+
 private:
 	UVOIPTalker* VOIPTalker;
 

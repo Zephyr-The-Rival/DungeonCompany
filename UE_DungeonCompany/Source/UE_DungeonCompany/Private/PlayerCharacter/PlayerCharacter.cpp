@@ -25,6 +25,7 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
 
 	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	VoiceSA = voiceSA.Object;
@@ -57,6 +58,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &APlayerCharacter::Jump);
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleCrouch);
+	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::ToggleCrouch);
 	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
@@ -88,6 +90,33 @@ void APlayerCharacter::ToggleCrouch()
 		UnCrouch(true);
 	else
 		Crouch(true);
+
+}
+
+bool APlayerCharacter::CanJumpInternal_Implementation() const
+{
+	bool bJumpIsAllowed = false;
+
+	// Ensure JumpHoldTime and JumpCount are valid.
+	if (!bWasJumping || GetJumpMaxHoldTime() <= 0.0f)
+	{
+		if (JumpCurrentCount == 0 && GetCharacterMovement()->IsFalling())
+			bJumpIsAllowed = JumpCurrentCount + 1 < JumpMaxCount;
+		else
+			bJumpIsAllowed = JumpCurrentCount < JumpMaxCount;
+	}
+	else
+	{
+		// Only consider JumpKeyHoldTime as long as:
+		// A) The jump limit hasn't been met OR
+		// B) The jump limit has been met AND we were already jumping
+		const bool bJumpKeyHeld = (bPressedJump && JumpKeyHoldTime < GetJumpMaxHoldTime());
+		bJumpIsAllowed = bJumpKeyHeld &&
+			((JumpCurrentCount < JumpMaxCount) || (bWasJumping && JumpCurrentCount == JumpMaxCount));
+	}
+
+	return bJumpIsAllowed;
+
 }
 
 void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
