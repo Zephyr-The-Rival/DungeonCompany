@@ -1,14 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "PlayerCharacter/Components/DC_CMC.h"
 #include "DCGame/DC_PC.h"
 
-#include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/VoiceConfig.h"
 
 // Sets default values
-APlayerCharacter::APlayerCharacter()
+APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -24,6 +25,8 @@ APlayerCharacter::APlayerCharacter()
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
 
 	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	VoiceSA = voiceSA.Object;
@@ -54,6 +57,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &APlayerCharacter::Jump);
+	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleCrouch);
+	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::ToggleCrouch);
 	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
@@ -76,6 +82,21 @@ void APlayerCharacter::MoveForward(float Value)
 void APlayerCharacter::Move(FVector MoveVector)
 {
 	AddMovementInput(MoveVector);
+
+}
+
+void APlayerCharacter::ToggleCrouch()
+{
+	if (GetCharacterMovement()->IsCrouching())
+		UnCrouch(true);
+	else
+		Crouch(true);
+
+}
+
+bool APlayerCharacter::CanJumpInternal_Implementation() const
+{
+	return JumpIsAllowedInternal();
 
 }
 

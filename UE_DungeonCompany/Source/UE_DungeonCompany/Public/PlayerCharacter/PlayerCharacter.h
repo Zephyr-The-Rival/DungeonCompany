@@ -16,7 +16,7 @@ class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
 
 public:
 	// Sets default values for this character's properties
-	APlayerCharacter();
+	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	// Called when the game starts or when spawned
@@ -35,12 +35,16 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-private:
-
+protected:
 	void MoveRight(float Value);
 	void MoveForward(float Value);
 
 	void Move(FVector MoveVector);
+
+	void ToggleCrouch();
+
+public:
+	virtual bool CanJumpInternal_Implementation() const override;
 
 private:
 	UVOIPTalker* VOIPTalker;
