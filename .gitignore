@@ -72,3 +72,5 @@ Plugins/*/Intermediate/
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+UE_DungeonCompany/Plugins/VisualStudioTools/
