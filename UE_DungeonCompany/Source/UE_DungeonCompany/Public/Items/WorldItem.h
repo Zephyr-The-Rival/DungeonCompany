@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "WorldItem.generated.h"
 
+class UItemData;
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API AWorldItem : public AActor
 {
@@ -14,10 +16,22 @@ class UE_DUNGEONCOMPANY_API AWorldItem : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AWorldItem();
+	AWorldItem(UItemData* ItemData);
 
 protected:
+	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UItemData> ItemDataClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UItemData* MyData;
+
+	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+
 
 public:	
 	// Called every frame

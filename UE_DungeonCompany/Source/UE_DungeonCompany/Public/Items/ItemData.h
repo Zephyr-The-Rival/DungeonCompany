@@ -9,17 +9,26 @@
 /**
  * 
  */
+
+class AWorldItem;
+
 UCLASS(Blueprintable)
 class UE_DUNGEONCOMPANY_API UItemData : public UObject
 {
 	GENERATED_BODY()
 	
-//public:
-//	UItemData();
-//
-//protected:
-//
-//	FString Name;
-//	UTexture2D Icon;
+public:
+	
+	AWorldItem* SpawnMyItem(FTransform transform);
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class AWorldItem> MyWorldItem;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Name;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* Icon;
 
 };
