@@ -3,6 +3,7 @@
 
 #include "Items/WorldItem.h"
 #include "Items/ItemData.h"
+#include "DC_Statics.h"
 
 // Sets default values
 AWorldItem::AWorldItem()
@@ -32,5 +33,10 @@ void AWorldItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AWorldItem::Interact()
+{
+	LogWarning(*(this->GetName()+" is beeing interacted with"));
 }
 

@@ -2,7 +2,8 @@
 
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "DCGame/DC_PC.h"
-
+#include "DC_Statics.h"
+#include "Interactable.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/VoiceConfig.h"
@@ -21,7 +22,7 @@ APlayerCharacter::APlayerCharacter()
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
 	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
 
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
@@ -29,6 +30,7 @@ APlayerCharacter::APlayerCharacter()
 	VoiceSA = voiceSA.Object;
 
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+
 
 }
 
@@ -47,6 +49,10 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	this->InteractorLineTrace();
+
+	
+
 }
 
 // Called to bind functionality to input
@@ -77,6 +83,27 @@ void APlayerCharacter::Move(FVector MoveVector)
 {
 	AddMovementInput(MoveVector);
 
+}
+
+void APlayerCharacter::InteractorLineTrace()
+{
+	//raycast to pick up and interact with stuff
+	FHitResult Hit;
+	float distance = 150;
+	FVector Start = this->FirstPersonCamera->GetComponentLocation();
+	FVector End = Start + this->FirstPersonCamera->GetForwardVector() * this->InteractionRange;
+
+	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility);
+
+	if (Hit.bBlockingHit)
+	{
+		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
+		if (i)
+		{
+			LogWarning(*("interactable " + Hit.GetActor()->GetName() + " was hit"));
+		}
+
+	}
 }
 
 void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
