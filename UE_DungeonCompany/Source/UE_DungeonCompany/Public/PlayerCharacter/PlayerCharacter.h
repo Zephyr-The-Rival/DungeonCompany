@@ -19,6 +19,14 @@ public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
 protected:
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float WalkingSpeed = 500;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing")
+	float InteractionRange=170;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -40,6 +48,8 @@ protected:
 	void MoveForward(float Value);
 
 	void Move(FVector MoveVector);
+
+	void InteractorLineTrace();
 
 	void ToggleCrouch();
 
