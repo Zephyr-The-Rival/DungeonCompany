@@ -4,7 +4,8 @@
 #include "PlayerCharacter/Components/DC_CMC.h"
 #include "DCGame/DC_PC.h"
 #include "DC_Statics.h"
-#include "Interactable.h"
+#include "UI/PlayerHud/PlayerHud.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/VoiceConfig.h"
@@ -107,9 +108,32 @@ void APlayerCharacter::InteractorLineTrace()
 		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
 		if (i)
 		{
-			LogWarning(*("interactable " + Hit.GetActor()->GetName() + " was hit"));
+			if (CurrentInteractable != i)//if a new intractable is being looked at
+			{
+				this->CurrentInteractable = i;
+				
+				ADC_PC* c = Cast<ADC_PC>(GetController());
+				c->GetMyPlayerHud()->ShowCrosshair(TEXT("to Interact"));
+			}
 		}
+		else
+		{
+			if (CurrentInteractable != NULL)
+			{
+				Cast<ADC_PC>(GetController())->GetMyPlayerHud()->HideCrosshair();
+			}
+			this->CurrentInteractable = NULL;
+		}
+		
 
+	}
+	else
+	{
+		if (CurrentInteractable != NULL)
+		{
+			Cast<ADC_PC>(GetController())->GetMyPlayerHud()->HideCrosshair();
+		}
+		this->CurrentInteractable = NULL;
 	}
 }
 

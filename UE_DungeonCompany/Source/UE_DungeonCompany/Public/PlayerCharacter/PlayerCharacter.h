@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
+#include "Interactable.h"
 #include "PlayerCharacter.generated.h"
+
 
 class UVOIPTalker;
 
@@ -61,6 +63,8 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* VoiceSA;
+
+	IInteractable* CurrentInteractable;
 
 protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
