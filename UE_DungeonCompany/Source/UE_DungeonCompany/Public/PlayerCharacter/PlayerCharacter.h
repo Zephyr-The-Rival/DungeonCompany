@@ -9,6 +9,7 @@
 #include "PlayerCharacter.generated.h"
 
 class UVOIPTalker;
+class ALadder;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
@@ -57,6 +58,11 @@ protected:
 
 private:
 	bool bSprinting = false;
+	bool bOnLadder = false;
+
+public:
+	void SetIsOnLadder(bool InOnLadder);
+	inline bool IsOnLadder() const { return bOnLadder; }
 
 protected:
 
@@ -79,6 +85,19 @@ protected:
 	UFUNCTION(Server, Unreliable)
 	void Server_StopSprint();
 	void Server_StopSprint_Implementation();
+
+public:
+	void StartClimbingOnLadder(ALadder* InLadder);
+	void StopClimbingOnLadder();
+
+protected:
+	UFUNCTION(Server, Unreliable)
+	void Server_StartClimbingOnLadder(ALadder* InLadder);
+	void Server_StartClimbingOnLadder_Implementation(ALadder* InLadder);
+
+	UFUNCTION(Server, Unreliable)
+	void Server_StopClimbingOnLadder();
+	void Server_StopClimbingOnLadder_Implementation();
 
 public:
 	virtual bool CanJumpInternal_Implementation() const override;

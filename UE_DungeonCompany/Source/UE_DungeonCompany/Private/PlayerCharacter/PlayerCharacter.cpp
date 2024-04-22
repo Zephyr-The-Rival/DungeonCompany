@@ -5,7 +5,9 @@
 #include "DCGame/DC_PC.h"
 #include "DC_Statics.h"
 #include "UI/PlayerHud/PlayerHud.h"
+#include "WorldActors/Ladder.h"
 
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/VoiceConfig.h"
@@ -101,15 +103,24 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 }
 
+void APlayerCharacter::SetIsOnLadder(bool InOnLadder)
+{
+	bOnLadder = InOnLadder;
+}
+
 void APlayerCharacter::MoveRight(float Value)
 {
-	Move(GetActorRightVector() * Value);
+	if(GetCharacterMovement()->MovementMode != MOVE_Flying)
+		Move(GetActorRightVector() * Value);
 
 }
 
 void APlayerCharacter::MoveForward(float Value)
 {
-	Move(GetActorForwardVector() * Value);
+	if(GetCharacterMovement()->MovementMode != MOVE_Flying)
+		Move(GetActorForwardVector() * Value);
+	else 
+		Move(FVector::UpVector * Value);
 
 }
 
@@ -132,7 +143,7 @@ void APlayerCharacter::InteractorLineTrace()
 	if (Hit.bBlockingHit)
 	{
 		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
-		if (i)
+		if (i && i->IsInteractable())
 		{
 			if (CurrentInteractable != i)//if a new intractable is being looked at
 			{
@@ -168,7 +179,7 @@ void APlayerCharacter::Interact()
 	if(!CurrentInteractable)
 		return;
 
-	CurrentInteractable->Interact();
+	CurrentInteractable->Interact(this);
 
 }
 
@@ -221,6 +232,47 @@ void APlayerCharacter::Server_StopSprint_Implementation()
 {
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 	bSprinting = false;
+}
+
+void APlayerCharacter::StartClimbingOnLadder(ALadder* InLadder)
+{
+	bOnLadder = true;
+
+	if (HasAuthority())
+		Server_StartClimbingOnLadder_Implementation(InLadder);
+	else
+		Server_StartClimbingOnLadder(InLadder);
+}
+
+void APlayerCharacter::Server_StartClimbingOnLadder_Implementation(ALadder* InLadder)
+{
+	float distanceToLadder = GetCapsuleComponent()->GetScaledCapsuleRadius();
+	FVector climbPosition = InLadder->GetActorLocation() + InLadder->GetActorForwardVector() * distanceToLadder;
+	climbPosition.Z = GetActorLocation().Z;
+
+	FRotator climbRotation = GetActorRotation();
+	climbRotation.Yaw = InLadder->GetActorRotation().Yaw + 180;
+
+	SetActorLocation(climbPosition);
+	GetController()->ClientSetRotation(climbRotation);
+	GetCharacterMovement()->MovementMode = MOVE_Flying;
+
+}
+
+void APlayerCharacter::StopClimbingOnLadder()
+{
+	bOnLadder = false;
+
+	if (HasAuthority())
+		Server_StopClimbingOnLadder_Implementation();
+	else
+		Server_StopClimbingOnLadder();
+}
+
+void APlayerCharacter::Server_StopClimbingOnLadder_Implementation()
+{
+	GetCharacterMovement()->MovementMode = MOVE_Walking;
+
 }
 
 void APlayerCharacter::AddStamina(float AddingStamina)

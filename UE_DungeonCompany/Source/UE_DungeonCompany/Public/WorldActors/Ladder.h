@@ -7,6 +7,8 @@
 #include "Interactable.h"
 #include "Ladder.generated.h"
 
+class UBoxComponent;
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API ALadder : public AActor, public IInteractable
 {
@@ -19,15 +21,22 @@ private:
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* Material;
 
-	UMaterialInstanceDynamic* DynMaterial;
+	UInstancedStaticMeshComponent* LadderMesh;
 
-	UPROPERTY(EditAnywhere)
+	UBoxComponent* InteractVolume;
+
+	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
 	unsigned int SectionsCount = 1;
 
-	UPROPERTY(EditAnywhere)
-	float LadderSectionGap = 100.f;
+	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
+	float SectionHeight = 100.f;
 
-	UInstancedStaticMeshComponent* LadderMesh;
+	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
+	bool bSectionOriginInMid = false;
+
+	UPROPERTY(EditAnywhere, Category = Interaction)
+	FVector2D InteractionArea = FVector2D(10, 20);
+
 	
 public:	
 	ALadder();
@@ -38,6 +47,12 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	virtual void Interact() override;
+	virtual void Interact(APawn* InteractingPawn) override;
+
+	UFUNCTION()
+	void OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 };

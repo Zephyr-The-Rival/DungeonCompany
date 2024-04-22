@@ -2,9 +2,13 @@
 
 
 #include "WorldActors/Ladder.h"
+#include "PlayerCharacter/PlayerCharacter.h"
 
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/ArrowComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 ALadder::ALadder()
@@ -12,11 +16,16 @@ ALadder::ALadder()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	RootComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
+	bInteractable = false;
+	bReplicates = true;
 
+	RootComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 
 	LadderMesh = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("LadderMesh"));
 	LadderMesh->SetupAttachment(RootComponent);
+
+	InteractVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionVolume"));
+	InteractVolume->SetupAttachment(RootComponent);
 
 }
 
@@ -34,9 +43,17 @@ void ALadder::OnConstruction(const FTransform& Transform)
 	
 	for (unsigned int i = 0; i < SectionsCount; ++i)
 	{
-		FVector translation = FVector::UpVector * (i * LadderSectionGap);
-		LadderMesh->AddInstance(FTransform(translation), false);
+		FVector translation = FVector::UpVector * (i * SectionHeight);
+		LadderMesh->AddInstance(FTransform(translation), false);	
 	}
+
+	if(bSectionOriginInMid)
+		LadderMesh->SetRelativeLocation(FVector(0, 0, SectionHeight/2));
+
+	float LadderHalfHeight = (SectionHeight / 2) * SectionsCount;
+
+	InteractVolume->InitBoxExtent(FVector(InteractionArea, LadderHalfHeight));
+	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, LadderHalfHeight));
 
 }
 
@@ -44,10 +61,40 @@ void ALadder::OnConstruction(const FTransform& Transform)
 void ALadder::BeginPlay()
 {
 	Super::BeginPlay();
+
+	InteractVolume->OnComponentBeginOverlap.AddDynamic(this, &ALadder::OnInteractVolumeEntered);
+	InteractVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnInteractVolumeLeft);
 	
 }
 
-void ALadder::Interact()
+void ALadder::Interact(APawn* InteractingPawn)
 {
+
+	APlayerCharacter* character = Cast<APlayerCharacter>(InteractingPawn);
+	
+	if(!character)
+		return;
+
+	character->StartClimbingOnLadder(this);	
+}
+
+void ALadder::OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
+	if(!character || !character->IsLocallyControlled())
+		return;
+
+	bInteractable = true;
+}
+
+void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
+	if (!character || !character->IsLocallyControlled())
+		return;
+
+	character->StopClimbingOnLadder();
+
+	bInteractable = false;
 }
 
