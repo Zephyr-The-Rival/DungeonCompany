@@ -93,6 +93,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleCrouch);
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::ToggleCrouch);
 	PlayerInputComponent->BindAction("Sprint", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleSprint);
+	PlayerInputComponent->BindAction("Interact", EInputEvent::IE_Pressed, this, &APlayerCharacter::Interact);
 	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
@@ -160,6 +161,15 @@ void APlayerCharacter::InteractorLineTrace()
 		}
 		this->CurrentInteractable = NULL;
 	}
+}
+
+void APlayerCharacter::Interact()
+{
+	if(!CurrentInteractable)
+		return;
+
+	CurrentInteractable->Interact();
+
 }
 
 void APlayerCharacter::ToggleCrouch()

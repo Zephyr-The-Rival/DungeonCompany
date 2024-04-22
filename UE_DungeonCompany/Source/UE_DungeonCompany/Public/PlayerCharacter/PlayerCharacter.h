@@ -45,6 +45,9 @@ protected:
 
 	void InteractorLineTrace();
 
+public:
+	void Interact();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float WalkingSpeed = 500;
