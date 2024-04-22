@@ -68,6 +68,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &APlayerCharacter::Jump);
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleCrouch);
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::ToggleCrouch);
+	PlayerInputComponent->BindAction("Sprint", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleSprint);
 	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
@@ -144,6 +145,18 @@ void APlayerCharacter::ToggleCrouch()
 	else
 		Crouch(true);
 
+}
+
+void APlayerCharacter::ToggleSprint()
+{
+	if (GetCharacterMovement()->MaxWalkSpeed == WalkingSpeed)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = SprintingSpeed;
+		return;
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
+	
 }
 
 bool APlayerCharacter::CanJumpInternal_Implementation() const

@@ -21,10 +21,11 @@ public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
 protected:
-
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float WalkingSpeed = 500;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float SprintingSpeed = 800;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing")
 	float InteractionRange=170;
@@ -54,6 +55,7 @@ protected:
 	void InteractorLineTrace();
 
 	void ToggleCrouch();
+	void ToggleSprint();
 
 public:
 	virtual bool CanJumpInternal_Implementation() const override;
