@@ -3,7 +3,10 @@
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "PlayerCharacter/Components/DC_CMC.h"
 #include "DCGame/DC_PC.h"
+#include "DC_Statics.h"
+#include "UI/PlayerHud/PlayerHud.h"
 
+#include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/VoiceConfig.h"
 
@@ -22,7 +25,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
 	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
 
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
@@ -32,6 +35,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	VoiceSA = voiceSA.Object;
 
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+
 
 }
 
@@ -50,6 +54,10 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	this->InteractorLineTrace();
+
+	
+
 }
 
 // Called to bind functionality to input
@@ -83,6 +91,50 @@ void APlayerCharacter::Move(FVector MoveVector)
 {
 	AddMovementInput(MoveVector);
 
+}
+
+void APlayerCharacter::InteractorLineTrace()
+{
+	//raycast to pick up and interact with stuff
+	FHitResult Hit;
+	float distance = 150;
+	FVector Start = this->FirstPersonCamera->GetComponentLocation();
+	FVector End = Start + this->FirstPersonCamera->GetForwardVector() * this->InteractionRange;
+
+	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility);
+
+	if (Hit.bBlockingHit)
+	{
+		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
+		if (i)
+		{
+			if (CurrentInteractable != i)//if a new intractable is being looked at
+			{
+				this->CurrentInteractable = i;
+				
+				ADC_PC* c = Cast<ADC_PC>(GetController());
+				c->GetMyPlayerHud()->ShowCrosshair(TEXT("to Interact"));
+			}
+		}
+		else
+		{
+			if (CurrentInteractable != NULL)
+			{
+				Cast<ADC_PC>(GetController())->GetMyPlayerHud()->HideCrosshair();
+			}
+			this->CurrentInteractable = NULL;
+		}
+		
+
+	}
+	else
+	{
+		if (CurrentInteractable != NULL)
+		{
+			Cast<ADC_PC>(GetController())->GetMyPlayerHud()->HideCrosshair();
+		}
+		this->CurrentInteractable = NULL;
+	}
 }
 
 void APlayerCharacter::ToggleCrouch()

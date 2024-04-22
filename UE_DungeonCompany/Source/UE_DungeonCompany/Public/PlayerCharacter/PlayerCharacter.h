@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
+#include "Interactable.h"
 #include "PlayerCharacter.generated.h"
+
 
 class UVOIPTalker;
 
@@ -19,6 +21,14 @@ public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
 protected:
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float WalkingSpeed = 500;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing")
+	float InteractionRange=170;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -41,6 +51,8 @@ protected:
 
 	void Move(FVector MoveVector);
 
+	void InteractorLineTrace();
+
 	void ToggleCrouch();
 
 public:
@@ -51,6 +63,8 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* VoiceSA;
+
+	IInteractable* CurrentInteractable;
 
 protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;

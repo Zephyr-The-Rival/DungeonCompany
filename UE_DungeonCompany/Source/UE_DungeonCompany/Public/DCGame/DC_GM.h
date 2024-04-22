@@ -16,5 +16,7 @@ class UE_DUNGEONCOMPANY_API ADC_GM : public AGameMode
 
 public:
 	ADC_GM();
+
+	UUserWidget* PlayerHud;
 	
 };
