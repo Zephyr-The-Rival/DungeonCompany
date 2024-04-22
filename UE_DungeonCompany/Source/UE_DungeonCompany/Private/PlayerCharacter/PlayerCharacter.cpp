@@ -5,7 +5,9 @@
 #include "DCGame/DC_PC.h"
 #include "DC_Statics.h"
 #include "UI/PlayerHud/PlayerHud.h"
+#include "WorldActors/Ladder.h"
 
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/VoiceConfig.h"
@@ -25,7 +27,10 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
 	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
 
+	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
+	GetCharacterMovement()->MaxFlySpeed = ClimbingSpeed;
+	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
@@ -36,7 +41,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
-
 }
 
 // Called when the game starts or when spawned
@@ -44,14 +48,11 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if(!IsLocallyControlled())
-		SetActorTickEnabled(false);
-
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
 
 	RestDelegate = FTimerDelegate::CreateLambda([this](){
-	StaminaState = Resting; 
+	bResting = true; 
 	});
 	
 }
@@ -61,26 +62,30 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	if(IsLocallyControlled())
+		LocalTick(DeltaTime);
+
+}
+
+void APlayerCharacter::LocalTick(float DeltaTime)
+{
 	this->InteractorLineTrace();
+	StaminaTick(DeltaTime);
+}
 
-	switch (StaminaState)
-	{
-	case Resting:
+void APlayerCharacter::StaminaTick(float DeltaTime)
+{
+	if (bResting)
 		AddStamina(StaminaGainPerSecond * DeltaTime);
-		break;
 
-	case Sprinting:
-		SubstractStamina(SprintStaminaDrainPerSecond * DeltaTime);
-		if (Stamina < 0.f)
-			ToggleSprint();
+	if (!bSprinting)
+		return;
 
-		Stamina = Stamina < 0.f ? 0.f : Stamina;
-		break;
+	if (GetCharacterMovement()->Velocity.Length() > WalkingSpeed)
+			SubstractStamina(SprintStaminaDrainPerSecond * DeltaTime);
 
-	default:
-		break;
-	}
-
+	if (Stamina < 0.f)
+		ToggleSprint();
 }
 
 // Called to bind functionality to input
@@ -92,6 +97,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleCrouch);
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::ToggleCrouch);
 	PlayerInputComponent->BindAction("Sprint", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleSprint);
+	PlayerInputComponent->BindAction("Interact", EInputEvent::IE_Pressed, this, &APlayerCharacter::Interact);
 	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
@@ -101,13 +107,20 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::MoveRight(float Value)
 {
-	Move(GetActorRightVector() * Value);
+	if(GetCharacterMovement()->MovementMode != MOVE_Flying)
+		Move(GetActorRightVector() * Value);
 
 }
 
 void APlayerCharacter::MoveForward(float Value)
 {
-	Move(GetActorForwardVector() * Value);
+	if(GetCharacterMovement()->MovementMode != MOVE_Flying)
+		Move(GetActorForwardVector() * Value);
+	else 
+		Move(FVector::UpVector * Value);
+
+	if(bSprinting && Value <= 0.f)
+		ToggleSprint();
 
 }
 
@@ -130,7 +143,7 @@ void APlayerCharacter::InteractorLineTrace()
 	if (Hit.bBlockingHit)
 	{
 		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
-		if (i)
+		if (i && i->IsInteractable())
 		{
 			if (CurrentInteractable != i)//if a new intractable is being looked at
 			{
@@ -161,6 +174,24 @@ void APlayerCharacter::InteractorLineTrace()
 	}
 }
 
+void APlayerCharacter::Interact()
+{
+	if(!CurrentInteractable)
+		return;
+
+	CurrentInteractable->Interact(this);
+
+}
+
+void APlayerCharacter::Jump()
+{
+	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
+		StopClimbing();
+
+	Super::Jump();
+
+}
+
 void APlayerCharacter::ToggleCrouch()
 {
 	if (GetCharacterMovement()->IsCrouching())
@@ -172,8 +203,7 @@ void APlayerCharacter::ToggleCrouch()
 
 void APlayerCharacter::ToggleSprint()
 {
-
-	if (StaminaState == Sprinting)
+	if (bSprinting)
 	{
 		StopSprint();
 		return;
@@ -195,7 +225,7 @@ void APlayerCharacter::StartSprint()
 void APlayerCharacter::Server_StartSprint_Implementation()
 {
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed * SprintSpeedMultiplier;
-	StaminaState = Sprinting;
+	bSprinting = true;
 }
 
 void APlayerCharacter::StopSprint()
@@ -209,7 +239,56 @@ void APlayerCharacter::StopSprint()
 void APlayerCharacter::Server_StopSprint_Implementation()
 {
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
-	StaminaState = Idle;
+	bSprinting = false;
+}
+
+void APlayerCharacter::StartClimbingAtLocation(const FVector& Location)
+{
+	bClimbing = true;
+
+	if (HasAuthority())
+		Server_StartClimbingAtLocation_Implementation(Location);
+	else
+		Server_StartClimbingAtLocation(Location);
+
+}
+
+void APlayerCharacter::StopClimbing()
+{	
+	if(!bClimbing)
+		return;
+
+	bClimbing = false;
+
+	OnStoppedClimbing.Broadcast();
+
+	if (HasAuthority())
+		Server_StopClimbing_Implementation();
+	else
+		Server_StopClimbing();
+
+}
+
+void APlayerCharacter::Server_StartClimbingAtLocation_Implementation(const FVector& Location)
+{
+	SetActorLocation(Location);
+	GetCharacterMovement()->MovementMode = MOVE_Flying;
+	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+}
+
+void APlayerCharacter::Server_StopClimbing_Implementation()
+{
+	GetCharacterMovement()->MovementMode = MOVE_Walking;
+}
+
+void APlayerCharacter::Server_SetActorLocation_Implementation(const FVector& InLocation)
+{
+	SetActorLocation(InLocation);
+}
+
+void APlayerCharacter::Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride)
+{
+	LaunchCharacter(LaunchVelocity, bXYOverride, bZOverride);
 }
 
 void APlayerCharacter::AddStamina(float AddingStamina)
@@ -227,7 +306,7 @@ void APlayerCharacter::AddStamina(float AddingStamina)
 	if (Stamina > MaxStamina)
 	{
 		Stamina = MaxStamina;
-		StaminaState = Idle;
+		bResting = false;
 	}
 
 }
@@ -240,6 +319,7 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 		return;
 	}
 
+	bResting = false;
 	Stamina -= SubStamina;
 
 	LogWarning(*FString::SanitizeFloat(Stamina));
@@ -251,7 +331,7 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 
 	Stamina = 0.f;
 
-	if(StaminaState == Sprinting)
+	if(bSprinting)
 		ToggleSprint();
 
 }

@@ -35,7 +35,7 @@ void AWorldItem::Tick(float DeltaTime)
 
 }
 
-void AWorldItem::Interact()
+void AWorldItem::Interact(APawn* InteractingPawn)
 {
 	LogWarning(*(this->GetName()+" is beeing interacted with"));
 }

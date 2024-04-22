@@ -21,7 +21,12 @@ class UE_DUNGEONCOMPANY_API IInteractable
 {
 	GENERATED_BODY()
 
+protected:
+	bool bInteractable = true;
+
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void Interact()=0;
+	virtual void Interact(APawn* InteractingPawn)=0;
+	
+	inline bool IsInteractable() const { return bInteractable; }
 };
