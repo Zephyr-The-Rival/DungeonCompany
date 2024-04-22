@@ -41,7 +41,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
-
 }
 
 // Called when the game starts or when spawned
@@ -119,6 +118,9 @@ void APlayerCharacter::MoveForward(float Value)
 		Move(GetActorForwardVector() * Value);
 	else 
 		Move(FVector::UpVector * Value);
+
+	if(bSprinting && Value <= 0.f)
+		ToggleSprint();
 
 }
 
