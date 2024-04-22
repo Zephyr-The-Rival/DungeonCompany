@@ -101,9 +101,9 @@ void ALadder::OnBottomBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	if (!character || !character->IsLocallyControlled())
 		return;
 
-	character->StopClimbing();
-
 	bRemovedByLadder = true;
+
+	character->StopClimbing();
 	
 }
 
@@ -123,10 +123,9 @@ void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AAc
 		return;
 
 	bInteractable = false;
+	bRemovedByLadder = true;
 
 	character->StopClimbing();
-
-	bRemovedByLadder = true;
 
 }
 
