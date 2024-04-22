@@ -10,7 +10,7 @@
  * 
  */
  class UVOIPTalker;
-
+ class UPlayerHud;
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_PC : public APlayerController
 {
@@ -18,8 +18,13 @@ class UE_DUNGEONCOMPANY_API ADC_PC : public APlayerController
 
 public:
 	ADC_PC();
-
+	UPlayerHud* GetMyPlayerHud() const { return MyPlayerHud; }
 protected:
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UPlayerHud> PlayerHudClass;
+
+	UPlayerHud* MyPlayerHud;
 
 };

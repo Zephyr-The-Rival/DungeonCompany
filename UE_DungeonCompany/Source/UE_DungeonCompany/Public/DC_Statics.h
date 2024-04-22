@@ -6,7 +6,7 @@
 #include "UObject/NoExportTypes.h"
 #include "DC_Statics.generated.h"
 
-#define LogWarning(Message) UE_LOG(LogTemp, Warning, Message)
+#define LogWarning(Message) UE_LOG(LogTemp, Warning, TEXT("%s"),Message)
 #define PrintMessage(Message, DisplayLength) GEngine->AddOnScreenDebugMessage(-1, DisplayLength, FColor::Green, Message)
 
 UCLASS()
