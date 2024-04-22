@@ -56,20 +56,22 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float SprintSpeedMultiplier = 1.5f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float ClimbingSpeed = 300;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float JumpVelocity = 420.f;
+
 private:
 	bool bSprinting = false;
-	bool bOnLadder = false;
-
-public:
-	void SetIsOnLadder(bool InOnLadder);
-	inline bool IsOnLadder() const { return bOnLadder; }
-
+	
 protected:
-
 	void MoveRight(float Value);
 	void MoveForward(float Value);
 
 	void Move(FVector MoveVector);
+
+	virtual void Jump() override;
 
 	void ToggleCrouch();
 	void ToggleSprint();
@@ -87,17 +89,35 @@ protected:
 	void Server_StopSprint_Implementation();
 
 public:
-	void StartClimbingOnLadder(ALadder* InLadder);
-	void StopClimbingOnLadder();
+	UFUNCTION(Server, Unreliable)
+	void Server_SetActorLocation(const FVector& InLocation);
+	void Server_SetActorLocation_Implementation(const FVector& InLocation);
+
+	UFUNCTION(Server, Unreliable)
+	void Server_LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
+	void Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
+
+private:
+	bool bClimbing = false;
+
+public:
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStoppedClimbing);
+
+	FOnStoppedClimbing OnStoppedClimbing;
+
+	void StartClimbingAtLocation(const FVector& Location);
+	void StopClimbing();
 
 protected:
-	UFUNCTION(Server, Unreliable)
-	void Server_StartClimbingOnLadder(ALadder* InLadder);
-	void Server_StartClimbingOnLadder_Implementation(ALadder* InLadder);
 
 	UFUNCTION(Server, Unreliable)
-	void Server_StopClimbingOnLadder();
-	void Server_StopClimbingOnLadder_Implementation();
+	void Server_StartClimbingAtLocation(const FVector& Location);
+	void Server_StartClimbingAtLocation_Implementation(const FVector& Location);
+
+	UFUNCTION(Server, Unreliable)
+	void Server_StopClimbing();
+	void Server_StopClimbing_Implementation();
 
 public:
 	virtual bool CanJumpInternal_Implementation() const override;

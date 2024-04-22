@@ -8,6 +8,7 @@
 #include "Ladder.generated.h"
 
 class UBoxComponent;
+class APlayerCharacter;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API ALadder : public AActor, public IInteractable
@@ -25,6 +26,8 @@ private:
 
 	UBoxComponent* InteractVolume;
 
+	UBoxComponent* BottomBox;
+
 	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
 	unsigned int SectionsCount = 1;
 
@@ -32,12 +35,14 @@ private:
 	float SectionHeight = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
+	float SectionDepth = 20.f;
+
+	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
 	bool bSectionOriginInMid = false;
 
 	UPROPERTY(EditAnywhere, Category = Interaction)
 	FVector2D InteractionArea = FVector2D(10, 20);
 
-	
 public:	
 	ALadder();
 
@@ -49,10 +54,22 @@ protected:
 public:
 	virtual void Interact(APawn* InteractingPawn) override;
 
+protected:
+	UFUNCTION()
+	void OnBottomBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	UFUNCTION()
 	void OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
 	void OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+private:
+	APlayerCharacter* LocalPlayerOnLadder;
+	bool bRemovedByLadder = false;
+
+protected:
+	UFUNCTION()
+	void StoppedInteracting();
 
 };

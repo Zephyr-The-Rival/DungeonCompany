@@ -27,7 +27,10 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
 	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
 
+	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
+	GetCharacterMovement()->MaxFlySpeed = ClimbingSpeed;
+	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
@@ -101,11 +104,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("MouseUp",this, &ACharacter::AddControllerPitchInput);
 
-}
-
-void APlayerCharacter::SetIsOnLadder(bool InOnLadder)
-{
-	bOnLadder = InOnLadder;
 }
 
 void APlayerCharacter::MoveRight(float Value)
@@ -183,6 +181,15 @@ void APlayerCharacter::Interact()
 
 }
 
+void APlayerCharacter::Jump()
+{
+	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
+		StopClimbing();
+
+	Super::Jump();
+
+}
+
 void APlayerCharacter::ToggleCrouch()
 {
 	if (GetCharacterMovement()->IsCrouching())
@@ -194,7 +201,6 @@ void APlayerCharacter::ToggleCrouch()
 
 void APlayerCharacter::ToggleSprint()
 {
-
 	if (bSprinting)
 	{
 		StopSprint();
@@ -234,45 +240,53 @@ void APlayerCharacter::Server_StopSprint_Implementation()
 	bSprinting = false;
 }
 
-void APlayerCharacter::StartClimbingOnLadder(ALadder* InLadder)
+void APlayerCharacter::StartClimbingAtLocation(const FVector& Location)
 {
-	bOnLadder = true;
+	bClimbing = true;
 
 	if (HasAuthority())
-		Server_StartClimbingOnLadder_Implementation(InLadder);
+		Server_StartClimbingAtLocation_Implementation(Location);
 	else
-		Server_StartClimbingOnLadder(InLadder);
+		Server_StartClimbingAtLocation(Location);
+
 }
 
-void APlayerCharacter::Server_StartClimbingOnLadder_Implementation(ALadder* InLadder)
+void APlayerCharacter::StopClimbing()
+{	
+	if(!bClimbing)
+		return;
+
+	bClimbing = false;
+
+	OnStoppedClimbing.Broadcast();
+
+	if (HasAuthority())
+		Server_StopClimbing_Implementation();
+	else
+		Server_StopClimbing();
+
+}
+
+void APlayerCharacter::Server_StartClimbingAtLocation_Implementation(const FVector& Location)
 {
-	float distanceToLadder = GetCapsuleComponent()->GetScaledCapsuleRadius();
-	FVector climbPosition = InLadder->GetActorLocation() + InLadder->GetActorForwardVector() * distanceToLadder;
-	climbPosition.Z = GetActorLocation().Z;
-
-	FRotator climbRotation = GetActorRotation();
-	climbRotation.Yaw = InLadder->GetActorRotation().Yaw + 180;
-
-	SetActorLocation(climbPosition);
-	GetController()->ClientSetRotation(climbRotation);
+	SetActorLocation(Location);
 	GetCharacterMovement()->MovementMode = MOVE_Flying;
-
+	GetCharacterMovement()->Velocity = FVector::ZeroVector;
 }
 
-void APlayerCharacter::StopClimbingOnLadder()
-{
-	bOnLadder = false;
-
-	if (HasAuthority())
-		Server_StopClimbingOnLadder_Implementation();
-	else
-		Server_StopClimbingOnLadder();
-}
-
-void APlayerCharacter::Server_StopClimbingOnLadder_Implementation()
+void APlayerCharacter::Server_StopClimbing_Implementation()
 {
 	GetCharacterMovement()->MovementMode = MOVE_Walking;
+}
 
+void APlayerCharacter::Server_SetActorLocation_Implementation(const FVector& InLocation)
+{
+	SetActorLocation(InLocation);
+}
+
+void APlayerCharacter::Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride)
+{
+	LaunchCharacter(LaunchVelocity, bXYOverride, bZOverride);
 }
 
 void APlayerCharacter::AddStamina(float AddingStamina)
