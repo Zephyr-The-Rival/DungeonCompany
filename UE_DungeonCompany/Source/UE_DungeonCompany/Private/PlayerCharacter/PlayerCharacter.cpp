@@ -44,14 +44,11 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if(!IsLocallyControlled())
-		SetActorTickEnabled(false);
-
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
 
 	RestDelegate = FTimerDelegate::CreateLambda([this](){
-	StaminaState = Resting; 
+	bResting = true; 
 	});
 	
 }
@@ -61,26 +58,30 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	if(IsLocallyControlled())
+		LocalTick(DeltaTime);
+
+}
+
+void APlayerCharacter::LocalTick(float DeltaTime)
+{
 	this->InteractorLineTrace();
+	StaminaTick(DeltaTime);
+}
 
-	switch (StaminaState)
-	{
-	case Resting:
+void APlayerCharacter::StaminaTick(float DeltaTime)
+{
+	if (bResting)
 		AddStamina(StaminaGainPerSecond * DeltaTime);
-		break;
 
-	case Sprinting:
-		SubstractStamina(SprintStaminaDrainPerSecond * DeltaTime);
-		if (Stamina < 0.f)
-			ToggleSprint();
+	if (!bSprinting)
+		return;
 
-		Stamina = Stamina < 0.f ? 0.f : Stamina;
-		break;
+	if (GetCharacterMovement()->Velocity.Length() > WalkingSpeed)
+			SubstractStamina(SprintStaminaDrainPerSecond * DeltaTime);
 
-	default:
-		break;
-	}
-
+	if (Stamina < 0.f)
+		ToggleSprint();
 }
 
 // Called to bind functionality to input
@@ -173,7 +174,7 @@ void APlayerCharacter::ToggleCrouch()
 void APlayerCharacter::ToggleSprint()
 {
 
-	if (StaminaState == Sprinting)
+	if (bSprinting)
 	{
 		StopSprint();
 		return;
@@ -195,7 +196,7 @@ void APlayerCharacter::StartSprint()
 void APlayerCharacter::Server_StartSprint_Implementation()
 {
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed * SprintSpeedMultiplier;
-	StaminaState = Sprinting;
+	bSprinting = true;
 }
 
 void APlayerCharacter::StopSprint()
@@ -209,7 +210,7 @@ void APlayerCharacter::StopSprint()
 void APlayerCharacter::Server_StopSprint_Implementation()
 {
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
-	StaminaState = Idle;
+	bSprinting = false;
 }
 
 void APlayerCharacter::AddStamina(float AddingStamina)
@@ -227,7 +228,7 @@ void APlayerCharacter::AddStamina(float AddingStamina)
 	if (Stamina > MaxStamina)
 	{
 		Stamina = MaxStamina;
-		StaminaState = Idle;
+		bResting = false;
 	}
 
 }
@@ -240,6 +241,7 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 		return;
 	}
 
+	bResting = false;
 	Stamina -= SubStamina;
 
 	LogWarning(*FString::SanitizeFloat(Stamina));
@@ -251,7 +253,7 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 
 	Stamina = 0.f;
 
-	if(StaminaState == Sprinting)
+	if(bSprinting)
 		ToggleSprint();
 
 }

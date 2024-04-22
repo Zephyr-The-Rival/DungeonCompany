@@ -8,14 +8,6 @@
 #include "Interactable.h"
 #include "PlayerCharacter.generated.h"
 
-UENUM()
-enum EStaminaState
-{
-	Idle UMETA(DisplayName = "Idle"),
-	Resting UMETA(DisplayName = "Resting"),
-	Sprinting UMETA(DisplayName = "Sprinting")
-};
-
 class UVOIPTalker;
 
 UCLASS()
@@ -38,6 +30,9 @@ protected:
 
 public:	
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void LocalTick(float DeltaTime);
+	virtual void StaminaTick(float DeltaTime);
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -100,7 +95,7 @@ protected:
 
 private:
 	float Stamina = MaxStamina;
-	EStaminaState StaminaState = Idle;
+	bool bResting = false;
 
 	FTimerHandle RestDelayTimerHandle;
 	FTimerDelegate RestDelegate;
