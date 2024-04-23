@@ -5,7 +5,8 @@
 #include "DCGame/DC_PC.h"
 #include "DC_Statics.h"
 #include "UI/PlayerHud/PlayerHud.h"
-#include "WorldActors/Ladder.h"
+#include "Items/WorldItem.h"
+#include "Items/ItemData.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -180,6 +181,15 @@ void APlayerCharacter::Interact()
 		return;
 
 	CurrentInteractable->Interact(this);
+
+}
+
+void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
+{
+
+	FString message = WorldItem->MyData->Name + " has been picked up";
+	LogWarning(*message);
+	WorldItem->Destroy();
 
 }
 

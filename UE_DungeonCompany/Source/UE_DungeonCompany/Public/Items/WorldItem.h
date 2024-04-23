@@ -8,6 +8,7 @@
 #include "WorldItem.generated.h"
 
 class UItemData;
+class APlayerCharacter;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AWorldItem : public AActor, public IInteractable
@@ -15,6 +16,10 @@ class UE_DUNGEONCOMPANY_API AWorldItem : public AActor, public IInteractable
 	GENERATED_BODY()
 	
 public:	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UItemData* MyData;
+
 	// Sets default values for this actor's properties
 	AWorldItem();
 	AWorldItem(UItemData* ItemData);
@@ -26,8 +31,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UItemData> ItemDataClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UItemData* MyData;
+
 
 	
 	// Called when the game starts or when spawned

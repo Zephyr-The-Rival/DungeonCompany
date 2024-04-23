@@ -9,7 +9,7 @@
 #include "PlayerCharacter.generated.h"
 
 class UVOIPTalker;
-class ALadder;
+class AWorldItem;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
@@ -49,6 +49,8 @@ protected:
 public:
 	void Interact();
 
+	void PickUpItem(AWorldItem* WorldItem);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float WalkingSpeed = 500;
@@ -68,9 +70,8 @@ private:
 protected:
 	void MoveRight(float Value);
 	void MoveForward(float Value);
-
 	void Move(FVector MoveVector);
-
+	
 	virtual void Jump() override;
 
 	void ToggleCrouch();
