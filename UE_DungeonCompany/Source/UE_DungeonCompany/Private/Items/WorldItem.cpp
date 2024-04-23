@@ -56,6 +56,7 @@ void AWorldItem::Interact(APawn* InteractingPawn)
 void AWorldItem::MulticastDestroy_Implementation()
 {
 	Destroy();
+	LogWarning(TEXT("Multicast Destroy has benn called"));
 }
 
 
