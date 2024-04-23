@@ -32,22 +32,7 @@ void AWorldItem::BeginPlay()
 
 }
 
-void AWorldItem::DestroyOnServer_Implementation()
-{
-	FString message;
-	message += "Destroying...";
-	LogWarning(*message);
-	this->Destroy();
-}
 
-bool AWorldItem::DestroyOnServer_Validate()
-{
-	FString message;
-
-	message += "Validating...";
-	LogWarning(*message);
-	return true;
-}
 
 // Called every frame
 void AWorldItem::Tick(float DeltaTime)

@@ -25,8 +25,6 @@ public:
 	AWorldItem(UItemData* ItemData);
 	virtual void Interact(APawn* InteractingPawn) override;
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void DestroyOnServer();
 
 protected:
 	
