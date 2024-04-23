@@ -27,12 +27,13 @@ ALadder::ALadder()
 	BottomBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BottomBox"));
 	BottomBox->SetupAttachment(RootComponent);
 
-	InteractVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionVolume"));
-	InteractVolume->SetupAttachment(RootComponent);
-
 	BottomBox->InitBoxExtent(FVector(100, 100, 5));
 	BottomBox->SetRelativeLocation(BottomBox->GetUnscaledBoxExtent().Z * FVector::UpVector);
 
+	InteractVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionVolume"));
+	InteractVolume->SetupAttachment(RootComponent);
+
+	InteractVolume->InitBoxExtent(FVector(1, 1, 1));
 }
 
 void ALadder::OnConstruction(const FTransform& Transform)
@@ -58,7 +59,7 @@ void ALadder::OnConstruction(const FTransform& Transform)
 
 	float LadderHalfHeight = (SectionHeight / 2) * SectionsCount;
 
-	InteractVolume->InitBoxExtent(FVector(InteractionArea, LadderHalfHeight));
+	InteractVolume->SetBoxExtent(FVector(InteractionArea, LadderHalfHeight));
 	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, LadderHalfHeight));
 
 }
@@ -104,6 +105,8 @@ void ALadder::OnBottomBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	bRemovedByLadder = true;
 
 	character->StopClimbing();
+
+	UE_LOG(LogTemp, Warning, TEXT("hanlo"));
 	
 }
 
@@ -114,6 +117,9 @@ void ALadder::OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, 
 		return;
 
 	bInteractable = true;
+
+	UE_LOG(LogTemp, Warning, TEXT("entered"));
+
 }
 
 void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -126,6 +132,8 @@ void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AAc
 	bRemovedByLadder = true;
 
 	character->StopClimbing();
+
+	UE_LOG(LogTemp, Warning, TEXT("left"));
 
 }
 
