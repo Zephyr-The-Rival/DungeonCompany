@@ -11,7 +11,6 @@ AWorldItem::AWorldItem()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	this->SetReplicates(true);
 
 
 }
@@ -30,6 +29,8 @@ void AWorldItem::BeginPlay()
 
 	if (IsValid(this->ItemDataClass) && this->MyData==NULL)
 		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
+
+	this->SetReplicates(true);
 }
 
 // Called every frame
