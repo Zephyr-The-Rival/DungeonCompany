@@ -10,6 +10,7 @@
 
 
 class UVOIPTalker;
+class AWorldItem;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
@@ -45,15 +46,19 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void PickUpIten(AWorldItem* WorldItem);
+
 protected:
 	void MoveRight(float Value);
 	void MoveForward(float Value);
-
 	void Move(FVector MoveVector);
+	
+	void ToggleCrouch();
+	void Interact();
 
 	void InteractorLineTrace();
 
-	void ToggleCrouch();
+	
 
 public:
 	virtual bool CanJumpInternal_Implementation() const override;

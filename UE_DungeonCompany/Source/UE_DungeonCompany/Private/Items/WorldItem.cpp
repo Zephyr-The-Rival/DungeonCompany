@@ -4,12 +4,16 @@
 #include "Items/WorldItem.h"
 #include "Items/ItemData.h"
 #include "DC_Statics.h"
+#include "PlayerCharacter/PlayerCharacter.h"
 
 // Sets default values
 AWorldItem::AWorldItem()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	this->SetReplicates(true);
+
+
 }
 
 AWorldItem::AWorldItem(UItemData* ItemData)
@@ -35,8 +39,9 @@ void AWorldItem::Tick(float DeltaTime)
 
 }
 
-void AWorldItem::Interact()
+void AWorldItem::Interact(APlayerCharacter* InteractingPlayer)
 {
 	LogWarning(*(this->GetName()+" is beeing interacted with"));
+	InteractingPlayer->PickUpIten(this);
 }
 

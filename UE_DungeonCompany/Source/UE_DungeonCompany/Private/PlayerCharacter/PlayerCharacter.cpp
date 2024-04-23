@@ -5,6 +5,8 @@
 #include "DCGame/DC_PC.h"
 #include "DC_Statics.h"
 #include "UI/PlayerHud/PlayerHud.h"
+#include "Items/WorldItem.h"
+#include "Items/ItemData.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
@@ -67,12 +69,23 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &APlayerCharacter::Jump);
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleCrouch);
-	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::ToggleCrouch);
+	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::ToggleCrouch);	
+	PlayerInputComponent->BindAction("Interact", EInputEvent::IE_Pressed, this, &APlayerCharacter::Interact);
+
 	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("MouseUp",this, &ACharacter::AddControllerPitchInput);
 
+}
+
+void APlayerCharacter::PickUpIten(AWorldItem* WorldItem)
+{	
+	
+	FString message = WorldItem->MyData->Name+ " has been picked up";
+	LogWarning(*message);
+	WorldItem->Destroy();
+	
 }
 
 void APlayerCharacter::MoveRight(float Value)
@@ -144,6 +157,14 @@ void APlayerCharacter::ToggleCrouch()
 	else
 		Crouch(true);
 
+}
+
+void APlayerCharacter::Interact()
+{
+	if (CurrentInteractable != NULL)
+	{
+		CurrentInteractable->Interact(this);
+	}
 }
 
 bool APlayerCharacter::CanJumpInternal_Implementation() const
