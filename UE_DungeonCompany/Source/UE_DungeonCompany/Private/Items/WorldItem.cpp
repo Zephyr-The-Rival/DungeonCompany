@@ -11,8 +11,6 @@ AWorldItem::AWorldItem()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-
 }
 
 AWorldItem::AWorldItem(UItemData* ItemData)
@@ -34,11 +32,38 @@ void AWorldItem::BeginPlay()
 
 void AWorldItem::DestroyOnServer_Implementation()
 {
+	FString message;
+
+	if (HasAuthority())
+	{
+		message = "Server: ";
+	}
+	else
+	{
+		message = "Client: ";
+	}
+
+	message += "Destroying...";
+	LogWarning(*message);
 	this->Destroy();
 }
 
 bool AWorldItem::DestroyOnServer_Validate()
 {
+
+	FString message;
+
+	if (HasAuthority())
+	{
+		message = "Server: ";
+	}
+	else
+	{
+		message = "Client: ";
+	}
+
+	message += "Validating...";
+	LogWarning(*message);
 	return true;
 }
 
