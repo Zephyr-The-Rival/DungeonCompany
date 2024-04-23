@@ -5,7 +5,6 @@
 #include "DCGame/DC_PC.h"
 #include "DC_Statics.h"
 #include "UI/PlayerHud/PlayerHud.h"
-#include "WorldActors/Ladder.h"
 #include "Items/WorldItem.h"
 #include "Items/ItemData.h"
 
