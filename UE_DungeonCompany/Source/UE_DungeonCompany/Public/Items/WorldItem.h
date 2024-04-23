@@ -25,6 +25,9 @@ public:
 	AWorldItem(UItemData* ItemData);
 	virtual void Interact(APawn* InteractingPawn) override;
 
+	UFUNCTION(Server, Reliable)
+	void DestroyOnServer();
+
 protected:
 	
 
@@ -36,6 +39,8 @@ protected:
 	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+
 
 	
 
