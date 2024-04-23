@@ -189,7 +189,8 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	FString message = WorldItem->MyData->Name + " has been picked up";
 	LogWarning(*message);
-	WorldItem->MulticastDestroy();
+	if(HasAuthority())
+		WorldItem->MulticastDestroy();
 
 }
 
