@@ -81,7 +81,7 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 	if (!bSprinting)
 		return;
 
-	if (GetCharacterMovement()->Velocity.Length() > WalkingSpeed)
+	if (GetCharacterMovement()->Velocity.Length() > WalkingSpeed && GetCharacterMovement()->IsMovingOnGround())
 			SubstractStamina(SprintStaminaDrainPerSecond * DeltaTime);
 
 	if (Stamina < 0.f)
@@ -301,8 +301,6 @@ void APlayerCharacter::AddStamina(float AddingStamina)
 
 	Stamina += AddingStamina;
 
-	LogWarning(*FString::SanitizeFloat(Stamina));
-
 	if (Stamina > MaxStamina)
 	{
 		Stamina = MaxStamina;
@@ -321,8 +319,6 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 
 	bResting = false;
 	Stamina -= SubStamina;
-
-	LogWarning(*FString::SanitizeFloat(Stamina));
 
 	GetWorld()->GetTimerManager().SetTimer(RestDelayTimerHandle, RestDelegate, StaminaGainDelay, false);
 
