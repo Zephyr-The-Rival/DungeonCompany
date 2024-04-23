@@ -30,7 +30,6 @@ void AWorldItem::BeginPlay()
 	if (IsValid(this->ItemDataClass) && this->MyData==NULL)
 		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
 
-	this->SetReplicates(true);
 }
 
 // Called every frame
