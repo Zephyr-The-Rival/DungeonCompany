@@ -39,9 +39,15 @@ void AWorldItem::Tick(float DeltaTime)
 
 }
 
-void AWorldItem::Interact(APlayerCharacter* InteractingPlayer)
+void AWorldItem::Interact(APawn* InteractingPawn)
 {
 	LogWarning(*(this->GetName()+" is beeing interacted with"));
-	InteractingPlayer->PickUpIten(this);
+
+	APlayerCharacter* character = Cast<APlayerCharacter>(InteractingPawn);
+
+	if(!character)
+		return;
+
+	character->PickUpItem(this);
 }
 

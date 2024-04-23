@@ -5,9 +5,11 @@
 #include "DCGame/DC_PC.h"
 #include "DC_Statics.h"
 #include "UI/PlayerHud/PlayerHud.h"
+#include "WorldActors/Ladder.h"
 #include "Items/WorldItem.h"
 #include "Items/ItemData.h"
 
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/VoiceConfig.h"
@@ -27,7 +29,10 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
 	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
 
+	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
+	GetCharacterMovement()->MaxFlySpeed = ClimbingSpeed;
+	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
@@ -38,7 +43,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
-
 }
 
 // Called when the game starts or when spawned
@@ -48,6 +52,10 @@ void APlayerCharacter::BeginPlay()
 
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
+
+	RestDelegate = FTimerDelegate::CreateLambda([this](){
+	bResting = true; 
+	});
 	
 }
 
@@ -56,10 +64,30 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	if(IsLocallyControlled())
+		LocalTick(DeltaTime);
+
+}
+
+void APlayerCharacter::LocalTick(float DeltaTime)
+{
 	this->InteractorLineTrace();
+	StaminaTick(DeltaTime);
+}
 
-	
+void APlayerCharacter::StaminaTick(float DeltaTime)
+{
+	if (bResting)
+		AddStamina(StaminaGainPerSecond * DeltaTime);
 
+	if (!bSprinting)
+		return;
+
+	if (GetCharacterMovement()->Velocity.Length() > WalkingSpeed && GetCharacterMovement()->IsMovingOnGround())
+			SubstractStamina(SprintStaminaDrainPerSecond * DeltaTime);
+
+	if (Stamina < 0.f)
+		ToggleSprint();
 }
 
 // Called to bind functionality to input
@@ -69,9 +97,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &APlayerCharacter::Jump);
 	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleCrouch);
-	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::ToggleCrouch);	
+	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::ToggleCrouch);
+	PlayerInputComponent->BindAction("Sprint", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleSprint);
 	PlayerInputComponent->BindAction("Interact", EInputEvent::IE_Pressed, this, &APlayerCharacter::Interact);
-
 	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
@@ -79,24 +107,22 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 }
 
-void APlayerCharacter::PickUpIten(AWorldItem* WorldItem)
-{	
-	
-	FString message = WorldItem->MyData->Name+ " has been picked up";
-	LogWarning(*message);
-	WorldItem->Destroy();
-	
-}
-
 void APlayerCharacter::MoveRight(float Value)
 {
-	Move(GetActorRightVector() * Value);
+	if(GetCharacterMovement()->MovementMode != MOVE_Flying)
+		Move(GetActorRightVector() * Value);
 
 }
 
 void APlayerCharacter::MoveForward(float Value)
 {
-	Move(GetActorForwardVector() * Value);
+	if(GetCharacterMovement()->MovementMode != MOVE_Flying)
+		Move(GetActorForwardVector() * Value);
+	else 
+		Move(FVector::UpVector * Value);
+
+	if(bSprinting && Value <= 0.f)
+		ToggleSprint();
 
 }
 
@@ -119,7 +145,7 @@ void APlayerCharacter::InteractorLineTrace()
 	if (Hit.bBlockingHit)
 	{
 		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
-		if (i)
+		if (i && i->IsInteractable())
 		{
 			if (CurrentInteractable != i)//if a new intractable is being looked at
 			{
@@ -150,6 +176,33 @@ void APlayerCharacter::InteractorLineTrace()
 	}
 }
 
+void APlayerCharacter::Interact()
+{
+	if(!CurrentInteractable)
+		return;
+
+	CurrentInteractable->Interact(this);
+
+}
+
+void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
+{
+
+	FString message = WorldItem->MyData->Name + " has been picked up";
+	LogWarning(*message);
+	WorldItem->Destroy();
+
+}
+
+void APlayerCharacter::Jump()
+{
+	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
+		StopClimbing();
+
+	Super::Jump();
+
+}
+
 void APlayerCharacter::ToggleCrouch()
 {
 	if (GetCharacterMovement()->IsCrouching())
@@ -159,12 +212,135 @@ void APlayerCharacter::ToggleCrouch()
 
 }
 
-void APlayerCharacter::Interact()
+void APlayerCharacter::ToggleSprint()
 {
-	if (CurrentInteractable != NULL)
+	if (bSprinting)
 	{
-		CurrentInteractable->Interact(this);
+		StopSprint();
+		return;
 	}
+
+	if(Stamina > 0.f)
+		StartSprint();
+	
+}
+
+void APlayerCharacter::StartSprint()
+{
+	if(!HasAuthority())
+		Server_StartSprint();
+
+	Server_StartSprint_Implementation();
+}
+
+void APlayerCharacter::Server_StartSprint_Implementation()
+{
+	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed * SprintSpeedMultiplier;
+	bSprinting = true;
+}
+
+void APlayerCharacter::StopSprint()
+{
+	if (!HasAuthority())
+		Server_StopSprint();
+
+	Server_StopSprint_Implementation();
+}
+
+void APlayerCharacter::Server_StopSprint_Implementation()
+{
+	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
+	bSprinting = false;
+}
+
+void APlayerCharacter::StartClimbingAtLocation(const FVector& Location)
+{
+	bClimbing = true;
+
+	if (HasAuthority())
+		Server_StartClimbingAtLocation_Implementation(Location);
+	else
+		Server_StartClimbingAtLocation(Location);
+
+}
+
+void APlayerCharacter::StopClimbing()
+{	
+	if(!bClimbing)
+		return;
+
+	bClimbing = false;
+
+	OnStoppedClimbing.Broadcast();
+
+	if (HasAuthority())
+		Server_StopClimbing_Implementation();
+	else
+		Server_StopClimbing();
+
+}
+
+void APlayerCharacter::Server_StartClimbingAtLocation_Implementation(const FVector& Location)
+{
+	SetActorLocation(Location);
+	GetCharacterMovement()->MovementMode = MOVE_Flying;
+	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+}
+
+void APlayerCharacter::Server_StopClimbing_Implementation()
+{
+	GetCharacterMovement()->MovementMode = MOVE_Walking;
+}
+
+void APlayerCharacter::Server_SetActorLocation_Implementation(const FVector& InLocation)
+{
+	SetActorLocation(InLocation);
+}
+
+void APlayerCharacter::Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride)
+{
+	LaunchCharacter(LaunchVelocity, bXYOverride, bZOverride);
+}
+
+void APlayerCharacter::AddStamina(float AddingStamina)
+{
+	if (AddingStamina < 0.f)
+	{
+		LogWarning("To substract stamina use \"SubstractStamina\" function");
+		return;
+	}
+
+	Stamina += AddingStamina;
+
+	if (Stamina > MaxStamina)
+	{
+		Stamina = MaxStamina;
+		bResting = false;
+	}
+
+}
+
+void APlayerCharacter::SubstractStamina(float SubStamina)
+{
+	if (SubStamina < 0.f)
+	{
+		LogWarning("To add stamina use \"AddStamina\" function");
+		return;
+	}
+
+	bResting = false;
+	Stamina -= SubStamina;
+
+	GetWorld()->GetTimerManager().SetTimer(RestDelayTimerHandle, RestDelegate, StaminaGainDelay, false);
+
+	if (Stamina > 0.f)
+		return;
+
+	Stamina = 0.f;
+
+	if(bSprinting)
+		ToggleSprint();
+
 }
 
 bool APlayerCharacter::CanJumpInternal_Implementation() const
