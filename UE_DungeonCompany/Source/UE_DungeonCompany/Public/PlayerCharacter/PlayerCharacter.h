@@ -46,6 +46,9 @@ protected:
 
 	void InteractorLineTrace();
 
+		UFUNCTION(SERVER, Unreliable)
+	void DestroyWorldItem(AWorldItem* ItemToDestroy);
+
 public:
 	void Interact();
 
@@ -137,6 +140,7 @@ protected:
 	float StaminaGainDelay = 3.f;
 
 private:
+	UPROPERTY(BlueprintGetter=GetStamina)
 	float Stamina = MaxStamina;
 	bool bResting = false;
 
@@ -146,7 +150,9 @@ private:
 public:
 	void AddStamina(float AddingStamina);
 	void SubstractStamina(float SubStamina);
-
+	
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	float GetStamina() const { return Stamina; }
 private:
 	UVOIPTalker* VOIPTalker;
 

@@ -175,6 +175,11 @@ void APlayerCharacter::InteractorLineTrace()
 	}
 }
 
+void APlayerCharacter::DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
+{
+	ItemToDestroy->Destroy();
+}
+
 void APlayerCharacter::Interact()
 {
 	if(!CurrentInteractable)
@@ -189,8 +194,8 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	FString message = WorldItem->MyData->Name + " has been picked up";
 	LogWarning(*message);
-	if(HasAuthority())
-		WorldItem->MulticastDestroy();
+	if (HasAuthority())
+		DestroyWorldItem(WorldItem);
 
 }
 

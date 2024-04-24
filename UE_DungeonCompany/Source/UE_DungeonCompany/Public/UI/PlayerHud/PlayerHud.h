@@ -9,12 +9,18 @@
 /**
  * 
  */
+
+class APlayerCharacter;
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API UPlayerHud : public UUserWidget
 {
 	GENERATED_BODY()
 	
 public:
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	APlayerCharacter* MyCharacter;
 
 	UFUNCTION(BlueprintNativeEvent)
 	void ShowCrosshair(const FString& Text);

@@ -25,8 +25,6 @@ public:
 	AWorldItem(UItemData* ItemData);
 	virtual void Interact(APawn* InteractingPawn) override;
 
-	UFUNCTION(NetMulticast, Reliable)
-    void MulticastDestroy();
 
 protected:
 	

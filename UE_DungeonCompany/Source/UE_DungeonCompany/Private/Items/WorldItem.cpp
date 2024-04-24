@@ -53,11 +53,6 @@ void AWorldItem::Interact(APawn* InteractingPawn)
 	character->PickUpItem(this);
 }
 
-void AWorldItem::MulticastDestroy_Implementation()
-{
-	LogWarning(TEXT("Destroying..."));
-	Destroy();	
-}
 
 
 
