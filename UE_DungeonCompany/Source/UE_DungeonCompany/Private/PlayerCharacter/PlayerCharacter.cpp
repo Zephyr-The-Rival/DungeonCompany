@@ -12,6 +12,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/VoiceConfig.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
+#include "InputMappingContext.h"
+#include "InputActionValue.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -55,6 +59,26 @@ void APlayerCharacter::BeginPlay()
 	RestDelegate = FTimerDelegate::CreateLambda([this](){
 	bResting = true; 
 	});
+
+	if(!InputMapping)
+		return;
+
+	APlayerController* playerController = GetController<APlayerController>();
+
+	if(!playerController)
+		return;
+
+	ULocalPlayer* localPlayer = playerController->GetLocalPlayer();
+
+	if(!localPlayer)
+		return;
+
+	UEnhancedInputLocalPlayerSubsystem* inputSystem = playerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+
+	if(!inputSystem)
+		return;
+	
+	inputSystem->AddMappingContext(InputMapping, 0);
 	
 }
 
@@ -94,40 +118,39 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &APlayerCharacter::Jump);
-	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleCrouch);
-	PlayerInputComponent->BindAction("Crouch", EInputEvent::IE_Released, this, &APlayerCharacter::ToggleCrouch);
-	PlayerInputComponent->BindAction("Sprint", EInputEvent::IE_Pressed, this, &APlayerCharacter::ToggleSprint);
-	PlayerInputComponent->BindAction("Interact", EInputEvent::IE_Pressed, this, &APlayerCharacter::Interact);
-	PlayerInputComponent->BindAxis("Forward", this, &APlayerCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("Right",this, &APlayerCharacter::MoveRight);
-	PlayerInputComponent->BindAxis("MouseRight",this, &ACharacter::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("MouseUp",this, &ACharacter::AddControllerPitchInput);
+	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+
+	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
+	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
+	EIC->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
+	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleCrouch);
+	EIC->BindAction(CrouchAction, ETriggerEvent::Completed, this, &APlayerCharacter::ToggleCrouch);
+	EIC->BindAction(SprintAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleSprint);
+
+	EIC->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
 
 }
 
-void APlayerCharacter::MoveRight(float Value)
+void APlayerCharacter::Move(const FInputActionValue& Value)
 {
-	if(GetCharacterMovement()->MovementMode != MOVE_Flying)
-		Move(GetActorRightVector() * Value);
+	FVector2D localMoveVector = Value.Get<FVector2D>();
 
-}
+	FVector worldMoveVector;
 
-void APlayerCharacter::MoveForward(float Value)
-{
 	if(GetCharacterMovement()->MovementMode != MOVE_Flying)
-		Move(GetActorForwardVector() * Value);
+		worldMoveVector = GetActorRightVector()* localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
 	else 
-		Move(FVector::UpVector * Value);
+		worldMoveVector = FVector::UpVector * localMoveVector.Y;
 
-	if(bSprinting && Value <= 0.f)
-		ToggleSprint();
-
+	AddMovementInput(worldMoveVector);
 }
 
-void APlayerCharacter::Move(FVector MoveVector)
+void APlayerCharacter::Look(const FInputActionValue& Value)
 {
-	AddMovementInput(MoveVector);
+	FVector2D lookVector = Value.Get<FVector2D>();
+
+	AddControllerYawInput(lookVector.X);
+	AddControllerPitchInput(-lookVector.Y);
 
 }
 
@@ -219,13 +242,15 @@ void APlayerCharacter::ToggleSprint()
 		return;
 	}
 
-	if(Stamina > 0.f)
-		StartSprint();
+	StartSprint();
 	
 }
 
 void APlayerCharacter::StartSprint()
 {
+	if(Stamina <= 0.f)
+		return;
+
 	if(!HasAuthority())
 		Server_StartSprint();
 

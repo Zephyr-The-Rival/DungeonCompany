@@ -8,8 +8,12 @@
 #include "Interactable.h"
 #include "PlayerCharacter.generated.h"
 
-class UVOIPTalker;
 class AWorldItem;
+
+class UVOIPTalker;
+class UInputMappingContext;
+class UInputAction;
+struct FInputActionValue;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
@@ -35,6 +39,29 @@ public:
 	virtual void LocalTick(float DeltaTime);
 	virtual void StaminaTick(float DeltaTime);
 
+private:
+	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
+	UInputMappingContext* InputMapping;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* MoveAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* LookAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* JumpAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* CrouchAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* SprintAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* InteractAction;
+
+public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
@@ -68,9 +95,8 @@ private:
 	bool bSprinting = false;
 	
 protected:
-	void MoveRight(float Value);
-	void MoveForward(float Value);
-	void Move(FVector MoveVector);
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
 	
 	virtual void Jump() override;
 
