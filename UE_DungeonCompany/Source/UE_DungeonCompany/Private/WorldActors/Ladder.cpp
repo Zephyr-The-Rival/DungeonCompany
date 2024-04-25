@@ -105,8 +105,6 @@ void ALadder::OnBottomBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	bRemovedByLadder = true;
 
 	character->StopClimbing();
-
-	UE_LOG(LogTemp, Warning, TEXT("hanlo"));
 	
 }
 
@@ -117,8 +115,6 @@ void ALadder::OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, 
 		return;
 
 	bInteractable = true;
-
-	UE_LOG(LogTemp, Warning, TEXT("entered"));
 
 }
 
@@ -132,8 +128,6 @@ void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AAc
 	bRemovedByLadder = true;
 
 	character->StopClimbing();
-
-	UE_LOG(LogTemp, Warning, TEXT("left"));
 
 }
 
