@@ -67,11 +67,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* InteractAction;
 
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* PushToTalkAction;
-
-	bool bPushToTalkActive = true;
-
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
