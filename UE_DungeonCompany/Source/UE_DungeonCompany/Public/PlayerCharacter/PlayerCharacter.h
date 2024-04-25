@@ -55,17 +55,30 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* CrouchAction;
 
-	UPROPERTY(EditAnywhere, Category = "Input | Toggle/Hold")
+	UPROPERTY(EditAnywhere, Getter = IsCrouchOnHold, Category = "Input | Toggle/Hold")
 	bool bCrouchHold = false;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* SprintAction;
 
-	UPROPERTY(EditAnywhere, Category = "Input | Toggle/Hold")
+	UPROPERTY(EditAnywhere, Getter = IsSprintOnHold, Category = "Input | Toggle/Hold")
 	bool bSprintHold = false;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* InteractAction;
+
+public:
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	bool IsCrouchOnHold() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetCrouchHold(bool ShouldHoldCrouch);
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	bool IsSprintOnHold() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetSprintHold(bool ShouldHoldSprint);
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -127,9 +140,6 @@ protected:
 	UFUNCTION(Server, Unreliable)
 	void Server_StopSprint();
 	void Server_StopSprint_Implementation();
-
-	void MuteMic();
-	void UnmuteMic();
 
 public:
 	UFUNCTION(Server, Unreliable)

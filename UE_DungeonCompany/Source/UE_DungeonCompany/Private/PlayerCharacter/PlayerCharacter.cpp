@@ -113,6 +113,26 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 		ToggleSprint();
 }
 
+bool APlayerCharacter::IsCrouchOnHold() const
+{
+	return bCrouchHold;
+}
+
+void APlayerCharacter::SetCrouchHold(bool ShouldHoldCrouch)
+{
+	bCrouchHold = ShouldHoldCrouch;
+}
+
+bool APlayerCharacter::IsSprintOnHold() const
+{
+	return bSprintHold;
+}
+
+void APlayerCharacter::SetSprintHold(bool ShouldHoldSprint)
+{
+	bSprintHold = ShouldHoldSprint;
+}
+
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);

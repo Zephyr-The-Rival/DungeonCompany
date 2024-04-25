@@ -37,7 +37,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* PushToTalkAction;
 
-	UPROPERTY(EditAnywhere, Category = "Microphone")
+	UPROPERTY(EditAnywhere,BlueprintGetter=IsPushToTalkActive, Category = "Microphone")
 	bool bPushToTalkActive = false;
 
 public:
@@ -46,5 +46,13 @@ public:
 protected:
 	void PushToTalkStarted();
 	void PushToTalkCompleted();
+
+public:
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	bool IsPushToTalkActive() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetPushToTalkActive(bool IsActive);
+
 
 };

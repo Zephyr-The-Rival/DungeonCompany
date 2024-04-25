@@ -26,7 +26,8 @@ void ADC_PC::BeginPlay()
 	UVOIPStatics::SetMicThreshold(-3.0);
 
 	GetWorld()->Exec(GetWorld(), TEXT("OSS.VoiceLoopback 1"));
-	ToggleSpeaking(true);
+
+	ToggleSpeaking(!bPushToTalkActive);
 
 	MyPlayerHud = CreateWidget<UPlayerHud>(this, PlayerHudClass);
 	MyPlayerHud->AddToViewport();
@@ -62,4 +63,14 @@ void ADC_PC::PushToTalkCompleted()
 
 	ToggleSpeaking(false);
 
+}
+
+bool ADC_PC::IsPushToTalkActive() const
+{
+	return bPushToTalkActive;
+}
+
+void ADC_PC::SetPushToTalkActive(bool IsActive)
+{
+	bPushToTalkActive = IsActive;
 }
