@@ -55,11 +55,22 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* CrouchAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input | Toggle/Hold")
+	bool bCrouchHold = false;
+
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* SprintAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input | Toggle/Hold")
+	bool bSprintHold = false;
+
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* InteractAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* PushToTalkAction;
+
+	bool bPushToTalkActive = true;
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -100,7 +111,14 @@ protected:
 	
 	virtual void Jump() override;
 
+	void CrouchActionStarted();
+	void CrouchActionCompleted();
+
 	void ToggleCrouch();
+
+	void SprintActionStarted();
+	void SprintActionCompleted();
+
 	void ToggleSprint();
 
 	void StartSprint();
@@ -114,6 +132,9 @@ protected:
 	UFUNCTION(Server, Unreliable)
 	void Server_StopSprint();
 	void Server_StopSprint_Implementation();
+
+	void MuteMic();
+	void UnmuteMic();
 
 public:
 	UFUNCTION(Server, Unreliable)

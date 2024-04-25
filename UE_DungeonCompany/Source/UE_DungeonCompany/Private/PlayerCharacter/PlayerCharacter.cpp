@@ -113,19 +113,22 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 		ToggleSprint();
 }
 
-// Called to bind functionality to input
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 
+	if(!EIC)
+		return;
+
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
 	EIC->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
-	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleCrouch);
-	EIC->BindAction(CrouchAction, ETriggerEvent::Completed, this, &APlayerCharacter::ToggleCrouch);
-	EIC->BindAction(SprintAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleSprint);
+	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::CrouchActionStarted);
+	EIC->BindAction(CrouchAction, ETriggerEvent::Completed, this, &APlayerCharacter::CrouchActionCompleted);
+	EIC->BindAction(SprintAction, ETriggerEvent::Started, this, &APlayerCharacter::SprintActionStarted);
+	EIC->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::SprintActionCompleted);
 
 	EIC->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
 
@@ -225,6 +228,27 @@ void APlayerCharacter::Jump()
 
 }
 
+void APlayerCharacter::CrouchActionStarted()
+{
+	if (!bCrouchHold)
+	{
+		ToggleCrouch();
+		return;
+	}
+
+	Crouch(true);
+
+}
+
+void APlayerCharacter::CrouchActionCompleted()
+{
+	if (!bCrouchHold)
+		return;
+
+	UnCrouch(true);
+
+}
+
 void APlayerCharacter::ToggleCrouch()
 {
 	if (GetCharacterMovement()->IsCrouching())
@@ -232,6 +256,26 @@ void APlayerCharacter::ToggleCrouch()
 	else
 		Crouch(true);
 
+}
+
+void APlayerCharacter::SprintActionStarted()
+{
+	if (!bSprintHold)
+	{
+		ToggleSprint();
+		return;
+	}
+
+	StartSprint();
+		
+}
+
+void APlayerCharacter::SprintActionCompleted()
+{
+	if (!bSprintHold)
+		return;
+
+	StopSprint();
 }
 
 void APlayerCharacter::ToggleSprint()
