@@ -177,6 +177,7 @@ void APlayerCharacter::InteractorLineTrace()
 
 void APlayerCharacter::DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
 {
+	LogWarning(TEXT("SERVER DESTROY CALLED"));
 	ItemToDestroy->Destroy();
 }
 
@@ -194,8 +195,8 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	FString message = WorldItem->MyData->Name + " has been picked up";
 	LogWarning(*message);
-	if (HasAuthority())
-		DestroyWorldItem(WorldItem);
+
+	DestroyWorldItem(WorldItem);
 
 }
 
