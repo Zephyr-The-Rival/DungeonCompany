@@ -11,8 +11,8 @@ AWorldItem::AWorldItem()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-
+	bReplicates = true;
+	bAlwaysRelevant = true;
 }
 
 AWorldItem::AWorldItem(UItemData* ItemData)
@@ -32,15 +32,7 @@ void AWorldItem::BeginPlay()
 
 }
 
-void AWorldItem::DestroyOnServer_Implementation()
-{
-	this->Destroy();
-}
 
-bool AWorldItem::DestroyOnServer_Validate()
-{
-	return true;
-}
 
 // Called every frame
 void AWorldItem::Tick(float DeltaTime)
@@ -60,4 +52,7 @@ void AWorldItem::Interact(APawn* InteractingPawn)
 
 	character->PickUpItem(this);
 }
+
+
+
 

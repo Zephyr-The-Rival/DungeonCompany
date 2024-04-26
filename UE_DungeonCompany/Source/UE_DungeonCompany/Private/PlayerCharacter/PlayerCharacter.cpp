@@ -221,6 +221,19 @@ void APlayerCharacter::InteractorLineTrace()
 	}
 }
 
+void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
+{
+	if (!HasAuthority())
+		Server_DestroyWorldItem(ItemToDestroy);
+
+	Server_DestroyWorldItem_Implementation(ItemToDestroy);
+}
+void APlayerCharacter::Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
+{
+	LogWarning(TEXT("SERVER DESTROY CALLED"));
+	ItemToDestroy->Destroy();
+}
+
 void APlayerCharacter::Interact()
 {
 	if(!CurrentInteractable)
@@ -235,7 +248,8 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	FString message = WorldItem->MyData->Name + " has been picked up";
 	LogWarning(*message);
-	WorldItem->DestroyOnServer();
+
+	DestroyWorldItem(WorldItem);
 
 }
 

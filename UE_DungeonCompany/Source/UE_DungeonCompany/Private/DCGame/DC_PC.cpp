@@ -2,6 +2,8 @@
 
 
 #include "DCGame/DC_PC.h"
+#include "Net/VoiceConfig.h"
+#include "PlayerCharacter/PlayerCharacter.h"
 #include "UI/PlayerHud/PlayerHud.h"
 #include "DC_Statics.h"
 
@@ -30,6 +32,7 @@ void ADC_PC::BeginPlay()
 	ToggleSpeaking(!bPushToTalkActive);
 
 	MyPlayerHud = CreateWidget<UPlayerHud>(this, PlayerHudClass);
+	MyPlayerHud->MyCharacter = Cast<APlayerCharacter>(this->GetPawn());
 	MyPlayerHud->AddToViewport();
 
 }
