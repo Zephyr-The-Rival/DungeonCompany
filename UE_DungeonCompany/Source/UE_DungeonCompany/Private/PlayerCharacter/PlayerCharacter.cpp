@@ -48,6 +48,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
 	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
+	this->InventoryIndexInFocus = 0;
 
 }
 
@@ -56,10 +57,6 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IsValid(this->Inventory))
-	{
-
-	}
 
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
@@ -159,6 +156,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::SprintActionCompleted);
 
 	EIC->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
+
+	EIC->BindAction(IterateItemsAction, ETriggerEvent::Triggered, this, &APlayerCharacter::IterateItems);
+	
+
 
 }
 
@@ -467,4 +468,25 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 	if(NewPlayerState)
 		VOIPTalker->RegisterWithPlayerState(NewPlayerState);
 
+}
+
+void APlayerCharacter::IterateItems(const FInputActionValue& Value)
+{
+	if (Value.Get<float>() < 0)
+	{
+		if (InventoryIndexInFocus == this->Inventory->NumInventorySlots-1)
+			InventoryIndexInFocus = 0;
+		else
+			this->InventoryIndexInFocus++;
+	}
+	else
+	{
+		if (InventoryIndexInFocus == 0)
+			InventoryIndexInFocus = this->Inventory->NumInventorySlots-1;
+		else
+			this->InventoryIndexInFocus--;
+	}
+
+
+	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->FocusOnInventorySlot(this->InventoryIndexInFocus);
 }

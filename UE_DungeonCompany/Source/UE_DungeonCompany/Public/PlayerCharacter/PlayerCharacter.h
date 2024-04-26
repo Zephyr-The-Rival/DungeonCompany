@@ -68,6 +68,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* InteractAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* IterateItemsAction;
+
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool IsCrouchOnHold() const;
@@ -219,12 +222,21 @@ protected:
 
 
 	protected://inventory
+
+		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventoryIndexInFocus)
+		int32 InventoryIndexInFocus;
+
 		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
 		UInventory* Inventory;
+
+		void IterateItems(const FInputActionValue& Value);
 
 	public:
 		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 		UInventory* GetInventory() const { return Inventory; }
+
+		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+		int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
 
 
 		

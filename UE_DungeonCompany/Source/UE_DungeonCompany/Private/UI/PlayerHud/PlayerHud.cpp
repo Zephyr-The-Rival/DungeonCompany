@@ -5,10 +5,17 @@
 #include "DC_Statics.h"
 void UPlayerHud::ShowCrosshair_Implementation(const FString& Text)
 {
-	LogWarning(TEXT("I hate this. i could have done this in 5 minutes. but here i am wasting 3 hours on it. if you are reading this then FUCK YOU!"));
+	LogWarning(TEXT("UPlayerHud::ShowCrosshair has not been overidden"));
+
 }
 
 void UPlayerHud::HideCrosshair_Implementation()
 {
-	LogWarning(TEXT("hideCrosshair has not been overidden"));
+	LogWarning(TEXT("UPlayerHud::HideCrosshair has not been overidden"));
+}
+
+void UPlayerHud::FocusOnInventorySlot_Implementation(int32 Index)
+{
+	LogWarning(TEXT("UPlayerHud::IterateInventorySlotsImplementtion has not been overidden"));
+
 }
