@@ -175,7 +175,14 @@ void APlayerCharacter::InteractorLineTrace()
 	}
 }
 
-void APlayerCharacter::DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
+void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
+{
+	if (!HasAuthority())
+		Server_DestroyWorldItem(ItemToDestroy);
+
+	Server_DestroyWorldItem_Implementation(ItemToDestroy);
+}
+void APlayerCharacter::Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
 {
 	LogWarning(TEXT("SERVER DESTROY CALLED"));
 	ItemToDestroy->Destroy();

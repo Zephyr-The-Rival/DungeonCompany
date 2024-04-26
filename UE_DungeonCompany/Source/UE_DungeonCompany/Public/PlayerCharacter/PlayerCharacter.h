@@ -46,8 +46,10 @@ protected:
 
 	void InteractorLineTrace();
 
-		UFUNCTION(SERVER, Unreliable)
 	void DestroyWorldItem(AWorldItem* ItemToDestroy);
+	UFUNCTION(Server, Unreliable)
+	void Server_DestroyWorldItem(AWorldItem* ItemToDestroy);
+	void Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy);
 
 public:
 	void Interact();
