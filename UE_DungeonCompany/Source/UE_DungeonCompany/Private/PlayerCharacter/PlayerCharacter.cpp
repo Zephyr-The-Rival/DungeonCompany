@@ -7,6 +7,7 @@
 #include "UI/PlayerHud/PlayerHud.h"
 #include "Items/WorldItem.h"
 #include "Items/ItemData.h"
+#include "Inventory/Inventory.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -46,12 +47,19 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
+	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
+
 }
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (IsValid(this->Inventory))
+	{
+
+	}
 
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
@@ -245,12 +253,13 @@ void APlayerCharacter::Interact()
 
 void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 {
+	if (this->Inventory->AddItem(WorldItem->MyData))
+	{
+		FString message = WorldItem->MyData->Name + " has been picked up";
+		LogWarning(*message);
 
-	FString message = WorldItem->MyData->Name + " has been picked up";
-	LogWarning(*message);
-
-	DestroyWorldItem(WorldItem);
-
+		DestroyWorldItem(WorldItem);
+	}	
 }
 
 void APlayerCharacter::Jump()

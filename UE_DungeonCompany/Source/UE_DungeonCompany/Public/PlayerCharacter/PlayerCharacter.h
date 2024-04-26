@@ -14,6 +14,7 @@ class UVOIPTalker;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
+class UInventory;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
@@ -216,4 +217,15 @@ private:
 protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
+
+	protected://inventory
+		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
+		UInventory* Inventory;
+
+	public:
+		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+		UInventory* GetInventory() const { return Inventory; }
+
+
+		
 };
