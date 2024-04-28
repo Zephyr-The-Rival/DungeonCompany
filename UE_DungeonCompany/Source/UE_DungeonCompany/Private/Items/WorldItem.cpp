@@ -32,6 +32,16 @@ void AWorldItem::BeginPlay()
 
 }
 
+void AWorldItem::DestroyOnServer_Implementation()
+{
+	this->Destroy();
+}
+
+bool AWorldItem::DestroyOnServer_Validate()
+{
+	return true;
+}
+
 // Called every frame
 void AWorldItem::Tick(float DeltaTime)
 {
