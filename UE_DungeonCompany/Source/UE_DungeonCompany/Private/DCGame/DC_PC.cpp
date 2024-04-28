@@ -29,7 +29,9 @@ void ADC_PC::BeginPlay()
 
 	GetWorld()->Exec(GetWorld(), TEXT("OSS.VoiceLoopback 1"));
 
-	ToggleSpeaking(!bPushToTalkActive);
+	ToggleSpeaking(true);
+	if(bPushToTalkActive)
+		ToggleSpeaking(false);
 
 	MyPlayerHud = CreateWidget<UPlayerHud>(this, PlayerHudClass);
 	MyPlayerHud->MyCharacter = Cast<APlayerCharacter>(this->GetPawn());
@@ -75,5 +77,6 @@ bool ADC_PC::IsPushToTalkActive() const
 
 void ADC_PC::SetPushToTalkActive(bool IsActive)
 {
+	ToggleSpeaking(!IsActive);
 	bPushToTalkActive = IsActive;
 }
