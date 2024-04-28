@@ -14,6 +14,7 @@ class UVOIPTalker;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
+class UInventory;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
@@ -91,6 +92,11 @@ protected:
 	float InteractionRange=170;
 
 	void InteractorLineTrace();
+
+	void DestroyWorldItem(AWorldItem* ItemToDestroy);
+	UFUNCTION(Server, Unreliable)
+	void Server_DestroyWorldItem(AWorldItem* ItemToDestroy);
+	void Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy);
 
 public:
 	void Interact();
@@ -190,6 +196,7 @@ protected:
 	float StaminaGainDelay = 3.f;
 
 private:
+	UPROPERTY(BlueprintGetter=GetStamina)
 	float Stamina = MaxStamina;
 	bool bResting = false;
 
@@ -199,7 +206,9 @@ private:
 public:
 	void AddStamina(float AddingStamina);
 	void SubstractStamina(float SubStamina);
-
+	
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	float GetStamina() const { return Stamina; }
 private:
 	UVOIPTalker* VOIPTalker;
 
@@ -209,4 +218,15 @@ private:
 protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
+
+	protected://inventory
+		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
+		UInventory* Inventory;
+
+	public:
+		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+		UInventory* GetInventory() const { return Inventory; }
+
+
+		
 };
