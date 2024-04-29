@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Entities/AI/Tasks/BTTTask_FindPlayerLocation.h"
+#include "AI/Tasks/BTTTask_FindPlayerLocation.h"
 
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
@@ -16,7 +16,7 @@ UBTTTask_FindPlayerLocation::UBTTTask_FindPlayerLocation(FObjectInitializer cons
 
 EBTNodeResult::Type UBTTTask_FindPlayerLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	ACharacter* character = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	ACharacter* character = Cast<ACharacter>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("PlayerChasing"));
 
 	if(!character)
 		return EBTNodeResult::Failed;

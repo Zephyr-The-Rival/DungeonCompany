@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Entities/AI/Tasks/BTTask_FindRandomLocation.h"
-#include "Entities/AI/DC_AIController.h"
+#include "AI/Tasks/BTTask_FindRandomLocation.h"
+#include "AI/DC_AIController.h"
 
 #include "NavigationSystem.h"
 #include "BehaviorTree/BlackboardComponent.h"
