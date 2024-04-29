@@ -148,6 +148,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		return;
 
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
+	EIC->BindAction(MoveAction, ETriggerEvent::None, this, &APlayerCharacter::NoMove);
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
 	EIC->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::CrouchActionStarted);
@@ -169,12 +170,21 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 	FVector worldMoveVector;
 
-	if(GetCharacterMovement()->MovementMode != MOVE_Flying)
-		worldMoveVector = GetActorRightVector()* localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
-	else 
+	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
+		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
+	else
 		worldMoveVector = FVector::UpVector * localMoveVector.Y;
 
+	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
+		StopSprint();
+
 	AddMovementInput(worldMoveVector);
+}
+
+void APlayerCharacter::NoMove()
+{
+	if (bSprinting)
+		StopSprint();
 }
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
