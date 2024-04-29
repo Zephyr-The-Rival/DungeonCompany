@@ -159,6 +159,7 @@ public:
 
 private:
 	bool bClimbing = false;
+	FVector ClimbUpVector = FVector::UpVector;
 
 public:
 	UDELEGATE()
@@ -166,14 +167,14 @@ public:
 
 	FOnStoppedClimbing OnStoppedClimbing;
 
-	void StartClimbingAtLocation(const FVector& Location);
+	void StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
 	void StopClimbing();
 
 protected:
 
 	UFUNCTION(Server, Unreliable)
-	void Server_StartClimbingAtLocation(const FVector& Location);
-	void Server_StartClimbingAtLocation_Implementation(const FVector& Location);
+	void Server_StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
+	void Server_StartClimbingAtLocation_Implementation(const FVector& Location, const FVector& InClimbUpVector);
 
 	UFUNCTION(Server, Unreliable)
 	void Server_StopClimbing();
