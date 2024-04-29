@@ -40,7 +40,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Balancing")
 	int32 NumInventorySlots;
 
-	bool AddItem(UItemData* item);
+	bool AddItem(UItemData* Item);
+	
+	UItemData* GetItemAtIndex(int32 Index);
 	
 
 };

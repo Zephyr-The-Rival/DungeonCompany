@@ -40,16 +40,21 @@ void UInventory::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
 
 }
 
-bool UInventory::AddItem(UItemData* item)
+bool UInventory::AddItem(UItemData* Item)
 {
 	for (UInventorySlot* s : this->Slots)
 	{		
 		if (!IsValid(s->MyItem))//free slot
 		{
-			s->MyItem = item;
+			s->MyItem = Item;
 			return true;
 		}			
 	}
 	return false;
+}
+
+UItemData* UInventory::GetItemAtIndex(int32 Index)
+{
+	return Slots[Index]->MyItem;
 }
 
