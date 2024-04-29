@@ -506,8 +506,9 @@ void APlayerCharacter::DropItem()
 	if (IsValid(this->Inventory->GetItemAtIndex(InventoryIndexInFocus)))
 	{
 		SpawnDroppedWorldItem(this->Inventory->GetItemAtIndex(InventoryIndexInFocus));
+		Inventory->RemoveItem(InventoryIndexInFocus);
 	}
-	Inventory->RemoveItem(InventoryIndexInFocus);
+
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(UItemData* ItemToSpawn)

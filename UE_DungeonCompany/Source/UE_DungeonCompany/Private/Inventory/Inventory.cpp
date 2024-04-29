@@ -71,7 +71,8 @@ void UInventory::RemoveItem(UItemData* ItemToRemove)
 
 void UInventory::RemoveItem(int32 index)
 {
-	FString message = "removing item at: " + index;
+	FString message = "removing item at: ";
+	message.AppendInt(index);
 	LogWarning(*message);
 	Slots[index]->MyItem = nullptr;
 }
