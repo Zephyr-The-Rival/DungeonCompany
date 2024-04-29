@@ -209,6 +209,7 @@ public:
 	
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetStamina() const { return Stamina; }
+
 private:
 	UVOIPTalker* VOIPTalker;
 
@@ -219,14 +220,15 @@ protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
 
-	protected://inventory
-		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
-		UInventory* Inventory;
+protected://inventory
+	UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
+	UInventory* Inventory;
 
-	public:
-		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-		UInventory* GetInventory() const { return Inventory; }
+public:
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	UInventory* GetInventory() const { return Inventory; }
 
-
+private:
+	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 		
 };

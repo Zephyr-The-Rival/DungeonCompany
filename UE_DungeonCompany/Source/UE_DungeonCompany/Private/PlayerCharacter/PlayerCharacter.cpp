@@ -17,6 +17,8 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
+#include "Perception/AISense_Sight.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -48,6 +50,10 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
 	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
+
+	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
+	StimulusSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
+	StimulusSource->RegisterWithPerceptionSystem();
 
 }
 
