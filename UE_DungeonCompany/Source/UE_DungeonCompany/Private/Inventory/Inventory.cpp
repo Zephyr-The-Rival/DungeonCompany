@@ -4,6 +4,7 @@
 #include "Inventory/Inventory.h"
 #include "Inventory/InventorySlot.h"
 #include "Items/ItemData.h"
+#include "DC_Statics.h"
 
 // Sets default values for this component's properties
 UInventory::UInventory()
@@ -70,6 +71,8 @@ void UInventory::RemoveItem(UItemData* ItemToRemove)
 
 void UInventory::RemoveItem(int32 index)
 {
+	FString message = "removing item at: " + index;
+	LogWarning(*message);
 	Slots[index]->MyItem = nullptr;
 }
 

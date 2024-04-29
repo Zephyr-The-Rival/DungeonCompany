@@ -252,7 +252,6 @@ void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
 }
 void APlayerCharacter::Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
 {
-	LogWarning(TEXT("SERVER DESTROY CALLED"));
 	ItemToDestroy->Destroy();
 }
 
@@ -269,9 +268,6 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 {
 	if (this->Inventory->AddItem(WorldItem->MyData))
 	{
-		FString message = WorldItem->MyData->Name + " has been picked up";
-		LogWarning(*message);
-
 		DestroyWorldItem(WorldItem);
 	}	
 }
@@ -506,6 +502,7 @@ void APlayerCharacter::IterateItemsRight()
 
 void APlayerCharacter::DropItem()
 {
+	LogWarning(TEXT("Drop Item Called"));
 	if (IsValid(this->Inventory->GetItemAtIndex(InventoryIndexInFocus)))
 	{
 		SpawnDroppedWorldItem(this->Inventory->GetItemAtIndex(InventoryIndexInFocus));
@@ -524,6 +521,7 @@ void APlayerCharacter::SpawnDroppedWorldItem(UItemData* ItemToSpawn)
 
 void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(UItemData* ItemToSpawn)
 {
+	LogWarning(TEXT("Spawning Item..."));
 	FTransform SpawnTransform;
 	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 30 - FVector(0, 0, 20));
 	AWorldItem* SpawnedItem = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn->MyWorldItem, SpawnTransform);
