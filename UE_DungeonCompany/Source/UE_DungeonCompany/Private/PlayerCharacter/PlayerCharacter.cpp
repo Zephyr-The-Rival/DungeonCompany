@@ -7,6 +7,7 @@
 #include "UI/PlayerHud/PlayerHud.h"
 #include "Items/WorldItem.h"
 #include "Items/ItemData.h"
+#include "Inventory/Inventory.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -46,12 +47,19 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
+	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
+
 }
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (IsValid(this->Inventory))
+	{
+
+	}
 
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
@@ -143,6 +151,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		return;
 
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
+	EIC->BindAction(MoveAction, ETriggerEvent::None, this, &APlayerCharacter::NoMove);
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
 	EIC->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::CrouchActionStarted);
@@ -160,12 +169,21 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 	FVector worldMoveVector;
 
-	if(GetCharacterMovement()->MovementMode != MOVE_Flying)
-		worldMoveVector = GetActorRightVector()* localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
-	else 
+	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
+		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
+	else
 		worldMoveVector = FVector::UpVector * localMoveVector.Y;
 
+	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
+		StopSprint();
+
 	AddMovementInput(worldMoveVector);
+}
+
+void APlayerCharacter::NoMove()
+{
+	if (bSprinting)
+		StopSprint();
 }
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
@@ -221,6 +239,19 @@ void APlayerCharacter::InteractorLineTrace()
 	}
 }
 
+void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
+{
+	if (!HasAuthority())
+		Server_DestroyWorldItem(ItemToDestroy);
+
+	Server_DestroyWorldItem_Implementation(ItemToDestroy);
+}
+void APlayerCharacter::Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
+{
+	LogWarning(TEXT("SERVER DESTROY CALLED"));
+	ItemToDestroy->Destroy();
+}
+
 void APlayerCharacter::Interact()
 {
 	if(!CurrentInteractable)
@@ -232,11 +263,13 @@ void APlayerCharacter::Interact()
 
 void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 {
+	if (this->Inventory->AddItem(WorldItem->MyData))
+	{
+		FString message = WorldItem->MyData->Name + " has been picked up";
+		LogWarning(*message);
 
-	FString message = WorldItem->MyData->Name + " has been picked up";
-	LogWarning(*message);
-	WorldItem->DestroyOnServer();
-
+		DestroyWorldItem(WorldItem);
+	}	
 }
 
 void APlayerCharacter::Jump()
