@@ -178,7 +178,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
 		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
 	else
-		worldMoveVector = FVector::UpVector * localMoveVector.Y;
+		worldMoveVector = ClimbUpVector * localMoveVector.Y;
 
 	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
 		StopSprint();
@@ -380,14 +380,15 @@ void APlayerCharacter::Server_StopSprint_Implementation()
 	bSprinting = false;
 }
 
-void APlayerCharacter::StartClimbingAtLocation(const FVector& Location)
+void APlayerCharacter::StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector)
 {
 	bClimbing = true;
+	ClimbUpVector = InClimbUpVector;
 
 	if (HasAuthority())
-		Server_StartClimbingAtLocation_Implementation(Location);
+		Server_StartClimbingAtLocation_Implementation(Location, InClimbUpVector);
 	else
-		Server_StartClimbingAtLocation(Location);
+		Server_StartClimbingAtLocation(Location, InClimbUpVector);
 
 }
 
@@ -407,11 +408,12 @@ void APlayerCharacter::StopClimbing()
 
 }
 
-void APlayerCharacter::Server_StartClimbingAtLocation_Implementation(const FVector& Location)
+void APlayerCharacter::Server_StartClimbingAtLocation_Implementation(const FVector& Location, const FVector& InClimbUpVector)
 {
 	SetActorLocation(Location);
 	GetCharacterMovement()->MovementMode = MOVE_Flying;
 	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+	ClimbUpVector = InClimbUpVector;
 }
 
 void APlayerCharacter::Server_StopClimbing_Implementation()
