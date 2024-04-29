@@ -191,7 +191,7 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 	FVector2D lookVector = Value.Get<FVector2D>();
 
 	AddControllerYawInput(lookVector.X);
-	AddControllerPitchInput(-lookVector.Y);
+	AddControllerPitchInput(lookVector.Y);
 
 }
 
