@@ -517,8 +517,8 @@ void APlayerCharacter::SpawnDroppedWorldItem(UItemData* ItemToSpawn)
 {
 	if (!HasAuthority())
 		Server_SpawnDroppedWorldItem(ItemToSpawn);
-	
-	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn);
+	else
+		Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn);
 }
 
 void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(UItemData* ItemToSpawn)
