@@ -522,12 +522,19 @@ void APlayerCharacter::SpawnDroppedWorldItem(UItemData* ItemToSpawn)
 
 void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(UItemData* ItemToSpawn)
 {
-	LogWarning(TEXT("Spawning Item..."));
-	FTransform SpawnTransform;
-	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 30 - FVector(0, 0, 20));
-	AWorldItem* SpawnedItem = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn->MyWorldItem, SpawnTransform);
-	SpawnedItem->MyData = ItemToSpawn;
-	//SpawnedItem->GetRootComponent()->AddImpulse()
+	if (IsValid(ItemToSpawn))
+	{
+		LogWarning(TEXT("Spawning Item..."));
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 30 - FVector(0, 0, 20));
+		AWorldItem* SpawnedItem = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn->MyWorldItem, SpawnTransform);
+		SpawnedItem->MyData = ItemToSpawn;
+		//SpawnedItem->GetRootComponent()->AddImpulse()
+	}
+	else
+	{
+		LogWarning(TEXT("ItemToSpawn is not valid"));
+	}
 }
 
 
