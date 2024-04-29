@@ -15,10 +15,6 @@ AWorldItem::AWorldItem()
 	bAlwaysRelevant = true;
 }
 
-AWorldItem::AWorldItem(UItemData* ItemData)
-{
-	this->MyData = ItemData;
-}
 
 
 

@@ -58,3 +58,18 @@ UItemData* UInventory::GetItemAtIndex(int32 Index)
 	return Slots[Index]->MyItem;
 }
 
+void UInventory::RemoveItem(UItemData* ItemToRemove)
+{
+	for (UInventorySlot* s : this->Slots)
+	{
+		if (s->MyItem == ItemToRemove)
+			s->MyItem = nullptr;
+		
+	}
+}
+
+void UInventory::RemoveItem(int32 index)
+{
+	Slots[index]->MyItem = nullptr;
+}
+

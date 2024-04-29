@@ -250,10 +250,10 @@ public:
 
 private:
 
-	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	void SpawnDroppedWorldItem(UItemData* ItemToSpawn);
 	UFUNCTION(Server,Unreliable)
-	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
-	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnDroppedWorldItem(UItemData* ItemToSpawn);
+	void Server_SpawnDroppedWorldItem_Implementation(UItemData* ItemToSpawn);
 
 		
 };

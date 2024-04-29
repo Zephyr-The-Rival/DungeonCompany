@@ -506,11 +506,14 @@ void APlayerCharacter::IterateItemsRight()
 
 void APlayerCharacter::DropItem()
 {
-	if(IsValid(this->Inventory->GetItemAtIndex(InventoryIndexInFocus)))
-	SpawnDroppedWorldItem(this->Inventory->GetItemAtIndex(InventoryIndexInFocus)->MyWorldItem);	
+	if (IsValid(this->Inventory->GetItemAtIndex(InventoryIndexInFocus)))
+	{
+		SpawnDroppedWorldItem(this->Inventory->GetItemAtIndex(InventoryIndexInFocus));
+	}
+	Inventory->RemoveItem(InventoryIndexInFocus);
 }
 
-void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::SpawnDroppedWorldItem(UItemData* ItemToSpawn)
 {
 	if (!HasAuthority())
 		Server_SpawnDroppedWorldItem(ItemToSpawn);
@@ -518,11 +521,12 @@ void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn
 	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn);
 }
 
-void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(UItemData* ItemToSpawn)
 {
 	FTransform SpawnTransform;
-	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 20 - FVector(0, 0, 20));
-	AWorldItem* SpawnedItem = GetWorld()->SpawnActor<AWorldItem>(*ItemToSpawn, SpawnTransform);
+	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 30 - FVector(0, 0, 20));
+	AWorldItem* SpawnedItem = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn->MyWorldItem, SpawnTransform);
+	SpawnedItem->MyData = ItemToSpawn;
 	//SpawnedItem->GetRootComponent()->AddImpulse()
 }
 
