@@ -505,37 +505,27 @@ void APlayerCharacter::DropItem()
 	LogWarning(TEXT("Drop Item Called"));
 	if (IsValid(this->Inventory->GetItemAtIndex(InventoryIndexInFocus)))
 	{
-		FTransform SpawnTransform;
-		SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 30 - FVector(0, 0, 20));
-
-		AWorldItem* WorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(this->Inventory->GetItemAtIndex(InventoryIndexInFocus)->MyWorldItem->StaticClass(), SpawnTransform);
-		WorldItem->MyData = this->Inventory->GetItemAtIndex(InventoryIndexInFocus);
-		SpawnDroppedWorldItem(WorldItem);
+		SpawnDroppedWorldItem(this->Inventory->GetItemAtIndex(this->InventoryIndexInFocus)->MyWorldItem);
 		Inventory->RemoveItem(InventoryIndexInFocus);
 	}
-
 }
 
-void APlayerCharacter::SpawnDroppedWorldItem(AWorldItem* ItemToSpawn)
+void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
 {
 	if (!HasAuthority())
 		Server_SpawnDroppedWorldItem(ItemToSpawn);
 
-
 	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn);
 }
 
-void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(AWorldItem* ItemToSpawn)
+void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
 {
-	if (IsValid(ItemToSpawn))
-	{
-		ItemToSpawn->FinishSpawning(ItemToSpawn->GetTransform());
-		//SpawnedItem->GetRootComponent()->AddImpulse()
-	}
-	else
-	{
-		LogWarning(TEXT("ItemToSpawn is not valid"));
-	}
+	FTransform SpawnTransform;
+	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 30 - FVector(0, 0, 20));
+
+	GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
+	//SpawnedItem->GetRootComponent()->AddImpulse()
+	//set item data
 }
 
 
