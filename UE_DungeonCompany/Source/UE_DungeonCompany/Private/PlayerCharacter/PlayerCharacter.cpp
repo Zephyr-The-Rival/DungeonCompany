@@ -514,12 +514,13 @@ void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn
 {
 	if (!HasAuthority())
 		Server_SpawnDroppedWorldItem(ItemToSpawn);
-
+	else
 	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn);
 }
 
 void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
 {
+	LogWarning(TEXT("Spawning Item"));
 	FTransform SpawnTransform;
 	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 30 - FVector(0, 0, 20));
 
