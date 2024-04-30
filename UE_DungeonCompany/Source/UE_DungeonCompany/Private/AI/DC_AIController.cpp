@@ -10,6 +10,7 @@
 #include "Perception/AISenseConfig_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "DC_Statics.h"
 
 ADC_AIController::ADC_AIController(FObjectInitializer const& ObjectInitializer)
 	:Super(ObjectInitializer)
@@ -44,50 +45,54 @@ void ADC_AIController::OnPossess(APawn* InPawn)
 void ADC_AIController::SetupPerceptionSystem()
 {
 	SightConfig->SightRadius = 500.f;
-	SightConfig->LoseSightRadius = SightConfig->SightRadius + 25.f;
+	SightConfig->LoseSightRadius = SightConfig->SightRadius + 300.f;
 	SightConfig->PeripheralVisionAngleDegrees = 90.f;
 	SightConfig->SetMaxAge(5.f);
-	SightConfig->AutoSuccessRangeFromLastSeenLocation = 520.f;
+	SightConfig->AutoSuccessRangeFromLastSeenLocation = 800.f;
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
 	GetPerceptionComponent()->ConfigureSense(*SightConfig);
 	GetPerceptionComponent()->SetDominantSense(SightConfig->GetSenseImplementation());
-	GetPerceptionComponent()->OnTargetPerceptionUpdated.AddDynamic(this, &ADC_AIController::OnTargetPerceptionUpdated);
 
 	HearingConfig->HearingRange = 3000.f;
 	HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
 	HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
 	HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
 	GetPerceptionComponent()->ConfigureSense(*HearingConfig);
+
+	GetPerceptionComponent()->OnTargetPerceptionUpdated.AddDynamic(this, &ADC_AIController::OnTargetPerceptionUpdated);
 }
 
 void ADC_AIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus const Stimulus)
 {
-	HandleSightSense(Actor, Stimulus);
+	if (Stimulus.Type == SightConfig->GetSenseID())
+		HandleSightSense(Actor, Stimulus);
+	else if(Stimulus.Type == HearingConfig->GetSenseID())
+		HandleHearingSense(Stimulus);
 }
 
 void ADC_AIController::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus)
 {
-	if(Stimulus.Type != SightConfig->GetSenseID())
-		return;
-
 	APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(Actor);
 
 	if (!playerCharacter)
 		return;
 
-	bool successfullySensed = Stimulus.WasSuccessfullySensed();
-	GetBlackboardComponent()->SetValueAsBool("CanSeePlayer", successfullySensed);
-	if (successfullySensed)
-		GetBlackboardComponent()->SetValueAsObject("PlayerChasing", Actor);
+	if (Stimulus.WasSuccessfullySensed())
+		GetBlackboardComponent()->SetValueAsObject("TargetPlayer", Actor);
+	else
+		GetBlackboardComponent()->ClearValue("TargetPlayer");
+
+	PrintMessage(FString::FromInt(Stimulus.WasSuccessfullySensed()), 10.f);
 }
 
 void ADC_AIController::HandleHearingSense(FAIStimulus const Stimulus)
 {
-	if (Stimulus.Type != HearingConfig->GetSenseID())
-		return;
-
-	GetBlackboardComponent()->SetValueAsVector("TargetLocation", Stimulus.StimulusLocation);
+	if (Stimulus.WasSuccessfullySensed())
+	{
+		GetBlackboardComponent()->SetValueAsVector("TargetLocation", Stimulus.StimulusLocation);
+		GetBlackboardComponent()->SetValueAsBool("NewTarget", true);
+	}
 }

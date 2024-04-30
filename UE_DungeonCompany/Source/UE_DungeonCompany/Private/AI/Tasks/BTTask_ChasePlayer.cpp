@@ -19,9 +19,16 @@ EBTNodeResult::Type UBTTask_ChasePlayer::ExecuteTask(UBehaviorTreeComponent& Own
 	if (!aiController)
 		return EBTNodeResult::Failed;
 
-	FVector playerLocation = OwnerComp.GetBlackboardComponent()->GetValueAsVector(GetSelectedBlackboardKey());
+	AActor* targetPlayer = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(GetSelectedBlackboardKey()));
 
-	UAIBlueprintHelperLibrary::SimpleMoveToLocation(aiController, playerLocation);
+	if(!targetPlayer)
+		return EBTNodeResult::Failed;
+
+	FVector targetLocation = targetPlayer->GetActorLocation();
+
+	OwnerComp.GetBlackboardComponent()->SetValueAsVector("TargetLocation", targetLocation);
+	UAIBlueprintHelperLibrary::SimpleMoveToLocation(aiController, targetLocation);
+
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 
 	return EBTNodeResult::Succeeded;

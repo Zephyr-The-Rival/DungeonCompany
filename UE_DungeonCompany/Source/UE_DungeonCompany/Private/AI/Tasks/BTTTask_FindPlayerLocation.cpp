@@ -16,7 +16,7 @@ UBTTTask_FindPlayerLocation::UBTTTask_FindPlayerLocation(FObjectInitializer cons
 
 EBTNodeResult::Type UBTTTask_FindPlayerLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	ACharacter* character = Cast<ACharacter>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("PlayerChasing"));
+	ACharacter* character = Cast<ACharacter>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("TargetPlayer"));
 
 	if(!character)
 		return EBTNodeResult::Failed;
