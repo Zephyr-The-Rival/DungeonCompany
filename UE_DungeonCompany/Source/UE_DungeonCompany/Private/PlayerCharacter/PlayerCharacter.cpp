@@ -48,6 +48,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
 	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
+	this->InventoryIndexInFocus = 0;
 
 }
 
@@ -56,10 +57,6 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IsValid(this->Inventory))
-	{
-
-	}
 
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
@@ -161,6 +158,13 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	EIC->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
 
+	EIC->BindAction(IterateItemsLeftAction, ETriggerEvent::Triggered, this, &APlayerCharacter::IterateItemsLeft);
+	EIC->BindAction(IterateItemsRightAction, ETriggerEvent::Triggered, this, &APlayerCharacter::IterateItemsRight);
+	
+	EIC->BindAction(DropItemAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DropItem);
+	
+
+
 }
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
@@ -248,7 +252,6 @@ void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
 }
 void APlayerCharacter::Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
 {
-	LogWarning(TEXT("SERVER DESTROY CALLED"));
 	ItemToDestroy->Destroy();
 }
 
@@ -265,9 +268,6 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 {
 	if (this->Inventory->AddItem(WorldItem->MyData))
 	{
-		FString message = WorldItem->MyData->Name + " has been picked up";
-		LogWarning(*message);
-
 		DestroyWorldItem(WorldItem);
 	}	
 }
@@ -478,3 +478,55 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 		VOIPTalker->RegisterWithPlayerState(NewPlayerState);
 
 }
+
+void APlayerCharacter::IterateItemsLeft()
+{
+	if (InventoryIndexInFocus == 0)
+		InventoryIndexInFocus = this->Inventory->NumInventorySlots - 1;
+	else
+		this->InventoryIndexInFocus--;
+
+	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->FocusOnInventorySlot(this->InventoryIndexInFocus);
+}
+
+void APlayerCharacter::IterateItemsRight()
+{
+	if (InventoryIndexInFocus == this->Inventory->NumInventorySlots - 1)
+		InventoryIndexInFocus = 0;
+	else
+		this->InventoryIndexInFocus++;
+
+	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->FocusOnInventorySlot(this->InventoryIndexInFocus);
+
+}
+
+void APlayerCharacter::DropItem()
+{
+	LogWarning(TEXT("Drop Item Called"));
+	if (IsValid(this->Inventory->GetItemAtIndex(InventoryIndexInFocus)))
+	{
+		SpawnDroppedWorldItem(this->Inventory->GetItemAtIndex(this->InventoryIndexInFocus)->MyWorldItem);
+		Inventory->RemoveItem(InventoryIndexInFocus);
+	}
+}
+
+void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
+{
+	if (!HasAuthority())
+		Server_SpawnDroppedWorldItem(ItemToSpawn);
+	else
+	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn);
+}
+
+void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
+{
+	LogWarning(TEXT("Spawning Item"));
+	FTransform SpawnTransform;
+	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 30 - FVector(0, 0, 20));
+
+	GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
+	//SpawnedItem->GetRootComponent()->AddImpulse()
+	//set item data
+}
+
+

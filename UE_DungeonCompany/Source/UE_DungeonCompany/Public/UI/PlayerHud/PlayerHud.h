@@ -31,4 +31,10 @@ public:
 	void HideCrosshair();
 
 	virtual void HideCrosshair_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void FocusOnInventorySlot(int32 Index);
+
+	virtual void FocusOnInventorySlot_Implementation(int32 Index);
+
 };

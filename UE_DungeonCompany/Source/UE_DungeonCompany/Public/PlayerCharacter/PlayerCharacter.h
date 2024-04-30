@@ -68,6 +68,15 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* InteractAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* IterateItemsLeftAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* IterateItemsRightAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* DropItemAction;
+
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool IsCrouchOnHold() const;
@@ -219,14 +228,32 @@ protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
 
-	protected://inventory
+protected://inventory
+
+		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventoryIndexInFocus)
+		int32 InventoryIndexInFocus;
+
 		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
 		UInventory* Inventory;
 
-	public:
+		void IterateItemsLeft();
+		void IterateItemsRight();
+
+		void DropItem();
+
+public:
 		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 		UInventory* GetInventory() const { return Inventory; }
 
+		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+		int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
+
+private:
+
+	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	UFUNCTION(Server,Unreliable)
+	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
 
 		
 };
