@@ -11,6 +11,7 @@
  * 
  */
  class UAISenseConfig_Sight;
+ class UAISenseConfig_Hearing;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_AIController : public AAIController
@@ -19,6 +20,7 @@ class UE_DUNGEONCOMPANY_API ADC_AIController : public AAIController
 
 private:
 	UAISenseConfig_Sight* SightConfig;
+	UAISenseConfig_Hearing* HearingConfig;
 
 public:
 	explicit ADC_AIController(FObjectInitializer const& ObjectInitializer);
@@ -30,5 +32,8 @@ protected:
 
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus const Stimulus);
+
+	void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus);
+	void HandleHearingSense(FAIStimulus const Stimulus);
 	
 };
