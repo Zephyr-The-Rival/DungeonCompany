@@ -86,9 +86,8 @@ void ALadder::Interact(APawn* InteractingPawn)
 
 	float distanceToLadder = character->GetCapsuleComponent()->GetScaledCapsuleRadius();
 
-	float distanceToStart = (character->GetActorLocation() - GetActorLocation()).Length();
+	float distanceToStart = character->GetDistanceTo(this);
 	FVector climbPosition = GetActorLocation() + GetActorUpVector() * distanceToStart + GetActorForwardVector() * distanceToLadder;
-	climbPosition.Z = character->GetActorLocation().Z;
 	bInteractable = false;
 
 	character->StartClimbingAtLocation(climbPosition, GetActorUpVector());

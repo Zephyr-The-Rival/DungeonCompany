@@ -18,8 +18,13 @@
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
 #include "Perception/AISense_Sight.h"
+#include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
-
+#include "Interfaces/VoiceInterface.h"
+#include "Online.h"
+#include "OnlineSubsystem.h"
+#include "OnlineSessionSettings.h"
+#include "Online/OnlineSessionNames.h"
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -100,6 +105,11 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	float voiceLevel = VOIPTalker->GetVoiceLevel();
+
+	if(voiceLevel > 0.f)
+		ReportTalking(voiceLevel);
 	
 	if(IsLocallyControlled())
 		LocalTick(DeltaTime);
@@ -110,6 +120,7 @@ void APlayerCharacter::LocalTick(float DeltaTime)
 {
 	this->InteractorLineTrace();
 	StaminaTick(DeltaTime);
+	IOnlineVoicePtr ptr = Online::GetVoiceInterface(IOnlineSubsystem::Get()->GetSubsystemName());
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -159,13 +170,13 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 	EIC->BindAction(MoveAction, ETriggerEvent::None, this, &APlayerCharacter::NoMove);
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
-	EIC->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
+	EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &APlayerCharacter::Jump);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::CrouchActionStarted);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Completed, this, &APlayerCharacter::CrouchActionCompleted);
 	EIC->BindAction(SprintAction, ETriggerEvent::Started, this, &APlayerCharacter::SprintActionStarted);
 	EIC->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::SprintActionCompleted);
 
-	EIC->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
+	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 
 }
 
@@ -485,4 +496,9 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 	if(NewPlayerState)
 		VOIPTalker->RegisterWithPlayerState(NewPlayerState);
 
+}
+
+void APlayerCharacter::ReportTalking(float Loudness)
+{
+	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
 }

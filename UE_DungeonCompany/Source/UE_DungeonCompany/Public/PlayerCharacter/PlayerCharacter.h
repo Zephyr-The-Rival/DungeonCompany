@@ -231,5 +231,8 @@ public:
 
 private:
 	class UAIPerceptionStimuliSourceComponent* StimulusSource;
+
+public:
+	void ReportTalking(float Loudness);
 		
 };
