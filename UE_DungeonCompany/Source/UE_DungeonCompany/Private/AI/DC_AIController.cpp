@@ -85,7 +85,6 @@ void ADC_AIController::HandleSightSense(AActor* Actor, FAIStimulus const Stimulu
 	else
 		GetBlackboardComponent()->ClearValue("TargetPlayer");
 
-	PrintMessage(FString::FromInt(Stimulus.WasSuccessfullySensed()), 10.f);
 }
 
 void ADC_AIController::HandleHearingSense(FAIStimulus const Stimulus)
