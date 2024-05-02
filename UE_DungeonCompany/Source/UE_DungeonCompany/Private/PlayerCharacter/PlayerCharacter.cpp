@@ -17,7 +17,14 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
-
+#include "Perception/AISense_Sight.h"
+#include "Perception/AISense_Hearing.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Interfaces/VoiceInterface.h"
+#include "Online.h"
+#include "OnlineSubsystem.h"
+#include "OnlineSessionSettings.h"
+#include "Online/OnlineSessionNames.h"
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -49,6 +56,10 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
 	this->InventoryIndexInFocus = 0;
+
+	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
+	StimulusSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
+	StimulusSource->RegisterWithPerceptionSystem();
 
 }
 
@@ -91,6 +102,11 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	float voiceLevel = VOIPTalker->GetVoiceLevel();
+
+	if(voiceLevel > 0.f)
+		ReportTalking(voiceLevel);
 	
 	if(IsLocallyControlled())
 		LocalTick(DeltaTime);
@@ -101,6 +117,7 @@ void APlayerCharacter::LocalTick(float DeltaTime)
 {
 	this->InteractorLineTrace();
 	StaminaTick(DeltaTime);
+	IOnlineVoicePtr ptr = Online::GetVoiceInterface(IOnlineSubsystem::Get()->GetSubsystemName());
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -150,13 +167,13 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 	EIC->BindAction(MoveAction, ETriggerEvent::None, this, &APlayerCharacter::NoMove);
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
-	EIC->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
+	EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &APlayerCharacter::Jump);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::CrouchActionStarted);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Completed, this, &APlayerCharacter::CrouchActionCompleted);
 	EIC->BindAction(SprintAction, ETriggerEvent::Started, this, &APlayerCharacter::SprintActionStarted);
 	EIC->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::SprintActionCompleted);
 
-	EIC->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
+	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 
 	EIC->BindAction(IterateItemsLeftAction, ETriggerEvent::Triggered, this, &APlayerCharacter::IterateItemsLeft);
 	EIC->BindAction(IterateItemsRightAction, ETriggerEvent::Triggered, this, &APlayerCharacter::IterateItemsRight);
@@ -176,7 +193,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
 		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
 	else
-		worldMoveVector = FVector::UpVector * localMoveVector.Y;
+		worldMoveVector = ClimbUpVector * localMoveVector.Y;
 
 	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
 		StopSprint();
@@ -374,14 +391,15 @@ void APlayerCharacter::Server_StopSprint_Implementation()
 	bSprinting = false;
 }
 
-void APlayerCharacter::StartClimbingAtLocation(const FVector& Location)
+void APlayerCharacter::StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector)
 {
 	bClimbing = true;
+	ClimbUpVector = InClimbUpVector;
 
 	if (HasAuthority())
-		Server_StartClimbingAtLocation_Implementation(Location);
+		Server_StartClimbingAtLocation_Implementation(Location, InClimbUpVector);
 	else
-		Server_StartClimbingAtLocation(Location);
+		Server_StartClimbingAtLocation(Location, InClimbUpVector);
 
 }
 
@@ -401,11 +419,12 @@ void APlayerCharacter::StopClimbing()
 
 }
 
-void APlayerCharacter::Server_StartClimbingAtLocation_Implementation(const FVector& Location)
+void APlayerCharacter::Server_StartClimbingAtLocation_Implementation(const FVector& Location, const FVector& InClimbUpVector)
 {
 	SetActorLocation(Location);
 	GetCharacterMovement()->MovementMode = MOVE_Flying;
 	GetCharacterMovement()->Velocity = FVector::ZeroVector;
+	ClimbUpVector = InClimbUpVector;
 }
 
 void APlayerCharacter::Server_StopClimbing_Implementation()
@@ -477,6 +496,11 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 	if(NewPlayerState)
 		VOIPTalker->RegisterWithPlayerState(NewPlayerState);
 
+}
+
+void APlayerCharacter::ReportTalking(float Loudness)
+{
+	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
 }
 
 void APlayerCharacter::IterateItemsLeft()
