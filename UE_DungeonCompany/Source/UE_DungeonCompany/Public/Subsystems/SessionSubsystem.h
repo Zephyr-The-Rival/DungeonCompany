@@ -12,21 +12,20 @@ struct FServerInfo
 {
 	GENERATED_BODY()
 	
-public:
 	UPROPERTY(BlueprintReadOnly)
 	FString ServerName;
 	UPROPERTY(BlueprintReadOnly)
 	FString PlayerCountString;
 	UPROPERTY(BlueprintReadOnly)
-	int32 currentPlayers;
+	int32 CurrentPlayers = 0;
 	UPROPERTY(BlueprintReadOnly)
-	int32 MaxPlayers;
+	int32 MaxPlayers = 0;
 	UPROPERTY(BlueprintReadOnly)
-	int32 ArrayIndex;
+	int32 ArrayIndex = 0;
 
 	void SetPlayerCount()
 	{
-		PlayerCountString= FString(FString::FromInt(currentPlayers) + "/" + FString::FromInt(MaxPlayers));
+		PlayerCountString= FString(FString::FromInt(CurrentPlayers) + "/" + FString::FromInt(MaxPlayers));
 	}
 };
 
@@ -38,8 +37,6 @@ class UE_DUNGEONCOMPANY_API USessionSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 private:
-	FName MySessionName;
-
 	UPROPERTY(BlueprintAssignable)
 	FServerDel SearchComplete;
 
@@ -65,5 +62,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void JoinServer(int32 Index);
+
+	UFUNCTION(BlueprintCallable)
+	void DestroyCurrentSession();
 	
 };
