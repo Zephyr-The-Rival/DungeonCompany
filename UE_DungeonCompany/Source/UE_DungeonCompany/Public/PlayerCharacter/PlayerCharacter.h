@@ -168,6 +168,7 @@ public:
 
 private:
 	bool bClimbing = false;
+	FVector ClimbUpVector = FVector::UpVector;
 
 public:
 	UDELEGATE()
@@ -175,14 +176,14 @@ public:
 
 	FOnStoppedClimbing OnStoppedClimbing;
 
-	void StartClimbingAtLocation(const FVector& Location);
+	void StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
 	void StopClimbing();
 
 protected:
 
 	UFUNCTION(Server, Unreliable)
-	void Server_StartClimbingAtLocation(const FVector& Location);
-	void Server_StartClimbingAtLocation_Implementation(const FVector& Location);
+	void Server_StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
+	void Server_StartClimbingAtLocation_Implementation(const FVector& Location, const FVector& InClimbUpVector);
 
 	UFUNCTION(Server, Unreliable)
 	void Server_StopClimbing();
@@ -218,6 +219,7 @@ public:
 	
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetStamina() const { return Stamina; }
+
 private:
 	UVOIPTalker* VOIPTalker;
 
@@ -247,6 +249,8 @@ public:
 
 		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 		int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
+private:
+	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 
 private:
 
@@ -255,5 +259,7 @@ private:
 	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
 	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
 
+public:
+	void ReportTalking(float Loudness);
 		
 };
