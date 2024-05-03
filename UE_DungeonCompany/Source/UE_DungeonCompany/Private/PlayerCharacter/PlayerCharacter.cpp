@@ -8,6 +8,7 @@
 #include "Items/WorldItem.h"
 #include "Items/ItemData.h"
 #include "Inventory/Inventory.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -60,6 +61,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 	StimulusSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
 	StimulusSource->RegisterWithPerceptionSystem();
+
+	this->HP = this->MaxHP;
 
 }
 
@@ -118,6 +121,7 @@ void APlayerCharacter::LocalTick(float DeltaTime)
 	this->InteractorLineTrace();
 	StaminaTick(DeltaTime);
 	IOnlineVoicePtr ptr = Online::GetVoiceInterface(IOnlineSubsystem::Get()->GetSubsystemName());
+	CheckForFallDamage();
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -553,4 +557,45 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	//set item data
 }
 
+void APlayerCharacter::TakeDamage(float amout)
+{
+	FString message = "Taking damage: " + FString::SanitizeFloat(amout);
+	LogWarning(*message);
+	if (this->HP - amout > 0)
+	{
+		HP -= amout;
+	}
+	else
+	{
+		HP = 0;
+		Cast<ADC_PC>(GetController())->ConsoleCommand("Quit");
+	}
+}
 
+void APlayerCharacter::CheckForFallDamage()
+{
+	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
+	// that results in the jump height not being included in the fall height calculation
+
+	if(GetMovementComponent()->Velocity.Z<0)
+		LogWarning(TEXT("Falling..."));
+
+	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
+	{
+		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
+		if (deltaZ > 200)
+		{
+			float damage = (deltaZ - 200) * 0.334; // 2m=0 damage 5m=100 dmg
+			this->TakeDamage(damage);
+		}
+		FString message = 
+			"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
+			"\nEnd height:\t"+FString::SanitizeFloat(RootComponent->GetComponentLocation().Z)
+			+ "\nFall height:\t " + FString::SanitizeFloat(deltaZ);
+		LogWarning(*message);
+	}
+	if (GetMovementComponent()->Velocity.Z>=0)
+		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
+
+	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0);
+}
