@@ -269,12 +269,17 @@ public://Health
 
 
 protected:
-
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
 	float MaxHP=100;
 
-	void TakeDamage(float amout);
 private:
 	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
 	float HP;
+
+	void TakeDamage(float amout);
+
+	void CheckForFallDamage();
+	float LastStandingHeight;
+	bool BWasFallingInLastFrame=false;
+
 };
