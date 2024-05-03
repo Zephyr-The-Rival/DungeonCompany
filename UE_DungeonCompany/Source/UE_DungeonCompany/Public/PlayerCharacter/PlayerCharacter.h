@@ -68,6 +68,15 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* InteractAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* IterateItemsLeftAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* IterateItemsRightAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* DropItemAction;
+
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool IsCrouchOnHold() const;
@@ -222,17 +231,55 @@ protected:
 
 
 protected://inventory
-	UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
-	UInventory* Inventory;
+
+		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventoryIndexInFocus)
+		int32 InventoryIndexInFocus;
+
+		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
+		UInventory* Inventory;
+
+		void IterateItemsLeft();
+		void IterateItemsRight();
+
+		void DropItem();
 
 public:
-	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-	UInventory* GetInventory() const { return Inventory; }
+		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+		UInventory* GetInventory() const { return Inventory; }
 
+		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+		int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
 private:
 	class UAIPerceptionStimuliSourceComponent* StimulusSource;
+
+private:
+
+	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	UFUNCTION(Server,Unreliable)
+	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
 
 public:
 	void ReportTalking(float Loudness);
 		
+public://Health
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	float GetHealth() const { return this->HP; }
+
+
+protected:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
+	float MaxHP=100;
+
+private:
+	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
+	float HP;
+
+	void TakeDamage(float amout);
+
+	void CheckForFallDamage();
+	float LastStandingHeight;
+	bool BWasFallingInLastFrame=false;
+
 };
