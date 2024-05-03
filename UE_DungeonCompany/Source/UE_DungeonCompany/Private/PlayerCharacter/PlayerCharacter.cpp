@@ -61,6 +61,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	StimulusSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
 	StimulusSource->RegisterWithPerceptionSystem();
 
+	this->HP = this->MaxHP;
+
 }
 
 // Called when the game starts or when spawned

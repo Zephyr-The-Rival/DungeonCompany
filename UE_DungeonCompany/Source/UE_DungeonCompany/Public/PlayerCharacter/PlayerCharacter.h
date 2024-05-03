@@ -262,4 +262,19 @@ private:
 public:
 	void ReportTalking(float Loudness);
 		
+public://Health
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	float GetHealth() const { return this->HP; }
+
+
+protected:
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
+	float MaxHP=100;
+
+	void TakeDamage(float amout);
+private:
+	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
+	float HP;
 };
