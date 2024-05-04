@@ -240,8 +240,17 @@ protected://inventory
 
 		void IterateItemsLeft();
 		void IterateItemsRight();
+		void TakeOutItem();
+		AWorldItem* CurrentlyHeldItem;
+
+		void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+		UFUNCTION(Server, Unreliable)
+		void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+		void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
 
 		void DropItem();
+
+
 
 public:
 		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
@@ -262,4 +271,24 @@ private:
 public:
 	void ReportTalking(float Loudness);
 		
+public://Health
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	float GetHealth() const { return this->HP; }
+
+
+protected:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
+	float MaxHP=100;
+
+private:
+	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
+	float HP;
+
+	void TakeDamage(float amout);
+
+	void CheckForFallDamage();
+	float LastStandingHeight;
+	bool BWasFallingInLastFrame=false;
+
 };

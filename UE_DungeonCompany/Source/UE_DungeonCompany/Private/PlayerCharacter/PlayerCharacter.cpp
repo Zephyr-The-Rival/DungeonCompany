@@ -8,6 +8,7 @@
 #include "Items/WorldItem.h"
 #include "Items/ItemData.h"
 #include "Inventory/Inventory.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -60,6 +61,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 	StimulusSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
 	StimulusSource->RegisterWithPerceptionSystem();
+
+	this->HP = this->MaxHP;
 
 }
 
@@ -118,6 +121,7 @@ void APlayerCharacter::LocalTick(float DeltaTime)
 	this->InteractorLineTrace();
 	StaminaTick(DeltaTime);
 	IOnlineVoicePtr ptr = Online::GetVoiceInterface(IOnlineSubsystem::Get()->GetSubsystemName());
+	CheckForFallDamage();
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -283,9 +287,14 @@ void APlayerCharacter::Interact()
 
 void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 {
-	if (this->Inventory->AddItem(WorldItem->MyData))
+	int32 slot = this->Inventory->AddItem(WorldItem->MyData);
+	if(slot!=-1)
 	{
 		DestroyWorldItem(WorldItem);
+		if (slot == InventoryIndexInFocus)
+		{
+			TakeOutItem();
+		}
 	}	
 }
 
@@ -511,6 +520,7 @@ void APlayerCharacter::IterateItemsLeft()
 		this->InventoryIndexInFocus--;
 
 	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->FocusOnInventorySlot(this->InventoryIndexInFocus);
+	this->TakeOutItem();
 }
 
 void APlayerCharacter::IterateItemsRight()
@@ -521,7 +531,47 @@ void APlayerCharacter::IterateItemsRight()
 		this->InventoryIndexInFocus++;
 
 	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->FocusOnInventorySlot(this->InventoryIndexInFocus);
+	this->TakeOutItem();
+}
 
+void APlayerCharacter::TakeOutItem()
+{
+	if (IsValid(CurrentlyHeldItem))
+		CurrentlyHeldItem->Destroy();
+
+	if (IsValid(this->Inventory->GetItemAtIndex(this->InventoryIndexInFocus)))
+	{
+		this->FirstPersonMesh->SetAnimClass(this->Inventory->GetItemAtIndex(this->InventoryIndexInFocus)->AnimationBlueprintClass);
+		SpawnItemInHand(Inventory->GetItemAtIndex(this->InventoryIndexInFocus)->MyWorldItem);
+	}
+	else
+	{
+		//animClass of regular hands
+	}
+}
+
+void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn)
+{
+	if (HasAuthority())
+		Server_SpawnItemInHand_Implementation(ItemToSpawn);
+	else
+		Server_SpawnItemInHand(ItemToSpawn);
+}
+
+void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
+{
+	//if is in first person or not will have to make a difference
+
+
+	FTransform SpawnTransform;
+	AWorldItem* i = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
+
+	i->OnHoldingInHand();
+
+	FAttachmentTransformRules rules= FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget,EAttachmentRule::KeepWorld, true);
+	i->AttachToComponent(FirstPersonMesh, rules, "Item_Joint_R");
+
+	CurrentlyHeldItem = i;
 }
 
 void APlayerCharacter::DropItem()
@@ -529,6 +579,7 @@ void APlayerCharacter::DropItem()
 	LogWarning(TEXT("Drop Item Called"));
 	if (IsValid(this->Inventory->GetItemAtIndex(InventoryIndexInFocus)))
 	{
+		CurrentlyHeldItem->Destroy();//has to be on server?
 		SpawnDroppedWorldItem(this->Inventory->GetItemAtIndex(this->InventoryIndexInFocus)->MyWorldItem);
 		Inventory->RemoveItem(InventoryIndexInFocus);
 	}
@@ -546,11 +597,49 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 {
 	LogWarning(TEXT("Spawning Item"));
 	FTransform SpawnTransform;
-	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 30 - FVector(0, 0, 20));
+	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 150 - FVector(0, 0, 20));
 
 	GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
 	//SpawnedItem->GetRootComponent()->AddImpulse()
 	//set item data
 }
 
+void APlayerCharacter::TakeDamage(float amout)
+{
+	FString message = "Taking damage: " + FString::SanitizeFloat(amout);
+	LogWarning(*message);
+	if (this->HP - amout > 0)
+	{
+		HP -= amout;
+	}
+	else
+	{
+		HP = 0;
+		Cast<ADC_PC>(GetController())->ConsoleCommand("Quit");
+	}
+}
 
+void APlayerCharacter::CheckForFallDamage()
+{
+	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
+	// that results in the jump height not being included in the fall height calculation
+
+	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
+	{
+		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
+		if (deltaZ > 200)
+		{
+			float damage = (deltaZ - 200) * 0.334; // 2m=0 damage 5m=100 dmg
+			this->TakeDamage(damage);
+		}
+		//FString message = 
+		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
+		//	"\nEnd height:\t"+FString::SanitizeFloat(RootComponent->GetComponentLocation().Z)
+		//	+ "\nFall height:\t " + FString::SanitizeFloat(deltaZ);
+		//LogWarning(*message);
+	}
+	if (GetMovementComponent()->Velocity.Z>=0)
+		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
+
+	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0);
+}
