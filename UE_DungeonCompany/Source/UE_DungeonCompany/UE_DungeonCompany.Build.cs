@@ -16,6 +16,8 @@ public class UE_DungeonCompany : ModuleRules
 			"InputCore", 
 			"OnlineSubsystem", 
 			"OnlineSubsystemSteam", 
+			"OnlineSubsystemEOS", 
+			"OnlineSubsystemUtils", 
 			"EnhancedInput",
 			"AIModule",
 			"GameplayTasks",
