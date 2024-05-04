@@ -28,22 +28,20 @@ public:
 
 protected:
 	
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UItemData> ItemDataClass;
-
-
-
-	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-
-
-	
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnHoldingInHand();
+
+	virtual void OnHoldingInHand_Implementation();
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UItemData> ItemDataClass;
 
 };
