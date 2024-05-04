@@ -54,5 +54,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetPushToTalkActive(bool IsActive);
 
+protected:
+	virtual void OnNetCleanup(UNetConnection* Connection) override;
 
 };

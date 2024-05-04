@@ -2,14 +2,12 @@
 
 
 #include "MainMenu/MainMenuGM.h"
-#include "Subsystems/SessionSubsystem.h"
 #include "Subsystems/EOSSubsystem.h"
 
 void AMainMenuGM::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetGameInstance()->GetSubsystem<USessionSubsystem>()->DestroyCurrentSession();
 	GetGameInstance()->GetSubsystem<UEOSSubsystem>()->Login();
 
 }

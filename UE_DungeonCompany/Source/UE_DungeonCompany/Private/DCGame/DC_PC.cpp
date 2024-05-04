@@ -5,6 +5,7 @@
 #include "Net/VoiceConfig.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "UI/PlayerHud/PlayerHud.h"
+#include "Subsystems/EOSSubsystem.h"
 #include "DC_Statics.h"
 
 #include "Net/VoiceConfig.h"
@@ -79,4 +80,12 @@ void ADC_PC::SetPushToTalkActive(bool IsActive)
 {
 	ToggleSpeaking(!IsActive);
 	bPushToTalkActive = IsActive;
+}
+
+void ADC_PC::OnNetCleanup(UNetConnection* Connection)
+{
+	Super::OnNetCleanup(Connection);
+
+	GetGameInstance()->GetSubsystem<UEOSSubsystem>()->DestroySession();
+
 }
