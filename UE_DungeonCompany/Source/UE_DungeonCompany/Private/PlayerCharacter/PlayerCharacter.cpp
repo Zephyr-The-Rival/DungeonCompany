@@ -536,6 +536,9 @@ void APlayerCharacter::IterateItemsRight()
 
 void APlayerCharacter::TakeOutItem()
 {
+	if (IsValid(CurrentlyHeldItem))
+		CurrentlyHeldItem->Destroy();
+
 	if (IsValid(this->Inventory->GetItemAtIndex(this->InventoryIndexInFocus)))
 	{
 		this->FirstPersonMesh->SetAnimClass(this->Inventory->GetItemAtIndex(this->InventoryIndexInFocus)->AnimationBlueprintClass);
@@ -558,8 +561,7 @@ void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn)
 void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
 {
 	//if is in first person or not will have to make a difference
-	if (IsValid(CurrentlyHeldItem))
-		CurrentlyHeldItem->Destroy();
+
 
 	FTransform SpawnTransform;
 	AWorldItem* i = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
