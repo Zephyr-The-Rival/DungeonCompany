@@ -285,7 +285,7 @@ private:
 	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
 	float HP;
 
-	void TakeDamage(float amout);
+	void TakeDamage_DC(float amout);
 
 	void CheckForFallDamage();
 	float LastStandingHeight;

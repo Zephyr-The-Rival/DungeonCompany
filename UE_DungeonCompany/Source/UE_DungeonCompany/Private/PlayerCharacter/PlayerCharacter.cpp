@@ -604,7 +604,7 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	//set item data
 }
 
-void APlayerCharacter::TakeDamage(float amout)
+void APlayerCharacter::TakeDamage_DC(float amout)
 {
 	FString message = "Taking damage: " + FString::SanitizeFloat(amout);
 	LogWarning(*message);
@@ -630,7 +630,7 @@ void APlayerCharacter::CheckForFallDamage()
 		if (deltaZ > 200)
 		{
 			float damage = (deltaZ - 200) * 0.334; // 2m=0 damage 5m=100 dmg
-			this->TakeDamage(damage);
+			this->TakeDamage_DC(damage);
 		}
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
