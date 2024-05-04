@@ -37,6 +37,11 @@ void AWorldItem::Tick(float DeltaTime)
 
 }
 
+void AWorldItem::OnHoldingInHand_Implementation()
+{
+	LogWarning(*(this->GetName()+"->OnHoldingInHand() was not overridden"));
+}
+
 void AWorldItem::Interact(APawn* InteractingPawn)
 {
 	LogWarning(*(this->GetName()+" is beeing interacted with"));
