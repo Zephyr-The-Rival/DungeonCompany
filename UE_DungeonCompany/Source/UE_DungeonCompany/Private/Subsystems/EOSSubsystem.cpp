@@ -94,8 +94,8 @@ void UEOSSubsystem::CreateSession(FString ServerName, FString HostName)
     sessionSettings.bShouldAdvertise = true;
     sessionSettings.bUsesPresence = true;
     sessionSettings.NumPublicConnections = 4;
-    sessionSettings.bUseLobbiesIfAvailable = true;
-    sessionSettings.bUseLobbiesVoiceChatIfAvailable = true;
+    sessionSettings.bUseLobbiesIfAvailable = false;
+    sessionSettings.bUseLobbiesVoiceChatIfAvailable = false;
     sessionSettings.Set(FName("SERVER_NAME_KEY"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
     sessionSettings.Set(FName("SERVER_HOSTNAME_KEY"), HostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
@@ -190,7 +190,7 @@ void UEOSSubsystem::OnFindSessionComplete(bool Succeeded)
 void UEOSSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
     if(Result == EOnJoinSessionCompleteResult::Success)
-        UE_LOG(LogTemp, Log, TEXT("Successfully joines Session!"))
+        UE_LOG(LogTemp, Log, TEXT("Successfully joined Session!"))
     else 
         UE_LOG(LogTemp, Warning, TEXT("Joining Session failed!"));
 
