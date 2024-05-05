@@ -5,42 +5,220 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
+#include "Interactable.h"
 #include "PlayerCharacter.generated.h"
 
+class AWorldItem;
+
 class UVOIPTalker;
+class UInputMappingContext;
+class UInputAction;
+struct FInputActionValue;
+class UInventory;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-public:
-	// Sets default values for this character's properties
-	APlayerCharacter();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
+private: 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	UCameraComponent* FirstPersonCamera;
 
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 
+public:
+	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
+
+protected:
+	virtual void BeginPlay() override;
+
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
+	virtual void LocalTick(float DeltaTime);
+	virtual void StaminaTick(float DeltaTime);
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
+	UInputMappingContext* InputMapping;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* MoveAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* LookAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* JumpAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* CrouchAction;
+
+	UPROPERTY(EditAnywhere, Getter = IsCrouchOnHold, Category = "Input | Toggle/Hold")
+	bool bCrouchHold = false;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* SprintAction;
+
+	UPROPERTY(EditAnywhere, Getter = IsSprintOnHold, Category = "Input | Toggle/Hold")
+	bool bSprintHold = false;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* InteractAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* IterateItemsLeftAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* IterateItemsRightAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* DropItemAction;
+
+public:
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	bool IsCrouchOnHold() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetCrouchHold(bool ShouldHoldCrouch);
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	bool IsSprintOnHold() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetSprintHold(bool ShouldHoldSprint);
+
+public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+	IInteractable* CurrentInteractable;
 
-	void MoveRight(float Value);
-	void MoveForward(float Value);
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing")
+	float InteractionRange=170;
 
-	void Move(FVector MoveVector);
+	void InteractorLineTrace();
+
+	void DestroyWorldItem(AWorldItem* ItemToDestroy);
+	UFUNCTION(Server, Unreliable)
+	void Server_DestroyWorldItem(AWorldItem* ItemToDestroy);
+	void Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy);
+
+public:
+	void Interact();
+
+	void PickUpItem(AWorldItem* WorldItem);
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float WalkingSpeed = 500;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float SprintSpeedMultiplier = 1.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float ClimbingSpeed = 300;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float JumpVelocity = 420.f;
+
+private:
+	bool bSprinting = false;
+	
+protected:
+	void Move(const FInputActionValue& Value);
+	void NoMove();
+	void Look(const FInputActionValue& Value);
+	
+	virtual void Jump() override;
+
+	void CrouchActionStarted();
+	void CrouchActionCompleted();
+
+	void ToggleCrouch();
+
+	void SprintActionStarted();
+	void SprintActionCompleted();
+
+	void ToggleSprint();
+
+	void StartSprint();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_StartSprint();
+	void Server_StartSprint_Implementation();
+
+	void StopSprint();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_StopSprint();
+	void Server_StopSprint_Implementation();
+
+public:
+	UFUNCTION(Server, Unreliable)
+	void Server_SetActorLocation(const FVector& InLocation);
+	void Server_SetActorLocation_Implementation(const FVector& InLocation);
+
+	UFUNCTION(Server, Unreliable)
+	void Server_LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
+	void Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
+
+private:
+	bool bClimbing = false;
+	FVector ClimbUpVector = FVector::UpVector;
+
+public:
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStoppedClimbing);
+
+	FOnStoppedClimbing OnStoppedClimbing;
+
+	void StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
+	void StopClimbing();
+
+protected:
+
+	UFUNCTION(Server, Unreliable)
+	void Server_StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
+	void Server_StartClimbingAtLocation_Implementation(const FVector& Location, const FVector& InClimbUpVector);
+
+	UFUNCTION(Server, Unreliable)
+	void Server_StopClimbing();
+	void Server_StopClimbing_Implementation();
+
+public:
+	virtual bool CanJumpInternal_Implementation() const override;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
+	float MaxStamina = 5.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
+	float SprintStaminaDrainPerSecond = 1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
+	float StaminaGainPerSecond = 2.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
+	float StaminaGainDelay = 3.f;
+
+private:
+	UPROPERTY(BlueprintGetter=GetStamina)
+	float Stamina = MaxStamina;
+	bool bResting = false;
+
+	FTimerHandle RestDelayTimerHandle;
+	FTimerDelegate RestDelegate;
+
+public:
+	void AddStamina(float AddingStamina);
+	void SubstractStamina(float SubStamina);
+	
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	float GetStamina() const { return Stamina; }
 
 private:
 	UVOIPTalker* VOIPTalker;
@@ -50,5 +228,67 @@ private:
 
 protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
+
+
+protected://inventory
+
+		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventoryIndexInFocus)
+		int32 InventoryIndexInFocus;
+
+		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
+		UInventory* Inventory;
+
+		void IterateItemsLeft();
+		void IterateItemsRight();
+		void TakeOutItem();
+		AWorldItem* CurrentlyHeldItem;
+
+		void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+		UFUNCTION(Server, Unreliable)
+		void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+		void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+
+		void DropItem();
+
+
+
+public:
+		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+		UInventory* GetInventory() const { return Inventory; }
+
+		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+		int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
+private:
+	class UAIPerceptionStimuliSourceComponent* StimulusSource;
+
+private:
+
+	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	UFUNCTION(Server,Unreliable)
+	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+
+public:
+	void ReportTalking(float Loudness);
+		
+public://Health
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	float GetHealth() const { return this->HP; }
+
+
+protected:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
+	float MaxHP=100;
+
+private:
+	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
+	float HP;
+
+	void TakeDamage_DC(float amout);
+
+	void CheckForFallDamage();
+	float LastStandingHeight;
+	bool BWasFallingInLastFrame=false;
 
 };
