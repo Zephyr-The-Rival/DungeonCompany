@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Puzzles/TimedInteractionPuzzle/PuzzleTarget.h"
+#include "Puzzles/TimedInteractionPuzzle/PuzzleObjective.h"
 #include "Puzzles/TimedInteractionPuzzle/PuzzleTrigger.h"
 
 #include "EngineUtils.h"
 
 
-APuzzleTarget::APuzzleTarget()
+APuzzleObjective::APuzzleObjective()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -15,7 +15,7 @@ APuzzleTarget::APuzzleTarget()
 
 }
 
-void APuzzleTarget::BeginPlay()
+void APuzzleObjective::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -28,20 +28,20 @@ void APuzzleTarget::BeginPlay()
 		if(channel != Channel)
 			continue;
 
-		It->OnTriggered.AddDynamic(this, &APuzzleTarget::OnPuzzleTriggerTriggered);
+		It->OnTriggered.AddDynamic(this, &APuzzleObjective::OnPuzzleTriggerTriggered);
 		MinActivatedTriggers += incrementMinActivatedTriggers;
 		
 	}
 	
 }
 
-void APuzzleTarget::Tick(float DeltaTime)
+void APuzzleObjective::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-void APuzzleTarget::OnPuzzleTriggerTriggered(APuzzleTrigger* TriggeredPuzzleTrigger)
+void APuzzleObjective::OnPuzzleTriggerTriggered(APuzzleTrigger* TriggeredPuzzleTrigger)
 {
 	if (ActivatedPuzzleTriggers.Contains(TriggeredPuzzleTrigger))
 		return;
@@ -58,7 +58,7 @@ void APuzzleTarget::OnPuzzleTriggerTriggered(APuzzleTrigger* TriggeredPuzzleTrig
 	CheckTriggerCount();
 }
 
-void APuzzleTarget::CheckTriggerCount()
+void APuzzleObjective::CheckTriggerCount()
 {
 	if (ActivatedPuzzleTriggers.Num() < MinActivatedTriggers)
 		return;
@@ -67,7 +67,7 @@ void APuzzleTarget::CheckTriggerCount()
 		OnTriggerNumReached();
 }
 
-void APuzzleTarget::OnTriggerNumReached_Implementation()
+void APuzzleObjective::OnTriggerNumReached_Implementation()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, "All buttons pressed!");
 }

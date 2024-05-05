@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "PuzzleTarget.generated.h"
+#include "PuzzleObjective.generated.h"
 
 class APuzzleTrigger;
 
 UCLASS()
-class UE_DUNGEONCOMPANY_API APuzzleTarget : public AActor
+class UE_DUNGEONCOMPANY_API APuzzleObjective : public AActor
 {
 	GENERATED_BODY()
 
@@ -27,7 +27,7 @@ private:
 	TArray<APuzzleTrigger*> ActivatedPuzzleTriggers;
 
 public:	
-	APuzzleTarget();
+	APuzzleObjective();
 
 protected:
 	virtual void BeginPlay() override;
