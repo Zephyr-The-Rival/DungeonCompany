@@ -193,6 +193,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	
 	EIC->BindAction(ToggleInventoryAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
 	
+	EIC->BindAction(FaceUpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::FaceUpPressed);
+
+	
 
 
 }
@@ -633,6 +636,12 @@ void APlayerCharacter::DropItem()
 	//}
 }
 
+void APlayerCharacter::SwitchHand()
+{
+	this->BSlotAIsInHand = !BSlotAIsInHand;
+	TakeOutItem();
+}
+
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
 {
 	if (!HasAuthority())
@@ -738,4 +747,9 @@ void APlayerCharacter::DPadRightPressed()
 	{
 		
 	}
+}
+
+void APlayerCharacter::FaceUpPressed()
+{
+	this->SwitchHand();
 }

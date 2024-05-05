@@ -84,6 +84,10 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ToggleInventoryAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* FaceUpAction;
+
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool IsCrouchOnHold() const;
@@ -265,7 +269,8 @@ protected://inventory & Backpack
 		void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
 
 		void DropItem();
-
+		
+		void SwitchHand();
 
 
 public:
@@ -326,6 +331,7 @@ private://Double controller controls
 	void DPadDownPressed();
 	void DPadLeftPressed();
 	void DPadRightPressed();
+	void FaceUpPressed();
 
 
 };
