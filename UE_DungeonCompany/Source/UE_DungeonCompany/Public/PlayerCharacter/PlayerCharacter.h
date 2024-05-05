@@ -110,6 +110,12 @@ protected:
 public:
 	void Interact();
 
+protected:
+	UFUNCTION(Server, Unreliable)
+	void Server_Interact(UObject* Interactable);
+	void Server_Interact_Implementation(UObject* Interactable);
+
+public:
 	void PickUpItem(AWorldItem* WorldItem);
 
 protected:
@@ -229,38 +235,35 @@ private:
 protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
-
-protected://inventory
-
-		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventoryIndexInFocus)
-		int32 InventoryIndexInFocus;
-
-		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
-		UInventory* Inventory;
-
-		void IterateItemsLeft();
-		void IterateItemsRight();
-
-		void DropItem();
-
-public:
-		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-		UInventory* GetInventory() const { return Inventory; }
-
-		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-		int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
 private:
 	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 
-private:
+public:
+	void ReportTalking(float Loudness);
 
+protected://inventory
+	UPROPERTY(EditAnywhere, BlueprintGetter= GetInventoryIndexInFocus)
+	int32 InventoryIndexInFocus;
+
+	UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
+	UInventory* Inventory;
+
+	void IterateItemsLeft();
+	void IterateItemsRight();
+
+	void DropItem();
+
+public:
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	UInventory* GetInventory() const { return Inventory; }
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
+private:
 	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
 	UFUNCTION(Server,Unreliable)
 	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
 	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
-
-public:
-	void ReportTalking(float Loudness);
 		
 public://Health
 
