@@ -25,7 +25,7 @@ public:
 	UTexture2D* Icon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class AWorldItem> MyWorldItem;
+	TSubclassOf<class AWorldItem> MyWorldItemClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> AnimationBlueprintClass;

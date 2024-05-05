@@ -37,4 +37,13 @@ public:
 
 	virtual void FocusOnInventorySlot_Implementation(int32 Index);
 
+	UFUNCTION(BlueprintNativeEvent)
+	void ToggleInventory(bool On);
+	void ToggleInventory_Implementation(bool On);
+
+		UFUNCTION(BlueprintNativeEvent)
+	void RefreshInventory();
+	void RefreshInventory_Implementation();
+
+
 };

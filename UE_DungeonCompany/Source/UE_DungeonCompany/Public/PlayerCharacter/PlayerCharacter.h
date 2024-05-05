@@ -9,12 +9,14 @@
 #include "PlayerCharacter.generated.h"
 
 class AWorldItem;
-
+class UItemData;
 class UVOIPTalker;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 class UInventory;
+class UInventorySlot;
+
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
@@ -69,14 +71,19 @@ private:
 	UInputAction* InteractAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* IterateItemsLeftAction;
+	UInputAction* DPadUpAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* IterateItemsRightAction;
+	UInputAction* DPadDownAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* DropItemAction;
+	UInputAction* DPadLeftAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* DPadRightAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ToggleInventoryAction;
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool IsCrouchOnHold() const;
@@ -93,7 +100,7 @@ public:
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-private:
+private://interact
 	IInteractable* CurrentInteractable;
 
 protected:
@@ -193,8 +200,7 @@ public:
 	virtual bool CanJumpInternal_Implementation() const override;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
-	float MaxStamina = 5.f;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
 	float SprintStaminaDrainPerSecond = 1.f;
@@ -214,6 +220,9 @@ private:
 	FTimerDelegate RestDelegate;
 
 public:
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
+	float MaxStamina = 5.f;
+
 	void AddStamina(float AddingStamina);
 	void SubstractStamina(float SubStamina);
 	
@@ -230,18 +239,25 @@ protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
 
-protected://inventory
+protected://inventory & Backpack
 
-		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventoryIndexInFocus)
-		int32 InventoryIndexInFocus;
 
 		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
 		UInventory* Inventory;
 
-		void IterateItemsLeft();
-		void IterateItemsRight();
+		UPROPERTY(EditAnywhere, BlueprintGetter= GetBackpack)
+		UInventory* Backpack;
+
+		bool BSlotAIsInHand=true;
+
+		void ToggleInventory();
+		bool BInventoryIsOn=false;
+
+		UInventorySlot* GetCurrentlyHeldInventorySlot();
+		UInventorySlot* FindFreeSlot();
+
 		void TakeOutItem();
-		AWorldItem* CurrentlyHeldItem;
+		AWorldItem* CurrentlyHeldWorldItem;
 
 		void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
 		UFUNCTION(Server, Unreliable)
@@ -253,11 +269,23 @@ protected://inventory
 
 
 public:
+		UPROPERTY(EditAnywhere,BlueprintReadOnly)
+		bool BHasBackPack = false;
+
 		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 		UInventory* GetInventory() const { return Inventory; }
 
-		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-		int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
+		UFUNCTION(BlueprintPure,BlueprintInternalUseOnly)
+		UInventory* GetBackpack() const {return Backpack;}
+
+		UPROPERTY(EditAnywhere,BlueprintReadOnly)
+		UInventorySlot* HandSlotA;
+		UPROPERTY(EditAnywhere,BlueprintReadOnly)
+		UInventorySlot* HandSlotB;
+		//bool BItemAIsInHand is protected
+		
+
+
 private:
 	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 
@@ -275,11 +303,12 @@ public://Health
 
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetHealth() const { return this->HP; }
-
-
-protected:
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
 	float MaxHP=100;
+
+protected:
+
 
 private:
 	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
@@ -290,5 +319,13 @@ private:
 	void CheckForFallDamage();
 	float LastStandingHeight;
 	bool BWasFallingInLastFrame=false;
+
+private://Double controller controls
+
+	void DPadUpPressed();
+	void DPadDownPressed();
+	void DPadLeftPressed();
+	void DPadRightPressed();
+
 
 };
