@@ -110,6 +110,12 @@ protected:
 public:
 	void Interact();
 
+protected:
+	UFUNCTION(Server, Unreliable)
+	void Server_Interact(UObject* Interactable);
+	void Server_Interact_Implementation(UObject* Interactable);
+
+public:
 	void PickUpItem(AWorldItem* WorldItem);
 
 protected:
@@ -168,6 +174,7 @@ public:
 
 private:
 	bool bClimbing = false;
+	FVector ClimbUpVector = FVector::UpVector;
 
 public:
 	UDELEGATE()
@@ -175,14 +182,14 @@ public:
 
 	FOnStoppedClimbing OnStoppedClimbing;
 
-	void StartClimbingAtLocation(const FVector& Location);
+	void StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
 	void StopClimbing();
 
 protected:
 
 	UFUNCTION(Server, Unreliable)
-	void Server_StartClimbingAtLocation(const FVector& Location);
-	void Server_StartClimbingAtLocation_Implementation(const FVector& Location);
+	void Server_StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
+	void Server_StartClimbingAtLocation_Implementation(const FVector& Location, const FVector& InClimbUpVector);
 
 	UFUNCTION(Server, Unreliable)
 	void Server_StopClimbing();
@@ -218,6 +225,7 @@ public:
 	
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetStamina() const { return Stamina; }
+
 private:
 	UVOIPTalker* VOIPTalker;
 
@@ -227,33 +235,63 @@ private:
 protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
-
-protected://inventory
-
-		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventoryIndexInFocus)
-		int32 InventoryIndexInFocus;
-
-		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
-		UInventory* Inventory;
-
-		void IterateItemsLeft();
-		void IterateItemsRight();
-
-		void DropItem();
+private:
+	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 
 public:
-		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-		UInventory* GetInventory() const { return Inventory; }
+	void ReportTalking(float Loudness);
 
-		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-		int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
+protected://inventory
+	UPROPERTY(EditAnywhere, BlueprintGetter= GetInventoryIndexInFocus)
+	int32 InventoryIndexInFocus;
 
+	UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
+	UInventory* Inventory;
+
+	void IterateItemsLeft();
+	void IterateItemsRight();
+	void TakeOutItem();
+	AWorldItem* CurrentlyHeldItem;
+	
+	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	UFUNCTION(Server, Unreliable)
+	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+	
+	void DropItem();
+
+
+
+public:
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	UInventory* GetInventory() const { return Inventory; }
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
 private:
-
 	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
 	UFUNCTION(Server,Unreliable)
 	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
 	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
-
 		
+public://Health
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	float GetHealth() const { return this->HP; }
+
+
+protected:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
+	float MaxHP=100;
+
+private:
+	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
+	float HP;
+
+	void TakeDamage_DC(float amout);
+
+	void CheckForFallDamage();
+	float LastStandingHeight;
+	bool BWasFallingInLastFrame=false;
+
 };
