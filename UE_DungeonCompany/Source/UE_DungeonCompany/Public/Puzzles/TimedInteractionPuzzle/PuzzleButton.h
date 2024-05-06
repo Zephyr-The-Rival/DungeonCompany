@@ -11,6 +11,15 @@ UCLASS()
 class UE_DUNGEONCOMPANY_API APuzzleButton : public APuzzleTrigger, public IInteractable
 {
 	GENERATED_BODY()
+
+private:
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* StaticMesh;
+
+	UPROPERTY(EditAnywhere)
+	UMaterialInterface* ActivatedMaterial;
+
+	UMaterialInterface* DefaultMaterial;
 	
 public:	
 	APuzzleButton();
@@ -23,5 +32,9 @@ public:
 
 	virtual void Interact(APawn* InteractingPawn);
 	virtual void AuthorityInteract(APawn* InteractingPawn);
+
+	virtual void OnTriggerStarted_Implementation() override;
+
+	virtual void OnTriggerStopped_Implementation() override;
 
 };
