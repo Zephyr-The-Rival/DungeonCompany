@@ -47,9 +47,11 @@ void APuzzleObjective::OnPuzzleTriggerTriggered(APuzzleTrigger* TriggeredPuzzleT
 		return;
 
 	ActivatedPuzzleTriggers.Add(TriggeredPuzzleTrigger);
+	TriggeredPuzzleTrigger->Multicast_Triggered();
 
 	FTimerDelegate delegate = FTimerDelegate::CreateLambda([this, TriggeredPuzzleTrigger]() {
 		ActivatedPuzzleTriggers.Remove(TriggeredPuzzleTrigger);
+		TriggeredPuzzleTrigger->Multicast_NotTriggered();
 		});
 
 	FTimerHandle timerHandle;

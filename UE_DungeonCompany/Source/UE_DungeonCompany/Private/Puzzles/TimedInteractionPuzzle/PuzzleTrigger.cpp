@@ -6,21 +6,18 @@
 // Sets default values
 APuzzleTrigger::APuzzleTrigger()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
 
 }
 
-// Called when the game starts or when spawned
 void APuzzleTrigger::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-// Called every frame
 void APuzzleTrigger::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -30,5 +27,25 @@ void APuzzleTrigger::Tick(float DeltaTime)
 void APuzzleTrigger::Trigger()
 {
 	OnTriggered.Broadcast(this);
+}
+
+void APuzzleTrigger::Multicast_Triggered_Implementation()
+{
+	OnTriggerStarted();
+}
+
+void APuzzleTrigger::OnTriggerStarted_Implementation()
+{
+
+}
+
+void APuzzleTrigger::Multicast_NotTriggered_Implementation()
+{
+	OnTriggerStopped();
+}
+
+void APuzzleTrigger::OnTriggerStopped_Implementation()
+{
+
 }
 

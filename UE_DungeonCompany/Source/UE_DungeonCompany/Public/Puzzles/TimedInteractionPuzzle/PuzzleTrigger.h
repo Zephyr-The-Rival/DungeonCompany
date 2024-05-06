@@ -16,25 +16,39 @@ private:
 	uint8 Channel = 0;
 	
 public:	
-	// Sets default values for this actor's properties
 	APuzzleTrigger();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	uint8 GetChannel() const { return Channel; }
 
 public:
 	UDELEGATE()
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTriggered, APuzzleTrigger*, TriggeredPuzzleTrigger);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTriggered, APuzzleTrigger*, PuzzleTrigger);
 
 	FOnTriggered OnTriggered;
 
 	void Trigger();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_Triggered();
+	void Multicast_Triggered_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, Category="PuzzleEvent")
+	void OnTriggerStarted();
+	virtual void OnTriggerStarted_Implementation();
+
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_NotTriggered();
+	void Multicast_NotTriggered_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, Category="PuzzleEvent")
+	void OnTriggerStopped();
+	virtual void OnTriggerStopped_Implementation();
 
 };
