@@ -87,6 +87,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* FaceUpAction;
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* FaceDownAction;
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* FaceLeftAction;
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* FaceRightAction;
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
@@ -217,7 +223,7 @@ protected:
 
 private:
 	UPROPERTY(BlueprintGetter=GetStamina)
-	float Stamina = MaxStamina;
+	float Stamina;
 	bool bResting = false;
 
 	FTimerHandle RestDelayTimerHandle;
@@ -268,12 +274,14 @@ protected://inventory & Backpack
 		void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
 		void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
 
-		void DropItem();
+		void DropItem(UInventorySlot* SlotToEmpty);
 		
 		void SwitchHand();
 		bool BSwichHandAllowed=true;
 		UFUNCTION()
 		void AllowSwitchHand();
+
+		void EquipCurrentInventorySelection(bool BToA);
 
 
 public:
@@ -334,7 +342,11 @@ private://Double controller controls
 	void DPadDownPressed();
 	void DPadLeftPressed();
 	void DPadRightPressed();
+	
 	void FaceUpPressed();
+	void FaceDownPressed();
+	void FaceLeftPressed();
+	void FaceRightPressed();
 
 
 };

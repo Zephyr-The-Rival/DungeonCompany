@@ -10,9 +10,19 @@
  * 
  */
 
+UENUM(BlueprintType)
+enum EDirections
+{
+	Up UMETA(DisplayName="Up"),
+	Down UMETA(DisplayName = "Down"),
+	Left UMETA(DisplayName = "Left"),
+	Right UMETA(DisplayName = "Right"),
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSwichDoneDelegate);
 
 class APlayerCharacter;
+class UInventorySlot;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API UPlayerHud : public UUserWidget
@@ -34,10 +44,6 @@ public:
 
 	virtual void HideCrosshair_Implementation();
 
-	UFUNCTION(BlueprintNativeEvent)
-	void FocusOnInventorySlot(int32 Index);
-
-	virtual void FocusOnInventorySlot_Implementation(int32 Index);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void ToggleInventory(bool On);
@@ -54,5 +60,14 @@ public:
 
 	UPROPERTY(BlueprintCallable, Category = "Events")
     FSwichDoneDelegate OnSwichingDone;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	UInventorySlot* GetHighlightedSlot();
+
+
+	UFUNCTION(BlueprintNativeEvent)
+	void MoveHighlight(EDirections direction);
+	void MoveHighlight_Implementation(EDirections direction);
+
 
 };

@@ -66,6 +66,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	StimulusSource->RegisterWithPerceptionSystem();
 
 	this->HP = this->MaxHP;
+	this->Stamina = this->MaxStamina;
 
 }
 
@@ -193,7 +194,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	
 	EIC->BindAction(ToggleInventoryAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
 	
-	EIC->BindAction(FaceUpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::FaceUpPressed);
+	EIC->BindAction(FaceUpAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceUpPressed);	
+	EIC->BindAction(FaceDownAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceDownPressed);
+	EIC->BindAction(FaceLeftAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceLeftPressed);
+	EIC->BindAction(FaceRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::FaceRightPressed);
 
 	
 
@@ -625,8 +629,21 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 	CurrentlyHeldWorldItem = i;
 }
 
-void APlayerCharacter::DropItem()
+void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 {
+	if (IsValid(SlotToEmpty->MyItem))
+	{
+		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass);
+		SlotToEmpty->MyItem = nullptr;
+
+		if (GetCurrentlyHeldInventorySlot()==SlotToEmpty)
+		{
+			CurrentlyHeldWorldItem->Destroy();
+			TakeOutItem();
+		}
+
+	}
+
 	//if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
 	//{
 	//	CurrentlyHeldWorldItem->Destroy();//has to be on server?
@@ -652,6 +669,29 @@ void APlayerCharacter::AllowSwitchHand()
 {
 	BSwichHandAllowed = true;
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.RemoveAll(this);
+}
+
+void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
+{
+	
+	UInventorySlot* slot;
+
+	if (BToA)
+		slot = HandSlotA;
+	else
+		slot = HandSlotB;
+	
+	//switch
+	UItemData* tmp = Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot()->MyItem;
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot()->MyItem = slot->MyItem;
+	slot->MyItem = tmp;
+
+
+	if (GetCurrentlyHeldInventorySlot()==slot)//if equipping to slot in hand
+	{
+		TakeOutItem();
+	}
+
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
@@ -717,7 +757,7 @@ void APlayerCharacter::DPadUpPressed()
 {
 	if (BInventoryIsOn)
 	{
-
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Up);
 	}
 	else
 	{
@@ -729,11 +769,11 @@ void APlayerCharacter::DPadDownPressed()
 {
 	if (BInventoryIsOn)
 	{
-
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Down);
 	}
 	else
 	{
-		DropItem();
+		DropItem(GetCurrentlyHeldInventorySlot());
 	}
 }
 
@@ -741,7 +781,7 @@ void APlayerCharacter::DPadLeftPressed()
 {
 	if (BInventoryIsOn)
 	{
-
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Left);
 	}
 	else
 	{
@@ -753,7 +793,7 @@ void APlayerCharacter::DPadRightPressed()
 {
 	if (BInventoryIsOn)
 	{
-
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Right);
 	}
 	else
 	{
@@ -763,5 +803,48 @@ void APlayerCharacter::DPadRightPressed()
 
 void APlayerCharacter::FaceUpPressed()
 {
-	this->SwitchHand();
+	if (BInventoryIsOn)
+	{
+		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
+	}
+	else
+	{
+		this->SwitchHand();
+	}
+}
+
+void APlayerCharacter::FaceDownPressed()
+{
+	if (BInventoryIsOn)
+	{
+
+	}
+	else
+	{
+		Jump();
+	}
+}
+
+void APlayerCharacter::FaceLeftPressed()
+{
+	if (BInventoryIsOn)
+	{
+		EquipCurrentInventorySelection(true);
+	}
+	else
+	{
+		Interact();
+	}
+}
+
+void APlayerCharacter::FaceRightPressed()
+{
+	if (BInventoryIsOn)
+	{
+		EquipCurrentInventorySelection(false);
+	}
+	else
+	{
+		ToggleCrouch();
+	}
 }

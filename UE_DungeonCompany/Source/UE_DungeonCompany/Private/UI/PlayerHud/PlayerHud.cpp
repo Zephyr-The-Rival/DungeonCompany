@@ -3,6 +3,7 @@
 
 #include "UI/PlayerHud/PlayerHud.h"
 #include "DC_Statics.h"
+
 void UPlayerHud::ShowCrosshair_Implementation(const FString& Text)
 {
 	LogWarning(TEXT("UPlayerHud::ShowCrosshair has not been overidden"));
@@ -12,12 +13,6 @@ void UPlayerHud::ShowCrosshair_Implementation(const FString& Text)
 void UPlayerHud::HideCrosshair_Implementation()
 {
 	LogWarning(TEXT("UPlayerHud::HideCrosshair has not been overidden"));
-}
-
-void UPlayerHud::FocusOnInventorySlot_Implementation(int32 Index)
-{
-	LogWarning(TEXT("UPlayerHud::IterateInventorySlotsImplementtion has not been overidden"));
-
 }
 
 void UPlayerHud::ToggleInventory_Implementation(bool On)
@@ -33,4 +28,9 @@ void UPlayerHud::RefreshInventory_Implementation()
 void UPlayerHud::SwichHandDisplays_Implementation(bool ToHandA)
 {
 	LogWarning(TEXT("UPlayerHud::SwichHandDisplays_Implementation has not been overidden"));
+}
+
+void UPlayerHud::MoveHighlight_Implementation(EDirections direction)
+{
+	LogWarning(TEXT("UPlayerHud::MoveHighlight_Implementation has not been overidden"));
 }
