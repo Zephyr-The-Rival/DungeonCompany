@@ -83,7 +83,9 @@ private:
 	UInputAction* DPadRightAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* ToggleInventoryAction;
+	UInputAction* ToggleInventoryPCAction;
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ToggleInventoryControllerAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* FaceUpAction;
@@ -93,6 +95,11 @@ private:
 	UInputAction* FaceLeftAction;
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* FaceRightAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* MouseRightAction;
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* MouseLeftAction;
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
@@ -260,7 +267,9 @@ protected://inventory & Backpack
 
 		bool BSlotAIsInHand=true;
 
-		void ToggleInventory();
+		void ToggleInventoryPC();
+		void ToggleInventoryController();
+		void ToggleInventory(bool ControllerVersion);
 		bool BInventoryIsOn=false;
 
 		UInventorySlot* GetCurrentlyHeldInventorySlot();
@@ -336,7 +345,7 @@ private:
 	float LastStandingHeight;
 	bool BWasFallingInLastFrame=false;
 
-private://Double controller controls
+private://only controller controls
 
 	void DPadUpPressed();
 	void DPadDownPressed();
@@ -348,5 +357,8 @@ private://Double controller controls
 	void FaceLeftPressed();
 	void FaceRightPressed();
 
+	//only pc controls
+	void LeftMouseButtonPressed();
+	void RightMouseButtonPressed();
 
 };

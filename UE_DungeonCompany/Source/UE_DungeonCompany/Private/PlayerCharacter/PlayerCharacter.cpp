@@ -192,12 +192,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(DPadLeftAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadLeftPressed);
 	EIC->BindAction(DPadRightAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadRightPressed);
 	
-	EIC->BindAction(ToggleInventoryAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
+	EIC->BindAction(ToggleInventoryPCAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventoryPC);
+	EIC->BindAction(ToggleInventoryControllerAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventoryController);
 	
 	EIC->BindAction(FaceUpAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceUpPressed);	
 	EIC->BindAction(FaceDownAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceDownPressed);
 	EIC->BindAction(FaceLeftAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceLeftPressed);
 	EIC->BindAction(FaceRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::FaceRightPressed);
+	
+	EIC->BindAction(MouseRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::RightMouseButtonPressed);
+	EIC->BindAction(MouseLeftAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::LeftMouseButtonPressed);
 
 	
 
@@ -529,10 +533,20 @@ void APlayerCharacter::ReportTalking(float Loudness)
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
 }
 
-void APlayerCharacter::ToggleInventory()
+void APlayerCharacter::ToggleInventoryPC()
+{
+	ToggleInventory(false);
+}
+
+void APlayerCharacter::ToggleInventoryController()
+{
+	ToggleInventory(true);
+}
+
+void APlayerCharacter::ToggleInventory(bool ControllerVersion)
 {
 	this->BInventoryIsOn = !BInventoryIsOn;
-	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(BInventoryIsOn);
+	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(BInventoryIsOn, ControllerVersion);
 }
 
 
@@ -544,6 +558,8 @@ UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
 	else
 		return HandSlotB;
 }
+
+
 
 UInventorySlot* APlayerCharacter::FindFreeSlot()
 {
@@ -848,3 +864,28 @@ void APlayerCharacter::FaceRightPressed()
 		ToggleCrouch();
 	}
 }
+
+void APlayerCharacter::LeftMouseButtonPressed()
+{
+	if (BInventoryIsOn)
+	{
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MouseButtonPressed(true);
+	}
+	else
+	{
+		
+	}
+}
+
+void APlayerCharacter::RightMouseButtonPressed()
+{
+	if (BInventoryIsOn)
+	{
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MouseButtonPressed(false);
+	}
+	else
+	{
+		
+	}
+}
+

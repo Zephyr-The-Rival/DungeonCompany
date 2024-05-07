@@ -15,7 +15,7 @@ void UPlayerHud::HideCrosshair_Implementation()
 	LogWarning(TEXT("UPlayerHud::HideCrosshair has not been overidden"));
 }
 
-void UPlayerHud::ToggleInventory_Implementation(bool On)
+void UPlayerHud::ToggleInventory_Implementation(bool On, bool ControllerVersion)
 {
 	LogWarning(TEXT("UPlayerHud::ToggleInventory_Implementation has not been overidden"));
 }
@@ -33,4 +33,9 @@ void UPlayerHud::SwichHandDisplays_Implementation(bool ToHandA)
 void UPlayerHud::MoveHighlight_Implementation(EDirections direction)
 {
 	LogWarning(TEXT("UPlayerHud::MoveHighlight_Implementation has not been overidden"));
+}
+
+void UPlayerHud::MouseButtonPressed_Implementation(bool left)
+{
+	LogWarning(TEXT("UPlayerHud::MouseButtonPressed_Implementation has not been overidden"));
 }

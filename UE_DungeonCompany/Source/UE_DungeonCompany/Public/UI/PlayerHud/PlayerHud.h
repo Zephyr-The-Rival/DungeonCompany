@@ -46,8 +46,8 @@ public:
 
 
 	UFUNCTION(BlueprintNativeEvent)
-	void ToggleInventory(bool On);
-	void ToggleInventory_Implementation(bool On);
+	void ToggleInventory(bool On, bool ControllerVersion);
+	void ToggleInventory_Implementation(bool On, bool ControllerVersion);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void RefreshInventory();
@@ -68,6 +68,11 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void MoveHighlight(EDirections direction);
 	void MoveHighlight_Implementation(EDirections direction);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void MouseButtonPressed(bool left);
+	void MouseButtonPressed_Implementation(bool left);
+	
 
 
 };
