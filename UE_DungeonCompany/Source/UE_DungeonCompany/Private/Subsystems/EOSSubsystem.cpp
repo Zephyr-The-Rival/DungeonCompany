@@ -102,7 +102,7 @@ void UEOSSubsystem::CreateSession(FString ServerName, FString HostName)
     sessionSettings.bShouldAdvertise = true;
     sessionSettings.bUsesPresence = true;
     sessionSettings.NumPublicConnections = 4;
-    sessionSettings.bUseLobbiesIfAvailable = true;
+    sessionSettings.bUseLobbiesIfAvailable = false;
     //sessionSettings.bUseLobbiesVoiceChatIfAvailable = false;
     sessionSettings.Set(FName("SERVER_NAME_KEY"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
     sessionSettings.Set(FName("SERVER_HOSTNAME_KEY"), HostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
@@ -117,7 +117,7 @@ void UEOSSubsystem::FindSessions()
 
     SessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
     SessionSearch->MaxSearchResults = 20;
-    SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+    SessionSearch->QuerySettings.SearchParams.Empty();
 
     SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 }
