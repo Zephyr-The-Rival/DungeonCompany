@@ -9,5 +9,6 @@ void AMainMenuGM::BeginPlay()
 	Super::BeginPlay();
 
 	GetGameInstance()->GetSubsystem<UEOSSubsystem>()->Login();
+	GetGameInstance()->GetSubsystem<UEOSSubsystem>()->DestroySession();
 
 }

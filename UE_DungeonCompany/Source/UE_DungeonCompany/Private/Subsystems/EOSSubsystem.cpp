@@ -54,6 +54,8 @@ void UEOSSubsystem::Login()
     //    UE_LOG(LogTemp, Warning, TEXT("Failed to login"));
 
     FOnlineAccountCredentials credentials;
+    credentials.Id = FString();
+    credentials.Token = FString();
     credentials.Type = FString("accountportal");
 
     IdentityInterface->Login(0, credentials);
@@ -93,14 +95,15 @@ void UEOSSubsystem::CreateSession(FString ServerName, FString HostName)
     FOnlineSessionSettings sessionSettings;
 
     sessionSettings.bIsDedicated = false;
+    sessionSettings.bAllowInvites = true;
     sessionSettings.bAllowJoinInProgress = true;
-    sessionSettings.bIsDedicated = false;
+    sessionSettings.bAllowJoinViaPresence = true;
     sessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
     sessionSettings.bShouldAdvertise = true;
     sessionSettings.bUsesPresence = true;
     sessionSettings.NumPublicConnections = 4;
-    sessionSettings.bUseLobbiesIfAvailable = false;
-    sessionSettings.bUseLobbiesVoiceChatIfAvailable = false;
+    sessionSettings.bUseLobbiesIfAvailable = true;
+    //sessionSettings.bUseLobbiesVoiceChatIfAvailable = false;
     sessionSettings.Set(FName("SERVER_NAME_KEY"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
     sessionSettings.Set(FName("SERVER_HOSTNAME_KEY"), HostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
@@ -113,7 +116,7 @@ void UEOSSubsystem::FindSessions()
     SessionSearch = MakeShareable(new FOnlineSessionSearch());
 
     SessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
-    SessionSearch->MaxSearchResults = 10000;//big number because of other steam users with the same appId
+    SessionSearch->MaxSearchResults = 20;
     SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 
     SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
@@ -123,11 +126,11 @@ void UEOSSubsystem::JoinSession(int32 Index)
 {
     FOnlineSessionSearchResult result = SessionSearch->SearchResults[Index];
 
-    if (!result.IsValid())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Joining session with index %d failed"), Index);
-        return;
-    }
+    //if (!result.IsValid())
+    //{
+    //    UE_LOG(LogTemp, Warning, TEXT("Joining session with index %d failed"), Index);
+    //    return;
+    //}
 
     UE_LOG(LogTemp, Log, TEXT("Joining session at index %d ..."), Index);
     SessionInterface->JoinSession(0, NAME_GameSession, result);
@@ -135,6 +138,9 @@ void UEOSSubsystem::JoinSession(int32 Index)
 
 void UEOSSubsystem::DestroySession()
 {
+    if(!SessionInterface->GetNamedSession(NAME_GameSession))
+        return;
+
     SessionInterface->DestroySession(NAME_GameSession);
 }
 
@@ -159,6 +165,7 @@ void UEOSSubsystem::OnCreateSessionComplete(FName SessionName, bool Succeeded)
 void UEOSSubsystem::OnFindSessionComplete(bool Succeeded)
 {
     UE_LOG(LogTemp, Warning, TEXT("OnFindSessionComplete Succeeded: %d"), Succeeded);
+    UE_LOG(LogTemp, Warning, TEXT("FoundSession Num: %d"), SessionSearch->SearchResults.Num());
 
     if (!Succeeded)
         return;
@@ -166,22 +173,22 @@ void UEOSSubsystem::OnFindSessionComplete(bool Succeeded)
     TArray<FServerInfo> infos;
     int i = 0;
 
-    for (FOnlineSessionSearchResult SR : SessionSearch->SearchResults)
+    for (FOnlineSessionSearchResult& SR : SessionSearch->SearchResults)
     {
-        if (!SR.IsValid())
-            continue;
+        //if (!SR.IsValid())
+        //    continue;
 
-        FServerInfo info;
-        FString serverName = "Empty server same";
-        FString hostName = "Empty host name";
+		FServerInfo info;
+		FString serverName = "Empty server same";
+		FString hostName = "Empty host name";
 
-        SR.Session.SessionSettings.Get(FName("SERVER_NAME_KEY"), serverName);
-        SR.Session.SessionSettings.Get(FName("SERVER_HOSTNAME_KEY"), hostName);
-
-        info.ServerName = serverName;
-        info.MaxPlayers = SR.Session.SessionSettings.NumPublicConnections;
-        info.CurrentPlayers = info.MaxPlayers - SR.Session.NumOpenPublicConnections;
-        info.SetPlayerCount();
+		SR.Session.SessionSettings.Get(FName("SERVER_NAME_KEY"), serverName);
+		SR.Session.SessionSettings.Get(FName("SERVER_HOSTNAME_KEY"), hostName);
+        
+		info.ServerName = serverName;
+		info.MaxPlayers = SR.Session.SessionSettings.NumPublicConnections;
+		info.CurrentPlayers = info.MaxPlayers - SR.Session.NumOpenPublicConnections;
+		info.SetPlayerCount();
         info.ArrayIndex = i;
         ++i;
 
