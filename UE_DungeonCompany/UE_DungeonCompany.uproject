@@ -25,10 +25,6 @@
 			]
 		},
 		{
-			"Name": "OnlineSubsystemSteam",
-			"Enabled": true
-		},
-		{
 			"Name": "EOSVoiceChat",
 			"Enabled": true
 		},
