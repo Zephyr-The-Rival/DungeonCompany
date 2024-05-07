@@ -271,6 +271,9 @@ protected://inventory & Backpack
 		void DropItem();
 		
 		void SwitchHand();
+		bool BSwichHandAllowed=true;
+		UFUNCTION()
+		void AllowSwitchHand();
 
 
 public:

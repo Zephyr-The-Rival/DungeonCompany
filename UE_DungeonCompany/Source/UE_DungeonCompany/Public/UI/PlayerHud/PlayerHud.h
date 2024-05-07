@@ -10,6 +10,8 @@
  * 
  */
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSwichDoneDelegate);
+
 class APlayerCharacter;
 
 UCLASS()
@@ -41,9 +43,16 @@ public:
 	void ToggleInventory(bool On);
 	void ToggleInventory_Implementation(bool On);
 
-		UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent)
 	void RefreshInventory();
 	void RefreshInventory_Implementation();
 
+
+	UFUNCTION(BlueprintNativeEvent)
+	void SwichHandDisplays(bool ToHandA);
+	void SwichHandDisplays_Implementation(bool ToHandA);
+
+	UPROPERTY(BlueprintCallable, Category = "Events")
+    FSwichDoneDelegate OnSwichingDone;
 
 };

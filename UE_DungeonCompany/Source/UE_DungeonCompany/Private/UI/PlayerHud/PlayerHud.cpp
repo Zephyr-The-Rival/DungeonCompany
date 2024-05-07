@@ -29,3 +29,8 @@ void UPlayerHud::RefreshInventory_Implementation()
 {
 	LogWarning(TEXT("UPlayerHud::RefreshInventory_Implementation has not been overidden"));
 }
+
+void UPlayerHud::SwichHandDisplays_Implementation(bool ToHandA)
+{
+	LogWarning(TEXT("UPlayerHud::SwichHandDisplays_Implementation has not been overidden"));
+}

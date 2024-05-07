@@ -638,8 +638,20 @@ void APlayerCharacter::DropItem()
 
 void APlayerCharacter::SwitchHand()
 {
-	this->BSlotAIsInHand = !BSlotAIsInHand;
-	TakeOutItem();
+	if (BSwichHandAllowed)
+	{
+		BSwichHandAllowed = false;
+		this->BSlotAIsInHand = !BSlotAIsInHand;
+		TakeOutItem();
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(BSlotAIsInHand);
+	}
+}
+
+void APlayerCharacter::AllowSwitchHand()
+{
+	BSwichHandAllowed = true;
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.RemoveAll(this);
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
