@@ -43,15 +43,20 @@ void UEOSSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UEOSSubsystem::Login()
 {
-    FUniqueNetIdPtr netId = IdentityInterface->GetUniquePlayerId(0);
+    //FUniqueNetIdPtr netId = IdentityInterface->GetUniquePlayerId(0);
+    //
+    //if (netId != nullptr && IdentityInterface->GetLoginStatus(0) == ELoginStatus::LoggedIn)
+    //    return;
+    //
+    //UE_LOG(LogTemp, Log, TEXT("Logging into EOS"));
+    //
+    //if (!IdentityInterface->AutoLogin(0))
+    //    UE_LOG(LogTemp, Warning, TEXT("Failed to login"));
 
-    if (netId != nullptr && IdentityInterface->GetLoginStatus(0) == ELoginStatus::LoggedIn)
-        return;
-    
-    UE_LOG(LogTemp, Log, TEXT("Logging into EOS"));
+    FOnlineAccountCredentials credentials;
+    credentials.Type = FString("accountportal");
 
-    if (!IdentityInterface->AutoLogin(0))
-        UE_LOG(LogTemp, Warning, TEXT("Failed to login"));
+    IdentityInterface->Login(0, credentials);
 
 }
 
