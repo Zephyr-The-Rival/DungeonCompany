@@ -897,16 +897,14 @@ void APlayerCharacter::RightMouseButtonPressed()
 
 void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 {
-	FString message;
-
-	if (Value.Get<float>() > 0)
+	if (BInventoryIsOn)
 	{
-		message = "ScrollingUP";
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlightScroll((Value.Get<float>() > 0));
 	}
 	else
-		message = "ScrollingDown";
+	{
 
-	LogWarning(*message);
+	}
 
 }
 
