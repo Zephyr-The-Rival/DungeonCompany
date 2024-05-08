@@ -70,8 +70,9 @@ public:
 	void MoveHighlight_Implementation(EDirections direction);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void MouseButtonPressed(bool left);
-	void MouseButtonPressed_Implementation(bool left);
+	void MoveHighlightScroll(bool up);
+	void MoveHighlightScroll_Implementation(bool up);
+
 	
 
 

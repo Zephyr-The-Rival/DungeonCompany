@@ -202,6 +202,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	
 	EIC->BindAction(MouseRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::RightMouseButtonPressed);
 	EIC->BindAction(MouseLeftAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::LeftMouseButtonPressed);
+	
+	EIC->BindAction(ScrollAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::MouseWheelScrolled);
+
+	
 
 	
 
@@ -869,7 +873,7 @@ void APlayerCharacter::LeftMouseButtonPressed()
 {
 	if (BInventoryIsOn)
 	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MouseButtonPressed(true);
+		//Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MouseButtonPressed(true);
 	}
 	else
 	{
@@ -881,11 +885,28 @@ void APlayerCharacter::RightMouseButtonPressed()
 {
 	if (BInventoryIsOn)
 	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MouseButtonPressed(false);
+		//Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MouseButtonPressed(false);
+
+
 	}
 	else
 	{
 		
 	}
+}
+
+void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
+{
+	FString message;
+
+	if (Value.Get<float>() > 0)
+	{
+		message = "ScrollingUP";
+	}
+	else
+		message = "ScrollingDown";
+
+	LogWarning(*message);
+
 }
 

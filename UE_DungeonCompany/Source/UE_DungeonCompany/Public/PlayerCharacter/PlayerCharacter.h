@@ -101,6 +101,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* MouseLeftAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ScrollAction;
+	
+
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool IsCrouchOnHold() const;
@@ -360,5 +364,5 @@ private://only controller controls
 	//only pc controls
 	void LeftMouseButtonPressed();
 	void RightMouseButtonPressed();
-
+	void MouseWheelScrolled(const FInputActionValue& Value);
 };

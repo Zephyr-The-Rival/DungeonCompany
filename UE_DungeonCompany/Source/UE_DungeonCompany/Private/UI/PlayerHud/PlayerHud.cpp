@@ -35,7 +35,9 @@ void UPlayerHud::MoveHighlight_Implementation(EDirections direction)
 	LogWarning(TEXT("UPlayerHud::MoveHighlight_Implementation has not been overidden"));
 }
 
-void UPlayerHud::MouseButtonPressed_Implementation(bool left)
+void UPlayerHud::MoveHighlightScroll_Implementation(bool up)
 {
-	LogWarning(TEXT("UPlayerHud::MouseButtonPressed_Implementation has not been overidden"));
+	LogWarning(TEXT("UPlayerHud::MoveHighlight_ScrollImplementation has not been overidden"));
 }
+
+
