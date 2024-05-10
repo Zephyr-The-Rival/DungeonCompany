@@ -18,6 +18,7 @@ class UInventory;
 class UInventorySlot;
 
 
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
 {
@@ -103,6 +104,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ScrollAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* DropItemAction;
 	
 
 public:
@@ -295,6 +299,8 @@ protected://inventory & Backpack
 		void AllowSwitchHand();
 
 		void EquipCurrentInventorySelection(bool BToA);
+
+		void DropItemPressed();
 
 
 public:

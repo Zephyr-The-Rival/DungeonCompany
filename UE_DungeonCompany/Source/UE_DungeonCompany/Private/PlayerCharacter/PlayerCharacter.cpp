@@ -204,6 +204,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(MouseLeftAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::LeftMouseButtonPressed);
 	
 	EIC->BindAction(ScrollAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::MouseWheelScrolled);
+	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
 
 	
 
@@ -714,6 +715,14 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 }
 
+void APlayerCharacter::DropItemPressed()
+{
+	if (this->BInventoryIsOn)
+		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
+	else
+		DropItem(GetCurrentlyHeldInventorySlot());
+}
+
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
 {
 	if (!HasAuthority())
@@ -873,7 +882,7 @@ void APlayerCharacter::LeftMouseButtonPressed()
 {
 	if (BInventoryIsOn)
 	{
-		//Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MouseButtonPressed(true);
+		EquipCurrentInventorySelection(true);
 	}
 	else
 	{
@@ -885,7 +894,7 @@ void APlayerCharacter::RightMouseButtonPressed()
 {
 	if (BInventoryIsOn)
 	{
-		//Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MouseButtonPressed(false);
+		EquipCurrentInventorySelection(false);
 
 
 	}
@@ -903,7 +912,7 @@ void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 	}
 	else
 	{
-
+		SwitchHand();
 	}
 
 }
