@@ -9,12 +9,15 @@
 #include "PlayerCharacter.generated.h"
 
 class AWorldItem;
-
+class UItemData;
 class UVOIPTalker;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 class UInventory;
+class UInventorySlot;
+
+
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
@@ -69,13 +72,42 @@ private:
 	UInputAction* InteractAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* IterateItemsLeftAction;
+	UInputAction* DPadUpAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* IterateItemsRightAction;
+	UInputAction* DPadDownAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* DPadLeftAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* DPadRightAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ToggleInventoryPCAction;
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ToggleInventoryControllerAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* FaceUpAction;
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* FaceDownAction;
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* FaceLeftAction;
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* FaceRightAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* MouseRightAction;
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* MouseLeftAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ScrollAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* DropItemAction;
+	
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
@@ -93,7 +125,7 @@ public:
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-private:
+private://interact
 	IInteractable* CurrentInteractable;
 
 protected:
@@ -213,13 +245,16 @@ protected:
 
 private:
 	UPROPERTY(BlueprintGetter=GetStamina)
-	float Stamina = MaxStamina;
+	float Stamina;
 	bool bResting = false;
 
 	FTimerHandle RestDelayTimerHandle;
 	FTimerDelegate RestDelegate;
 
 public:
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
+	float MaxStamina = 5.f;
+
 	void AddStamina(float AddingStamina);
 	void SubstractStamina(float SubStamina);
 	
@@ -238,6 +273,7 @@ protected:
 private:
 	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 
+protected://inventory & Backpack
 public:
 	void ReportTalking(float Loudness);
 
@@ -248,41 +284,76 @@ protected://inventory
 	UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
 	UInventory* Inventory;
 
-	void IterateItemsLeft();
-	void IterateItemsRight();
-	void TakeOutItem();
-	AWorldItem* CurrentlyHeldItem;
-	
-	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
-	UFUNCTION(Server, Unreliable)
-	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
-	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
-	
-	void DropItem();
+		UPROPERTY(EditAnywhere, BlueprintGetter= GetBackpack)
+		UInventory* Backpack;
 
+		bool BSlotAIsInHand=true;
+
+		void ToggleInventoryPC();
+		void ToggleInventoryController();
+		void ToggleInventory(bool ControllerVersion);
+		bool BInventoryIsOn=false;
+
+		UInventorySlot* GetCurrentlyHeldInventorySlot();
+		UInventorySlot* FindFreeSlot();
+
+		void TakeOutItem();
+		AWorldItem* CurrentlyHeldWorldItem;
+
+		void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+		UFUNCTION(Server, Unreliable)
+		void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+		void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+
+		void DropItem(UInventorySlot* SlotToEmpty);
+		
+		void SwitchHand();
+		bool BSwichHandAllowed=true;
+		UFUNCTION()
+		void AllowSwitchHand();
+
+		void EquipCurrentInventorySelection(bool BToA);
+
+		void DropItemPressed();
 
 
 public:
-	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-	UInventory* GetInventory() const { return Inventory; }
+		UPROPERTY(EditAnywhere,BlueprintReadOnly)
+		bool BHasBackPack = false;
 
-	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-	int32 GetInventoryIndexInFocus() const { return this->InventoryIndexInFocus; }
+		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+		UInventory* GetInventory() const { return Inventory; }
+
+		UFUNCTION(BlueprintPure,BlueprintInternalUseOnly)
+		UInventory* GetBackpack() const {return Backpack;}
+
+		UPROPERTY(EditAnywhere,BlueprintReadOnly)
+		UInventorySlot* HandSlotA;
+		UPROPERTY(EditAnywhere,BlueprintReadOnly)
+		UInventorySlot* HandSlotB;
+		//bool BItemAIsInHand is protected
+		
+
+
 private:
 	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
 	UFUNCTION(Server,Unreliable)
 	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
 	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+
+public:
+	void ReportTalking(float Loudness);
 		
 public://Health
 
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetHealth() const { return this->HP; }
-
-
-protected:
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
 	float MaxHP=100;
+
+protected:
+
 
 private:
 	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
@@ -294,4 +365,20 @@ private:
 	float LastStandingHeight;
 	bool BWasFallingInLastFrame=false;
 
+private://only controller controls
+
+	void DPadUpPressed();
+	void DPadDownPressed();
+	void DPadLeftPressed();
+	void DPadRightPressed();
+	
+	void FaceUpPressed();
+	void FaceDownPressed();
+	void FaceLeftPressed();
+	void FaceRightPressed();
+
+	//only pc controls
+	void LeftMouseButtonPressed();
+	void RightMouseButtonPressed();
+	void MouseWheelScrolled(const FInputActionValue& Value);
 };
