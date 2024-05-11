@@ -132,12 +132,6 @@ void APlayerCharacter::LocalTick(float DeltaTime)
 	StaminaTick(DeltaTime);
 	IOnlineVoicePtr ptr = Online::GetVoiceInterface(IOnlineSubsystem::Get()->GetSubsystemName());
 	CheckForFallDamage();
-
-	if (IsValid(CurrentlyHeldWorldItem))
-	{
-		CurrentlyHeldWorldItem->OnRep_AttachmentReplication();
-	}
-	
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -213,8 +207,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	
 	EIC->BindAction(ScrollAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::MouseWheelScrolled);
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
-
-	
 
 	
 
@@ -671,7 +663,9 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 	FTransform SpawnTransform;
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
 
-	AttachItemToHand();
+	FTimerHandle h;
+	GetWorldTimerManager().SetTimer(h, this, &APlayerCharacter::AttachItemToHand,1,false);
+	//AttachItemToHand();
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const 
@@ -686,7 +680,6 @@ void APlayerCharacter::AttachItemToHand_Implementation()
 	FRepAttachment rules = FRepAttachment();
 	CurrentlyHeldWorldItem->OnHoldingInHand();
 	CurrentlyHeldWorldItem->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
-
 }
 
 void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
