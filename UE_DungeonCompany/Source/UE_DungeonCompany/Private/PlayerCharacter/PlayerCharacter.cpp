@@ -132,6 +132,12 @@ void APlayerCharacter::LocalTick(float DeltaTime)
 	StaminaTick(DeltaTime);
 	IOnlineVoicePtr ptr = Online::GetVoiceInterface(IOnlineSubsystem::Get()->GetSubsystemName());
 	CheckForFallDamage();
+
+	if (IsValid(CurrentlyHeldWorldItem))
+	{
+		CurrentlyHeldWorldItem->OnRep_AttachmentReplication();
+	}
+	
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -680,7 +686,7 @@ void APlayerCharacter::AttachItemToHand_Implementation()
 	FRepAttachment rules = FRepAttachment();
 	CurrentlyHeldWorldItem->OnHoldingInHand();
 	CurrentlyHeldWorldItem->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
-	CurrentlyHeldWorldItem->OnRep_AttachmentReplication();
+
 }
 
 void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
