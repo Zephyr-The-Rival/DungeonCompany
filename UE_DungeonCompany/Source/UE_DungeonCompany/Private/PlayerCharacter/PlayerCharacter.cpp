@@ -303,11 +303,30 @@ void APlayerCharacter::Server_DestroyWorldItem_Implementation(AWorldItem* ItemTo
 
 void APlayerCharacter::Interact()
 {
-	if(!CurrentInteractable)
+	if(!CurrentInteractable || !CurrentInteractable->IsInteractable())
 		return;
 
 	CurrentInteractable->Interact(this);
 
+	if (!CurrentInteractable->IsInteractionRunningOnServer())
+		return;
+	
+
+	if(!HasAuthority())
+		Server_Interact(Cast<UObject>(CurrentInteractable));
+	else
+		Server_Interact_Implementation(Cast<UObject>(CurrentInteractable));
+
+}
+
+void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
+{
+	if(!IsValid(Interactable))
+		return;
+
+	if (IInteractable* interactableInterface = Cast<IInteractable>(Interactable))
+		interactableInterface->AuthorityInteract(this);
+	
 }
 
 void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)

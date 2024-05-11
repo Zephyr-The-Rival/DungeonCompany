@@ -142,6 +142,12 @@ protected:
 public:
 	void Interact();
 
+protected:
+	UFUNCTION(Server, Unreliable)
+	void Server_Interact(UObject* Interactable);
+	void Server_Interact_Implementation(UObject* Interactable);
+
+public:
 	void PickUpItem(AWorldItem* WorldItem);
 
 protected:
@@ -226,7 +232,6 @@ public:
 
 protected:
 
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
 	float SprintStaminaDrainPerSecond = 1.f;
 
@@ -245,7 +250,7 @@ private:
 	FTimerDelegate RestDelegate;
 
 public:
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
 	float MaxStamina = 5.f;
 
 	void AddStamina(float AddingStamina);
@@ -263,44 +268,46 @@ private:
 protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
+private:
+	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 
 protected://inventory & Backpack
 
 
-		UPROPERTY(EditAnywhere, BlueprintGetter= GetInventory)
-		UInventory* Inventory;
+	UPROPERTY(EditAnywhere, BlueprintGetter = GetInventory)
+	UInventory* Inventory;
 
-		UPROPERTY(EditAnywhere, BlueprintGetter= GetBackpack)
-		UInventory* Backpack;
+	UPROPERTY(EditAnywhere, BlueprintGetter = GetBackpack)
+	UInventory* Backpack;
 
-		bool BSlotAIsInHand=true;
+	bool BSlotAIsInHand = true;
 
-		void ToggleInventoryPC();
-		void ToggleInventoryController();
-		void ToggleInventory(bool ControllerVersion);
-		bool BInventoryIsOn=false;
+	void ToggleInventoryPC();
+	void ToggleInventoryController();
+	void ToggleInventory(bool ControllerVersion);
+	bool BInventoryIsOn = false;
 
-		UInventorySlot* GetCurrentlyHeldInventorySlot();
-		UInventorySlot* FindFreeSlot();
+	UInventorySlot* GetCurrentlyHeldInventorySlot();
+	UInventorySlot* FindFreeSlot();
 
-		void TakeOutItem();
-		AWorldItem* CurrentlyHeldWorldItem;
+	void TakeOutItem();
+	AWorldItem* CurrentlyHeldWorldItem;
 
-		void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
-		UFUNCTION(Server, Unreliable)
-		void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
-		void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	UFUNCTION(Server, Unreliable)
+	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
 
-		void DropItem(UInventorySlot* SlotToEmpty);
-		
-		void SwitchHand();
-		bool BSwichHandAllowed=true;
-		UFUNCTION()
-		void AllowSwitchHand();
+	void DropItem(UInventorySlot* SlotToEmpty);
 
-		void EquipCurrentInventorySelection(bool BToA);
+	void SwitchHand();
+	bool BSwichHandAllowed = true;
+	UFUNCTION()
+	void AllowSwitchHand();
 
-		void DropItemPressed();
+	void EquipCurrentInventorySelection(bool BToA);
+
+	void DropItemPressed();
 
 
 public:
@@ -322,10 +329,6 @@ public:
 
 
 private:
-	class UAIPerceptionStimuliSourceComponent* StimulusSource;
-
-private:
-
 	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
 	UFUNCTION(Server,Unreliable)
 	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
