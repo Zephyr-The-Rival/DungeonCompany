@@ -46,7 +46,7 @@ void ALadder::OnConstruction(const FTransform& Transform)
 		return;
 
 	LadderMesh->SetStaticMesh(LadderSectionReference);
-	LadderSectionReference->SetMaterial(0, Material);
+	//LadderSectionReference->SetMaterial(0, Material);
 	
 	for (unsigned int i = 0; i < SectionsCount; ++i)
 	{

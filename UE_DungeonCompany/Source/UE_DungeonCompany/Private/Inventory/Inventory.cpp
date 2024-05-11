@@ -41,17 +41,18 @@ void UInventory::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompo
 
 }
 
-bool UInventory::AddItem(UItemData* Item)
+int32 UInventory::AddItem(UItemData* Item)
 {
-	for (UInventorySlot* s : this->Slots)
+	//returns the slot index or -1
+	for (int32 i=0; i<NumInventorySlots;i++)
 	{		
-		if (!IsValid(s->MyItem))//free slot
+		if (!IsValid(Slots[i]->MyItem))//free slot
 		{
-			s->MyItem = Item;
-			return true;
+			Slots[i]->MyItem = Item;
+			return i;
 		}			
 	}
-	return false;
+	return -1;
 }
 
 UItemData* UInventory::GetItemAtIndex(int32 Index)
@@ -64,8 +65,10 @@ void UInventory::RemoveItem(UItemData* ItemToRemove)
 	for (UInventorySlot* s : this->Slots)
 	{
 		if (s->MyItem == ItemToRemove)
+		{
 			s->MyItem = nullptr;
-		
+			return;
+		}		
 	}
 }
 
