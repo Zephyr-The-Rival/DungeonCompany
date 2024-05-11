@@ -34,6 +34,7 @@ private:
 public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
+	TObjectPtr<USkeletalMeshComponent> GetFirstPersonMesh() const { return this->FirstPersonMesh; }
 protected:
 	virtual void BeginPlay() override;
 

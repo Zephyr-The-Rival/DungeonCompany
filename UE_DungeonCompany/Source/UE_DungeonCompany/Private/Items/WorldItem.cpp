@@ -26,6 +26,8 @@ void AWorldItem::BeginPlay()
 	if (IsValid(this->ItemDataClass) && this->MyData==NULL)
 		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
 
+	if (bAttachOnBeginPlay && IsValid(MyAttachedCharacter))
+		AttachToPlayer();
 }
 
 
@@ -40,6 +42,12 @@ void AWorldItem::Tick(float DeltaTime)
 void AWorldItem::OnHoldingInHand_Implementation()
 {
 	LogWarning(*(this->GetName()+"->OnHoldingInHand() was not overridden"));
+}
+
+void AWorldItem::AttachToPlayer()
+{
+	this->OnHoldingInHand();
+	this->AttachToComponent(MyAttachedCharacter->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
 }
 
 void AWorldItem::Interact(APawn* InteractingPawn)

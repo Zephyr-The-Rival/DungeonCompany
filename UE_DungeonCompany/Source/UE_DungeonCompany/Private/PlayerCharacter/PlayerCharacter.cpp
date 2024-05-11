@@ -659,13 +659,12 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 {
 	//if is in first person or not will have to make a difference
 
-
 	FTransform SpawnTransform;
-	CurrentlyHeldWorldItem = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
+	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
+	CurrentlyHeldWorldItem->bAttachOnBeginPlay = true;
+	CurrentlyHeldWorldItem->MyAttachedCharacter = this;
+	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
 
-	FTimerHandle h;
-	GetWorldTimerManager().SetTimer(h, this, &APlayerCharacter::AttachItemToHand,1,false);
-	//AttachItemToHand();
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const 
@@ -677,7 +676,6 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 void APlayerCharacter::AttachItemToHand_Implementation()
 {	
-	FRepAttachment rules = FRepAttachment();
 	CurrentlyHeldWorldItem->OnHoldingInHand();
 	CurrentlyHeldWorldItem->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
 }

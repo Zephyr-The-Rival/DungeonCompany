@@ -44,4 +44,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UItemData> ItemDataClass;
 
+public://attached to hand
+
+	bool bAttachOnBeginPlay = false;
+	APlayerCharacter* MyAttachedCharacter;
+	void AttachToPlayer();
+
 };
