@@ -663,8 +663,10 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 
 	i->OnHoldingInHand();
 
-	FAttachmentTransformRules rules= FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget,EAttachmentRule::KeepWorld, true);
-	i->AttachToComponent(FirstPersonMesh, rules, "Item_Joint_R");
+	/*FAttachmentTransformRules rules= FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget,EAttachmentRule::KeepWorld, true);
+	i->AttachToComponent(FirstPersonMesh, rules, "Item_Joint_R");*/
+	
+	i->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true) , "Item_Joint_R");
 
 	CurrentlyHeldWorldItem = i;
 }
