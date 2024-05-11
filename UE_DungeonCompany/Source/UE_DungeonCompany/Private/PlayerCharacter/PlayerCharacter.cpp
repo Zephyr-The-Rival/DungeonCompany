@@ -673,13 +673,6 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 }
 
-
-void APlayerCharacter::AttachItemToHand_Implementation()
-{	
-	CurrentlyHeldWorldItem->OnHoldingInHand();
-	CurrentlyHeldWorldItem->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
-}
-
 void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 {
 	if (IsValid(SlotToEmpty->MyItem))

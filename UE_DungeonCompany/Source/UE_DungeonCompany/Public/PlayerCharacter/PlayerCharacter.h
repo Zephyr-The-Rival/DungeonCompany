@@ -303,8 +303,6 @@ protected://inventory & Backpack
 	UFUNCTION(Server, Unreliable)
 	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
 
-	UFUNCTION(NetMulticast, Unreliable)
-	void AttachItemToHand();
 
 	void DropItem(UInventorySlot* SlotToEmpty);
 

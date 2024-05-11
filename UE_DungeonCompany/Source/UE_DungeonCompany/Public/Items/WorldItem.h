@@ -48,6 +48,8 @@ public://attached to hand
 
 	bool bAttachOnBeginPlay = false;
 	APlayerCharacter* MyAttachedCharacter;
+	
+	UFUNCTION(NetMulticast, Unreliable)
 	void AttachToPlayer();
 
 };
