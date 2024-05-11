@@ -663,14 +663,14 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 	FTransform SpawnTransform;
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
 
-	this->AttachItemToHand();
+	AttachItemToHand(CurrentlyHeldWorldItem);
 }
 
 
-void APlayerCharacter::AttachItemToHand_Implementation()
+void APlayerCharacter::AttachItemToHand_Implementation(AWorldItem* i)
 {
-	CurrentlyHeldWorldItem->OnHoldingInHand();
-	CurrentlyHeldWorldItem->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+	i->OnHoldingInHand();
+	i->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
 }
 
 void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)

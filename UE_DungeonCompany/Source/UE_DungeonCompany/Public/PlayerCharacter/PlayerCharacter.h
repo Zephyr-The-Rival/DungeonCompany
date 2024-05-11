@@ -299,8 +299,7 @@ protected://inventory & Backpack
 	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void AttachItemToHand();
-	void AttachItemToHand_Implementation();
+	void AttachItemToHand(AWorldItem* i);
 
 	void DropItem(UInventorySlot* SlotToEmpty);
 
