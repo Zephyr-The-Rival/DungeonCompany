@@ -10,6 +10,8 @@
 #include "Inventory/Inventory.h"
 #include "Inventory/InventorySlot.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Net/UnrealNetwork.h"
+
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -663,14 +665,21 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 	FTransform SpawnTransform;
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
 
-	AttachItemToHand(CurrentlyHeldWorldItem);
+	AttachItemToHand();
+}
+
+void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const 
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 }
 
 
-void APlayerCharacter::AttachItemToHand_Implementation(AWorldItem* i)
+void APlayerCharacter::AttachItemToHand_Implementation()
 {
-	i->OnHoldingInHand();
-	i->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+
+	CurrentlyHeldWorldItem->OnHoldingInHand();
+	CurrentlyHeldWorldItem->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
 }
 
 void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)

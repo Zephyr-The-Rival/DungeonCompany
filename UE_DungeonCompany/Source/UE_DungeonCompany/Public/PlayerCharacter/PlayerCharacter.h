@@ -291,7 +291,11 @@ protected://inventory & Backpack
 	UInventorySlot* FindFreeSlot();
 
 	void TakeOutItem();
+
+	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
 
@@ -299,7 +303,7 @@ protected://inventory & Backpack
 	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void AttachItemToHand(AWorldItem* i);
+	void AttachItemToHand();
 
 	void DropItem(UInventorySlot* SlotToEmpty);
 
