@@ -677,7 +677,9 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 void APlayerCharacter::AttachItemToHand_Implementation()
 {
-	LogWarning(TEXT("AttachHasBeenCalled"));
+	FString message = "CurrentlyHeldWorldItem is: " + (IsValid(CurrentlyHeldWorldItem))+ CurrentlyHeldWorldItem->MyData->Name;
+	LogWarning(*message);
+	
 	CurrentlyHeldWorldItem->OnHoldingInHand();
 	CurrentlyHeldWorldItem->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
 }
