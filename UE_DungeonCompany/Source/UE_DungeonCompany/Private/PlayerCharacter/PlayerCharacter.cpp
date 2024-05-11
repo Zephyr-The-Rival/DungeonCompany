@@ -676,12 +676,11 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 
 void APlayerCharacter::AttachItemToHand_Implementation()
-{
-	FString message = "CurrentlyHeldWorldItem is: " + (IsValid(CurrentlyHeldWorldItem))+ CurrentlyHeldWorldItem->MyData->Name;
-	LogWarning(*message);
-	
+{	
+	FRepAttachment rules = FRepAttachment();
 	CurrentlyHeldWorldItem->OnHoldingInHand();
 	CurrentlyHeldWorldItem->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+	CurrentlyHeldWorldItem->OnRep_AttachmentReplication();
 }
 
 void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
