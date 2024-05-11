@@ -645,6 +645,8 @@ void APlayerCharacter::TakeOutItem()
 	}
 }
 
+
+
 void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn)
 {
 	if (HasAuthority())
@@ -659,16 +661,16 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 
 
 	FTransform SpawnTransform;
-	AWorldItem* i = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
+	CurrentlyHeldWorldItem = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
 
-	i->OnHoldingInHand();
+	this->AttachItemToHand();
+}
 
-	/*FAttachmentTransformRules rules= FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget,EAttachmentRule::KeepWorld, true);
-	i->AttachToComponent(FirstPersonMesh, rules, "Item_Joint_R");*/
-	
-	i->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true) , "Item_Joint_R");
 
-	CurrentlyHeldWorldItem = i;
+void APlayerCharacter::AttachItemToHand_Implementation()
+{
+	CurrentlyHeldWorldItem->OnHoldingInHand();
+	CurrentlyHeldWorldItem->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
 }
 
 void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
@@ -685,14 +687,6 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 		}
 
 	}
-
-	//if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
-	//{
-	//	CurrentlyHeldWorldItem->Destroy();//has to be on server?
-
-	//	SpawnDroppedWorldItem(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass);
-	//	Inventory->RemoveItem(GetCurrentlyHeldInventorySlot()->MyItem);
-	//}
 }
 
 void APlayerCharacter::SwitchHand()
