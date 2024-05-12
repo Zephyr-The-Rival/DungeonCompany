@@ -166,6 +166,7 @@ protected:
 	float JumpVelocity = 420.f;
 
 private:
+	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
 	
 protected:
@@ -198,6 +199,10 @@ protected:
 	void Server_StopSprint_Implementation();
 
 public:
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	bool GetIsSprinting() const {return this->bSprinting;}
+
 	UFUNCTION(Server, Unreliable)
 	void Server_SetActorLocation(const FVector& InLocation);
 	void Server_SetActorLocation_Implementation(const FVector& InLocation);
@@ -315,6 +320,8 @@ protected://inventory & Backpack
 
 	void DropItemPressed();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UObject> NoItemAnimationBlueprintClass;
 
 public:
 		UPROPERTY(EditAnywhere,BlueprintReadOnly)
@@ -332,6 +339,7 @@ public:
 		UInventorySlot* HandSlotB;
 		//bool BItemAIsInHand is protected
 		
+
 
 
 private:

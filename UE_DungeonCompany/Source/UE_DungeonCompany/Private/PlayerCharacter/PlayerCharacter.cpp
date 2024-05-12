@@ -650,7 +650,7 @@ void APlayerCharacter::TakeOutItem()
 	}
 	else
 	{
-		//animClass of regular hands
+		this->FirstPersonMesh->SetAnimClass(NoItemAnimationBlueprintClass);
 	}
 }
 
