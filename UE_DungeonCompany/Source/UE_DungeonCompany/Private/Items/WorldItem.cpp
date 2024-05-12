@@ -30,7 +30,6 @@ void AWorldItem::BeginPlay()
 	if (IsValid(MyCharacterToAttachTo))
 	{
 		AttachToPlayer();
-		LogWarning(TEXT("ATTACH was called on begin play"));
 	}
 	
 }
@@ -57,7 +56,10 @@ void AWorldItem::OnHoldingInHand_Implementation()
 void AWorldItem::AttachToPlayer()
 {
 	this->OnHoldingInHand();
+	LogWarning(TEXT("Attaching to player..."));
 	this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+	this->SetActorScale3D(FVector(1, 1, 1));
+
 }
 
 void AWorldItem::Interact(APawn* InteractingPawn)
