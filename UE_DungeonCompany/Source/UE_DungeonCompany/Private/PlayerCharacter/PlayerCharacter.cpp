@@ -683,7 +683,7 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass);
 		SlotToEmpty->MyItem = nullptr;
 
-		if (GetCurrentlyHeldInventorySlot()==SlotToEmpty)
+		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
 		{
 			TakeOutItem();
 		}
