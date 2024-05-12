@@ -662,8 +662,7 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 	FTransform SpawnTransform;
 	LogWarning(TEXT("Spawning Item..."));
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
-	CurrentlyHeldWorldItem->bAttachOnBeginPlay = true;
-	CurrentlyHeldWorldItem->MyAttachedCharacter = this;
+	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this;
 	LogWarning(TEXT("Values were set. Spawning now:"));
 	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
 	LogWarning(TEXT("FinishedSpawning"));

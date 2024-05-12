@@ -5,6 +5,7 @@
 #include "Items/ItemData.h"
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AWorldItem::AWorldItem()
@@ -26,7 +27,7 @@ void AWorldItem::BeginPlay()
 	if (IsValid(this->ItemDataClass) && this->MyData==NULL)
 		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
 
-	if (bAttachOnBeginPlay && IsValid(MyAttachedCharacter))
+	if (IsValid(MyCharacterToAttachTo))
 	{
 		AttachToPlayer();
 		LogWarning(TEXT("ATTACH was called on begin play"));
@@ -35,6 +36,11 @@ void AWorldItem::BeginPlay()
 }
 
 
+void AWorldItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWorldItem, MyCharacterToAttachTo);
+}
 
 // Called every frame
 void AWorldItem::Tick(float DeltaTime)
@@ -51,7 +57,7 @@ void AWorldItem::OnHoldingInHand_Implementation()
 void AWorldItem::AttachToPlayer()
 {
 	this->OnHoldingInHand();
-	this->AttachToComponent(MyAttachedCharacter->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+	this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
 }
 
 void AWorldItem::Interact(APawn* InteractingPawn)

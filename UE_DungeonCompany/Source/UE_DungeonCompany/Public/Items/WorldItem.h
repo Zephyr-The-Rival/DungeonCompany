@@ -46,9 +46,10 @@ protected:
 
 public://attached to hand
 
-	bool bAttachOnBeginPlay = false;
-	APlayerCharacter* MyAttachedCharacter;
+	UPROPERTY(Replicated)
+	APlayerCharacter* MyCharacterToAttachTo;
 	
 	void AttachToPlayer();
-
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
