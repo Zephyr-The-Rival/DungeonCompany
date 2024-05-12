@@ -667,11 +667,6 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 
 }
 
-void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const 
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
-}
 
 void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 {

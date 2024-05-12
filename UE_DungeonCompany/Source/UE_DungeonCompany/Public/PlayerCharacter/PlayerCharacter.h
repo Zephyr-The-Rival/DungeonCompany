@@ -293,10 +293,8 @@ protected://inventory & Backpack
 
 	void TakeOutItem();
 
-	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
 

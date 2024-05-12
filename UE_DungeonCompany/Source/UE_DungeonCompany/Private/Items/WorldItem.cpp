@@ -44,7 +44,7 @@ void AWorldItem::OnHoldingInHand_Implementation()
 	LogWarning(*(this->GetName()+"->OnHoldingInHand() was not overridden"));
 }
 
-void AWorldItem::AttachToPlayer_Implementation()
+void AWorldItem::AttachToPlayer()
 {
 	this->OnHoldingInHand();
 	this->AttachToComponent(MyAttachedCharacter->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
