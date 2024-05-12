@@ -639,7 +639,6 @@ void APlayerCharacter::TakeOutItem()
 {
 	if (IsValid(CurrentlyHeldWorldItem))//destroying old item
 	{
-		LogWarning(TEXT("calling destroy world item"));
 		DestroyWorldItem(CurrentlyHeldWorldItem);
 	}
 		
@@ -686,7 +685,6 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 
 		if (GetCurrentlyHeldInventorySlot()==SlotToEmpty)
 		{
-			DestroyWorldItem(CurrentlyHeldWorldItem);
 			TakeOutItem();
 		}
 
