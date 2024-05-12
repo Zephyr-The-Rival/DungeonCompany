@@ -27,7 +27,11 @@ void AWorldItem::BeginPlay()
 		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
 
 	if (bAttachOnBeginPlay && IsValid(MyAttachedCharacter))
+	{
 		AttachToPlayer();
+		LogWarning(TEXT("ATTACH was called on begin play"));
+	}
+	
 }
 
 

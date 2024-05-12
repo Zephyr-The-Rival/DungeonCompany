@@ -660,10 +660,13 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 	//if is in first person or not will have to make a difference
 
 	FTransform SpawnTransform;
+	LogWarning(TEXT("Spawning Item..."));
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	CurrentlyHeldWorldItem->bAttachOnBeginPlay = true;
 	CurrentlyHeldWorldItem->MyAttachedCharacter = this;
+	LogWarning(TEXT("Values were set. Spawning now:"));
 	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
+	LogWarning(TEXT("FinishedSpawning"));
 
 }
 
