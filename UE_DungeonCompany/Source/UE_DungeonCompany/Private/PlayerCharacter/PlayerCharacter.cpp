@@ -632,9 +632,13 @@ UInventorySlot* APlayerCharacter::FindFreeSlot()
 void APlayerCharacter::TakeOutItem()
 {
 	if (IsValid(CurrentlyHeldWorldItem))//destroying old item
+	{
+		LogWarning(TEXT("calling destroy world item"));
 		DestroyWorldItem(CurrentlyHeldWorldItem);
+	}
+		
 
-	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
+	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
 	{
 		this->FirstPersonMesh->SetAnimClass(GetCurrentlyHeldInventorySlot()->MyItem->AnimationBlueprintClass);
 		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass);
