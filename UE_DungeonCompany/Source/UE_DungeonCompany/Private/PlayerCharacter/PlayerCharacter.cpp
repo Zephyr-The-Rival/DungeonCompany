@@ -632,7 +632,7 @@ UInventorySlot* APlayerCharacter::FindFreeSlot()
 void APlayerCharacter::TakeOutItem()
 {
 	if (IsValid(CurrentlyHeldWorldItem))//destroying old item
-		CurrentlyHeldWorldItem->Destroy();
+		DestroyWorldItem(CurrentlyHeldWorldItem);
 
 	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
 	{
@@ -660,12 +660,9 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 	//if is in first person or not will have to make a difference
 
 	FTransform SpawnTransform;
-	LogWarning(TEXT("Spawning Item..."));
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
-	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this;
-	LogWarning(TEXT("Values were set. Spawning now:"));
+	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this; //this property is replicated and the item will attach on begin play
 	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
-	LogWarning(TEXT("FinishedSpawning"));
 
 }
 
@@ -679,7 +676,7 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 
 		if (GetCurrentlyHeldInventorySlot()==SlotToEmpty)
 		{
-			CurrentlyHeldWorldItem->Destroy();
+			DestroyWorldItem(CurrentlyHeldWorldItem);
 			TakeOutItem();
 		}
 
