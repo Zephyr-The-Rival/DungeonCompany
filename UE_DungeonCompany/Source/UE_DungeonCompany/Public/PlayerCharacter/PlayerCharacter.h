@@ -37,6 +37,7 @@ public:
 	TObjectPtr<USkeletalMeshComponent> GetFirstPersonMesh() const { return this->FirstPersonMesh; }
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
 	virtual void Tick(float DeltaTime) override;
@@ -293,6 +294,7 @@ protected://inventory & Backpack
 
 	void TakeOutItem();
 
+	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
 
 

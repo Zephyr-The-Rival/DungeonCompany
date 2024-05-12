@@ -149,6 +149,12 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 		ToggleSprint();
 }
 
+void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
+}
+
 bool APlayerCharacter::IsCrouchOnHold() const
 {
 	return bCrouchHold;
