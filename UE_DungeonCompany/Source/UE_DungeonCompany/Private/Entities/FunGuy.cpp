@@ -2,25 +2,27 @@
 
 
 #include "Entities/FunGuy.h"
+#include "PlayerCharacter/PlayerCharacter.h"
+#include "AI/DC_AIController.h"
 
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Perception/AISense_Hearing.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 
 AFunGuy::AFunGuy()
 {
 	CloudSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CloudSphere"));
-	RootComponent = CloudSphere;
-
-	GetCapsuleComponent()->SetupAttachment(RootComponent);
+	CloudSphere->SetupAttachment(GetCapsuleComponent());
 
 	TempMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TempMesh"));
 	TempMesh->SetupAttachment(GetCapsuleComponent());
 
-	NetUpdateFrequency = 100.f;
-	GetCharacterMovement()->DisableMovement();
-	GetCharacterMovement()->SetActive(false);
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+	GetCharacterMovement()->MaxFlySpeed = 50.f;
 }
 
 void AFunGuy::OnConstruction(const FTransform& Transform)
@@ -35,16 +37,39 @@ void AFunGuy::OnConstruction(const FTransform& Transform)
 
 	GetCapsuleComponent()->SetRelativeScale3D(newScale);
 
-	float height = (AgeSeconds < LiftoffAge) ? 0.f :
-		(AgeSeconds > LiftoffAge + LiftoffTime) ? LiftoffHeight :
-		(AgeSeconds - LiftoffAge) / LiftoffTime * LiftoffHeight;
+	int cloudUpscaleNum = AgeSeconds / CloudUpdateInterval;
+	float newCloadRadius = CloudRadius;
 
-	GetCapsuleComponent()->SetRelativeLocation(FVector::UpVector * height);
+	for (int i = 0; i < cloudUpscaleNum; ++i)
+		newCloadRadius *= CloudSizeMultiplierPerUpdate;
+	
+	CloudSphere->SetSphereRadius(newCloadRadius);
+
 }
 
 void AFunGuy::BeginPlay()
 {
 	Super::BeginPlay();
+
+	auto material = TempMesh->GetMaterial(0);
+
+	DynamicMaterial = UMaterialInstanceDynamic::Create(material, this);
+	TempMesh->SetMaterial(0, DynamicMaterial);
+	DynamicMaterial->SetScalarParameterValue(FName("PulseFrequency"), PulseFrequency);
+
+	FTimerDelegate updateDelegate = FTimerDelegate::CreateLambda([this]() 
+		{
+			float radius = CloudSphere->GetUnscaledSphereRadius() * CloudSizeMultiplierPerUpdate;
+			CloudSphere->SetSphereRadius(radius);
+		}
+	);
+	GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, updateDelegate, CloudUpdateInterval, true);
+
+	if (!HasAuthority())
+		return;
+
+	CloudSphere->OnComponentBeginOverlap.AddDynamic(this, &AFunGuy::OnCloudBeginOverlap);
+	CloudSphere->OnComponentEndOverlap.AddDynamic(this, &AFunGuy::OnCloudEndOverlap);
 
 }
 
@@ -58,18 +83,24 @@ void AFunGuy::Tick(float DeltaSeconds)
 	AgeSeconds += DeltaSeconds * AgingMultiplier;
 
 	if (AgeSeconds > MaxSizeAgeSeconds)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(UpdateTimerHandle);
 		AgeSeconds = MaxSizeAgeSeconds;
+	}
 
 	FVector newScale = FVector(1, 1, 1);
 	newScale += newScale * AgeSeconds * AgeBonusScaleMultiplier;
 
 	GetCapsuleComponent()->SetRelativeScale3D(newScale);
+	CloudSphere->SetWorldScale3D(FVector(1, 1, 1));
 
-	float height = (AgeSeconds < LiftoffAge) ? 0.f :
-		(AgeSeconds > LiftoffAge + LiftoffTime) ? LiftoffHeight :
-		(AgeSeconds - LiftoffAge) / LiftoffTime * LiftoffHeight;
+	if (!HasAuthority() || bLifted || (AgeSeconds < LiftoffAge))
+		return;
 
-	GetCapsuleComponent()->SetRelativeLocation(FVector::UpVector * height);
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
+
+	bLifted = true;
+	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsVector(FName("MoveLocation"), GetActorLocation() + FVector::UpVector * LiftoffHeight);
 
 }
 
@@ -78,4 +109,52 @@ void AFunGuy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AFunGuy, AgeSeconds);
+}
+
+void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
+
+	if (!character)
+		return;
+
+	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &AFunGuy::OnSafeTimerElapsed, character);
+
+	PlayerTimerHandles.Add(character);
+
+	GetWorld()->GetTimerManager().SetTimer(PlayerTimerHandles[character], timerDelegate, SafeTime, false);
+
+}
+
+void AFunGuy::OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
+
+	if (!character)
+		return;
+
+	GetWorld()->GetTimerManager().ClearTimer(PlayerTimerHandles[character]);
+	PlayerTimerHandles.Remove(character);
+}
+
+void AFunGuy::OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter)
+{
+	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &AFunGuy::OnDamageTimerElapsed, PlayerCharacter);
+
+	GetWorld()->GetTimerManager().SetTimer(PlayerTimerHandles[PlayerCharacter], timerDelegate, DamageInterval, true, 0.f);
+
+}
+
+void AFunGuy::OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter)
+{
+	if (!IsValid(PlayerCharacter))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(PlayerTimerHandles[PlayerCharacter]);
+		PlayerTimerHandles.Remove(PlayerCharacter);
+		return;
+	}
+
+	PlayerCharacter->TakeDamage(Damage);
+	UAISense_Hearing::ReportNoiseEvent(GetWorld(), PlayerCharacter->GetActorLocation(), 2.f, PlayerCharacter);
+
 }
