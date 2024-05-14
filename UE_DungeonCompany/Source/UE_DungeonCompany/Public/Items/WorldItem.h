@@ -53,6 +53,20 @@ public://attached to hand
 	APlayerCharacter* MyCharacterToAttachTo;
 	
 	void AttachToPlayer();
+
+
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	
+public://item actions
+
+	//can be extended in blueprints
+	UFUNCTION(BlueprintNativeEvent)
+	void TriggerPrimaryAction();
+
+	virtual void TriggerPrimaryAction_Implementation();
+
+	
+
 };

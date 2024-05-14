@@ -41,6 +41,12 @@ void AWorldItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AWorldItem, MyCharacterToAttachTo);
 }
 
+void AWorldItem::TriggerPrimaryAction_Implementation()
+{
+	LogWarning(TEXT("leks mih do oam oarsch"));
+}
+
+
 // Called every frame
 void AWorldItem::Tick(float DeltaTime)
 {
