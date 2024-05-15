@@ -44,4 +44,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UItemData> ItemDataClass;
 
+public://attached to hand
+
+	UPROPERTY(Replicated)
+	APlayerCharacter* MyCharacterToAttachTo;
+	
+	void AttachToPlayer();
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
