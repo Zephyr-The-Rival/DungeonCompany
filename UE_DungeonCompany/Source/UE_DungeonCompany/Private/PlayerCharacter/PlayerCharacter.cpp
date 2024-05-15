@@ -116,6 +116,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	float voiceLevel = VOIPTalker->GetVoiceLevel();
 
+	CheckForFallDamage();
+
 	if(voiceLevel > 0.f)
 		ReportTalking(voiceLevel);
 	
@@ -128,8 +130,6 @@ void APlayerCharacter::LocalTick(float DeltaTime)
 {
 	this->InteractorLineTrace();
 	StaminaTick(DeltaTime);
-	IOnlineVoicePtr ptr = Online::GetVoiceInterface(IOnlineSubsystem::Get()->GetSubsystemName());
-	CheckForFallDamage();
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -761,25 +761,12 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	//set item data
 }
 
-void APlayerCharacter::TakeDamage_DC(float amout)
-{
-	FString message = "Taking damage: " + FString::SanitizeFloat(amout);
-	LogWarning(*message);
-	if (this->HP - amout > 0)
-	{
-		HP -= amout;
-	}
-	else
-	{
-		HP = 0;
-		Cast<ADC_PC>(GetController())->ConsoleCommand("Quit");
-	}
-}
-
 void APlayerCharacter::CheckForFallDamage()
 {
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
 	// that results in the jump height not being included in the fall height calculation
+
+
 
 	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
 	{
@@ -787,7 +774,7 @@ void APlayerCharacter::CheckForFallDamage()
 		if (deltaZ > 200)
 		{
 			float damage = (deltaZ - 200) * 0.334; // 2m=0 damage 5m=100 dmg
-			this->TakeDamage_DC(damage);
+			TakeDamage(damage);
 		}
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
@@ -934,5 +921,15 @@ void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 		SwitchHand();
 	}
 
+}
+
+void APlayerCharacter::OnDeath_Implementation()
+{
+	Super::OnDeath_Implementation();
+
+	if (!HasAuthority())
+		return;
+
+	GetController()->UnPossess();
 }
 
