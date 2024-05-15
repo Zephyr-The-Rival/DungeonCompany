@@ -26,11 +26,11 @@ public:
 	virtual void Interact(APawn* InteractingPawn) override;
 
 
+
 protected:
 	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -44,4 +44,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UItemData> ItemDataClass;
 
+	UFUNCTION(BlueprintCallable)
+	void ActivateMaterialOnTop(UMeshComponent* MeshComponent);
+
+public://attached to hand
+
+	UPROPERTY(Replicated)
+	APlayerCharacter* MyCharacterToAttachTo;
+	
+	void AttachToPlayer();
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

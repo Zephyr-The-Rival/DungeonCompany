@@ -32,8 +32,10 @@ private:
 public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
+	TObjectPtr<USkeletalMeshComponent> GetFirstPersonMesh() const { return this->FirstPersonMesh; }
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
 	virtual void Tick(float DeltaTime) override;
@@ -162,6 +164,7 @@ protected:
 	float JumpVelocity = 420.f;
 
 private:
+	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
 	
 protected:
@@ -194,6 +197,10 @@ protected:
 	void Server_StopSprint_Implementation();
 
 public:
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	bool GetIsSprinting() const {return this->bSprinting;}
+
 	UFUNCTION(Server, Unreliable)
 	void Server_SetActorLocation(const FVector& InLocation);
 	void Server_SetActorLocation_Implementation(const FVector& InLocation);
@@ -286,12 +293,16 @@ protected://inventory & Backpack
 	UInventorySlot* FindFreeSlot();
 
 	void TakeOutItem();
+
+	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
 
+
 	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+
 	UFUNCTION(Server, Unreliable)
 	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
-	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+
 
 	void DropItem(UInventorySlot* SlotToEmpty);
 
@@ -303,6 +314,9 @@ protected://inventory & Backpack
 	void EquipCurrentInventorySelection(bool BToA);
 
 	void DropItemPressed();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UObject> NoItemAnimationBlueprintClass;
 
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)

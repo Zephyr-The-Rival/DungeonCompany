@@ -10,6 +10,8 @@
 #include "Inventory/Inventory.h"
 #include "Inventory/InventorySlot.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Net/UnrealNetwork.h"
+
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -147,6 +149,12 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 		ToggleSprint();
 }
 
+void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
+}
+
 bool APlayerCharacter::IsCrouchOnHold() const
 {
 	return bCrouchHold;
@@ -205,8 +213,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	
 	EIC->BindAction(ScrollAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::MouseWheelScrolled);
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
-
-	
 
 	
 
@@ -632,18 +638,23 @@ UInventorySlot* APlayerCharacter::FindFreeSlot()
 void APlayerCharacter::TakeOutItem()
 {
 	if (IsValid(CurrentlyHeldWorldItem))//destroying old item
-		CurrentlyHeldWorldItem->Destroy();
+	{
+		DestroyWorldItem(CurrentlyHeldWorldItem);
+	}
+		
 
-	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
+	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
 	{
 		this->FirstPersonMesh->SetAnimClass(GetCurrentlyHeldInventorySlot()->MyItem->AnimationBlueprintClass);
 		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass);
 	}
 	else
 	{
-		//animClass of regular hands
+		this->FirstPersonMesh->SetAnimClass(NoItemAnimationBlueprintClass);
 	}
 }
+
+
 
 void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn)
 {
@@ -657,17 +668,13 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 {
 	//if is in first person or not will have to make a difference
 
-
 	FTransform SpawnTransform;
-	AWorldItem* i = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
+	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
+	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this; //this property is replicated and the item will attach on begin play
+	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
 
-	i->OnHoldingInHand();
-
-	FAttachmentTransformRules rules= FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget,EAttachmentRule::KeepWorld, true);
-	i->AttachToComponent(FirstPersonMesh, rules, "Item_Joint_R");
-
-	CurrentlyHeldWorldItem = i;
 }
+
 
 void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 {
@@ -676,21 +683,12 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass);
 		SlotToEmpty->MyItem = nullptr;
 
-		if (GetCurrentlyHeldInventorySlot()==SlotToEmpty)
+		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
 		{
-			CurrentlyHeldWorldItem->Destroy();
 			TakeOutItem();
 		}
 
 	}
-
-	//if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
-	//{
-	//	CurrentlyHeldWorldItem->Destroy();//has to be on server?
-
-	//	SpawnDroppedWorldItem(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass);
-	//	Inventory->RemoveItem(GetCurrentlyHeldInventorySlot()->MyItem);
-	//}
 }
 
 void APlayerCharacter::SwitchHand()
