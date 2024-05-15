@@ -41,6 +41,9 @@ void AWorldItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AWorldItem, MyCharacterToAttachTo);
 }
 
+
+
+
 // Called every frame
 void AWorldItem::Tick(float DeltaTime)
 {
@@ -55,8 +58,12 @@ void AWorldItem::OnHoldingInHand_Implementation()
 
 void AWorldItem::ActivateMaterialOnTop(UMeshComponent* MeshComponent)
 {
-	UMaterialInstanceDynamic* materialInstance = MeshComponent->CreateAndSetMaterialInstanceDynamic(0);
-	materialInstance->SetScalarParameterValue(TEXT("OnTopActive"),1);
+
+	for (int i = 0; i < MeshComponent->GetNumMaterials(); i++)
+	{
+		UMaterialInstanceDynamic* materialInstance = MeshComponent->CreateAndSetMaterialInstanceDynamic(i);
+		materialInstance->SetScalarParameterValue(TEXT("OnTopActive"), 1);
+	}
 }
 
 void AWorldItem::AttachToPlayer()
@@ -79,6 +86,7 @@ void AWorldItem::Interact(APawn* InteractingPawn)
 	character->PickUpItem(this);
 }
 
-
-
-
+void AWorldItem::TriggerPrimaryAction_Implementation()
+{
+	LogWarning(TEXT("World Item parent primary action was called"));
+}
