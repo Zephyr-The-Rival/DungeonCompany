@@ -5,6 +5,7 @@
 #include "Items/ItemData.h"
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AWorldItem::AWorldItem()
@@ -26,9 +27,19 @@ void AWorldItem::BeginPlay()
 	if (IsValid(this->ItemDataClass) && this->MyData==NULL)
 		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
 
+	if (IsValid(MyCharacterToAttachTo))
+	{
+		AttachToPlayer();
+	}
+	
 }
 
 
+void AWorldItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWorldItem, MyCharacterToAttachTo);
+}
 
 // Called every frame
 void AWorldItem::Tick(float DeltaTime)
@@ -40,6 +51,20 @@ void AWorldItem::Tick(float DeltaTime)
 void AWorldItem::OnHoldingInHand_Implementation()
 {
 	LogWarning(*(this->GetName()+"->OnHoldingInHand() was not overridden"));
+}
+
+void AWorldItem::ActivateMaterialOnTop(UMeshComponent* MeshComponent)
+{
+	UMaterialInstanceDynamic* materialInstance = MeshComponent->CreateAndSetMaterialInstanceDynamic(0);
+	materialInstance->SetScalarParameterValue(TEXT("OnTopActive"),1);
+}
+
+void AWorldItem::AttachToPlayer()
+{
+	this->OnHoldingInHand();
+	this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+	this->SetActorScale3D(FVector(1, 1, 1));
+
 }
 
 void AWorldItem::Interact(APawn* InteractingPawn)
