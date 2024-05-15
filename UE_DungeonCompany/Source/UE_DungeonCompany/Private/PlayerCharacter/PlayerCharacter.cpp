@@ -905,7 +905,7 @@ void APlayerCharacter::LeftMouseButtonPressed()
 	{
 		if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
 		{
-			CurrentlyHeldWorldItem->TriggerPrimaryAction_Implementation();
+			CurrentlyHeldWorldItem->TriggerPrimaryAction();
 		}
 	}
 }
