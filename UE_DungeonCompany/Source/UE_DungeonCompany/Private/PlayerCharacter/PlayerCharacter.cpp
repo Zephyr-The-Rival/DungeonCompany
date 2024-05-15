@@ -35,14 +35,16 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
+	FirstPersonMesh->SetupAttachment(RootComponent);
+
+
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	FirstPersonCamera->SetupAttachment(RootComponent);
-	FirstPersonCamera->SetRelativeLocation(FVector(0, 0, 40));
-	FirstPersonCamera->bUsePawnControlRotation = true;
+	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
+	//FirstPersonCamera->bUsePawnControlRotation = true;
 		   
 
-	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
-	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
+
 
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
@@ -248,6 +250,14 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 
 	AddControllerYawInput(lookVector.X);
 	AddControllerPitchInput(lookVector.Y);
+	FRotator newRotation = FRotator(0,0,0);
+	newRotation.Pitch =GetControlRotation().Euler().Y;
+
+	FString message= newRotation.ToString();
+	LogWarning(*message);
+
+	
+	FirstPersonMesh->SetRelativeRotation(newRotation);
 
 }
 
