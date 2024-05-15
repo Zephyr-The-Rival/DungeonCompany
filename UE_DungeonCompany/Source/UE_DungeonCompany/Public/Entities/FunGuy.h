@@ -40,16 +40,16 @@ private:
 	float LiftoffHeight = 150.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
-	float CloudRadius = 100.f;
+	float StartCloudRadius = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
 	float CloudUpdateInterval = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
-	float CloudSizeMultiplierPerUpdate = 1.01f;
+	float CloudSizeFactor = 3.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing")
-	float AgingMultiplier = 1.2f;
+	float AgingMultiplier = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing")
 	float PulseFrequency = 2.f;
@@ -87,6 +87,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
 	float DamageCoughLoudness = 2.f;
+
+	float CloudSizeMultiplierPerUpdate;
 
 protected:
 	UFUNCTION()

@@ -23,6 +23,7 @@ AFunGuy::AFunGuy()
 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	GetCharacterMovement()->MaxFlySpeed = 50.f;
+
 }
 
 void AFunGuy::OnConstruction(const FTransform& Transform)
@@ -38,7 +39,9 @@ void AFunGuy::OnConstruction(const FTransform& Transform)
 	GetCapsuleComponent()->SetRelativeScale3D(newScale);
 
 	int cloudUpscaleNum = AgeSeconds / CloudUpdateInterval;
-	float newCloadRadius = CloudRadius;
+	float newCloadRadius = StartCloudRadius;
+
+	CloudSizeMultiplierPerUpdate = 1 + CloudSizeFactor / 1000;
 
 	for (int i = 0; i < cloudUpscaleNum; ++i)
 		newCloadRadius *= CloudSizeMultiplierPerUpdate;
@@ -63,6 +66,7 @@ void AFunGuy::BeginPlay()
 			CloudSphere->SetSphereRadius(radius);
 		}
 	);
+
 	GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, updateDelegate, CloudUpdateInterval, true);
 
 	if (!HasAuthority())
@@ -90,11 +94,14 @@ void AFunGuy::Tick(float DeltaSeconds)
 
 	FVector newScale = FVector(1, 1, 1);
 	newScale += newScale * AgeSeconds * AgeBonusScaleMultiplier;
-
 	GetCapsuleComponent()->SetRelativeScale3D(newScale);
+
+	if (!HasAuthority())
+		return;
+
 	CloudSphere->SetWorldScale3D(FVector(1, 1, 1));
 
-	if (!HasAuthority() || bLifted || (AgeSeconds < LiftoffAge))
+	if (bLifted || (AgeSeconds < LiftoffAge))
 		return;
 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
