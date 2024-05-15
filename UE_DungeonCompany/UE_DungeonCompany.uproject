@@ -9,7 +9,10 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
-				"Engine"
+				"Engine",
+				"CoreUObject",
+				"UMG",
+				"AIModule"
 			]
 		}
 	],
@@ -23,6 +26,10 @@
 		},
 		{
 			"Name": "OnlineSubsystemSteam",
+			"Enabled": true
+		},
+		{
+			"Name": "SteamController",
 			"Enabled": true
 		}
 	]
