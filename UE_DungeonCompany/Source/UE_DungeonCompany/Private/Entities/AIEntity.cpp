@@ -13,8 +13,14 @@ AAIEntity::AAIEntity()
 	PrimaryActorTick.bCanEverTick = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 360.f, 0.0f);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->MaxWalkSpeed = 300.f;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+}
+
+void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
+{
+	UE_LOG(LogTemp, Log, TEXT("Attacking Player"));
 }
