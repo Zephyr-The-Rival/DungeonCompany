@@ -8,7 +8,10 @@
 #include "Items/WorldItem.h"
 #include "Items/ItemData.h"
 #include "Inventory/Inventory.h"
+#include "Inventory/InventorySlot.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Net/UnrealNetwork.h"
+
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -56,13 +59,16 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
 
 	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
-	this->InventoryIndexInFocus = 0;
+	this->Backpack = CreateDefaultSubobject<UInventory>(TEXT("BackpackComponent"));
+	
+
 
 	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 	StimulusSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
 	StimulusSource->RegisterWithPerceptionSystem();
 
 	this->HP = this->MaxHP;
+	this->Stamina = this->MaxStamina;
 
 }
 
@@ -71,6 +77,9 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//this did not work on begin play
+	this->HandSlotA = NewObject<UInventorySlot>();
+	this->HandSlotB = NewObject<UInventorySlot>();
 
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
@@ -99,6 +108,7 @@ void APlayerCharacter::BeginPlay()
 	
 	inputSystem->AddMappingContext(InputMapping, 0);
 	
+
 }
 
 // Called every frame
@@ -107,6 +117,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	float voiceLevel = VOIPTalker->GetVoiceLevel();
+
+	CheckForFallDamage();
 
 	if(voiceLevel > 0.f)
 		ReportTalking(voiceLevel);
@@ -120,8 +132,6 @@ void APlayerCharacter::LocalTick(float DeltaTime)
 {
 	this->InteractorLineTrace();
 	StaminaTick(DeltaTime);
-	IOnlineVoicePtr ptr = Online::GetVoiceInterface(IOnlineSubsystem::Get()->GetSubsystemName());
-	CheckForFallDamage();
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -137,6 +147,12 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 
 	if (Stamina < 0.f)
 		ToggleSprint();
+}
+
+void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 }
 
 bool APlayerCharacter::IsCrouchOnHold() const
@@ -179,10 +195,25 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 
-	EIC->BindAction(IterateItemsLeftAction, ETriggerEvent::Triggered, this, &APlayerCharacter::IterateItemsLeft);
-	EIC->BindAction(IterateItemsRightAction, ETriggerEvent::Triggered, this, &APlayerCharacter::IterateItemsRight);
+	EIC->BindAction(DPadUpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadUpPressed);
+	EIC->BindAction(DPadDownAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadDownPressed);
+	EIC->BindAction(DPadLeftAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadLeftPressed);
+	EIC->BindAction(DPadRightAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadRightPressed);
 	
-	EIC->BindAction(DropItemAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DropItem);
+	EIC->BindAction(ToggleInventoryPCAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventoryPC);
+	EIC->BindAction(ToggleInventoryControllerAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventoryController);
+	
+	EIC->BindAction(FaceUpAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceUpPressed);	
+	EIC->BindAction(FaceDownAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceDownPressed);
+	EIC->BindAction(FaceLeftAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceLeftPressed);
+	EIC->BindAction(FaceRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::FaceRightPressed);
+	
+	EIC->BindAction(MouseRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::RightMouseButtonPressed);
+	EIC->BindAction(MouseLeftAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::LeftMouseButtonPressed);
+	
+	EIC->BindAction(ScrollAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::MouseWheelScrolled);
+	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
+
 	
 
 
@@ -306,14 +337,15 @@ void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
 
 void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 {
-	int32 slot = this->Inventory->AddItem(WorldItem->MyData);
-	if(slot!=-1)
+	UInventorySlot* freeSlot = FindFreeSlot();
+
+	if (IsValid(freeSlot))
 	{
+		freeSlot->MyItem = WorldItem->MyData;
 		DestroyWorldItem(WorldItem);
-		if (slot == InventoryIndexInFocus)
-		{
+
+		if (freeSlot == GetCurrentlyHeldInventorySlot())
 			TakeOutItem();
-		}
 	}	
 }
 
@@ -531,43 +563,98 @@ void APlayerCharacter::ReportTalking(float Loudness)
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
 }
 
-void APlayerCharacter::IterateItemsLeft()
+void APlayerCharacter::ToggleInventoryPC()
 {
-	if (InventoryIndexInFocus == 0)
-		InventoryIndexInFocus = this->Inventory->NumInventorySlots - 1;
-	else
-		this->InventoryIndexInFocus--;
-
-	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->FocusOnInventorySlot(this->InventoryIndexInFocus);
-	this->TakeOutItem();
+	ToggleInventory(false);
 }
 
-void APlayerCharacter::IterateItemsRight()
+void APlayerCharacter::ToggleInventoryController()
 {
-	if (InventoryIndexInFocus == this->Inventory->NumInventorySlots - 1)
-		InventoryIndexInFocus = 0;
-	else
-		this->InventoryIndexInFocus++;
+	ToggleInventory(true);
+}
 
-	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->FocusOnInventorySlot(this->InventoryIndexInFocus);
-	this->TakeOutItem();
+void APlayerCharacter::ToggleInventory(bool ControllerVersion)
+{
+	this->BInventoryIsOn = !BInventoryIsOn;
+	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(BInventoryIsOn, ControllerVersion);
+}
+
+
+
+UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
+{
+	if (this->BSlotAIsInHand)
+		return HandSlotA;
+	else
+		return HandSlotB;
+}
+
+
+
+UInventorySlot* APlayerCharacter::FindFreeSlot()
+{
+	if (BSlotAIsInHand)// a is in hand check a and then b
+	{
+		if (!IsValid(this->HandSlotA->MyItem))
+		{
+			return HandSlotA;
+		}
+		if (!IsValid(this->HandSlotB->MyItem))
+		{
+			return HandSlotB;
+		}
+
+	}
+	else //check b and then a
+	{
+		if (!IsValid(this->HandSlotB->MyItem))
+		{
+			return HandSlotB;
+		}
+		if (!IsValid(this->HandSlotA->MyItem))
+		{
+			return HandSlotA;
+		}
+	}
+
+	for (UInventorySlot* S : Inventory->GetSlots())//checking for free inventory slot
+	{
+		if (!IsValid(S->MyItem))
+			return S;
+	}
+
+	if(this->BHasBackPack)//checking for free backpack slots if the player has a backpack
+	{ 
+		for (UInventorySlot* S : Backpack->GetSlots())
+		{
+			if (!IsValid(S->MyItem))
+				return S;
+		}
+	}
+
+	return nullptr;
 }
 
 void APlayerCharacter::TakeOutItem()
 {
-	if (IsValid(CurrentlyHeldItem))
-		CurrentlyHeldItem->Destroy();
-
-	if (IsValid(this->Inventory->GetItemAtIndex(this->InventoryIndexInFocus)))
+	if (IsValid(CurrentlyHeldWorldItem))//destroying old item
 	{
-		this->FirstPersonMesh->SetAnimClass(this->Inventory->GetItemAtIndex(this->InventoryIndexInFocus)->AnimationBlueprintClass);
-		SpawnItemInHand(Inventory->GetItemAtIndex(this->InventoryIndexInFocus)->MyWorldItem);
+		DestroyWorldItem(CurrentlyHeldWorldItem);
+	}
+		
+
+	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
+	{
+		this->FirstPersonMesh->SetAnimClass(GetCurrentlyHeldInventorySlot()->MyItem->AnimationBlueprintClass);
+		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass);
 	}
 	else
 	{
-		//animClass of regular hands
+		this->FirstPersonMesh->SetAnimClass(NoItemAnimationBlueprintClass);
 	}
 }
+
+
 
 void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn)
 {
@@ -581,27 +668,76 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 {
 	//if is in first person or not will have to make a difference
 
-
 	FTransform SpawnTransform;
-	AWorldItem* i = GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
+	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
+	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this; //this property is replicated and the item will attach on begin play
+	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
 
-	i->OnHoldingInHand();
-
-	FAttachmentTransformRules rules= FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget,EAttachmentRule::KeepWorld, true);
-	i->AttachToComponent(FirstPersonMesh, rules, "Item_Joint_R");
-
-	CurrentlyHeldItem = i;
 }
 
-void APlayerCharacter::DropItem()
+
+void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 {
-	LogWarning(TEXT("Drop Item Called"));
-	if (IsValid(this->Inventory->GetItemAtIndex(InventoryIndexInFocus)))
+	if (IsValid(SlotToEmpty->MyItem))
 	{
-		CurrentlyHeldItem->Destroy();//has to be on server?
-		SpawnDroppedWorldItem(this->Inventory->GetItemAtIndex(this->InventoryIndexInFocus)->MyWorldItem);
-		Inventory->RemoveItem(InventoryIndexInFocus);
+		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass);
+		SlotToEmpty->MyItem = nullptr;
+
+		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
+		{
+			TakeOutItem();
+		}
+
 	}
+}
+
+void APlayerCharacter::SwitchHand()
+{
+	if (BSwichHandAllowed)
+	{
+		BSwichHandAllowed = false;
+		this->BSlotAIsInHand = !BSlotAIsInHand;
+		TakeOutItem();
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(BSlotAIsInHand);
+	}
+}
+
+void APlayerCharacter::AllowSwitchHand()
+{
+	BSwichHandAllowed = true;
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.RemoveAll(this);
+}
+
+void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
+{
+	
+	UInventorySlot* slot;
+
+	if (BToA)
+		slot = HandSlotA;
+	else
+		slot = HandSlotB;
+	
+	//switch
+	UItemData* tmp = Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot()->MyItem;
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot()->MyItem = slot->MyItem;
+	slot->MyItem = tmp;
+
+
+	if (GetCurrentlyHeldInventorySlot()==slot)//if equipping to slot in hand
+	{
+		TakeOutItem();
+	}
+
+}
+
+void APlayerCharacter::DropItemPressed()
+{
+	if (this->BInventoryIsOn)
+		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
+	else
+		DropItem(GetCurrentlyHeldInventorySlot());
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
@@ -623,25 +759,12 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	//set item data
 }
 
-void APlayerCharacter::TakeDamage_DC(float amout)
-{
-	FString message = "Taking damage: " + FString::SanitizeFloat(amout);
-	LogWarning(*message);
-	if (this->HP - amout > 0)
-	{
-		HP -= amout;
-	}
-	else
-	{
-		HP = 0;
-		Cast<ADC_PC>(GetController())->ConsoleCommand("Quit");
-	}
-}
-
 void APlayerCharacter::CheckForFallDamage()
 {
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
 	// that results in the jump height not being included in the fall height calculation
+
+
 
 	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
 	{
@@ -649,7 +772,7 @@ void APlayerCharacter::CheckForFallDamage()
 		if (deltaZ > 200)
 		{
 			float damage = (deltaZ - 200) * 0.334; // 2m=0 damage 5m=100 dmg
-			this->TakeDamage_DC(damage);
+			TakeDamage(damage);
 		}
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
@@ -662,3 +785,152 @@ void APlayerCharacter::CheckForFallDamage()
 
 	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0);
 }
+
+void APlayerCharacter::DPadUpPressed()
+{
+	if (BInventoryIsOn)
+	{
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Up);
+	}
+	else
+	{
+		//throw
+	}
+}
+
+void APlayerCharacter::DPadDownPressed()
+{
+	if (BInventoryIsOn)
+	{
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Down);
+	}
+	else
+	{
+		DropItem(GetCurrentlyHeldInventorySlot());
+	}
+}
+
+void APlayerCharacter::DPadLeftPressed()
+{
+	if (BInventoryIsOn)
+	{
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Left);
+	}
+	else
+	{
+		
+	}
+}
+
+void APlayerCharacter::DPadRightPressed()
+{
+	if (BInventoryIsOn)
+	{
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Right);
+	}
+	else
+	{
+		
+	}
+}
+
+void APlayerCharacter::FaceUpPressed()
+{
+	if (BInventoryIsOn)
+	{
+		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
+	}
+	else
+	{
+		this->SwitchHand();
+	}
+}
+
+void APlayerCharacter::FaceDownPressed()
+{
+	if (BInventoryIsOn)
+	{
+
+	}
+	else
+	{
+		Jump();
+	}
+}
+
+void APlayerCharacter::FaceLeftPressed()
+{
+	if (BInventoryIsOn)
+	{
+		EquipCurrentInventorySelection(true);
+	}
+	else
+	{
+		Interact();
+	}
+}
+
+void APlayerCharacter::FaceRightPressed()
+{
+	if (BInventoryIsOn)
+	{
+		EquipCurrentInventorySelection(false);
+	}
+	else
+	{
+		ToggleCrouch();
+	}
+}
+
+void APlayerCharacter::LeftMouseButtonPressed()
+{
+	if (BInventoryIsOn)
+	{
+		EquipCurrentInventorySelection(true);
+	}
+	else
+	{
+		if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
+		{
+			CurrentlyHeldWorldItem->TriggerPrimaryAction();
+		}
+	}
+}
+
+void APlayerCharacter::RightMouseButtonPressed()
+{
+	if (BInventoryIsOn)
+	{
+		EquipCurrentInventorySelection(false);
+
+
+	}
+	else
+	{
+		
+	}
+}
+
+void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
+{
+	if (BInventoryIsOn)
+	{
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlightScroll((Value.Get<float>() > 0));
+	}
+	else
+	{
+		SwitchHand();
+	}
+
+}
+
+void APlayerCharacter::OnDeath_Implementation()
+{
+	Super::OnDeath_Implementation();
+
+	if (!HasAuthority())
+		return;
+
+	GetController()->UnPossess();
+}
+

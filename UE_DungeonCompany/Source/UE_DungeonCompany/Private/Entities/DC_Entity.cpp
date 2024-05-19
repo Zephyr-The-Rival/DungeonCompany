@@ -2,40 +2,51 @@
 
 
 #include "Entities/DC_Entity.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "AI/DC_AIController.h"
 
-// Sets default values
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h"
+
 ADC_Entity::ADC_Entity()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 360.f, 0.0f);
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationRoll = false;
 
 }
 
-// Called when the game starts or when spawned
-void ADC_Entity::BeginPlay()
+ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
-	Super::BeginPlay();
+	PrimaryActorTick.bCanEverTick = true;
 	
 }
 
-// Called every frame
-void ADC_Entity::Tick(float DeltaTime)
+void ADC_Entity::TakeDamage(float Damage)
 {
-	Super::Tick(DeltaTime);
+	if (HP <= 0.f)
+		return;
+
+	UE_LOG(LogTemp, Log, TEXT("Taking damage : %s"), *FString::SanitizeFloat(Damage));
+
+	HP -= Damage;
+
+	if (HP > 0.f)
+		return;
+
+	HP = 0.f;
+
+	OnDeath();
 
 }
 
-// Called to bind functionality to input
-void ADC_Entity::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ADC_Entity::OnDeath_Implementation()
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName());
 
 }
 
+void ADC_Entity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ADC_Entity, HP);
+
+}
