@@ -2,24 +2,30 @@
 
 
 #include "Entities/QuasoSnake.h"
-
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "AI/DC_AIController.h"
+
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SplineComponent.h"
+#include "Components/SphereComponent.h"
+#include "Kismet/KismetMathLibrary.h" 
+#include "BrainComponent.h"
 
 AQuasoSnake::AQuasoSnake()
 {
 	AttackSpline = CreateDefaultSubobject<USplineComponent>("AttackSpline");
+
+	EyeCollision = CreateDefaultSubobject<USphereComponent>("EyeCollision");
+	EyeCollision->SetupAttachment(RootComponent);
 }
 
 void AQuasoSnake::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AttackSpline->Duration = 0.5f;
+	AttackSpline->Duration = 0.75f;
 
 	if(!HasAuthority())
 		return;
@@ -48,6 +54,9 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 
 	GetCharacterMovement()->SetMovementMode(MOVE_None);
 
+	FRotator attackRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), TargetPlayer->GetActorLocation());
+	GetController()->SetControlRotation(attackRotation);
+
 	CalculateLaunchSplineToActor(TargetPlayer);
 
 }
@@ -59,24 +68,28 @@ void AQuasoSnake::LaunchAtActor(AActor* Actor)
 	FTimerDelegate delegate = FTimerDelegate::CreateLambda([this]() {
 
 		AttackTime += LaunchUpdateInterval;
+
 		if (AttackTime > AttackSpline->Duration)
 		{
 			GetWorld()->GetTimerManager().ClearTimer(LaunchHandle);
 			return;
 		}
-
+		
 		FVector splineLocation = AttackSpline->GetLocationAtTime(AttackTime, ESplineCoordinateSpace::World);
 
 		FVector direction = splineLocation - GetActorLocation();
 		float distance = direction.Length();
 		direction.Normalize();
 
-		GetCharacterMovement()->Velocity = direction * 50 * distance;
+		FVector velocity = direction * 50;
 
-		AddMovementInput(GetCharacterMovement()->Velocity);
+		if (distance > 1.f)
+			velocity *= distance;
+		
+		GetCharacterMovement()->Velocity = velocity;
 
-		UE_LOG(LogTemp, Warning, TEXT("%d"), GetCharacterMovement()->MovementMode);
-		});
+		AddMovementInput(velocity);
+	});
 
 	bLaunched = true;
 
@@ -93,7 +106,24 @@ void AQuasoSnake::CalculateLaunchSplineToActor(AActor* Actor)
 	FVector midwayPoint = (start + target) * 0.5;
 	midwayPoint += FVector::UpVector * 0.15f * (target - start).Length();
 
-	TArray<FVector> points = { start, midwayPoint, target};
+	FVector direction = target - start;
+	float distance = direction.Length();
+	direction.Normalize();
+
+	FVector rightVector = direction.Cross(FVector::DownVector);
+	rightVector.Normalize();
+
+	FVector dropDirection = rightVector.Cross(direction);
+
+	dropDirection.Normalize();
+	dropDirection = 2*dropDirection + direction;
+	dropDirection.Normalize();
+
+	FVector end = target + dropDirection * distance * 0.75;
+
+	TArray<FVector> points = { start, midwayPoint, target, end};
+
+
 
 	AttackSpline->SetSplinePoints(points, ESplineCoordinateSpace::World, true);
 }
@@ -119,10 +149,15 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 		return;
 	}
 
+	DetachFromControllerPendingDestroy();
+	GetCharacterMovement()->DisableMovement();
 	Multicast_OnAttachedToPlayer();
+
 	AttachToActor(character, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	SetActorLocation(character->GetActorLocation() + FVector::UpVector * 100);
-	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsObject("PlayerAttachedTo", character);
+	PlayerAttachedTo = character;
+
+	SetActorLocation(character->GetActorLocation() + FVector::UpVector * 50);
+	character->GetCharacterMovement()->DisableMovement();
 
 }
 
@@ -130,5 +165,15 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 void AQuasoSnake::Multicast_OnAttachedToPlayer_Implementation()
 {
 	GetCapsuleComponent()->SetCollisionProfileName("OverlapAll", true);
-	GetCharacterMovement()->Deactivate();
+}
+
+void AQuasoSnake::OnDeath_Implementation()
+{
+	Super::OnDeath_Implementation();
+
+	if(!HasAuthority() || !IsValid(PlayerAttachedTo))
+		return;
+
+	PlayerAttachedTo->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
 }

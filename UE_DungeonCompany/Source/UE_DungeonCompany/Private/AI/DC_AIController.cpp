@@ -99,3 +99,8 @@ void ADC_AIController::HandleHearingSense(FAIStimulus const Stimulus)
 		GetBlackboardComponent()->SetValueAsBool("NewTarget", true);
 	}
 }
+
+void ADC_AIController::SetSightRadius(float Radius)
+{
+	SightConfig->SightRadius = Radius;
+}

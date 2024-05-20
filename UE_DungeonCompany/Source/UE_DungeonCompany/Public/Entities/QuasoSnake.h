@@ -9,27 +9,30 @@
 /**
  * 
  */
+class USphereComponent;
 class USplineComponent;
+class APlayerCharacter;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AQuasoSnake : public AAIEntity
 {
 	GENERATED_BODY()
+
 private:
-
+	UPROPERTY(EditAnywhere)
+	USphereComponent* EyeCollision;
+	
 	UPROPERTY(EditAnywhere, Category="Balancing")
-	float WindUpTime = 2.f;
-
-	USplineComponent* AttackSpline;
-
-	bool bInAttack = false;
-	float AttackTime = 0.f;
+	float WindUpTime = 1.f;
 
 public:
 	AQuasoSnake();
 
 protected:
 	virtual void BeginPlay() override;
+
+private:
+	bool bInAttack = false;
 
 public:
 	virtual void AttackPlayer(APlayerCharacter* TargetPlayer) override;
@@ -41,9 +44,16 @@ private:
 	UPROPERTY(EditAnywhere)
 	float LaunchUpdateInterval = 0.01f;
 
+	USplineComponent* AttackSpline;
+
+	float AttackTime = 0.f;
+
 protected:
 	void LaunchAtActor(AActor* Actor);
 	void CalculateLaunchSplineToActor(AActor* Actor);
+
+private:
+	APlayerCharacter* PlayerAttachedTo;
 
 public:
 	UFUNCTION()
@@ -52,5 +62,7 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_OnAttachedToPlayer();
 	void Multicast_OnAttachedToPlayer_Implementation();
+
+	virtual void OnDeath_Implementation() override;
 	
 };
