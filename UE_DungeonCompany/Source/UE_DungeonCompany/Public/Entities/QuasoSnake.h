@@ -21,9 +21,12 @@ class UE_DUNGEONCOMPANY_API AQuasoSnake : public AAIEntity
 private:
 	UPROPERTY(EditAnywhere)
 	USphereComponent* EyeCollision;
+
+	UPROPERTY(EditAnywhere, Category="Balancing")
+	float DeathSeconds = 30.f;
 	
 	UPROPERTY(EditAnywhere, Category="Balancing")
-	float WindUpTime = 1.f;
+	float WindUpSeconds = 1.f;
 
 public:
 	AQuasoSnake();
@@ -64,5 +67,13 @@ public:
 	void Multicast_OnAttachedToPlayer_Implementation();
 
 	virtual void OnDeath_Implementation() override;
+
+private:
+	int CurrentStage = -1;
+	FTimerHandle StageProgressHandle;
+
+protected:
+	void ProgressStage();
+	void ResetPlayerEffects();
 	
 };

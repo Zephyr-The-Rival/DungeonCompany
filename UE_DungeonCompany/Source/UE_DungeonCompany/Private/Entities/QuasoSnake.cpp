@@ -11,7 +11,7 @@
 #include "Components/SplineComponent.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/KismetMathLibrary.h" 
-#include "BrainComponent.h"
+#include "BuffSystem/DebuffDisableMovement.h"
 
 AQuasoSnake::AQuasoSnake()
 {
@@ -46,7 +46,7 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 
 	FTimerHandle handle;
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AQuasoSnake::LaunchAtActor, Cast<AActor>(TargetPlayer));
-	GetWorld()->GetTimerManager().SetTimer(handle, delegate, WindUpTime, false);
+	GetWorld()->GetTimerManager().SetTimer(handle, delegate, WindUpSeconds, false);
 
 	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", true);
 
@@ -123,8 +123,6 @@ void AQuasoSnake::CalculateLaunchSplineToActor(AActor* Actor)
 
 	TArray<FVector> points = { start, midwayPoint, target, end};
 
-
-
 	AttackSpline->SetSplinePoints(points, ESplineCoordinateSpace::World, true);
 }
 
@@ -157,10 +155,10 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	PlayerAttachedTo = character;
 
 	SetActorLocation(character->GetActorLocation() + FVector::UpVector * 50);
-	character->GetCharacterMovement()->DisableMovement();
+
+	GetWorld()->GetTimerManager().SetTimer(StageProgressHandle, this, &AQuasoSnake::ProgressStage, DeathSeconds/3, true, 0.f);
 
 }
-
 
 void AQuasoSnake::Multicast_OnAttachedToPlayer_Implementation()
 {
@@ -171,9 +169,51 @@ void AQuasoSnake::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
 
-	if(!HasAuthority() || !IsValid(PlayerAttachedTo))
+	if(!HasAuthority())
+		return;
+
+	ResetPlayerEffects();
+
+}
+
+void AQuasoSnake::ProgressStage()
+{
+	if(!IsValid(PlayerAttachedTo))
+		return;
+
+	++CurrentStage;
+
+	switch (CurrentStage)
+	{
+		case 0:
+			PlayerAttachedTo->AddBuffOrDebuff(UDebuffDisableMovement::StaticClass());
+			break;
+
+		case 1:
+			PlayerAttachedTo->GetController()->SetIgnoreLookInput(true);
+			//Block other inputs
+			break;
+
+		case 2:
+			//mute voicechat and blur + dark screen
+			break;
+
+		case 3:
+			PlayerAttachedTo->TakeDamage(100000.f);
+			break;
+
+		default:
+			break;
+
+	}
+}
+
+void AQuasoSnake::ResetPlayerEffects()
+{
+	if(!IsValid(PlayerAttachedTo))
 		return;
 
 	PlayerAttachedTo->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	PlayerAttachedTo->GetController()->SetIgnoreLookInput(false);
 
 }

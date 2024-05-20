@@ -3,6 +3,7 @@
 
 #include "Entities/DC_Entity.h"
 #include "AI/DC_AIController.h"
+#include "BuffSystem/BuffDebuffBase.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -48,5 +49,38 @@ void ADC_Entity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ADC_Entity, HP);
+
+}
+
+void ADC_Entity::AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass, float ActiveTime /*= 0.f*/)
+{
+	if (!HasAuthority())
+		return;
+
+	UBuffDebuffBase* ExistingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
+
+	if (ExistingDeBuff)
+	{
+		ExistingDeBuff->Timegate(ActiveTime);
+		return;
+	}
+
+	UBuffDebuffBase* DeBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
+
+	DeBuff->RegisterComponent();
+
+	DeBuff->Timegate(ActiveTime);
+
+}
+
+void ADC_Entity::RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass)
+{
+	if (!HasAuthority())
+		return;
+
+	UBuffDebuffBase* ExistingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
+
+	if (ExistingDeBuff)
+		ExistingDeBuff->Destroy();
 
 }
