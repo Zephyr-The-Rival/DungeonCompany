@@ -86,7 +86,7 @@ void AWorldItem::Interact(APawn* InteractingPawn)
 	character->PickUpItem(this);
 }
 
-void AWorldItem::TriggerPrimaryAction_Implementation()
+void AWorldItem::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 {
 	LogWarning(TEXT("World Item parent primary action was called"));
 }

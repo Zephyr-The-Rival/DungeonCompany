@@ -9,6 +9,7 @@
 #include "Items/ItemData.h"
 #include "Inventory/Inventory.h"
 #include "Inventory/InventorySlot.h"
+#include "Items/Weapon.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 
@@ -249,13 +250,10 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 	FVector2D lookVector = Value.Get<FVector2D>();
 
 	AddControllerYawInput(lookVector.X);
+
 	AddControllerPitchInput(lookVector.Y);
 	FRotator newRotation = FRotator(0,0,0);
 	newRotation.Pitch =GetControlRotation().Euler().Y;
-
-	FString message= newRotation.ToString();
-	LogWarning(*message);
-
 	
 	FirstPersonMesh->SetRelativeRotation(newRotation);
 
@@ -915,7 +913,11 @@ void APlayerCharacter::LeftMouseButtonPressed()
 	{
 		if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
 		{
-			CurrentlyHeldWorldItem->TriggerPrimaryAction();
+			CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
+			if (IsValid(Cast<AWeapon>(CurrentlyHeldWorldItem)))
+			{
+				this->AttackBlend=1;
+			}
 		}
 	}
 }
@@ -947,3 +949,17 @@ void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 
 }
 
+void APlayerCharacter::AttackLanded()
+{
+	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
+	weapon->GetHitActors();
+
+	FString message= "hits:\n";
+
+	for (AActor* a : weapon->GetHitActors())
+	{
+		message += a->GetName() + "\n";
+	}
+
+	LogWarning(*message);
+}

@@ -388,4 +388,12 @@ private://only controller controls
 	void LeftMouseButtonPressed();
 	void RightMouseButtonPressed();
 	void MouseWheelScrolled(const FInputActionValue& Value);
+
+public://fighting
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float AttackBlend = 0;
+
+	UFUNCTION(BlueprintCallable)
+	void AttackLanded();
+
 };
