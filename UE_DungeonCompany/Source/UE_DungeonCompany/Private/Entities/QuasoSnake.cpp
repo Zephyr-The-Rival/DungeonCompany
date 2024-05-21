@@ -4,6 +4,8 @@
 #include "Entities/QuasoSnake.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "AI/DC_AIController.h"
+#include "BuffSystem/DebuffDisableMovement.h"
+#include "BuffSystem/DebuffBlockInputs.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -11,7 +13,6 @@
 #include "Components/SplineComponent.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/KismetMathLibrary.h" 
-#include "BuffSystem/DebuffDisableMovement.h"
 
 AQuasoSnake::AQuasoSnake()
 {
@@ -190,8 +191,7 @@ void AQuasoSnake::ProgressStage()
 			break;
 
 		case 1:
-			PlayerAttachedTo->GetController()->SetIgnoreLookInput(true);
-			//Block other inputs
+			PlayerAttachedTo->AddBuffOrDebuff(UDebuffBlockInputs::StaticClass());
 			break;
 
 		case 2:

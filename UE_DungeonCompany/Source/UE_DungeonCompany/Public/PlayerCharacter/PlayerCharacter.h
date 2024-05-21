@@ -99,6 +99,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* MouseRightAction;
+
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* MouseLeftAction;
 
@@ -107,7 +108,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* DropItemAction;
-	
+
+public:
+	inline UInputMappingContext* GetInputMapping() const { return InputMapping; }
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
