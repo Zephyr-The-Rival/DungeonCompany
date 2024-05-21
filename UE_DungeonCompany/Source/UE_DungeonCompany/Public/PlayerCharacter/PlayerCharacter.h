@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "Entities/DC_Entity.h"
 #include "Camera/CameraComponent.h"
 #include "Interactable.h"
 #include "PlayerCharacter.generated.h"
@@ -17,10 +17,8 @@ struct FInputActionValue;
 class UInventory;
 class UInventorySlot;
 
-
-
 UCLASS()
-class UE_DUNGEONCOMPANY_API APlayerCharacter : public ACharacter
+class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
 {
 	GENERATED_BODY()
 
@@ -238,7 +236,6 @@ public:
 	virtual bool CanJumpInternal_Implementation() const override;
 
 protected:
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
 	float SprintStaminaDrainPerSecond = 1.f;
 
@@ -279,8 +276,6 @@ private:
 	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 
 protected://inventory & Backpack
-
-
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetInventory)
 	UInventory* Inventory;
 
@@ -324,23 +319,20 @@ protected://inventory & Backpack
 	TSubclassOf<class UObject> NoItemAnimationBlueprintClass;
 
 public:
-		UPROPERTY(EditAnywhere,BlueprintReadOnly)
-		bool BHasBackPack = false;
+	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	bool BHasBackPack = false;
 
-		UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-		UInventory* GetInventory() const { return Inventory; }
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	UInventory* GetInventory() const { return Inventory; }
 
-		UFUNCTION(BlueprintPure,BlueprintInternalUseOnly)
-		UInventory* GetBackpack() const {return Backpack;}
+	UFUNCTION(BlueprintPure,BlueprintInternalUseOnly)
+	UInventory* GetBackpack() const {return Backpack;}
 
-		UPROPERTY(EditAnywhere,BlueprintReadOnly)
-		UInventorySlot* HandSlotA;
-		UPROPERTY(EditAnywhere,BlueprintReadOnly)
-		UInventorySlot* HandSlotB;
-		//bool BItemAIsInHand is protected
-		
-
-
+	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	UInventorySlot* HandSlotA;
+	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	UInventorySlot* HandSlotB;
+	//bool BItemAIsInHand is protected
 
 private:
 	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
@@ -350,30 +342,13 @@ private:
 
 public:
 	void ReportTalking(float Loudness);
-		
-public://Health
-
-	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-	float GetHealth() const { return this->HP; }
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
-	float MaxHP=100;
-
-protected:
-
 
 private:
-	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
-	float HP;
-
-	void TakeDamage_DC(float amout);
-
 	void CheckForFallDamage();
 	float LastStandingHeight;
 	bool BWasFallingInLastFrame=false;
 
 private://only controller controls
-
 	void DPadUpPressed();
 	void DPadDownPressed();
 	void DPadLeftPressed();
@@ -388,4 +363,8 @@ private://only controller controls
 	void LeftMouseButtonPressed();
 	void RightMouseButtonPressed();
 	void MouseWheelScrolled(const FInputActionValue& Value);
+
+public:
+	virtual void OnDeath_Implementation() override;
+
 };

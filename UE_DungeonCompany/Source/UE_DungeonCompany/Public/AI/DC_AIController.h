@@ -22,6 +22,8 @@ private:
 	UAISenseConfig_Sight* SightConfig;
 	UAISenseConfig_Hearing* HearingConfig;
 
+	bool bUsingBlackboard = false;
+
 public:
 	explicit ADC_AIController(FObjectInitializer const& ObjectInitializer);
 
