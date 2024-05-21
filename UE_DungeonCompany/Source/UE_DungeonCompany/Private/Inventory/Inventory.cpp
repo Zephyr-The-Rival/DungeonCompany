@@ -65,8 +65,10 @@ void UInventory::RemoveItem(UItemData* ItemToRemove)
 	for (UInventorySlot* s : this->Slots)
 	{
 		if (s->MyItem == ItemToRemove)
+		{
 			s->MyItem = nullptr;
-		
+			return;
+		}		
 	}
 }
 
