@@ -342,24 +342,8 @@ private:
 
 public:
 	void ReportTalking(float Loudness);
-		
-public://Health
-
-	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-	float GetHealth() const { return this->HP; }
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
-	float MaxHP=100;
-
-protected:
-
 
 private:
-	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
-	float HP;
-
-	void TakeDamage_DC(float amout);
-
 	void CheckForFallDamage();
 	float LastStandingHeight;
 	bool BWasFallingInLastFrame=false;
@@ -379,14 +363,6 @@ private://only controller controls
 	void LeftMouseButtonPressed();
 	void RightMouseButtonPressed();
 	void MouseWheelScrolled(const FInputActionValue& Value);
-
-public://fighting
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float AttackBlend = 0;
-
-	UFUNCTION(BlueprintCallable)
-	void AttackLanded();
-
 
 public:
 	virtual void OnDeath_Implementation() override;
