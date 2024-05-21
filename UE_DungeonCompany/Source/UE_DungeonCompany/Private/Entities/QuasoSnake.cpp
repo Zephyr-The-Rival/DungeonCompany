@@ -6,6 +6,7 @@
 #include "AI/DC_AIController.h"
 #include "BuffSystem/DebuffDisableMovement.h"
 #include "BuffSystem/DebuffBlockInputs.h"
+#include "BuffSystem/DebuffMuffledVoice.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -187,15 +188,16 @@ void AQuasoSnake::ProgressStage()
 	switch (CurrentStage)
 	{
 		case 0:
-			PlayerAttachedTo->AddBuffOrDebuff(UDebuffDisableMovement::StaticClass());
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffDisableMovement::StaticClass()));
 			break;
 
 		case 1:
-			PlayerAttachedTo->AddBuffOrDebuff(UDebuffBlockInputs::StaticClass());
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffBlockInputs::StaticClass()));
 			break;
 
 		case 2:
-			//mute voicechat and blur + dark screen
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffMuffledVoice::StaticClass()));
+			//dark + blur screen
 			break;
 
 		case 3:
@@ -213,7 +215,13 @@ void AQuasoSnake::ResetPlayerEffects()
 	if(!IsValid(PlayerAttachedTo))
 		return;
 
-	PlayerAttachedTo->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	PlayerAttachedTo->GetController()->SetIgnoreLookInput(false);
+	int debuffsNum = AppliedDebuffs.Num();
 
+	for (int i = 0; i < debuffsNum; ++i)
+	{
+		if(!IsValid(AppliedDebuffs[i]))
+			continue;
+
+		AppliedDebuffs[i]->Destroy();
+	}
 }

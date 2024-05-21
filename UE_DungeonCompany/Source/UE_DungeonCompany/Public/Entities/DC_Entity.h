@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "DC_Entity.generated.h"
 
+class UBuffDebuffBase;
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_Entity : public ACharacter
 {
@@ -39,7 +41,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 public:
-	void AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass, float ActiveTime = 0.f);
+	UBuffDebuffBase* AddBuffOrDebuff(TSubclassOf<UBuffDebuffBase> BuffDebuffClass, float ActiveTime = 0.f);
 	void RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass);
 
 };

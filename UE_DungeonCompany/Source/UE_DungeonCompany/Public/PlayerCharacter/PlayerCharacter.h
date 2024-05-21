@@ -272,6 +272,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* VoiceSA;
 
+public:
+	void SetVoiceEffect(USoundEffectSourcePresetChain* SoundEffect);
+
 protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 

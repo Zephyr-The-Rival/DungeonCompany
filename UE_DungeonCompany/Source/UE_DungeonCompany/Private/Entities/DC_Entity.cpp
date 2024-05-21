@@ -52,17 +52,17 @@ void ADC_Entity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 
 }
 
-void ADC_Entity::AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass, float ActiveTime /*= 0.f*/)
+UBuffDebuffBase* ADC_Entity::AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass, float ActiveTime /*= 0.f*/)
 {
 	if (!HasAuthority())
-		return;
+		return nullptr;
 
 	UBuffDebuffBase* ExistingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
 
 	if (ExistingDeBuff)
 	{
 		ExistingDeBuff->Timegate(ActiveTime);
-		return;
+		return ExistingDeBuff;
 	}
 
 	UBuffDebuffBase* DeBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
@@ -71,6 +71,7 @@ void ADC_Entity::AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffCl
 
 	DeBuff->Timegate(ActiveTime);
 
+	return DeBuff;
 }
 
 void ADC_Entity::RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass)

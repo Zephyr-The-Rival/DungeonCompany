@@ -12,6 +12,7 @@
  class UPlayerHud;
 
  class UVOIPTalker;
+ class UInputMappingContext;
  class UInputAction;
 
 UCLASS()
@@ -34,6 +35,9 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
+	UInputMappingContext* InputMapping;
+
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* PushToTalkAction;
 

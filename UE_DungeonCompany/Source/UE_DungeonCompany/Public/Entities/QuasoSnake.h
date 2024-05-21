@@ -12,6 +12,7 @@
 class USphereComponent;
 class USplineComponent;
 class APlayerCharacter;
+class UBuffDebuffBase;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AQuasoSnake : public AAIEntity
@@ -71,6 +72,8 @@ public:
 private:
 	int CurrentStage = -1;
 	FTimerHandle StageProgressHandle;
+
+	TArray<UBuffDebuffBase*> AppliedDebuffs;
 
 protected:
 	void ProgressStage();

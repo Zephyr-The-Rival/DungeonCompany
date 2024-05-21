@@ -8,7 +8,7 @@ UBuffDebuffBase::UBuffDebuffBase()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
-	SetIsReplicated(true);
+	SetIsReplicatedByDefault(true);
 
 }
 

@@ -21,6 +21,9 @@ private:
 
 public:
 	inline ADC_Entity* GetOuterEntity() const { return OuterEntity; }
+	
+	template<class T>
+	T* GetOuterEntity() const { return Cast<T>(OuterEntity); }
 
 protected:
 	virtual void BeginPlay() override;

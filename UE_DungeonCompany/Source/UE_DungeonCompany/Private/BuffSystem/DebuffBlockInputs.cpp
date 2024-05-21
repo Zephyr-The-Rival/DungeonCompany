@@ -8,7 +8,7 @@
 
 void UDebuffBlockInputs::LocalApply()
 {
-	APlayerCharacter* character = Cast<APlayerCharacter>(GetOuterEntity());
+	APlayerCharacter* character = GetOuterEntity<APlayerCharacter>();
 
 	if (!character)
 		return;
