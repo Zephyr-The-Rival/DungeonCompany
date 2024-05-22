@@ -2,7 +2,7 @@
 
 
 #include "AI/DC_AIController.h"
-#include "Entities/DC_Entity.h"
+#include "Entities/AIEntity.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 
 #include "Perception/AIPerceptionComponent.h"
@@ -26,7 +26,7 @@ void ADC_AIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	ADC_Entity* entity = Cast<ADC_Entity>(InPawn);
+	AAIEntity* entity = Cast<AAIEntity>(InPawn);
 
 	if(!entity)
 		return;
@@ -38,6 +38,7 @@ void ADC_AIController::OnPossess(APawn* InPawn)
 
 	UBlackboardComponent* b;
 	UseBlackboard(tree->BlackboardAsset, b);
+	bUsingBlackboard = true;
 	Blackboard = b;
 	RunBehaviorTree(tree);
 }
@@ -67,6 +68,9 @@ void ADC_AIController::SetupPerceptionSystem()
 
 void ADC_AIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus const Stimulus)
 {
+	if (!bUsingBlackboard)
+		return;
+
 	if (Stimulus.Type == SightConfig->GetSenseID())
 		HandleSightSense(Actor, Stimulus);
 	else if(Stimulus.Type == HearingConfig->GetSenseID())

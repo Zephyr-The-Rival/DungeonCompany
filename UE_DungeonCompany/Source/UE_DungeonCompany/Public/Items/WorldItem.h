@@ -26,11 +26,11 @@ public:
 	virtual void Interact(APawn* InteractingPawn) override;
 
 
+
 protected:
 	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -43,6 +43,9 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UItemData> ItemDataClass;
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateMaterialOnTop(UMeshComponent* MeshComponent);
 
 public://attached to hand
 

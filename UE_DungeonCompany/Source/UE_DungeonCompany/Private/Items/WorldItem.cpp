@@ -53,6 +53,12 @@ void AWorldItem::OnHoldingInHand_Implementation()
 	LogWarning(*(this->GetName()+"->OnHoldingInHand() was not overridden"));
 }
 
+void AWorldItem::ActivateMaterialOnTop(UMeshComponent* MeshComponent)
+{
+	UMaterialInstanceDynamic* materialInstance = MeshComponent->CreateAndSetMaterialInstanceDynamic(0);
+	materialInstance->SetScalarParameterValue(TEXT("OnTopActive"),1);
+}
+
 void AWorldItem::AttachToPlayer()
 {
 	this->OnHoldingInHand();

@@ -6,28 +6,36 @@
 #include "GameFramework/Character.h"
 #include "DC_Entity.generated.h"
 
-class UBehaviorTree;
-
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_Entity : public ACharacter
 {
 	GENERATED_BODY()
 
+protected:	
+	UPROPERTY(EditAnywhere,	BlueprintGetter = GetMaxHealth, Category = "Balancing|Health")
+	float MaxHP = 100.f;
+
+	UPROPERTY(EditAnywhere, Replicated, BlueprintGetter = GetHealth)
+	float HP = 100.f;
+
 public:
 	ADC_Entity();
+	ADC_Entity(const FObjectInitializer& ObjectInitializer);
 
-protected:
-	virtual void BeginPlay() override;
-
-public:	
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-private:
-	UPROPERTY(EditAnywhere, Category = "AI")
-	UBehaviorTree* BehaviorTree;
 public:
-	inline UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	float GetHealth() const { return HP; }
+
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	float GetMaxHealth() const { return MaxHP; }
+
+	using Super::TakeDamage;
+	virtual void TakeDamage(float Damage);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnDeath();
+	virtual void OnDeath_Implementation();
+
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 };
