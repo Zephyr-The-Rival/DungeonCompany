@@ -342,24 +342,8 @@ private:
 
 public:
 	void ReportTalking(float Loudness);
-		
-public://Health
-
-	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-	float GetHealth() const { return this->HP; }
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Balancing")
-	float MaxHP=100;
-
-protected:
-
 
 private:
-	UPROPERTY(EditAnywhere,BlueprintGetter=GetHealth)
-	float HP;
-
-	void TakeDamage_DC(float amout);
-
 	void CheckForFallDamage();
 	float LastStandingHeight;
 	bool BWasFallingInLastFrame=false;

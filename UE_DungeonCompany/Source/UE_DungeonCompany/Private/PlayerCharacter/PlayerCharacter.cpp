@@ -769,21 +769,6 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	//set item data
 }
 
-void APlayerCharacter::TakeDamage_DC(float amout)
-{
-	FString message = "Taking damage: " + FString::SanitizeFloat(amout);
-	LogWarning(*message);
-	if (this->HP - amout > 0)
-	{
-		HP -= amout;
-	}
-	else
-	{
-		HP = 0;
-		Cast<ADC_PC>(GetController())->ConsoleCommand("Quit");
-	}
-}
-
 void APlayerCharacter::CheckForFallDamage()
 {
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
