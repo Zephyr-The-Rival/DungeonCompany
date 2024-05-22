@@ -39,15 +39,9 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
 	FirstPersonMesh->SetupAttachment(RootComponent);
 
-
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
 	//FirstPersonCamera->bUsePawnControlRotation = true;
-		   
-
-
-	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
-	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
 
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
