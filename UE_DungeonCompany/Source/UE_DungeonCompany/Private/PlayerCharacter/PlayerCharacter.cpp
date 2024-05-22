@@ -12,6 +12,7 @@
 #include "Items/Weapon.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Entities/DC_Entity.h"
 
 
 #include "Components/CapsuleComponent.h"
@@ -956,13 +957,30 @@ void APlayerCharacter::AttackStart()
 void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
-	weapon->GetHitActors();
+	
 
 	FString message= "hits:\n";
 
-	for (AActor* a : weapon->GetHitActors())
+	for (FWeaponHit hit : weapon->GetHits())
 	{
-		message += a->GetName() + "\n";
+		AActor* a = hit.HitActor;
+		if (Cast<ADC_Entity>(a))
+		{
+			//if a is not an entity then it maybe a vase that needs to break
+
+			ADC_Entity* entity = Cast<ADC_Entity>(a);
+			
+			if(hit.bWeakspotHit)
+				entity->TakeDamage(20);
+			else
+				entity->TakeDamage(10);
+
+		}
+		else
+		{
+
+		}
+		message += hit.HitActor->GetName() + "\n";
 	}
 
 	LogWarning(*message);
