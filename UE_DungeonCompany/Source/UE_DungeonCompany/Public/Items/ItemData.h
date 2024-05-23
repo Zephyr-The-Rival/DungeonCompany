@@ -24,10 +24,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTexture2D* Icon;
 
-	AWorldItem* SpawnMyItem(FTransform transform);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class AWorldItem> MyWorldItemClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UObject> AnimationBlueprintClass;
 
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class AWorldItem> MyWorldItem;
+
 };

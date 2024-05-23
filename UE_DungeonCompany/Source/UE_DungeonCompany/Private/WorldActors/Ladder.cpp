@@ -46,7 +46,9 @@ void ALadder::OnConstruction(const FTransform& Transform)
 		return;
 
 	LadderMesh->SetStaticMesh(LadderSectionReference);
-	LadderSectionReference->SetMaterial(0, Material);
+
+	if(Material)
+		LadderMesh->SetMaterial(0, Material);
 	
 	for (unsigned int i = 0; i < SectionsCount; ++i)
 	{
@@ -85,11 +87,12 @@ void ALadder::Interact(APawn* InteractingPawn)
 		return;
 
 	float distanceToLadder = character->GetCapsuleComponent()->GetScaledCapsuleRadius();
-	FVector climbPosition = GetActorLocation() + GetActorForwardVector() * distanceToLadder;
-	climbPosition.Z = character->GetActorLocation().Z;
+
+	float distanceToStart = character->GetDistanceTo(this);
+	FVector climbPosition = GetActorLocation() + GetActorUpVector() * distanceToStart + GetActorForwardVector() * distanceToLadder;
 	bInteractable = false;
 
-	character->StartClimbingAtLocation(climbPosition);
+	character->StartClimbingAtLocation(climbPosition, GetActorUpVector());
 
 	LocalPlayerOnLadder = character;
 	character->OnStoppedClimbing.AddDynamic(this, &ALadder::StoppedInteracting);
@@ -105,8 +108,6 @@ void ALadder::OnBottomBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	bRemovedByLadder = true;
 
 	character->StopClimbing();
-
-	UE_LOG(LogTemp, Warning, TEXT("hanlo"));
 	
 }
 
@@ -117,8 +118,6 @@ void ALadder::OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, 
 		return;
 
 	bInteractable = true;
-
-	UE_LOG(LogTemp, Warning, TEXT("entered"));
 
 }
 
@@ -132,8 +131,6 @@ void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AAc
 	bRemovedByLadder = true;
 
 	character->StopClimbing();
-
-	UE_LOG(LogTemp, Warning, TEXT("left"));
 
 }
 
