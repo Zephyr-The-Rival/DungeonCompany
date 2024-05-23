@@ -39,15 +39,9 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
 	FirstPersonMesh->SetupAttachment(RootComponent);
 
-
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
 	//FirstPersonCamera->bUsePawnControlRotation = true;
-		   
-
-
-	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
-	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
 
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
@@ -226,19 +220,22 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
-	FVector2D localMoveVector = Value.Get<FVector2D>();
+	if (this->bMoveAllowed)
+	{
+		FVector2D localMoveVector = Value.Get<FVector2D>();
 
-	FVector worldMoveVector;
+		FVector worldMoveVector;
 
-	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
-		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
-	else
-		worldMoveVector = ClimbUpVector * localMoveVector.Y;
+		if (GetCharacterMovement()->MovementMode != MOVE_Flying)
+			worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
+		else
+			worldMoveVector = ClimbUpVector * localMoveVector.Y;
 
-	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
-		StopSprint();
+		if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
+			StopSprint();
 
-	AddMovementInput(worldMoveVector);
+		AddMovementInput(worldMoveVector);
+	}
 }
 
 void APlayerCharacter::NoMove()
@@ -249,16 +246,18 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
-	FVector2D lookVector = Value.Get<FVector2D>();
+	if (bLookAllowed)
+	{
+		FVector2D lookVector = Value.Get<FVector2D>();
 
-	AddControllerYawInput(lookVector.X);
+		AddControllerYawInput(lookVector.X);
 
-	AddControllerPitchInput(lookVector.Y);
-	FRotator newRotation = FRotator(0,0,0);
-	newRotation.Pitch =GetControlRotation().Euler().Y;
-	
-	FirstPersonMesh->SetRelativeRotation(newRotation);
+		AddControllerPitchInput(lookVector.Y);
+		FRotator newRotation = FRotator(0, 0, 0);
+		newRotation.Pitch = GetControlRotation().Euler().Y;
 
+		FirstPersonMesh->SetRelativeRotation(newRotation);
+	}
 }
 
 void APlayerCharacter::InteractorLineTrace()
@@ -703,9 +702,9 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 
 void APlayerCharacter::SwitchHand()
 {
-	if (BSwichHandAllowed)
+	if (bSwichHandAllowed)
 	{
-		BSwichHandAllowed = false;
+		bSwichHandAllowed = false;
 		this->BSlotAIsInHand = !BSlotAIsInHand;
 		TakeOutItem();
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
@@ -715,7 +714,7 @@ void APlayerCharacter::SwitchHand()
 
 void APlayerCharacter::AllowSwitchHand()
 {
-	BSwichHandAllowed = true;
+	bSwichHandAllowed = true;
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.RemoveAll(this);
 }
 
@@ -767,21 +766,6 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
 	//SpawnedItem->GetRootComponent()->AddImpulse()
 	//set item data
-}
-
-void APlayerCharacter::TakeDamage_DC(float amout)
-{
-	FString message = "Taking damage: " + FString::SanitizeFloat(amout);
-	LogWarning(*message);
-	if (this->HP - amout > 0)
-	{
-		HP -= amout;
-	}
-	else
-	{
-		HP = 0;
-		Cast<ADC_PC>(GetController())->ConsoleCommand("Quit");
-	}
 }
 
 void APlayerCharacter::CheckForFallDamage()
@@ -918,7 +902,7 @@ void APlayerCharacter::LeftMouseButtonPressed()
 			CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
 			if (IsValid(Cast<AWeapon>(CurrentlyHeldWorldItem)))
 			{
-				this->AttackBlend=1;
+				this->AttackStart();
 			}
 		}
 	}
@@ -961,6 +945,14 @@ void APlayerCharacter::OnDeath_Implementation()
 	GetController()->UnPossess();
 }
 
+void APlayerCharacter::AttackStart()
+{
+	this->AttackBlend = 1;
+	this->bSwichHandAllowed = false;
+	this->bMoveAllowed = false;
+	this->bLookAllowed = false;
+}
+
 void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
@@ -974,4 +966,13 @@ void APlayerCharacter::AttackLanded()
 	}
 
 	LogWarning(*message);
+}
+
+void APlayerCharacter::OnAttackOver()
+{
+	this->AttackBlend = 0;
+	this->bSwichHandAllowed = true;
+	this->bMoveAllowed = true;
+	this->bLookAllowed = true;
+	
 }
