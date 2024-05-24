@@ -47,12 +47,14 @@ void ADC_AIController::SetupPerceptionSystem()
 {
 	SightConfig->SightRadius = 500.f;
 	SightConfig->LoseSightRadius = SightConfig->SightRadius + 300.f;
-	SightConfig->PeripheralVisionAngleDegrees = 90.f;
+	SightConfig->PeripheralVisionAngleDegrees = 60.f;
 	SightConfig->SetMaxAge(5.f);
 	SightConfig->AutoSuccessRangeFromLastSeenLocation = 800.f;
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	SightConfig->NearClippingRadius = 100.f;
+	SightConfig->PointOfViewBackwardOffset = 100.f;
 
 	GetPerceptionComponent()->ConfigureSense(*SightConfig);
 	GetPerceptionComponent()->SetDominantSense(SightConfig->GetSenseImplementation());
@@ -84,7 +86,7 @@ void ADC_AIController::HandleSightSense(AActor* Actor, FAIStimulus const Stimulu
 	if (!playerCharacter)
 		return;
 
-	if (Stimulus.WasSuccessfullySensed())
+	if (Stimulus.WasSuccessfullySensed() && !playerCharacter->IsDead())
 		GetBlackboardComponent()->SetValueAsObject("TargetPlayer", Actor);
 	else
 		GetBlackboardComponent()->ClearValue("TargetPlayer");
@@ -103,4 +105,9 @@ void ADC_AIController::HandleHearingSense(FAIStimulus const Stimulus)
 void ADC_AIController::SetSightRadius(float Radius)
 {
 	SightConfig->SightRadius = Radius;
+}
+
+void ADC_AIController::SetLoseSightRadius(float Radius)
+{
+	SightConfig->LoseSightRadius = Radius;
 }

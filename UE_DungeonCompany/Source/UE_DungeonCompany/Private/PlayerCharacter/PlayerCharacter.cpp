@@ -101,7 +101,6 @@ void APlayerCharacter::BeginPlay()
 	
 	inputSystem->AddMappingContext(InputMapping, 0);
 	
-
 }
 
 // Called every frame
@@ -778,7 +777,7 @@ void APlayerCharacter::CheckForFallDamage()
 	if (GetMovementComponent()->Velocity.Z>=0)
 		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
 
-	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0);
+	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->IsFalling());
 }
 
 void APlayerCharacter::DPadUpPressed()
@@ -922,6 +921,9 @@ void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 void APlayerCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
+
+	GetCapsuleComponent()->SetCollisionProfileName("DeadPawn", true);
+	StimulusSource->DestroyComponent(false);
 
 	if (!HasAuthority())
 		return;

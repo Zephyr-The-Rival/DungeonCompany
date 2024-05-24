@@ -20,6 +20,12 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 	
 }
 
+void ADC_Entity::CheckIfDead()
+{
+	if (HP <= 0.f)
+		OnDeath();
+}
+
 void ADC_Entity::TakeDamage(float Damage)
 {
 	if (HP <= 0.f)
@@ -34,7 +40,7 @@ void ADC_Entity::TakeDamage(float Damage)
 
 	HP = 0.f;
 
-	OnDeath();
+	CheckIfDead();
 
 }
 

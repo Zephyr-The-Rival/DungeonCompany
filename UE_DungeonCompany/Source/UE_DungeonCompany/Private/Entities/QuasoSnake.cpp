@@ -7,6 +7,7 @@
 #include "BuffSystem/DebuffDisableMovement.h"
 #include "BuffSystem/DebuffBlockInputs.h"
 #include "BuffSystem/DebuffMuffledVoice.h"
+#include "BuffSystem/DebuffImpairedVision.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -35,6 +36,14 @@ void AQuasoSnake::BeginPlay()
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AQuasoSnake::OnHit);
 	GetCapsuleComponent()->SetNotifyRigidBodyCollision(true);
 
+	GetCharacterMovement()->DisableMovement();
+
+	ADC_AIController* aiController = GetController<ADC_AIController>();
+	if (!aiController)
+		return;
+
+	aiController->SetLoseSightRadius(0.f);
+
 }
 
 void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
@@ -50,7 +59,9 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AQuasoSnake::LaunchAtActor, Cast<AActor>(TargetPlayer));
 	GetWorld()->GetTimerManager().SetTimer(handle, delegate, WindUpSeconds, false);
 
-	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", true);
+	ADC_AIController* aiController = GetController<ADC_AIController>();
+	if (aiController)
+		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", true);
 
 	GetCharacterMovement()->Velocity = FVector(0, 0, 0);
 
@@ -83,10 +94,7 @@ void AQuasoSnake::LaunchAtActor(AActor* Actor)
 		float distance = direction.Length();
 		direction.Normalize();
 
-		FVector velocity = direction * 50;
-
-		if (distance > 1.f)
-			velocity *= distance;
+		FVector velocity = direction * 50 * distance;
 		
 		GetCharacterMovement()->Velocity = velocity;
 
@@ -136,8 +144,11 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	bLaunched = false;
 	AttackTime = 0.f;
 
-	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", false);
-	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsBool("InAttackRange", false);
+	ADC_AIController* aiController = GetController<ADC_AIController>();
+	if (!aiController)
+		return;
+
+	aiController->GetBlackboardComponent()->SetValueAsBool("InAttackRange", false);
 
 	GetWorld()->GetTimerManager().ClearTimer(LaunchHandle);
 
@@ -146,10 +157,10 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	if (!character)
 	{
 		bInAttack = false;
+		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", false);
 		return;
 	}
 
-	DetachFromControllerPendingDestroy();
 	GetCharacterMovement()->DisableMovement();
 	Multicast_OnAttachedToPlayer();
 
@@ -165,6 +176,16 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 void AQuasoSnake::Multicast_OnAttachedToPlayer_Implementation()
 {
 	GetCapsuleComponent()->SetCollisionProfileName("OverlapAll", true);
+}
+
+void AQuasoSnake::Multicast_OnDetachedFromPlayer_Implementation()
+{
+	GetCapsuleComponent()->SetCollisionProfileName("Pawn", true);
+}
+
+AQuasoSnake* AQuasoSnake::Spawn(UWorld* World)
+{
+	return nullptr;
 }
 
 void AQuasoSnake::OnDeath_Implementation()
@@ -197,16 +218,17 @@ void AQuasoSnake::ProgressStage()
 
 		case 2:
 			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffMuffledVoice::StaticClass()));
-			//dark + blur screen
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffImpairedVision::StaticClass()));
 			break;
 
 		case 3:
 			PlayerAttachedTo->TakeDamage(100000.f);
+			DetachFromPlayer();
+			CurrentStage = -1;
 			break;
 
 		default:
 			break;
-
 	}
 }
 
@@ -224,4 +246,21 @@ void AQuasoSnake::ResetPlayerEffects()
 
 		AppliedDebuffs[i]->Destroy();
 	}
+}
+
+void AQuasoSnake::DetachFromPlayer()
+{
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	Multicast_OnDetachedFromPlayer();
+
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+	bInAttack = false;
+
+	ADC_AIController* aiController = Cast<ADC_AIController>(GetController());
+	if (!aiController)
+		return;
+
+	aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", false);
+	aiController->GetBlackboardComponent()->ClearValue("TargetPlayer");
 }

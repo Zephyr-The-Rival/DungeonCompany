@@ -17,7 +17,7 @@ protected:
 	UPROPERTY(EditAnywhere,	BlueprintGetter = GetMaxHealth, Category = "Balancing|Health")
 	float MaxHP = 100.f;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintGetter = GetHealth)
+	UPROPERTY(EditAnywhere, ReplicatedUsing = CheckIfDead, BlueprintGetter = GetHealth)
 	float HP = 100.f;
 
 public:
@@ -31,9 +31,16 @@ public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetMaxHealth() const { return MaxHP; }
 
+	inline bool IsDead() const { return HP <= 0.f; }
+
 	using Super::TakeDamage;
 	virtual void TakeDamage(float Damage);
 
+protected:
+	UFUNCTION()
+	void CheckIfDead();
+
+public:
 	UFUNCTION(BlueprintNativeEvent)
 	void OnDeath();
 	virtual void OnDeath_Implementation();

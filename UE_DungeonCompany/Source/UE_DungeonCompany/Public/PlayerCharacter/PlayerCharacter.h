@@ -281,6 +281,9 @@ protected:
 private:
 	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 
+public:
+	void DeactivateStimulus();
+
 protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetInventory)
 	UInventory* Inventory;
@@ -322,7 +325,7 @@ protected://inventory & Backpack
 	void DropItemPressed();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UObject> NoItemAnimationBlueprintClass;
+	TSubclassOf<UObject> NoItemAnimationBlueprintClass;
 
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)

@@ -65,7 +65,7 @@ public:
 	
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_OnAttachedToPlayer();
-	void Multicast_OnAttachedToPlayer_Implementation();
+	void Multicast_OnAttachedToPlayer_Implementation(); 
 
 	virtual void OnDeath_Implementation() override;
 
@@ -78,5 +78,14 @@ private:
 protected:
 	void ProgressStage();
 	void ResetPlayerEffects();
+
+	void DetachFromPlayer();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_OnDetachedFromPlayer();
+	void Multicast_OnDetachedFromPlayer_Implementation();
+
+public:
+	static AQuasoSnake* Spawn(UWorld* World);
 	
 };

@@ -40,5 +40,6 @@ protected:
 
 public:
 	void SetSightRadius(float Radius);
+	void SetLoseSightRadius(float Radius);
 	
 };
