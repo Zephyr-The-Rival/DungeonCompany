@@ -9,6 +9,7 @@
 #include "Items/ItemData.h"
 #include "Inventory/Inventory.h"
 #include "Inventory/InventorySlot.h"
+#include "Items/Weapon.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 
@@ -35,14 +36,12 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	FirstPersonCamera->SetupAttachment(RootComponent);
-	FirstPersonCamera->SetRelativeLocation(FVector(0, 0, 40));
-	FirstPersonCamera->bUsePawnControlRotation = true;
-		   
-
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
-	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
+	FirstPersonMesh->SetupAttachment(RootComponent);
+
+	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
+	//FirstPersonCamera->bUsePawnControlRotation = true;
 
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
@@ -221,19 +220,22 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
-	FVector2D localMoveVector = Value.Get<FVector2D>();
+	if (this->bMoveAllowed)
+	{
+		FVector2D localMoveVector = Value.Get<FVector2D>();
 
-	FVector worldMoveVector;
+		FVector worldMoveVector;
 
-	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
-		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
-	else
-		worldMoveVector = ClimbUpVector * localMoveVector.Y;
+		if (GetCharacterMovement()->MovementMode != MOVE_Flying)
+			worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
+		else
+			worldMoveVector = ClimbUpVector * localMoveVector.Y;
 
-	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
-		StopSprint();
+		if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
+			StopSprint();
 
-	AddMovementInput(worldMoveVector);
+		AddMovementInput(worldMoveVector);
+	}
 }
 
 void APlayerCharacter::NoMove()
@@ -244,11 +246,18 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
-	FVector2D lookVector = Value.Get<FVector2D>();
+	if (bLookAllowed)
+	{
+		FVector2D lookVector = Value.Get<FVector2D>();
 
-	AddControllerYawInput(lookVector.X);
-	AddControllerPitchInput(lookVector.Y);
+		AddControllerYawInput(lookVector.X);
 
+		AddControllerPitchInput(lookVector.Y);
+		FRotator newRotation = FRotator(0, 0, 0);
+		newRotation.Pitch = GetControlRotation().Euler().Y;
+
+		FirstPersonMesh->SetRelativeRotation(newRotation);
+	}
 }
 
 void APlayerCharacter::InteractorLineTrace()
@@ -693,9 +702,9 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 
 void APlayerCharacter::SwitchHand()
 {
-	if (BSwichHandAllowed)
+	if (bSwichHandAllowed)
 	{
-		BSwichHandAllowed = false;
+		bSwichHandAllowed = false;
 		this->BSlotAIsInHand = !BSlotAIsInHand;
 		TakeOutItem();
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
@@ -705,7 +714,7 @@ void APlayerCharacter::SwitchHand()
 
 void APlayerCharacter::AllowSwitchHand()
 {
-	BSwichHandAllowed = true;
+	bSwichHandAllowed = true;
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.RemoveAll(this);
 }
 
@@ -763,8 +772,6 @@ void APlayerCharacter::CheckForFallDamage()
 {
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
 	// that results in the jump height not being included in the fall height calculation
-
-
 
 	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
 	{
@@ -892,7 +899,11 @@ void APlayerCharacter::LeftMouseButtonPressed()
 	{
 		if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
 		{
-			CurrentlyHeldWorldItem->TriggerPrimaryAction();
+			CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
+			if (IsValid(Cast<AWeapon>(CurrentlyHeldWorldItem)))
+			{
+				this->AttackStart();
+			}
 		}
 	}
 }
@@ -934,3 +945,34 @@ void APlayerCharacter::OnDeath_Implementation()
 	GetController()->UnPossess();
 }
 
+void APlayerCharacter::AttackStart()
+{
+	this->AttackBlend = 1;
+	this->bSwichHandAllowed = false;
+	this->bMoveAllowed = false;
+	this->bLookAllowed = false;
+}
+
+void APlayerCharacter::AttackLanded()
+{
+	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
+	weapon->GetHitActors();
+
+	FString message= "hits:\n";
+
+	for (AActor* a : weapon->GetHitActors())
+	{
+		message += a->GetName() + "\n";
+	}
+
+	LogWarning(*message);
+}
+
+void APlayerCharacter::OnAttackOver()
+{
+	this->AttackBlend = 0;
+	this->bSwichHandAllowed = true;
+	this->bMoveAllowed = true;
+	this->bLookAllowed = true;
+	
+}

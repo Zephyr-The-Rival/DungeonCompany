@@ -307,7 +307,7 @@ protected://inventory & Backpack
 	void DropItem(UInventorySlot* SlotToEmpty);
 
 	void SwitchHand();
-	bool BSwichHandAllowed = true;
+
 	UFUNCTION()
 	void AllowSwitchHand();
 
@@ -363,6 +363,27 @@ private://only controller controls
 	void LeftMouseButtonPressed();
 	void RightMouseButtonPressed();
 	void MouseWheelScrolled(const FInputActionValue& Value);
+
+public://blockers
+
+	bool bSwichHandAllowed = true;
+	bool bMoveAllowed = true;
+	bool bLookAllowed = true;
+
+
+public://fighting
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float AttackBlend = 0;
+
+	void AttackStart();
+
+	UFUNCTION(BlueprintCallable)
+	void AttackLanded();
+
+	UFUNCTION(BlueprintCallable)
+	void OnAttackOver();
+
+
 
 public:
 	virtual void OnDeath_Implementation() override;
