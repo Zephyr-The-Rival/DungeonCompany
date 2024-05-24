@@ -6,6 +6,7 @@
 #include "Entities/AIEntity.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 UBTTask_StartMovement::UBTTask_StartMovement()
 {
@@ -14,7 +15,9 @@ UBTTask_StartMovement::UBTTask_StartMovement()
 
 EBTNodeResult::Type UBTTask_StartMovement::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	ADC_AIController* aiController = Cast<ADC_AIController>(OwnerComp.GetAIOwner());
+	UE_LOG(LogTemp, Warning, TEXT("starting movement"));
+
+	AAIController* aiController = OwnerComp.GetAIOwner();
 	if (!aiController)
 		return EBTNodeResult::Failed;
 
@@ -22,7 +25,11 @@ EBTNodeResult::Type UBTTask_StartMovement::ExecuteTask(UBehaviorTreeComponent& O
 	if (!aiEntity)
 		return EBTNodeResult::Failed;
 
+
+	OwnerComp.GetBlackboardComponent()->SetValueAsBool("MovementStarted", true);
 	aiEntity->GetCharacterMovement()->SetMovementMode(DefaultMovementMode);
+
+	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 
 	return EBTNodeResult::Succeeded;
 }

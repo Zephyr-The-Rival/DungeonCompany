@@ -20,20 +20,33 @@ void UBTService_IsInAttackRange::OnBecomeRelevant(UBehaviorTreeComponent& OwnerC
 
 	AActor* targetPlayer = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("TargetPlayer"));
 
+	UE_LOG(LogTemp, Warning, TEXT("0"))
+
 	if (!targetPlayer)
 		WriteResult(false);
+
+	UE_LOG(LogTemp, Warning, TEXT("1"))
 
 	AAIController* aiController = OwnerComp.GetAIOwner();
 
 	if (!aiController)
 		WriteResult(false);
 
+	UE_LOG(LogTemp, Warning, TEXT("2"))
+
+
 	APawn* aiPawn = aiController->GetPawn();
 	if (!aiPawn)
 		WriteResult(false);
 
+	UE_LOG(LogTemp, Warning, TEXT("3"))
+
+
 	if(aiPawn->GetDistanceTo(targetPlayer) > AttackRange)
 		WriteResult(false);
+
+	UE_LOG(LogTemp, Warning, TEXT("4"))
+
 
 	WriteResult(true);
 
