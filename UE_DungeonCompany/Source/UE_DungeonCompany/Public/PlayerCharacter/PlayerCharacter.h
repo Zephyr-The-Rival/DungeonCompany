@@ -152,7 +152,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
-	float WalkingSpeed = 500;
+	float WalkingSpeed = 350;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float SprintSpeedMultiplier = 1.5f;
@@ -345,6 +345,7 @@ public:
 
 private:
 	void CheckForFallDamage();
+	float FallDamageCalculation(float deltaHeight);
 	float LastStandingHeight;
 	bool BWasFallingInLastFrame=false;
 
@@ -369,6 +370,7 @@ public://blockers
 	bool bSwichHandAllowed = true;
 	bool bMoveAllowed = true;
 	bool bLookAllowed = true;
+	bool bSprintAllowed = true;
 
 
 public://fighting

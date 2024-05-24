@@ -227,6 +227,8 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 		FVector worldMoveVector;
 
+
+
 		if (GetCharacterMovement()->MovementMode != MOVE_Flying)
 			worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
 		else
@@ -432,6 +434,9 @@ void APlayerCharacter::ToggleSprint()
 
 void APlayerCharacter::StartSprint()
 {
+	if (!this->bSprintAllowed)
+		return;
+
 	if(Stamina <= 0.f)
 		return;
 
@@ -769,6 +774,8 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	//set item data
 }
 
+
+
 void APlayerCharacter::CheckForFallDamage()
 {
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
@@ -779,7 +786,8 @@ void APlayerCharacter::CheckForFallDamage()
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
 		if (deltaZ > 200)
 		{
-			float damage = (deltaZ - 200) * 0.334; // 2m=0 damage 5m=100 dmg
+			
+			float damage = this->FallDamageCalculation(deltaZ);
 			TakeDamage(damage);
 		}
 		//FString message = 
@@ -792,6 +800,21 @@ void APlayerCharacter::CheckForFallDamage()
 		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
 
 	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0);
+}
+
+float APlayerCharacter::FallDamageCalculation(float deltaHeight)
+{
+
+	float free = 300;
+	float max = 1000;
+
+	if (deltaHeight <= free)
+		return 0;
+
+
+	float factor = 100 / (max - free);
+
+	return (deltaHeight- free) * factor;
 }
 
 void APlayerCharacter::DPadUpPressed()
@@ -948,10 +971,18 @@ void APlayerCharacter::OnDeath_Implementation()
 
 void APlayerCharacter::AttackStart()
 {
+	//different attack when sprinting?
+
 	this->AttackBlend = 1;
 	this->bSwichHandAllowed = false;
-	this->bMoveAllowed = false;
-	this->bLookAllowed = false;
+	//this->bMoveAllowed = false;
+	//this->bLookAllowed = false;
+
+
+	this->bSprintAllowed = false;
+	StopSprint();
+	GetCharacterMovement()->MaxWalkSpeed = 100;
+	
 }
 
 void APlayerCharacter::AttackLanded()
@@ -990,7 +1021,11 @@ void APlayerCharacter::OnAttackOver()
 {
 	this->AttackBlend = 0;
 	this->bSwichHandAllowed = true;
-	this->bMoveAllowed = true;
-	this->bLookAllowed = true;
+	//this->bMoveAllowed = true;
+	//this->bLookAllowed = true;
+
+	//allow sprint
+	this->bSprintAllowed = true;
+	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 	
 }
