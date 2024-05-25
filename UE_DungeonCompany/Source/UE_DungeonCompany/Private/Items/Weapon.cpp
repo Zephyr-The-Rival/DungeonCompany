@@ -10,8 +10,6 @@
 
 void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVector traceStart, FVector TraceEnd)
 {
-	
-	
 	ADC_Entity* criticallyHitEntity;
 
 	FHitResult hitResult;
@@ -35,7 +33,7 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVec
 	{
 		if (Cast<ADC_Entity>(a))//if hit entity
 		{
-			if (IsValid(criticallyHitEntity) && a == criticallyHitEntity)//was hit on weakspot
+			if (IsValid(criticallyHitEntity) && a == criticallyHitEntity)//was hit on weak spot
 			{
 				criticallyHitEntity->TakeDamage(20);
 			}
