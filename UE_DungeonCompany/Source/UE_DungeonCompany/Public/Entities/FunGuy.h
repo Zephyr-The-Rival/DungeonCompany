@@ -21,9 +21,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	USphereComponent* CloudSphere;
 
-	UPROPERTY(EditAnywhere)
-	UStaticMeshComponent* TempMesh;
-
 private:
 	UPROPERTY(EditAnywhere, Replicated)
 	float AgeSeconds = 0.f;

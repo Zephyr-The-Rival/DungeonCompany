@@ -18,9 +18,6 @@ AFunGuy::AFunGuy()
 	CloudSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CloudSphere"));
 	CloudSphere->SetupAttachment(GetCapsuleComponent());
 
-	TempMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TempMesh"));
-	TempMesh->SetupAttachment(GetCapsuleComponent());
-
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	GetCharacterMovement()->MaxFlySpeed = 50.f;
 
@@ -54,10 +51,10 @@ void AFunGuy::BeginPlay()
 {
 	Super::BeginPlay();
 
-	auto material = TempMesh->GetMaterial(0);
+	auto material = GetMesh()->GetMaterial(0);
 
 	DynamicMaterial = UMaterialInstanceDynamic::Create(material, this);
-	TempMesh->SetMaterial(0, DynamicMaterial);
+	GetMesh()->SetMaterial(0, DynamicMaterial);
 	DynamicMaterial->SetScalarParameterValue(FName("PulseFrequency"), PulseFrequency);
 
 	FTimerDelegate updateDelegate = FTimerDelegate::CreateLambda([this]() 
