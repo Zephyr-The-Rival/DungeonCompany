@@ -12,11 +12,15 @@
 #include "Perception/AISense_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "NiagaraComponent.h"
 
 AFunGuy::AFunGuy()
 {
 	CloudSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CloudSphere"));
 	CloudSphere->SetupAttachment(GetCapsuleComponent());
+
+	CloudNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("CloudNiagara"));
+	CloudNiagara->SetupAttachment(GetCapsuleComponent());
 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	GetCharacterMovement()->MaxFlySpeed = 50.f;
@@ -44,6 +48,7 @@ void AFunGuy::OnConstruction(const FTransform& Transform)
 		newCloadRadius *= CloudSizeMultiplierPerUpdate;
 	
 	CloudSphere->SetSphereRadius(newCloadRadius);
+	CloudNiagara->SetWorldScale3D(FVector(1, 1, 1));
 
 }
 
@@ -92,6 +97,8 @@ void AFunGuy::Tick(float DeltaSeconds)
 	FVector newScale = FVector(1, 1, 1);
 	newScale += newScale * AgeSeconds * AgeBonusScaleMultiplier;
 	GetCapsuleComponent()->SetRelativeScale3D(newScale);
+
+	CloudNiagara->SetWorldScale3D(FVector(1, 1, 1));
 
 	if (!HasAuthority())
 		return;

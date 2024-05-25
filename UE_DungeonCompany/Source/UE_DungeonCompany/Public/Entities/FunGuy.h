@@ -11,6 +11,7 @@
  */
 class USphereComponent;
 class APlayerCharacter;
+class UNiagaraComponent;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity
@@ -20,6 +21,9 @@ class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity
 private:
 	UPROPERTY(EditAnywhere)
 	USphereComponent* CloudSphere;
+
+	UPROPERTY(EditAnywhere)
+	UNiagaraComponent* CloudNiagara;
 
 private:
 	UPROPERTY(EditAnywhere, Replicated)
