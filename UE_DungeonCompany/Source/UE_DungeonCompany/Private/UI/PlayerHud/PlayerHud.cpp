@@ -15,7 +15,7 @@ void UPlayerHud::HideCrosshair_Implementation()
 	LogWarning(TEXT("UPlayerHud::HideCrosshair has not been overidden"));
 }
 
-void UPlayerHud::ToggleInventory_Implementation(bool On, bool ControllerVersion)
+void UPlayerHud::ToggleInventory_Implementation(bool On)
 {
 	LogWarning(TEXT("UPlayerHud::ToggleInventory_Implementation has not been overidden"));
 }

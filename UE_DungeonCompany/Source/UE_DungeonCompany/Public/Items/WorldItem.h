@@ -63,8 +63,8 @@ public://item actions
 
 	//can be extended in blueprints
 	UFUNCTION(BlueprintNativeEvent)
-	void TriggerPrimaryAction();
-	void TriggerPrimaryAction_Implementation();
+	void TriggerPrimaryAction(APlayerCharacter* User);
+	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User);
 
 
 	
