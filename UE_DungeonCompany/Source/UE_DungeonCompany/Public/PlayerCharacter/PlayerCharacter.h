@@ -103,10 +103,17 @@ private:
 	UInputAction* MouseLeftAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* RightBumperAction;
+
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ScrollAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* DropItemAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* EscPressedAction;
 	
 
 public:
@@ -152,7 +159,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
-	float WalkingSpeed = 500;
+	float WalkingSpeed = 350;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float SprintSpeedMultiplier = 1.5f;
@@ -282,12 +289,11 @@ protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetBackpack)
 	UInventory* Backpack;
 
-	bool BSlotAIsInHand = true;
+	bool bSlotAIsInHand = true;
 
-	void ToggleInventoryPC();
-	void ToggleInventoryController();
-	void ToggleInventory(bool ControllerVersion);
-	bool BInventoryIsOn = false;
+
+	void ToggleInventory();
+	bool bInventoryIsOn = false;
 
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
 	UInventorySlot* FindFreeSlot();
@@ -318,6 +324,8 @@ protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> NoItemAnimationBlueprintClass;
 
+	void TriggerPrimaryItemAction();
+
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
 	bool BHasBackPack = false;
@@ -345,6 +353,7 @@ public:
 
 private:
 	void CheckForFallDamage();
+	float FallDamageCalculation(float deltaHeight);
 	float LastStandingHeight;
 	bool BWasFallingInLastFrame=false;
 
@@ -363,13 +372,15 @@ private://only controller controls
 	void LeftMouseButtonPressed();
 	void RightMouseButtonPressed();
 	void MouseWheelScrolled(const FInputActionValue& Value);
+	void EscPressed();
 
 public://blockers
 
 	bool bSwichHandAllowed = true;
 	bool bMoveAllowed = true;
 	bool bLookAllowed = true;
-
+	bool bSprintAllowed = true;
+	bool bPrimaryActionAllowed = true;
 
 public://fighting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

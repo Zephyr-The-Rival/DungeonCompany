@@ -3,11 +3,30 @@
 
 #include "Items/Weapon.h"
 #include "DC_Statics.h"
+#include "PlayerCharacter/PlayerCharacter.h"
 
 
-TArray<AActor*> AWeapon::GetHitActors_Implementation()
+TArray<UPrimitiveComponent*> AWeapon::GetHitComponents_Implementation()
 {
 	LogWarning(TEXT("GetHitActorsWas not overwritten"));
-	return TArray<AActor*>();
+	return TArray<UPrimitiveComponent*>();
 }
+
+bool AWeapon::IsWeakspotHit_Implementation()
+{
+	LogWarning(TEXT("IsWeakspotHit not overwritten"));
+	return false;
+}
+
+TArray<FWeaponHit> AWeapon::GetHits_Implementation()
+{
+	LogWarning(TEXT("GetHits_Implementation not overwritten"));
+	return TArray<FWeaponHit>();
+}
+
+void AWeapon::TriggerPrimaryAction_Implementation(APlayerCharacter* user)
+{
+	user->AttackStart();
+}
+
 
