@@ -14,6 +14,10 @@ class UE_DUNGEONCOMPANY_API UBTTask_RotateToActor : public UBTTask_BlackboardBas
 {
 	GENERATED_BODY()
 
+private:
+	UPROPERTY(EditAnywhere)
+	float RotationSpeed = 15.f;
+
 public:
 	UBTTask_RotateToActor();
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

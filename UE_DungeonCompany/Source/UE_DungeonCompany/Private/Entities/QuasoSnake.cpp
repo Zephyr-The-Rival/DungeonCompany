@@ -113,25 +113,19 @@ void AQuasoSnake::CalculateLaunchSplineToActor(AActor* Actor)
 	FVector start = GetActorLocation();
 	FVector target = Actor->GetActorLocation() + FVector::UpVector * 75;
 
+	FVector jumpVector = target - start;
+
 	FVector midwayPoint = (start + target) * 0.5;
-	midwayPoint += FVector::UpVector * 0.15f * (target - start).Length();
+	midwayPoint += FVector::UpVector * 0.15f * jumpVector.Length();
+	if(jumpVector.Z > 0.f)
+		jumpVector.Z = -jumpVector.Z;
 
-	FVector direction = target - start;
-	float distance = direction.Length();
-	direction.Normalize();
+	FVector end = target + jumpVector;
 
-	FVector rightVector = direction.Cross(FVector::DownVector);
-	rightVector.Normalize();
+	FVector secMidwayPoint = (target + end) * 0.5;
+	secMidwayPoint += FVector::UpVector * 0.15f * jumpVector.Length();
 
-	FVector dropDirection = rightVector.Cross(direction);
-
-	dropDirection.Normalize();
-	dropDirection = 2*dropDirection + direction;
-	dropDirection.Normalize();
-
-	FVector end = target + dropDirection * distance * 0.75;
-
-	TArray<FVector> points = { start, midwayPoint, target, end};
+	TArray<FVector> points = { start, midwayPoint, target, secMidwayPoint, end};
 
 	AttackSpline->SetSplinePoints(points, ESplineCoordinateSpace::World, true);
 }

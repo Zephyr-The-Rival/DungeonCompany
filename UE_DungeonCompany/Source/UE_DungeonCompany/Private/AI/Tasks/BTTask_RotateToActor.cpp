@@ -29,7 +29,7 @@ EBTNodeResult::Type UBTTask_RotateToActor::ExecuteTask(UBehaviorTreeComponent& O
 
 	FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(aiCharacter->GetActorLocation(), targetActor->GetActorLocation());
 
-	newRotation = UKismetMathLibrary::RInterpTo(aiCharacter->GetActorRotation(), newRotation, GetWorld()->DeltaTimeSeconds, 15);
+	newRotation = UKismetMathLibrary::RInterpTo(aiCharacter->GetActorRotation(), newRotation, GetWorld()->DeltaTimeSeconds, RotationSpeed);
 
 	aiCharacter->SetActorRotation(newRotation, ETeleportType::TeleportPhysics);
 
