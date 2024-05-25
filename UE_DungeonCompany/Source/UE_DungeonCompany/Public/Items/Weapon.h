@@ -6,9 +6,11 @@
 #include "Items/WorldItem.h"
 #include "Weapon.generated.h"
 
+
 /**
  * 
  */
+
 
 USTRUCT(BlueprintType)
 struct FWeaponHit
@@ -21,6 +23,8 @@ struct FWeaponHit
 	UPROPERTY(BlueprintReadWrite)
 	bool bWeakspotHit;
 };
+
+class APlayerCharacter;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AWeapon : public AWorldItem
@@ -44,5 +48,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
     TArray<FWeaponHit> GetHits();
 	TArray<FWeaponHit> GetHits_Implementation();
+
+	void TriggerPrimaryAction_Implementation(APlayerCharacter* user) override;
 
 };

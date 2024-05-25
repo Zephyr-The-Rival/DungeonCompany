@@ -103,6 +103,10 @@ private:
 	UInputAction* MouseLeftAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* RightBumperAction;
+
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ScrollAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
@@ -317,6 +321,8 @@ protected://inventory & Backpack
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> NoItemAnimationBlueprintClass;
+
+	void TriggerPrimaryItemAction();
 
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)

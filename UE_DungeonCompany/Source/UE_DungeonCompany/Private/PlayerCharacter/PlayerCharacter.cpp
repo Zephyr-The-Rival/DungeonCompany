@@ -211,8 +211,12 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(MouseRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::RightMouseButtonPressed);
 	EIC->BindAction(MouseLeftAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::LeftMouseButtonPressed);
 	
+	EIC->BindAction(RightBumperAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TriggerPrimaryItemAction);
+
 	EIC->BindAction(ScrollAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::MouseWheelScrolled);
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
+	
+	
 
 	
 
@@ -921,14 +925,7 @@ void APlayerCharacter::LeftMouseButtonPressed()
 	}
 	else
 	{
-		if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
-		{
-			CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
-			if (IsValid(Cast<AWeapon>(CurrentlyHeldWorldItem)))
-			{
-				this->AttackStart();
-			}
-		}
+		TriggerPrimaryItemAction();
 	}
 }
 
@@ -967,6 +964,14 @@ void APlayerCharacter::OnDeath_Implementation()
 		return;
 
 	GetController()->UnPossess();
+}
+
+void APlayerCharacter::TriggerPrimaryItemAction()
+{
+	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
+	{
+		CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
+	}
 }
 
 void APlayerCharacter::AttackStart()
