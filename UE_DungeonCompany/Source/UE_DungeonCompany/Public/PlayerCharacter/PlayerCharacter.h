@@ -111,6 +111,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* DropItemAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* EscPressedAction;
 	
 
 public:
@@ -286,12 +289,11 @@ protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetBackpack)
 	UInventory* Backpack;
 
-	bool BSlotAIsInHand = true;
+	bool bSlotAIsInHand = true;
 
-	void ToggleInventoryPC();
-	void ToggleInventoryController();
-	void ToggleInventory(bool ControllerVersion);
-	bool BInventoryIsOn = false;
+
+	void ToggleInventory();
+	bool bInventoryIsOn = false;
 
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
 	UInventorySlot* FindFreeSlot();
@@ -370,6 +372,7 @@ private://only controller controls
 	void LeftMouseButtonPressed();
 	void RightMouseButtonPressed();
 	void MouseWheelScrolled(const FInputActionValue& Value);
+	void EscPressed();
 
 public://blockers
 

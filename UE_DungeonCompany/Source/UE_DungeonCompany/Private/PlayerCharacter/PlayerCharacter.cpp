@@ -200,8 +200,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(DPadLeftAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadLeftPressed);
 	EIC->BindAction(DPadRightAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadRightPressed);
 	
-	EIC->BindAction(ToggleInventoryPCAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventoryPC);
-	EIC->BindAction(ToggleInventoryControllerAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventoryController);
+	EIC->BindAction(ToggleInventoryPCAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
+	EIC->BindAction(ToggleInventoryControllerAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
 	
 	EIC->BindAction(FaceUpAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceUpPressed);	
 	EIC->BindAction(FaceDownAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceDownPressed);
@@ -215,6 +215,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	EIC->BindAction(ScrollAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::MouseWheelScrolled);
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
+	
+	
+	EIC->BindAction(EscPressedAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::EscPressed);
 	
 	
 
@@ -582,27 +585,17 @@ void APlayerCharacter::ReportTalking(float Loudness)
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
 }
 
-void APlayerCharacter::ToggleInventoryPC()
+void APlayerCharacter::ToggleInventory()
 {
-	ToggleInventory(false);
-}
-
-void APlayerCharacter::ToggleInventoryController()
-{
-	ToggleInventory(true);
-}
-
-void APlayerCharacter::ToggleInventory(bool ControllerVersion)
-{
-	this->BInventoryIsOn = !BInventoryIsOn;
-	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(BInventoryIsOn, ControllerVersion);
+	this->bInventoryIsOn = !bInventoryIsOn;
+	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(bInventoryIsOn);
 }
 
 
 
 UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
 {
-	if (this->BSlotAIsInHand)
+	if (this->bSlotAIsInHand)
 		return HandSlotA;
 	else
 		return HandSlotB;
@@ -612,7 +605,7 @@ UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
 
 UInventorySlot* APlayerCharacter::FindFreeSlot()
 {
-	if (BSlotAIsInHand)// a is in hand check a and then b
+	if (bSlotAIsInHand)// a is in hand check a and then b
 	{
 		if (!IsValid(this->HandSlotA->MyItem))
 		{
@@ -715,10 +708,10 @@ void APlayerCharacter::SwitchHand()
 	if (bSwichHandAllowed)
 	{
 		bSwichHandAllowed = false;
-		this->BSlotAIsInHand = !BSlotAIsInHand;
+		this->bSlotAIsInHand = !bSlotAIsInHand;
 		TakeOutItem();
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(BSlotAIsInHand);
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(bSlotAIsInHand);
 	}
 }
 
@@ -753,7 +746,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	if (this->BInventoryIsOn)
+	if (this->bInventoryIsOn)
 		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
 	else
 		DropItem(GetCurrentlyHeldInventorySlot());
@@ -824,7 +817,7 @@ float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 
 void APlayerCharacter::DPadUpPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Up);
 	}
@@ -836,7 +829,7 @@ void APlayerCharacter::DPadUpPressed()
 
 void APlayerCharacter::DPadDownPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Down);
 	}
@@ -848,7 +841,7 @@ void APlayerCharacter::DPadDownPressed()
 
 void APlayerCharacter::DPadLeftPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Left);
 	}
@@ -860,7 +853,7 @@ void APlayerCharacter::DPadLeftPressed()
 
 void APlayerCharacter::DPadRightPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Right);
 	}
@@ -872,7 +865,7 @@ void APlayerCharacter::DPadRightPressed()
 
 void APlayerCharacter::FaceUpPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
 	}
@@ -884,7 +877,7 @@ void APlayerCharacter::FaceUpPressed()
 
 void APlayerCharacter::FaceDownPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 
 	}
@@ -896,7 +889,7 @@ void APlayerCharacter::FaceDownPressed()
 
 void APlayerCharacter::FaceLeftPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		EquipCurrentInventorySelection(true);
 	}
@@ -908,7 +901,7 @@ void APlayerCharacter::FaceLeftPressed()
 
 void APlayerCharacter::FaceRightPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		EquipCurrentInventorySelection(false);
 	}
@@ -920,7 +913,7 @@ void APlayerCharacter::FaceRightPressed()
 
 void APlayerCharacter::LeftMouseButtonPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		EquipCurrentInventorySelection(true);
 	}
@@ -932,7 +925,7 @@ void APlayerCharacter::LeftMouseButtonPressed()
 
 void APlayerCharacter::RightMouseButtonPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		EquipCurrentInventorySelection(false);
 
@@ -946,7 +939,7 @@ void APlayerCharacter::RightMouseButtonPressed()
 
 void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlightScroll((Value.Get<float>() > 0));
 	}
@@ -955,6 +948,12 @@ void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 		SwitchHand();
 	}
 
+}
+void APlayerCharacter::EscPressed()
+{
+	if (this->bInventoryIsOn)
+		ToggleInventory();
+	
 }
 
 void APlayerCharacter::OnDeath_Implementation()
