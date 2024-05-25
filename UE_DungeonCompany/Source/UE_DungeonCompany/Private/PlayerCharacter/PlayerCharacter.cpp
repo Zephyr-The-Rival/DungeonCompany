@@ -134,7 +134,7 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 	if (!bSprinting)
 		return;
 
-	if (GetCharacterMovement()->Velocity.Length() > WalkingSpeed && GetCharacterMovement()->IsMovingOnGround())
+	if (GetCharacterMovement()->Velocity.Length() > WalkingSpeed)
 			SubstractStamina(SprintStaminaDrainPerSecond * DeltaTime);
 
 	if (Stamina < 0.f)
@@ -341,10 +341,17 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 void APlayerCharacter::Jump()
 {
 	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
+	{
 		StopClimbing();
+		Super::Jump();
+		return;
+	}
+	
+	if(Stamina <= 0.f)
+		return;
 
+	SubstractStamina(JumpStaminaDrain);
 	Super::Jump();
-
 }
 
 void APlayerCharacter::CrouchActionStarted()
