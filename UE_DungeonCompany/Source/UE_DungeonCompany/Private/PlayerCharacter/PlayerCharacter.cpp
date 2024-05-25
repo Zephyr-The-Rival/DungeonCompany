@@ -968,6 +968,9 @@ void APlayerCharacter::OnDeath_Implementation()
 
 void APlayerCharacter::TriggerPrimaryItemAction()
 {
+	if (!this->bPrimaryActionAllowed)
+		return;
+
 	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
 	{
 		CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
@@ -976,8 +979,9 @@ void APlayerCharacter::TriggerPrimaryItemAction()
 
 void APlayerCharacter::AttackStart()
 {
-	//different attack when sprinting?
 
+	//different attack when sprinting?
+	this->bPrimaryActionAllowed = false;
 	this->AttackBlend = 1;
 	this->bSwichHandAllowed = false;
 	//this->bMoveAllowed = false;
@@ -1028,7 +1032,7 @@ void APlayerCharacter::OnAttackOver()
 	this->bSwichHandAllowed = true;
 	//this->bMoveAllowed = true;
 	//this->bLookAllowed = true;
-
+	this->bPrimaryActionAllowed = true;
 	//allow sprint
 	this->bSprintAllowed = true;
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;

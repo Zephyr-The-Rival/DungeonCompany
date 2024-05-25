@@ -377,7 +377,7 @@ public://blockers
 	bool bMoveAllowed = true;
 	bool bLookAllowed = true;
 	bool bSprintAllowed = true;
-
+	bool bPrimaryActionAllowed = true;
 
 public://fighting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
