@@ -794,16 +794,17 @@ void APlayerCharacter::CheckForFallDamage()
 			float damage = this->FallDamageCalculation(deltaZ);
 			TakeDamage(damage);
 		}
+
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
 		//	"\nEnd height:\t"+FString::SanitizeFloat(RootComponent->GetComponentLocation().Z)
 		//	+ "\nFall height:\t " + FString::SanitizeFloat(deltaZ);
 		//LogWarning(*message);
 	}
-	if (GetMovementComponent()->Velocity.Z>=0)
+	if (GetMovementComponent()->Velocity.Z >= 0 && GetCharacterMovement()->MovementMode != MOVE_Flying)
 		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
 
-	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0);
+	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->MovementMode != MOVE_Flying);
 }
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
@@ -981,6 +982,7 @@ void APlayerCharacter::AttackStart()
 {
 
 	//different attack when sprinting?
+	//attack needs to cost stamina
 	this->bPrimaryActionAllowed = false;
 	this->AttackBlend = 1;
 	this->bSwichHandAllowed = false;
