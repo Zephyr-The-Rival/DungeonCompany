@@ -98,7 +98,13 @@ void AFunGuy::Tick(float DeltaSeconds)
 
 	CloudSphere->SetWorldScale3D(FVector(1, 1, 1));
 
-	if (bLifted || (AgeSeconds < LiftoffAge))
+	if (bLifted)
+	{
+		AddMovementInput(FVector::UpVector, FMath::Sin(AgeSeconds) * WobblingScale);
+		return;
+	}
+
+	if (AgeSeconds < LiftoffAge)
 		return;
 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);

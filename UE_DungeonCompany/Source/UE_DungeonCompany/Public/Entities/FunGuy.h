@@ -65,6 +65,10 @@ protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 
+private:
+	UPROPERTY(EditAnywhere, Category = "Balancing")
+	float WobblingScale = 0.2f;
+
 public:
 	virtual void Tick(float DeltaSeconds) override;
 
