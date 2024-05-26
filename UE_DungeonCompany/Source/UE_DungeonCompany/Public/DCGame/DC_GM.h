@@ -9,16 +9,33 @@
 /**
  * 
  */
+ class AAIEntity;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_GM : public AGameMode
 {
 	GENERATED_BODY()
 
+private:
+	UPROPERTY(EditAnywhere)
+	TArray<TSubclassOf<AAIEntity>> AIClasses;
+
 public:
 	ADC_GM();
 
+protected:
+	virtual void BeginPlay() override;
+
 public:
 	void Respawn(AController* Controller);
-	
+
+	template<class T = AAIEntity>
+	T* RandomlySpawnAIEntity(UClass* Class) const;
+
+	template<class T = AAIEntity>
+	T* SpawnAIEntityCloseToActor(UClass* Class, AActor* Actor, float Radius) const;
+
+	template<class T>
+	T* SpawnAIEntity(UClass* Class, FVector Location) const;
+
 };
