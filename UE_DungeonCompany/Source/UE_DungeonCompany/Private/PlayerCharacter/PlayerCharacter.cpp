@@ -47,6 +47,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
 	GetCharacterMovement()->MaxFlySpeed = ClimbingSpeed;
 	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
