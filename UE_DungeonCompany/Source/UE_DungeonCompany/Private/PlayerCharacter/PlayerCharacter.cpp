@@ -406,6 +406,7 @@ void APlayerCharacter::ToggleCrouch()
 	else
 		Crouch(true);
 
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
 }
 
 void APlayerCharacter::SprintActionStarted()
@@ -779,7 +780,7 @@ void APlayerCharacter::CheckForFallDamage()
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
 	// that results in the jump height not being included in the fall height calculation
 
-	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
+	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame && GetCharacterMovement()->MovementMode != MOVE_Flying)//frame of impact
 	{
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
 		if (deltaZ > 200)
@@ -795,10 +796,12 @@ void APlayerCharacter::CheckForFallDamage()
 		//	+ "\nFall height:\t " + FString::SanitizeFloat(deltaZ);
 		//LogWarning(*message);
 	}
-	if (GetMovementComponent()->Velocity.Z >= 0 && GetCharacterMovement()->MovementMode != MOVE_Flying)
+	if (GetMovementComponent()->Velocity.Z >= 0 || GetCharacterMovement()->MovementMode == MOVE_Flying)
 		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
 
 	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->MovementMode != MOVE_Flying);
+	if(BWasFallingInLastFrame)
+		LogWarning(TEXT("Falling"));
 }
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)

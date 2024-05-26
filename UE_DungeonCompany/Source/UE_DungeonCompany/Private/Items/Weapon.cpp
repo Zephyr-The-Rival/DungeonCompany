@@ -24,7 +24,7 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVec
 		criticallyHitEntity = nullptr;
 	}
 
-	DrawDebugLine(GetWorld(), traceStart, TraceEnd, FColor::Green, false, 1.0f, 0, 1.0f);
+	//DrawDebugLine(GetWorld(), traceStart, TraceEnd, FColor::Green, false, 1.0f, 0, 1.0f);
 		
 	TArray<AActor*> overlappingActors;
 	WeaponCollision->GetOverlappingActors(overlappingActors);
