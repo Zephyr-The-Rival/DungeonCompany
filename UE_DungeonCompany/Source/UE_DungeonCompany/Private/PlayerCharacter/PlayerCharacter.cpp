@@ -1001,32 +1001,7 @@ void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
 	
-
-	FString message= "hits:\n";
-
-	for (FWeaponHit hit : weapon->GetHits())
-	{
-		AActor* a = hit.HitActor;
-		if (Cast<ADC_Entity>(a))
-		{
-			//if a is not an entity then it maybe a vase that needs to break
-
-			ADC_Entity* entity = Cast<ADC_Entity>(a);
-			
-			if(hit.bWeakspotHit)
-				entity->TakeDamage(20);
-			else
-				entity->TakeDamage(10);
-
-		}
-		else
-		{
-
-		}
-		message += hit.HitActor->GetName() + "\n";
-	}
-
-	LogWarning(*message);
+	weapon->DealHits(NULL, FVector(), FVector());
 }
 
 void APlayerCharacter::OnAttackOver()

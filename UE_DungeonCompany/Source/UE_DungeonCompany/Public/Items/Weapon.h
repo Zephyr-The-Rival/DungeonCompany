@@ -12,18 +12,6 @@
  */
 
 
-USTRUCT(BlueprintType)
-struct FWeaponHit
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite)
-	AActor* HitActor;
-
-	UPROPERTY(BlueprintReadWrite)
-	bool bWeakspotHit;
-};
-
 class APlayerCharacter;
 
 UCLASS()
@@ -34,20 +22,9 @@ class UE_DUNGEONCOMPANY_API AWeapon : public AWorldItem
 
 public:
 
-	//UFUNCTION(,BlueprintImplementableEvent)
-	//TArray<AActor*> GetHitActors();
-
 	UFUNCTION(BlueprintNativeEvent)
-    TArray<UPrimitiveComponent*> GetHitComponents();
-    virtual TArray<UPrimitiveComponent*> GetHitComponents_Implementation();
-	
-	UFUNCTION(BlueprintNativeEvent)
-    bool IsWeakspotHit();
-    bool IsWeakspotHit_Implementation();
-
-	UFUNCTION(BlueprintNativeEvent)
-    TArray<FWeaponHit> GetHits();
-	TArray<FWeaponHit> GetHits_Implementation();
+    void DealHits(UPrimitiveComponent* WeaponCollision, FVector traceStart, FVector TraceEnd);
+	void DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVector traceStart, FVector TraceEnd);
 
 	void TriggerPrimaryAction_Implementation(APlayerCharacter* user) override;
 
