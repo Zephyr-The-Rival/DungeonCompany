@@ -9,8 +9,10 @@
 /**
  * 
  */
+class UStaticMeshComponent;
 class USphereComponent;
 class APlayerCharacter;
+class UNiagaraComponent;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity
@@ -19,10 +21,13 @@ class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity
 
 private:
 	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* CloudMesh;
+
+	UPROPERTY(EditAnywhere)
 	USphereComponent* CloudSphere;
 
 	UPROPERTY(EditAnywhere)
-	UStaticMeshComponent* TempMesh;
+	UNiagaraComponent* CloudNiagara;
 
 private:
 	UPROPERTY(EditAnywhere, Replicated)
@@ -40,6 +45,9 @@ private:
 	float LiftoffHeight = 150.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
+	float SporeProduceAge = 190.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
 	float StartCloudRadius = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
@@ -52,7 +60,7 @@ private:
 	float AgingMultiplier = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing")
-	float PulseFrequency = 2.f;
+	float PulseFrequency = 0.5f;
 
 public:
 	AFunGuy();
@@ -67,6 +75,10 @@ private:
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Balancing")
+	float WobblingScale = 0.2f;
 
 public:
 	virtual void Tick(float DeltaSeconds) override;
@@ -99,5 +111,8 @@ protected:
 
 	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter);
 	void OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter);
+
+public:
+	virtual void OnDeath_Implementation() override;
 
 };

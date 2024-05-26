@@ -13,7 +13,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Entities/DC_Entity.h"
-
+#include "DCGame/DC_GM.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -31,6 +31,7 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include "Online/OnlineSessionNames.h"
+
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -966,7 +967,8 @@ void APlayerCharacter::OnDeath_Implementation()
 	if (!HasAuthority())
 		return;
 
-	GetController()->UnPossess();
+	GetWorld()->GetAuthGameMode<ADC_GM>()->Respawn(GetController());
+
 }
 
 void APlayerCharacter::TriggerPrimaryItemAction()

@@ -12,14 +12,20 @@
 #include "Perception/AISense_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "NiagaraComponent.h"
 
 AFunGuy::AFunGuy()
 {
-	CloudSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CloudSphere"));
-	CloudSphere->SetupAttachment(GetCapsuleComponent());
+	CloudMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CloudMesh"));
+	CloudMesh->SetupAttachment(RootComponent);
 
-	TempMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TempMesh"));
-	TempMesh->SetupAttachment(GetCapsuleComponent());
+	CloudSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CloudSphere"));
+	CloudSphere->SetupAttachment(RootComponent);
+
+	CloudNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("CloudNiagara"));
+	CloudNiagara->SetupAttachment(RootComponent);
+
+	CloudMesh->SetCollisionProfileName("NoCollision");
 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	GetCharacterMovement()->MaxFlySpeed = 50.f;
@@ -39,14 +45,15 @@ void AFunGuy::OnConstruction(const FTransform& Transform)
 	GetCapsuleComponent()->SetRelativeScale3D(newScale);
 
 	int cloudUpscaleNum = AgeSeconds / CloudUpdateInterval;
-	float newCloadRadius = StartCloudRadius;
+	float newCloudRadius = StartCloudRadius;
 
 	CloudSizeMultiplierPerUpdate = 1 + CloudSizeFactor / 1000;
 
 	for (int i = 0; i < cloudUpscaleNum; ++i)
-		newCloadRadius *= CloudSizeMultiplierPerUpdate;
+		newCloudRadius *= CloudSizeMultiplierPerUpdate;
 	
-	CloudSphere->SetSphereRadius(newCloadRadius);
+	CloudMesh->SetWorldScale3D(FVector(1, 1, 1) * newCloudRadius /50);
+	CloudSphere->SetSphereRadius(newCloudRadius);
 
 }
 
@@ -54,19 +61,27 @@ void AFunGuy::BeginPlay()
 {
 	Super::BeginPlay();
 
-	auto material = TempMesh->GetMaterial(0);
+	auto material = GetMesh()->GetMaterial(0);
 
 	DynamicMaterial = UMaterialInstanceDynamic::Create(material, this);
-	TempMesh->SetMaterial(0, DynamicMaterial);
+	GetMesh()->SetMaterial(0, DynamicMaterial);
 	DynamicMaterial->SetScalarParameterValue(FName("PulseFrequency"), PulseFrequency);
+
+	CloudSizeMultiplierPerUpdate = 1 + CloudSizeFactor / 1000;
 
 	FTimerDelegate updateDelegate = FTimerDelegate::CreateLambda([this]() 
 		{
-			float radius = CloudSphere->GetUnscaledSphereRadius() * CloudSizeMultiplierPerUpdate;
-			CloudSphere->SetSphereRadius(radius);
+			FVector newScale = CloudMesh->GetRelativeScale3D() * CloudSizeMultiplierPerUpdate;
+			CloudMesh->SetRelativeScale3D(newScale);
+
+			if (HasAuthority()) 
+			{
+				float radius = CloudSphere->GetUnscaledSphereRadius() * CloudSizeMultiplierPerUpdate;
+				CloudSphere->SetSphereRadius(radius);
+			}
 		}
 	);
-
+	
 	GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, updateDelegate, CloudUpdateInterval, true);
 
 	if (!HasAuthority())
@@ -99,9 +114,13 @@ void AFunGuy::Tick(float DeltaSeconds)
 	if (!HasAuthority())
 		return;
 
-	CloudSphere->SetWorldScale3D(FVector(1, 1, 1));
+	if (bLifted)
+	{
+		AddMovementInput(FVector::UpVector, FMath::Sin(AgeSeconds) * WobblingScale);
+		return;
+	}
 
-	if (bLifted || (AgeSeconds < LiftoffAge))
+	if (AgeSeconds < LiftoffAge)
 		return;
 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
@@ -130,6 +149,7 @@ void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	PlayerTimerHandles.Add(character);
 
 	GetWorld()->GetTimerManager().SetTimer(PlayerTimerHandles[character], timerDelegate, SafeTime, false);
+
 
 }
 
@@ -164,4 +184,11 @@ void AFunGuy::OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter)
 	PlayerCharacter->TakeDamage(Damage);
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), PlayerCharacter->GetActorLocation(), 2.f, PlayerCharacter);
 
+}
+
+void AFunGuy::OnDeath_Implementation()
+{
+	Super::OnDeath_Implementation();
+
+	Destroy();
 }
