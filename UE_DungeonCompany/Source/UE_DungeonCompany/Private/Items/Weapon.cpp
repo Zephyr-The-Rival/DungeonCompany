@@ -4,29 +4,56 @@
 #include "Items/Weapon.h"
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "Entities/DC_Entity.h"
 
 
-TArray<UPrimitiveComponent*> AWeapon::GetHitComponents_Implementation()
+
+void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVector traceStart, FVector TraceEnd)
 {
-	LogWarning(TEXT("GetHitActorsWas not overwritten"));
-	return TArray<UPrimitiveComponent*>();
-}
+	ADC_Entity* criticallyHitEntity;
 
-bool AWeapon::IsWeakspotHit_Implementation()
-{
-	LogWarning(TEXT("IsWeakspotHit not overwritten"));
-	return false;
-}
+	FHitResult hitResult;
+	GetWorld()->LineTraceSingleByChannel(hitResult, traceStart, TraceEnd, ECC_GameTraceChannel2);
 
-TArray<FWeaponHit> AWeapon::GetHits_Implementation()
-{
-	LogWarning(TEXT("GetHits_Implementation not overwritten"));
-	return TArray<FWeaponHit>();
+	if (hitResult.bBlockingHit)
+	{
+		criticallyHitEntity = Cast<ADC_Entity>(hitResult.GetActor());
+	}
+	else
+	{
+		criticallyHitEntity = nullptr;
+	}
+
+	//DrawDebugLine(GetWorld(), traceStart, TraceEnd, FColor::Green, false, 1.0f, 0, 1.0f);
+		
+	TArray<AActor*> overlappingActors;
+	WeaponCollision->GetOverlappingActors(overlappingActors);
+
+	for (AActor* a : overlappingActors)
+	{
+		if (Cast<ADC_Entity>(a))//if hit entity
+		{
+			if (IsValid(criticallyHitEntity) && a == criticallyHitEntity)//was hit on weak spot
+			{
+				criticallyHitEntity->TakeDamage(20);
+			}
+			else
+			{
+				Cast<ADC_Entity>(a)->TakeDamage(10);
+			}
+		}
+		else
+		{
+			//if hit non-alive thing
+		}
+	}
 }
 
 void AWeapon::TriggerPrimaryAction_Implementation(APlayerCharacter* user)
 {
 	user->AttackStart();
 }
+
+
 
 

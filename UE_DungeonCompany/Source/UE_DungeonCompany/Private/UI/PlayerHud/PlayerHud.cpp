@@ -40,4 +40,9 @@ void UPlayerHud::MoveHighlightScroll_Implementation(bool up)
 	LogWarning(TEXT("UPlayerHud::MoveHighlight_ScrollImplementation has not been overidden"));
 }
 
+void UPlayerHud::UpdateCrouchIcon_Implementation()
+{
+	LogWarning(TEXT("UPlayerHud::UpdateCrouchIcon_Implementation has not been overidden"));
+}
+
 

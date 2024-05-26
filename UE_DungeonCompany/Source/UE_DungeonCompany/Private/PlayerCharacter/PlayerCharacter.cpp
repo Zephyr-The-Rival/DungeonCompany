@@ -405,6 +405,7 @@ void APlayerCharacter::ToggleCrouch()
 	else
 		Crouch(true);
 
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
 }
 
 void APlayerCharacter::SprintActionStarted()
@@ -778,7 +779,7 @@ void APlayerCharacter::CheckForFallDamage()
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
 	// that results in the jump height not being included in the fall height calculation
 
-	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
+	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame && GetCharacterMovement()->MovementMode != MOVE_Flying)//frame of impact
 	{
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
 		if (deltaZ > 200)
@@ -794,10 +795,12 @@ void APlayerCharacter::CheckForFallDamage()
 		//	+ "\nFall height:\t " + FString::SanitizeFloat(deltaZ);
 		//LogWarning(*message);
 	}
-	if (GetMovementComponent()->Velocity.Z >= 0 && GetCharacterMovement()->MovementMode != MOVE_Flying)
+	if (GetMovementComponent()->Velocity.Z >= 0 || GetCharacterMovement()->MovementMode == MOVE_Flying)
 		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
 
 	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->MovementMode != MOVE_Flying);
+	if(BWasFallingInLastFrame)
+		LogWarning(TEXT("Falling"));
 }
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
@@ -999,32 +1002,7 @@ void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
 	
-
-	FString message= "hits:\n";
-
-	for (FWeaponHit hit : weapon->GetHits())
-	{
-		AActor* a = hit.HitActor;
-		if (Cast<ADC_Entity>(a))
-		{
-			//if a is not an entity then it maybe a vase that needs to break
-
-			ADC_Entity* entity = Cast<ADC_Entity>(a);
-			
-			if(hit.bWeakspotHit)
-				entity->TakeDamage(20);
-			else
-				entity->TakeDamage(10);
-
-		}
-		else
-		{
-
-		}
-		message += hit.HitActor->GetName() + "\n";
-	}
-
-	LogWarning(*message);
+	weapon->DealHits(NULL, FVector(), FVector());
 }
 
 void APlayerCharacter::OnAttackOver()
