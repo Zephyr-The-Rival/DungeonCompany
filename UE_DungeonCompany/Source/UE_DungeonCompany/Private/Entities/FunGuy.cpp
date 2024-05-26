@@ -26,6 +26,7 @@ AFunGuy::AFunGuy()
 	CloudNiagara->SetupAttachment(RootComponent);
 
 	CloudMesh->SetCollisionProfileName("NoCollision");
+	CloudSphere->SetCollisionProfileName("AOECollision");
 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	GetCharacterMovement()->MaxFlySpeed = 50.f;
@@ -68,21 +69,9 @@ void AFunGuy::BeginPlay()
 	DynamicMaterial->SetScalarParameterValue(FName("PulseFrequency"), PulseFrequency);
 
 	CloudSizeMultiplierPerUpdate = 1 + CloudSizeFactor / 1000;
-
-	FTimerDelegate updateDelegate = FTimerDelegate::CreateLambda([this]() 
-		{
-			FVector newScale = CloudMesh->GetRelativeScale3D() * CloudSizeMultiplierPerUpdate;
-			CloudMesh->SetRelativeScale3D(newScale);
-
-			if (HasAuthority()) 
-			{
-				float radius = CloudSphere->GetUnscaledSphereRadius() * CloudSizeMultiplierPerUpdate;
-				CloudSphere->SetSphereRadius(radius);
-			}
-		}
-	);
 	
-	GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, updateDelegate, CloudUpdateInterval, true);
+	GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, this, &AFunGuy::UpdateCloud, CloudUpdateInterval, true);
+	CloudNiagara->SetFloatParameter("SpawnRadius", 100.0f);
 
 	if (!HasAuthority())
 		return;
@@ -92,24 +81,50 @@ void AFunGuy::BeginPlay()
 
 }
 
+void AFunGuy::UpdateCloud()
+{
+	FVector newScale = CloudMesh->GetRelativeScale3D() * CloudSizeMultiplierPerUpdate;
+	CloudMesh->SetRelativeScale3D(newScale);
+
+	if (LastNiagaraScaleUpdate + 0.5f <= newScale.X)
+	{
+		LastNiagaraScaleUpdate = newScale.X;
+
+		CloudNiagara->SetFloatParameter("SpawnRate", 1.0f);
+
+		FTimerHandle resetHandle;
+
+		FTimerDelegate resetDelegate = FTimerDelegate::CreateLambda([this]() {
+			CloudNiagara->SetFloatParameter("SpawnRate", 0.0f);
+		});
+
+		GetWorld()->GetTimerManager().SetTimer(resetHandle, resetDelegate, 7.0f, false);
+	}
+
+	if (HasAuthority())
+	{
+		float radius = CloudSphere->GetUnscaledSphereRadius() * CloudSizeMultiplierPerUpdate;
+		CloudSphere->SetSphereRadius(radius);
+	}
+}
+
 void AFunGuy::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (AgeSeconds >= MaxSizeAgeSeconds)
-		return;
-
-	AgeSeconds += DeltaSeconds * AgingMultiplier;
+	if(HasAuthority() || AgeSeconds < MaxSizeAgeSeconds)
+		AgeSeconds += DeltaSeconds * AgingMultiplier;
 
 	if (AgeSeconds > MaxSizeAgeSeconds)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(UpdateTimerHandle);
-		AgeSeconds = MaxSizeAgeSeconds;
 	}
-
-	FVector newScale = FVector(1, 1, 1);
-	newScale += newScale * AgeSeconds * AgeBonusScaleMultiplier;
-	GetCapsuleComponent()->SetRelativeScale3D(newScale);
+	else
+	{
+		FVector newScale = FVector(1, 1, 1);
+		newScale += newScale * AgeSeconds * AgeBonusScaleMultiplier;
+		GetCapsuleComponent()->SetRelativeScale3D(newScale);
+	}
 
 	if (!HasAuthority())
 		return;
