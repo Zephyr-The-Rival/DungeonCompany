@@ -805,8 +805,6 @@ void APlayerCharacter::CheckForFallDamage()
 		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
 
 	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->MovementMode != MOVE_Flying);
-	if(BWasFallingInLastFrame)
-		LogWarning(TEXT("Falling"));
 }
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
