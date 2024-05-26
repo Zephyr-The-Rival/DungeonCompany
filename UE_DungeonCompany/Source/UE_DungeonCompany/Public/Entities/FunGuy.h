@@ -70,15 +70,20 @@ private:
 
 	FTimerHandle UpdateTimerHandle;
 
-	bool bLifted = false;
+	float LastNiagaraScaleUpdate = 0.f;
 
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 
+protected: 
+	void UpdateCloud();
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Balancing")
 	float WobblingScale = 0.2f;
+
+	bool bLifted = false;
 
 public:
 	virtual void Tick(float DeltaSeconds) override;
