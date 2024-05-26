@@ -9,7 +9,7 @@
 /**
  * 
  */
-class USphereComponent;
+class UStaticMeshComponent;
 class APlayerCharacter;
 class UNiagaraComponent;
 
@@ -20,7 +20,7 @@ class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity
 
 private:
 	UPROPERTY(EditAnywhere)
-	USphereComponent* CloudSphere;
+	UStaticMeshComponent* CloudMesh;
 
 	UPROPERTY(EditAnywhere)
 	UNiagaraComponent* CloudNiagara;
@@ -41,6 +41,9 @@ private:
 	float LiftoffHeight = 150.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
+	float SporeProduceAge = 190.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
 	float StartCloudRadius = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
@@ -53,7 +56,7 @@ private:
 	float AgingMultiplier = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing")
-	float PulseFrequency = 2.f;
+	float PulseFrequency = 0.5f;
 
 public:
 	AFunGuy();
