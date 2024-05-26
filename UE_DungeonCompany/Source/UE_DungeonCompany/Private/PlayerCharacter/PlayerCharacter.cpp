@@ -405,6 +405,7 @@ void APlayerCharacter::ToggleCrouch()
 	else
 		Crouch(true);
 
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
 }
 
 void APlayerCharacter::SprintActionStarted()
