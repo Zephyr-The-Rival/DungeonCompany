@@ -10,6 +10,7 @@
  * 
  */
 class UStaticMeshComponent;
+class USphereComponent;
 class APlayerCharacter;
 class UNiagaraComponent;
 
@@ -21,6 +22,9 @@ class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity
 private:
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* CloudMesh;
+
+	UPROPERTY(EditAnywhere)
+	USphereComponent* CloudSphere;
 
 	UPROPERTY(EditAnywhere)
 	UNiagaraComponent* CloudNiagara;
@@ -107,5 +111,8 @@ protected:
 
 	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter);
 	void OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter);
+
+public:
+	virtual void OnDeath_Implementation() override;
 
 };

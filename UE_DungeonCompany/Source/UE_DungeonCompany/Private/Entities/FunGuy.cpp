@@ -19,10 +19,13 @@ AFunGuy::AFunGuy()
 	CloudMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CloudMesh"));
 	CloudMesh->SetupAttachment(RootComponent);
 
+	CloudSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CloudSphere"));
+	CloudSphere->SetupAttachment(RootComponent);
+
 	CloudNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("CloudNiagara"));
 	CloudNiagara->SetupAttachment(RootComponent);
 
-	CloudMesh->SetCollisionProfileName("OverlapAll");
+	CloudMesh->SetCollisionProfileName("NoCollision");
 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	GetCharacterMovement()->MaxFlySpeed = 50.f;
@@ -42,14 +45,15 @@ void AFunGuy::OnConstruction(const FTransform& Transform)
 	GetCapsuleComponent()->SetRelativeScale3D(newScale);
 
 	int cloudUpscaleNum = AgeSeconds / CloudUpdateInterval;
-	float newCloadRadius = StartCloudRadius;
+	float newCloudRadius = StartCloudRadius;
 
 	CloudSizeMultiplierPerUpdate = 1 + CloudSizeFactor / 1000;
 
 	for (int i = 0; i < cloudUpscaleNum; ++i)
-		newCloadRadius *= CloudSizeMultiplierPerUpdate;
+		newCloudRadius *= CloudSizeMultiplierPerUpdate;
 	
-	CloudMesh->SetWorldScale3D(FVector(1, 1, 1) * newCloadRadius/50);
+	CloudMesh->SetWorldScale3D(FVector(1, 1, 1) * newCloudRadius /50);
+	CloudSphere->SetSphereRadius(newCloudRadius);
 
 }
 
@@ -69,6 +73,12 @@ void AFunGuy::BeginPlay()
 		{
 			FVector newScale = CloudMesh->GetRelativeScale3D() * CloudSizeMultiplierPerUpdate;
 			CloudMesh->SetRelativeScale3D(newScale);
+
+			if (HasAuthority()) 
+			{
+				float radius = CloudSphere->GetUnscaledSphereRadius() * CloudSizeMultiplierPerUpdate;
+				CloudSphere->SetSphereRadius(radius);
+			}
 		}
 	);
 	
@@ -77,8 +87,8 @@ void AFunGuy::BeginPlay()
 	if (!HasAuthority())
 		return;
 
-	CloudMesh->OnComponentBeginOverlap.AddDynamic(this, &AFunGuy::OnCloudBeginOverlap);
-	CloudMesh->OnComponentEndOverlap.AddDynamic(this, &AFunGuy::OnCloudEndOverlap);
+	CloudSphere->OnComponentBeginOverlap.AddDynamic(this, &AFunGuy::OnCloudBeginOverlap);
+	CloudSphere->OnComponentEndOverlap.AddDynamic(this, &AFunGuy::OnCloudEndOverlap);
 
 }
 
@@ -100,8 +110,6 @@ void AFunGuy::Tick(float DeltaSeconds)
 	FVector newScale = FVector(1, 1, 1);
 	newScale += newScale * AgeSeconds * AgeBonusScaleMultiplier;
 	GetCapsuleComponent()->SetRelativeScale3D(newScale);
-
-	//CloudNiagara->SetWorldScale3D(FVector(1, 1, 1));
 
 	if (!HasAuthority())
 		return;
@@ -142,6 +150,7 @@ void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 
 	GetWorld()->GetTimerManager().SetTimer(PlayerTimerHandles[character], timerDelegate, SafeTime, false);
 
+
 }
 
 void AFunGuy::OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -175,4 +184,11 @@ void AFunGuy::OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter)
 	PlayerCharacter->TakeDamage(Damage);
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), PlayerCharacter->GetActorLocation(), 2.f, PlayerCharacter);
 
+}
+
+void AFunGuy::OnDeath_Implementation()
+{
+	Super::OnDeath_Implementation();
+
+	Destroy();
 }
