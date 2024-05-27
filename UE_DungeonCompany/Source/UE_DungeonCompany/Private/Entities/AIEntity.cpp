@@ -21,6 +21,8 @@ AAIEntity::AAIEntity()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
