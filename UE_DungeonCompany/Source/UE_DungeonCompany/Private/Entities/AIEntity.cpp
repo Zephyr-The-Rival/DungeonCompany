@@ -14,6 +14,9 @@ AAIEntity::AAIEntity()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 360.f, 0.0f);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
+	GetMesh()->SetCollisionProfileName("EntityMesh");
+	GetMesh()->SetGenerateOverlapEvents(true);
+
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
