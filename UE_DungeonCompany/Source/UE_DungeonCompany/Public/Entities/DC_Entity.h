@@ -41,7 +41,7 @@ protected:
 	void CheckIfDead();
 
 public:
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnDeath();
 	virtual void OnDeath_Implementation();
 

@@ -15,6 +15,9 @@ AAIEntity::AAIEntity()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
 
+	GetMesh()->SetCollisionProfileName("EntityMesh");
+	GetMesh()->SetGenerateOverlapEvents(true);
+
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
