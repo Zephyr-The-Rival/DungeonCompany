@@ -29,6 +29,11 @@ protected:
 public:
 	void Respawn(AController* Controller);
 
+	/* If you want to Spawn the AI randomly on the map then leave the NearActor param on null.
+	In this case the Radius parameter can be ignored */
+	AAIEntity* SpawnAIEntity(UClass* Class, AActor* NearActor = nullptr, float Radius = 500.f);
+
+protected:
 	template<class T = AAIEntity>
 	T* RandomlySpawnAIEntity(UClass* Class) const;
 
@@ -36,6 +41,6 @@ public:
 	T* SpawnAIEntityCloseToActor(UClass* Class, AActor* Actor, float Radius) const;
 
 	template<class T>
-	T* SpawnAIEntity(UClass* Class, FVector Location) const;
+	T* SpawnAIEntity(UClass* Class, FVector Location, FRotator Rotation = FRotator::ZeroRotator) const;
 
 };

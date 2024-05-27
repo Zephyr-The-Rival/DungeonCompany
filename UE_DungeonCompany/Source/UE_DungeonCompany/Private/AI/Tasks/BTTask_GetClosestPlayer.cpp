@@ -46,7 +46,6 @@ EBTNodeResult::Type UBTTask_GetClosestPlayer::ExecuteTask(UBehaviorTreeComponent
 		return EBTNodeResult::Failed;
 
 	OwnerComp.GetBlackboardComponent()->SetValueAsObject(GetSelectedBlackboardKey(), closestPlayer);
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *closestPlayer->GetName())
 
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 	
