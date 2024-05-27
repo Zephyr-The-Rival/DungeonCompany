@@ -24,11 +24,13 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UPlayerHud> PlayerHudClass;
 
+	UPROPERTY(BlueprintGetter = GetMyPlayerHud)
 	UPlayerHud* MyPlayerHud;
 
 public:
 	ADC_PC();
 
+	UFUNCTION(BlueprintCallable)
 	UPlayerHud* GetMyPlayerHud() const { return MyPlayerHud; }
 
 protected:
