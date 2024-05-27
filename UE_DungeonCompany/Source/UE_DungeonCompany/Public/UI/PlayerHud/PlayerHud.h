@@ -46,8 +46,8 @@ public:
 
 
 	UFUNCTION(BlueprintNativeEvent)
-	void ToggleInventory(bool On, bool ControllerVersion);
-	void ToggleInventory_Implementation(bool On, bool ControllerVersion);
+	void ToggleInventory(bool On);
+	void ToggleInventory_Implementation(bool On);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void RefreshInventory();
@@ -74,6 +74,8 @@ public:
 	void MoveHighlightScroll_Implementation(bool up);
 
 	
-
+	UFUNCTION(BlueprintNativeEvent)
+	void UpdateCrouchIcon();
+	void UpdateCrouchIcon_Implementation();
 
 };
