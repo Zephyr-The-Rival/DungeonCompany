@@ -74,6 +74,8 @@ public:
 	void MoveHighlightScroll_Implementation(bool up);
 
 	
-
+	UFUNCTION(BlueprintNativeEvent)
+	void UpdateCrouchIcon();
+	void UpdateCrouchIcon_Implementation();
 
 };

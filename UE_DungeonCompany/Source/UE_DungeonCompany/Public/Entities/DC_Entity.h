@@ -32,7 +32,7 @@ public:
 	using Super::TakeDamage;
 	virtual void TakeDamage(float Damage);
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent,BlueprintCallable)
 	void OnDeath();
 	virtual void OnDeath_Implementation();
 

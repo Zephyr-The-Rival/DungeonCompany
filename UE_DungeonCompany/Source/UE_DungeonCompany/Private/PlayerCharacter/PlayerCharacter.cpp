@@ -13,7 +13,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Entities/DC_Entity.h"
-
+#include "DCGame/DC_GM.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -31,6 +31,7 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include "Online/OnlineSessionNames.h"
+
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -46,6 +47,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
 	GetCharacterMovement()->MaxFlySpeed = ClimbingSpeed;
 	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
@@ -379,6 +381,7 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::CrouchActionStarted()
 {
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
 	if (!bCrouchHold)
 	{
 		ToggleCrouch();
@@ -391,10 +394,13 @@ void APlayerCharacter::CrouchActionStarted()
 
 void APlayerCharacter::CrouchActionCompleted()
 {
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
 	if (!bCrouchHold)
 		return;
 
 	UnCrouch(true);
+
+	
 
 }
 
@@ -405,6 +411,7 @@ void APlayerCharacter::ToggleCrouch()
 	else
 		Crouch(true);
 
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
 }
 
 void APlayerCharacter::SprintActionStarted()
@@ -778,7 +785,7 @@ void APlayerCharacter::CheckForFallDamage()
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
 	// that results in the jump height not being included in the fall height calculation
 
-	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
+	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame && GetCharacterMovement()->MovementMode != MOVE_Flying)//frame of impact
 	{
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
 		if (deltaZ > 200)
@@ -794,7 +801,7 @@ void APlayerCharacter::CheckForFallDamage()
 		//	+ "\nFall height:\t " + FString::SanitizeFloat(deltaZ);
 		//LogWarning(*message);
 	}
-	if (GetMovementComponent()->Velocity.Z >= 0 && GetCharacterMovement()->MovementMode != MOVE_Flying)
+	if (GetMovementComponent()->Velocity.Z >= 0 || GetCharacterMovement()->MovementMode == MOVE_Flying)
 		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
 
 	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->MovementMode != MOVE_Flying);
@@ -963,7 +970,8 @@ void APlayerCharacter::OnDeath_Implementation()
 	if (!HasAuthority())
 		return;
 
-	GetController()->UnPossess();
+	GetWorld()->GetAuthGameMode<ADC_GM>()->Respawn(GetController());
+
 }
 
 void APlayerCharacter::TriggerPrimaryItemAction()
@@ -999,32 +1007,7 @@ void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
 	
-
-	FString message= "hits:\n";
-
-	for (FWeaponHit hit : weapon->GetHits())
-	{
-		AActor* a = hit.HitActor;
-		if (Cast<ADC_Entity>(a))
-		{
-			//if a is not an entity then it maybe a vase that needs to break
-
-			ADC_Entity* entity = Cast<ADC_Entity>(a);
-			
-			if(hit.bWeakspotHit)
-				entity->TakeDamage(20);
-			else
-				entity->TakeDamage(10);
-
-		}
-		else
-		{
-
-		}
-		message += hit.HitActor->GetName() + "\n";
-	}
-
-	LogWarning(*message);
+	weapon->DealHits(NULL, FVector(), FVector());
 }
 
 void APlayerCharacter::OnAttackOver()

@@ -22,10 +22,16 @@ private:
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* Material;
 
+	UPROPERTY()
 	UInstancedStaticMeshComponent* LadderMesh;
 
+	UPROPERTY()
 	UBoxComponent* InteractVolume;
 
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* EasyInteractBox;
+
+	UPROPERTY()
 	UBoxComponent* BottomBox;
 
 	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
@@ -42,6 +48,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Interaction)
 	FVector2D InteractionArea = FVector2D(10, 20);
+
+	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
+	FVector2D EasyInteractArea = FVector2D(5, 20);
 
 public:	
 	ALadder();
