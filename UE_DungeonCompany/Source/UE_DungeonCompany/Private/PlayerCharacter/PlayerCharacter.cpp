@@ -593,6 +593,13 @@ void APlayerCharacter::ReportTalking(float Loudness)
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
 }
 
+void APlayerCharacter::Cough()
+{
+	if(HasAuthority())
+		UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), 1.0f, this);
+
+}
+
 void APlayerCharacter::ToggleInventory()
 {
 	this->bInventoryIsOn = !bInventoryIsOn;

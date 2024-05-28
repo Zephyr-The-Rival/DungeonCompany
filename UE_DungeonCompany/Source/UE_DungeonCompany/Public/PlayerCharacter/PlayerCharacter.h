@@ -374,6 +374,7 @@ private:
 
 public:
 	void ReportTalking(float Loudness);
+	void Cough();
 
 private:
 	void CheckForFallDamage();
@@ -427,8 +428,6 @@ public://fighting
 
 	UFUNCTION(BlueprintCallable)
 	void OnAttackOver();
-
-
 
 public:
 	virtual void OnDeath_Implementation() override;

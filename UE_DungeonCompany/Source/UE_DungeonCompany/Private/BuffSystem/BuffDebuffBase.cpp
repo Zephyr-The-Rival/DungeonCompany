@@ -34,7 +34,15 @@ void UBuffDebuffBase::Apply()
 	if (OuterEntity->IsLocallyControlled())
 		LocalApply();
 
+	if (OuterEntity->HasAuthority())
+		AuthorityRemove();
+
+}
+
+void UBuffDebuffBase::AuthorityApply()
+{
 	Timegate(ActiveSeconds);
+
 }
 
 void UBuffDebuffBase::LocalApply()
@@ -57,6 +65,14 @@ void UBuffDebuffBase::Remove()
 {
 	if (OuterEntity->IsLocallyControlled())
 		LocalRemove();
+
+	if(OuterEntity->HasAuthority())
+		AuthorityRemove();
+}
+
+void UBuffDebuffBase::AuthorityRemove()
+{
+
 }
 
 void UBuffDebuffBase::LocalRemove()
