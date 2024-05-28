@@ -27,12 +27,7 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Interfaces/VoiceInterface.h"
-#include "Online.h"
-#include "OnlineSubsystem.h"
-#include "OnlineSessionSettings.h"
-#include "Online/OnlineSessionNames.h"
 
-// Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
 {
@@ -62,8 +57,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
 	this->Backpack = CreateDefaultSubobject<UInventory>(TEXT("BackpackComponent"));
-	
-
 
 	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 	StimulusSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
@@ -103,14 +96,13 @@ void APlayerCharacter::BeginPlay()
 	if(!localPlayer)
 		return;
 
-	UEnhancedInputLocalPlayerSubsystem* inputSystem = playerController->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	UEnhancedInputLocalPlayerSubsystem* inputSystem = localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 
 	if(!inputSystem)
 		return;
 	
 	inputSystem->AddMappingContext(InputMapping, 0);
 	
-
 }
 
 // Called every frame
@@ -144,7 +136,7 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 	if (!bSprinting)
 		return;
 
-	if (GetCharacterMovement()->Velocity.Length() > WalkingSpeed && GetCharacterMovement()->IsMovingOnGround())
+	if (GetCharacterMovement()->Velocity.Length() > WalkingSpeed)
 			SubstractStamina(SprintStaminaDrainPerSecond * DeltaTime);
 
 	if (Stamina < 0.f)
@@ -222,9 +214,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(EscPressedAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::EscPressed);
 	
 	
-
-	
-
 
 }
 
@@ -373,10 +362,17 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 void APlayerCharacter::Jump()
 {
 	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
+	{
 		StopClimbing();
+		Super::Jump();
+		return;
+	}
+	
+	if(Stamina <= 0.f)
+		return;
 
+	SubstractStamina(JumpStaminaDrain);
 	Super::Jump();
-
 }
 
 void APlayerCharacter::CrouchActionStarted()
@@ -576,6 +572,11 @@ bool APlayerCharacter::CanJumpInternal_Implementation() const
 {
 	return JumpIsAllowedInternal();
 
+}
+
+void APlayerCharacter::SetVoiceEffect(USoundEffectSourcePresetChain* SoundEffect)
+{
+	VOIPTalker->Settings.SourceEffectChain = SoundEffect;
 }
 
 void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
@@ -980,6 +981,9 @@ void APlayerCharacter::EscPressed()
 void APlayerCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
+
+	GetCapsuleComponent()->SetCollisionProfileName("DeadPawn", true);
+	StimulusSource->DestroyComponent(false);
 
 	if (!HasAuthority())
 		return;

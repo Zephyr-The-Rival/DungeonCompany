@@ -99,6 +99,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* MouseRightAction;
+
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* MouseLeftAction;
 
@@ -115,6 +116,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* EscPressedAction;
 	
+public:
+	inline UInputMappingContext* GetInputMapping() const { return InputMapping; }
+
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool IsCrouchOnHold() const;
@@ -249,6 +253,9 @@ protected:
 	float SprintStaminaDrainPerSecond = 1.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
+	float JumpStaminaDrain = 1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
 	float StaminaGainPerSecond = 2.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
@@ -278,13 +285,19 @@ private:
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* VoiceSA;
 
+public:
+	void SetVoiceEffect(USoundEffectSourcePresetChain* SoundEffect);
+
 protected:
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 
 private:
 	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 
-private://inventory & Backpack
+public:
+	void DeactivateStimulus();
+
+protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetInventory)
 	UInventory* Inventory;
 
@@ -333,7 +346,7 @@ protected:
 	void DropItemPressed();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UObject> NoItemAnimationBlueprintClass;
+	TSubclassOf<UObject> NoItemAnimationBlueprintClass;
 
 	void TriggerPrimaryItemAction();
 

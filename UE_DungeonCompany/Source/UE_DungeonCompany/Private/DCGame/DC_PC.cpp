@@ -9,6 +9,7 @@
 
 #include "Net/VoiceConfig.h"
 #include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 ADC_PC::ADC_PC()
 {
@@ -36,6 +37,21 @@ void ADC_PC::BeginPlay()
 	MyPlayerHud = CreateWidget<UPlayerHud>(this, PlayerHudClass);
 	MyPlayerHud->MyCharacter = Cast<APlayerCharacter>(this->GetPawn());
 	MyPlayerHud->AddToViewport();
+
+	if (!InputMapping)
+		return;
+
+	ULocalPlayer* localPlayer = GetLocalPlayer();
+
+	if (!localPlayer)
+		return;
+
+	UEnhancedInputLocalPlayerSubsystem* inputSystem = localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+
+	if (!inputSystem)
+		return;
+
+	inputSystem->AddMappingContext(InputMapping, 1);
 
 }
 
