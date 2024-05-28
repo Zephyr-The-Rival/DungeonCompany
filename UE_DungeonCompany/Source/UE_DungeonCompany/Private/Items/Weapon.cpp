@@ -6,8 +6,6 @@
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "Entities/DC_Entity.h"
 
-
-
 void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVector traceStart, FVector TraceEnd)
 {
 	ADC_Entity* criticallyHitEntity;
@@ -51,7 +49,7 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVec
 
 void AWeapon::TriggerPrimaryAction_Implementation(APlayerCharacter* user)
 {
-	user->AttackStart();
+	user->StartAttacking();
 }
 
 
