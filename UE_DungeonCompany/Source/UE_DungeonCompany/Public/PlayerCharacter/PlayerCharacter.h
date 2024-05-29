@@ -115,7 +115,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* EscPressedAction;
 	
-
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool IsCrouchOnHold() const;
@@ -285,7 +284,7 @@ protected:
 private:
 	class UAIPerceptionStimuliSourceComponent* StimulusSource;
 
-protected://inventory & Backpack
+private://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetInventory)
 	UInventory* Inventory;
 
@@ -294,24 +293,33 @@ protected://inventory & Backpack
 
 	bool bSlotAIsInHand = true;
 
-
-	void ToggleInventory();
 	bool bInventoryIsOn = false;
 
+protected:
+	void ToggleInventory();
+
+private:
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
 	UInventorySlot* FindFreeSlot();
-
-	void TakeOutItem();
 
 	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
 
+protected:
+	void TakeOutItem();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_SetFPMeshAnimClass(UClass* NewClass);
+	void Server_SetFPMeshAnimClass_Implementation(UClass* NewClass);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_SetFPMeshAnimClass(UClass* NewClass);
+	void Multicast_SetFPMeshAnimClass_Implementation(UClass* NewClass);
 
 	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
 
 	UFUNCTION(Server, Unreliable)
 	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
-
 
 	void DropItem(UInventorySlot* SlotToEmpty);
 
@@ -389,7 +397,17 @@ public://fighting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float AttackBlend = 0;
 
+	void StartAttacking();
+
 	void AttackStart();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_AttackStart();
+	void Server_AttackStart_Implementation();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_AttackStart();
+	void Multicast_AttackStart_Implementation();
 
 	UFUNCTION(BlueprintCallable)
 	void AttackLanded();
