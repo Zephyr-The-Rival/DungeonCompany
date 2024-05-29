@@ -660,20 +660,34 @@ void APlayerCharacter::TakeOutItem()
 	{
 		DestroyWorldItem(CurrentlyHeldWorldItem);
 	}
-		
+
+	UClass* newAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->AnimationBlueprintClass : NoItemAnimationBlueprintClass;
 
 	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
-	{
-		this->FirstPersonMesh->SetAnimClass(GetCurrentlyHeldInventorySlot()->MyItem->AnimationBlueprintClass);
 		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass);
-	}
+	
+	FirstPersonMesh->SetAnimClass(newAnimClass);
+	if(HasAuthority())
+		Multicast_SetFPMeshAnimClass(newAnimClass);
 	else
-	{
-		this->FirstPersonMesh->SetAnimClass(NoItemAnimationBlueprintClass);
-	}
+		Server_SetFPMeshAnimClass(newAnimClass);
+
 }
 
+void APlayerCharacter::Server_SetFPMeshAnimClass_Implementation(UClass* NewClass)
+{
+	Multicast_SetFPMeshAnimClass(NewClass);
 
+}
+
+void APlayerCharacter::Multicast_SetFPMeshAnimClass_Implementation(UClass* NewClass)
+{
+	if(IsLocallyControlled())
+		return;
+
+	FirstPersonMesh->SetAnimClass(NewClass);
+
+}
 
 void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn)
 {
@@ -985,6 +999,16 @@ void APlayerCharacter::TriggerPrimaryItemAction()
 	}
 }
 
+void APlayerCharacter::StartAttacking()
+{
+	AttackStart();
+
+	if (!HasAuthority())
+		Server_AttackStart();
+	else
+		Multicast_AttackStart();
+}
+
 void APlayerCharacter::AttackStart()
 {
 
@@ -998,9 +1022,25 @@ void APlayerCharacter::AttackStart()
 
 
 	this->bSprintAllowed = false;
-	StopSprint();
 	GetCharacterMovement()->MaxWalkSpeed = 100;
+
+	if(IsLocallyControlled())
+		StopSprint();
 	
+}
+
+void APlayerCharacter::Server_AttackStart_Implementation()
+{
+	AttackStart();
+}
+
+void APlayerCharacter::Multicast_AttackStart_Implementation()
+{
+	if(IsLocallyControlled())
+		return;
+
+	AttackStart();
+
 }
 
 void APlayerCharacter::AttackLanded()
