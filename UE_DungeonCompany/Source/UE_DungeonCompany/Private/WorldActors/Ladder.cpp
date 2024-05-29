@@ -34,6 +34,11 @@ ALadder::ALadder()
 	InteractVolume->SetupAttachment(RootComponent);
 
 	InteractVolume->InitBoxExtent(FVector(1, 1, 1));
+
+	EasyInteractBox = CreateDefaultSubobject<UBoxComponent>(TEXT("EasyInteractBox"));
+	EasyInteractBox->SetupAttachment(RootComponent);
+
+	EasyInteractBox->InitBoxExtent(FVector(1, 1, 1));
 }
 
 void ALadder::OnConstruction(const FTransform& Transform)
@@ -41,9 +46,6 @@ void ALadder::OnConstruction(const FTransform& Transform)
 	Super::OnConstruction(Transform);
 
 	LadderMesh->ClearInstances();
-
-	if(!LadderSectionReference)
-		return;
 
 	LadderMesh->SetStaticMesh(LadderSectionReference);
 
@@ -63,6 +65,9 @@ void ALadder::OnConstruction(const FTransform& Transform)
 
 	InteractVolume->SetBoxExtent(FVector(InteractionArea, LadderHalfHeight));
 	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, LadderHalfHeight));
+
+	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, LadderHalfHeight));
+	EasyInteractBox->SetRelativeLocation(FVector(0, 0, LadderHalfHeight));
 
 }
 

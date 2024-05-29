@@ -9,9 +9,11 @@
 #include "Items/ItemData.h"
 #include "Inventory/Inventory.h"
 #include "Inventory/InventorySlot.h"
+#include "Items/Weapon.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
-
+#include "Entities/DC_Entity.h"
+#include "DCGame/DC_GM.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -29,23 +31,23 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include "Online/OnlineSessionNames.h"
+
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	FirstPersonCamera->SetupAttachment(RootComponent);
-	FirstPersonCamera->SetRelativeLocation(FVector(0, 0, 40));
-	FirstPersonCamera->bUsePawnControlRotation = true;
-		   
-
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
-	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
+	FirstPersonMesh->SetupAttachment(RootComponent);
+
+	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
+	//FirstPersonCamera->bUsePawnControlRotation = true;
 
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
 	GetCharacterMovement()->MaxFlySpeed = ClimbingSpeed;
 	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
@@ -200,8 +202,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(DPadLeftAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadLeftPressed);
 	EIC->BindAction(DPadRightAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadRightPressed);
 	
-	EIC->BindAction(ToggleInventoryPCAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventoryPC);
-	EIC->BindAction(ToggleInventoryControllerAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventoryController);
+	EIC->BindAction(ToggleInventoryPCAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
+	EIC->BindAction(ToggleInventoryControllerAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
 	
 	EIC->BindAction(FaceUpAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceUpPressed);	
 	EIC->BindAction(FaceDownAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceDownPressed);
@@ -211,8 +213,15 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(MouseRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::RightMouseButtonPressed);
 	EIC->BindAction(MouseLeftAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::LeftMouseButtonPressed);
 	
+	EIC->BindAction(RightBumperAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TriggerPrimaryItemAction);
+
 	EIC->BindAction(ScrollAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::MouseWheelScrolled);
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
+	
+	
+	EIC->BindAction(EscPressedAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::EscPressed);
+	
+	
 
 	
 
@@ -221,19 +230,24 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
-	FVector2D localMoveVector = Value.Get<FVector2D>();
+	if (this->bMoveAllowed)
+	{
+		FVector2D localMoveVector = Value.Get<FVector2D>();
 
-	FVector worldMoveVector;
+		FVector worldMoveVector;
 
-	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
-		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
-	else
-		worldMoveVector = ClimbUpVector * localMoveVector.Y;
 
-	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
-		StopSprint();
 
-	AddMovementInput(worldMoveVector);
+		if (GetCharacterMovement()->MovementMode != MOVE_Flying)
+			worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
+		else
+			worldMoveVector = ClimbUpVector * localMoveVector.Y;
+
+		if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
+			StopSprint();
+
+		AddMovementInput(worldMoveVector);
+	}
 }
 
 void APlayerCharacter::NoMove()
@@ -244,11 +258,18 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
-	FVector2D lookVector = Value.Get<FVector2D>();
+	if (bLookAllowed)
+	{
+		FVector2D lookVector = Value.Get<FVector2D>();
 
-	AddControllerYawInput(lookVector.X);
-	AddControllerPitchInput(lookVector.Y);
+		AddControllerYawInput(lookVector.X);
 
+		AddControllerPitchInput(lookVector.Y);
+		FRotator newRotation = FRotator(0, 0, 0);
+		newRotation.Pitch = GetControlRotation().Euler().Y;
+
+		FirstPersonMesh->SetRelativeRotation(newRotation);
+	}
 }
 
 void APlayerCharacter::InteractorLineTrace()
@@ -360,6 +381,7 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::CrouchActionStarted()
 {
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
 	if (!bCrouchHold)
 	{
 		ToggleCrouch();
@@ -372,10 +394,13 @@ void APlayerCharacter::CrouchActionStarted()
 
 void APlayerCharacter::CrouchActionCompleted()
 {
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
 	if (!bCrouchHold)
 		return;
 
 	UnCrouch(true);
+
+	
 
 }
 
@@ -386,6 +411,7 @@ void APlayerCharacter::ToggleCrouch()
 	else
 		Crouch(true);
 
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
 }
 
 void APlayerCharacter::SprintActionStarted()
@@ -422,6 +448,9 @@ void APlayerCharacter::ToggleSprint()
 
 void APlayerCharacter::StartSprint()
 {
+	if (!this->bSprintAllowed)
+		return;
+
 	if(Stamina <= 0.f)
 		return;
 
@@ -563,27 +592,17 @@ void APlayerCharacter::ReportTalking(float Loudness)
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
 }
 
-void APlayerCharacter::ToggleInventoryPC()
+void APlayerCharacter::ToggleInventory()
 {
-	ToggleInventory(false);
-}
-
-void APlayerCharacter::ToggleInventoryController()
-{
-	ToggleInventory(true);
-}
-
-void APlayerCharacter::ToggleInventory(bool ControllerVersion)
-{
-	this->BInventoryIsOn = !BInventoryIsOn;
-	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(BInventoryIsOn, ControllerVersion);
+	this->bInventoryIsOn = !bInventoryIsOn;
+	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(bInventoryIsOn);
 }
 
 
 
 UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
 {
-	if (this->BSlotAIsInHand)
+	if (this->bSlotAIsInHand)
 		return HandSlotA;
 	else
 		return HandSlotB;
@@ -593,7 +612,7 @@ UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
 
 UInventorySlot* APlayerCharacter::FindFreeSlot()
 {
-	if (BSlotAIsInHand)// a is in hand check a and then b
+	if (bSlotAIsInHand)// a is in hand check a and then b
 	{
 		if (!IsValid(this->HandSlotA->MyItem))
 		{
@@ -693,19 +712,19 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 
 void APlayerCharacter::SwitchHand()
 {
-	if (BSwichHandAllowed)
+	if (bSwichHandAllowed)
 	{
-		BSwichHandAllowed = false;
-		this->BSlotAIsInHand = !BSlotAIsInHand;
+		bSwichHandAllowed = false;
+		this->bSlotAIsInHand = !bSlotAIsInHand;
 		TakeOutItem();
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(BSlotAIsInHand);
+		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(bSlotAIsInHand);
 	}
 }
 
 void APlayerCharacter::AllowSwitchHand()
 {
-	BSwichHandAllowed = true;
+	bSwichHandAllowed = true;
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.RemoveAll(this);
 }
 
@@ -734,7 +753,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	if (this->BInventoryIsOn)
+	if (this->bInventoryIsOn)
 		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
 	else
 		DropItem(GetCurrentlyHeldInventorySlot());
@@ -759,36 +778,53 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	//set item data
 }
 
+
+
 void APlayerCharacter::CheckForFallDamage()
 {
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
 	// that results in the jump height not being included in the fall height calculation
 
-
-
-	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
+	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame && GetCharacterMovement()->MovementMode != MOVE_Flying)//frame of impact
 	{
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
 		if (deltaZ > 200)
 		{
-			float damage = (deltaZ - 200) * 0.334; // 2m=0 damage 5m=100 dmg
+			
+			float damage = this->FallDamageCalculation(deltaZ);
 			TakeDamage(damage);
 		}
+
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
 		//	"\nEnd height:\t"+FString::SanitizeFloat(RootComponent->GetComponentLocation().Z)
 		//	+ "\nFall height:\t " + FString::SanitizeFloat(deltaZ);
 		//LogWarning(*message);
 	}
-	if (GetMovementComponent()->Velocity.Z>=0)
+	if (GetMovementComponent()->Velocity.Z >= 0 || GetCharacterMovement()->MovementMode == MOVE_Flying)
 		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
 
-	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0);
+	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->MovementMode != MOVE_Flying);
+}
+
+float APlayerCharacter::FallDamageCalculation(float deltaHeight)
+{
+
+	float free = 300;
+	float max = 1000;
+
+	if (deltaHeight <= free)
+		return 0;
+
+
+	float factor = 100 / (max - free);
+
+	return (deltaHeight- free) * factor;
 }
 
 void APlayerCharacter::DPadUpPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Up);
 	}
@@ -800,7 +836,7 @@ void APlayerCharacter::DPadUpPressed()
 
 void APlayerCharacter::DPadDownPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Down);
 	}
@@ -812,7 +848,7 @@ void APlayerCharacter::DPadDownPressed()
 
 void APlayerCharacter::DPadLeftPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Left);
 	}
@@ -824,7 +860,7 @@ void APlayerCharacter::DPadLeftPressed()
 
 void APlayerCharacter::DPadRightPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Right);
 	}
@@ -836,7 +872,7 @@ void APlayerCharacter::DPadRightPressed()
 
 void APlayerCharacter::FaceUpPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
 	}
@@ -848,7 +884,7 @@ void APlayerCharacter::FaceUpPressed()
 
 void APlayerCharacter::FaceDownPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 
 	}
@@ -860,7 +896,7 @@ void APlayerCharacter::FaceDownPressed()
 
 void APlayerCharacter::FaceLeftPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		EquipCurrentInventorySelection(true);
 	}
@@ -872,7 +908,7 @@ void APlayerCharacter::FaceLeftPressed()
 
 void APlayerCharacter::FaceRightPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		EquipCurrentInventorySelection(false);
 	}
@@ -884,19 +920,19 @@ void APlayerCharacter::FaceRightPressed()
 
 void APlayerCharacter::LeftMouseButtonPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		EquipCurrentInventorySelection(true);
 	}
 	else
 	{
-		
+		TriggerPrimaryItemAction();
 	}
 }
 
 void APlayerCharacter::RightMouseButtonPressed()
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		EquipCurrentInventorySelection(false);
 
@@ -910,7 +946,7 @@ void APlayerCharacter::RightMouseButtonPressed()
 
 void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 {
-	if (BInventoryIsOn)
+	if (bInventoryIsOn)
 	{
 		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlightScroll((Value.Get<float>() > 0));
 	}
@@ -920,6 +956,12 @@ void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 	}
 
 }
+void APlayerCharacter::EscPressed()
+{
+	if (this->bInventoryIsOn)
+		ToggleInventory();
+	
+}
 
 void APlayerCharacter::OnDeath_Implementation()
 {
@@ -928,6 +970,55 @@ void APlayerCharacter::OnDeath_Implementation()
 	if (!HasAuthority())
 		return;
 
-	GetController()->UnPossess();
+	GetWorld()->GetAuthGameMode<ADC_GM>()->Respawn(GetController());
+
 }
 
+void APlayerCharacter::TriggerPrimaryItemAction()
+{
+	if (!this->bPrimaryActionAllowed)
+		return;
+
+	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
+	{
+		CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
+	}
+}
+
+void APlayerCharacter::AttackStart()
+{
+
+	//different attack when sprinting?
+	//attack needs to cost stamina
+	this->bPrimaryActionAllowed = false;
+	this->AttackBlend = 1;
+	this->bSwichHandAllowed = false;
+	//this->bMoveAllowed = false;
+	//this->bLookAllowed = false;
+
+
+	this->bSprintAllowed = false;
+	StopSprint();
+	GetCharacterMovement()->MaxWalkSpeed = 100;
+	
+}
+
+void APlayerCharacter::AttackLanded()
+{
+	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
+	
+	weapon->DealHits(NULL, FVector(), FVector());
+}
+
+void APlayerCharacter::OnAttackOver()
+{
+	this->AttackBlend = 0;
+	this->bSwichHandAllowed = true;
+	//this->bMoveAllowed = true;
+	//this->bLookAllowed = true;
+	this->bPrimaryActionAllowed = true;
+	//allow sprint
+	this->bSprintAllowed = true;
+	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
+	
+}
