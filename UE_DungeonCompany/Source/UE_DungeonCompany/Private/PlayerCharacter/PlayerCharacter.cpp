@@ -27,6 +27,7 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Interfaces/VoiceInterface.h"
+#include "Kismet/GameplayStatics.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -597,6 +598,9 @@ void APlayerCharacter::Cough()
 {
 	if(HasAuthority())
 		UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), 1.0f, this);
+
+	if(CoughSound)
+		UGameplayStatics::SpawnSoundAtLocation(this, CoughSound, GetActorLocation());
 
 }
 

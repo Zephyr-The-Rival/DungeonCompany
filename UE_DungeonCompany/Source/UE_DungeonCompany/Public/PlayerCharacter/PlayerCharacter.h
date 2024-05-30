@@ -374,6 +374,12 @@ private:
 
 public:
 	void ReportTalking(float Loudness);
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundBase* CoughSound;
+
+public:
 	void Cough();
 
 private:
