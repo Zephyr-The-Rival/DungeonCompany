@@ -314,12 +314,12 @@ protected:
 	void TakeOutItem();
 
 	UFUNCTION(Server, Unreliable)
-	void Server_SetFPMeshAnimClass(UClass* NewClass);
-	void Server_SetFPMeshAnimClass_Implementation(UClass* NewClass);
+	void Server_SetTPMeshAnimClass(UClass* NewClass);
+	void Server_SetTPMeshAnimClass_Implementation(UClass* NewClass);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void Multicast_SetFPMeshAnimClass(UClass* NewClass);
-	void Multicast_SetFPMeshAnimClass_Implementation(UClass* NewClass);
+	void Multicast_SetTPMeshAnimClass(UClass* NewClass);
+	void Multicast_SetTPMeshAnimClass_Implementation(UClass* NewClass);
 
 	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
 
@@ -340,7 +340,10 @@ protected:
 	void DropItemPressed();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UObject> NoItemAnimationBlueprintClass;
+	TSubclassOf<class UObject> NoItemFirstPersonAnimationBlueprintClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UObject> NoItemThirdPersonAnimationBlueprintClass;
 
 	void TriggerPrimaryItemAction();
 

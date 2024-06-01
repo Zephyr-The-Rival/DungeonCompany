@@ -28,7 +28,10 @@ public:
 	TSubclassOf<class AWorldItem> MyWorldItemClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UObject> AnimationBlueprintClass;
+	TSubclassOf<class UObject> FirstPersonAnimationBlueprintClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UObject> ThirdPersonAnimationBlueprintClass;
 
 
 

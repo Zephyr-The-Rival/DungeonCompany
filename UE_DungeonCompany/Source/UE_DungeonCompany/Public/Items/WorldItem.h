@@ -36,9 +36,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnHoldingInHand();
+	void OnHoldingInHand(bool locallyControlled);
 
-	virtual void OnHoldingInHand_Implementation();
+	virtual void OnHoldingInHand_Implementation(bool locallyControlled);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

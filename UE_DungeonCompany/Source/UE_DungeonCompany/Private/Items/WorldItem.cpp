@@ -61,7 +61,7 @@ void AWorldItem::Tick(float DeltaTime)
 
 }
 
-void AWorldItem::OnHoldingInHand_Implementation()
+void AWorldItem::OnHoldingInHand_Implementation(bool locallyControlled)
 {
 	LogWarning(*(this->GetName()+"->OnHoldingInHand() was not overridden"));
 }
@@ -78,8 +78,21 @@ void AWorldItem::ActivateMaterialOnTop(UMeshComponent* MeshComponent)
 
 void AWorldItem::AttachToPlayer()
 {
-	this->OnHoldingInHand();
-	this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+	this->OnHoldingInHand(MyCharacterToAttachTo->IsLocallyControlled());
+	if (MyCharacterToAttachTo->IsLocallyControlled())
+	{
+		this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+	}		
+	else
+	{
+		MyCharacterToAttachTo->GetMesh()->GetBoneIndex("ItemHandle_R_001");
+		FVector tmp = MyCharacterToAttachTo->GetMesh()->GetSocketLocation("ItemHandle_R_001");
+		tmp = FVector(0,0,0);
+
+		//this->attac
+		this->AttachToComponent(MyCharacterToAttachTo->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_R_001");
+	}
+	
 	this->SetActorScale3D(FVector(1, 1, 1));
 
 }

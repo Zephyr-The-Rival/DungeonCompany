@@ -662,31 +662,33 @@ void APlayerCharacter::TakeOutItem()
 		DestroyWorldItem(CurrentlyHeldWorldItem);
 	}
 
-	UClass* newAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->AnimationBlueprintClass : NoItemAnimationBlueprintClass;
+	UClass* newFirstPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->FirstPersonAnimationBlueprintClass : NoItemFirstPersonAnimationBlueprintClass;
+	UClass* newThirdPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->ThirdPersonAnimationBlueprintClass : NoItemThirdPersonAnimationBlueprintClass;
 
 	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
 		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass);
 	
-	FirstPersonMesh->SetAnimClass(newAnimClass);
+	FirstPersonMesh->SetAnimClass(newFirstPersonAnimClass);
+
 	if(HasAuthority())
-		Multicast_SetFPMeshAnimClass(newAnimClass);
+		Multicast_SetTPMeshAnimClass(newThirdPersonAnimClass);
 	else
-		Server_SetFPMeshAnimClass(newAnimClass);
+		Server_SetTPMeshAnimClass(newThirdPersonAnimClass);
 
 }
 
-void APlayerCharacter::Server_SetFPMeshAnimClass_Implementation(UClass* NewClass)
+void APlayerCharacter::Server_SetTPMeshAnimClass_Implementation(UClass* NewClass)
 {
-	Multicast_SetFPMeshAnimClass(NewClass);
+	Multicast_SetTPMeshAnimClass(NewClass);
 
 }
 
-void APlayerCharacter::Multicast_SetFPMeshAnimClass_Implementation(UClass* NewClass)
+void APlayerCharacter::Multicast_SetTPMeshAnimClass_Implementation(UClass* NewClass)
 {
 	if(IsLocallyControlled())
 		return;
 
-	FirstPersonMesh->SetAnimClass(NewClass);
+	GetMesh()->SetAnimClass(NewClass);
 
 }
 
