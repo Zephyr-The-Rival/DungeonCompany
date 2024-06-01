@@ -6,6 +6,7 @@
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "Inventory/InventorySlot.h"
 
 // Sets default values
 AWorldItem::AWorldItem()
@@ -22,16 +23,24 @@ AWorldItem::AWorldItem()
 // Called when the game starts or when spawned
 void AWorldItem::BeginPlay()
 {
-	Super::BeginPlay();
-
-	if (IsValid(this->ItemDataClass) && this->MyData==NULL)
-		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
+	
 
 	if (IsValid(MyCharacterToAttachTo))
 	{
 		AttachToPlayer();
+		if(IsValid(MyCharacterToAttachTo->GetCurrentlyHeldInventorySlot()->MyItem))
+			this->MyData = MyCharacterToAttachTo->GetCurrentlyHeldInventorySlot()->MyItem;//when player spawns item in hand so it doesnt create a new item data
+	}
+
+	if (IsValid(this->ItemDataClass) && this->MyData==NULL)
+		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
+
+	if (!SerializedStringData.IsEmpty())
+	{
+		MyData->DeserializeMyData(SerializedStringData);
 	}
 	
+	Super::BeginPlay();
 }
 
 
@@ -39,6 +48,7 @@ void AWorldItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWorldItem, MyCharacterToAttachTo);
+	DOREPLIFETIME(AWorldItem, SerializedStringData);
 }
 
 

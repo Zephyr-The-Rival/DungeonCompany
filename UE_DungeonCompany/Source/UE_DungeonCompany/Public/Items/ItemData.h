@@ -30,7 +30,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> AnimationBlueprintClass;
 
+
+
+	UFUNCTION(BlueprintNativeEvent)
+	FString SerializeMyData();
+	FString SerializeMyData_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void DeserializeMyData(const FString& StringData);
+	void DeserializeMyData_Implementation(const FString& StringData);
+
 protected:
+
+
+	UFUNCTION(BlueprintCallable)
+	TArray<FString> SeperateStringData(const FString& StringData);
 
 
 };

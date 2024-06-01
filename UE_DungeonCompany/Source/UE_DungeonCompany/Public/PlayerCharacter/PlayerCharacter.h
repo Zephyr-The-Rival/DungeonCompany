@@ -295,11 +295,16 @@ private://inventory & Backpack
 
 	bool bInventoryIsOn = false;
 
+	
+
 protected:
 	void ToggleInventory();
 
+public:
+		UInventorySlot* GetCurrentlyHeldInventorySlot();
+
 private:
-	UInventorySlot* GetCurrentlyHeldInventorySlot();
+	
 	UInventorySlot* FindFreeSlot();
 
 	UPROPERTY(Replicated)
@@ -320,6 +325,8 @@ protected:
 
 	UFUNCTION(Server, Unreliable)
 	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+
 
 	void DropItem(UInventorySlot* SlotToEmpty);
 
@@ -336,6 +343,7 @@ protected:
 	TSubclassOf<class UObject> NoItemAnimationBlueprintClass;
 
 	void TriggerPrimaryItemAction();
+
 
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
@@ -354,10 +362,10 @@ public:
 	//bool BItemAIsInHand is protected
 
 private:
-	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 	UFUNCTION(Server,Unreliable)
-	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
-	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 public:
 	void ReportTalking(float Loudness);

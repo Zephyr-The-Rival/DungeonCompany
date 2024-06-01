@@ -67,6 +67,10 @@ public://item actions
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User);
 
 
+public:	//keeping itemdata
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	FString SerializedStringData;
+
 	
 
 };

@@ -19,7 +19,8 @@ class UE_DUNGEONCOMPANY_API AWeapon : public AWorldItem
 {
 	GENERATED_BODY()
 	
-
+protected:
+	virtual void BeginPlay() override;
 public:
 
 	UFUNCTION(BlueprintNativeEvent)

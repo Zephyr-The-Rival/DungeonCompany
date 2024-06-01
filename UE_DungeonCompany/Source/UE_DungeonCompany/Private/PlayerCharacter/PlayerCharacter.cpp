@@ -72,6 +72,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina;
 
+
 }
 
 // Called when the game starts or when spawned
@@ -713,7 +714,7 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 {
 	if (IsValid(SlotToEmpty->MyItem))
 	{
-		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass);
+		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass, SlotToEmpty->MyItem->SerializeMyData());
 		SlotToEmpty->MyItem = nullptr;
 
 		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
@@ -773,23 +774,26 @@ void APlayerCharacter::DropItemPressed()
 		DropItem(GetCurrentlyHeldInventorySlot());
 }
 
-void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	if (!HasAuthority())
-		Server_SpawnDroppedWorldItem(ItemToSpawn);
+		Server_SpawnDroppedWorldItem(ItemToSpawn,SerializedData);
 	else
-	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn);
+	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SerializedData);
 }
 
-void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	LogWarning(TEXT("Spawning Item"));
 	FTransform SpawnTransform;
 	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 150 - FVector(0, 0, 20));
 
-	GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
+	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
+	i->SerializedStringData = SerializedData;
+	i->FinishSpawning(SpawnTransform);
+
+	//GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
 	//SpawnedItem->GetRootComponent()->AddImpulse()
-	//set item data
 }
 
 
@@ -820,6 +824,7 @@ void APlayerCharacter::CheckForFallDamage()
 
 	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->MovementMode != MOVE_Flying);
 }
+
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 {
@@ -998,6 +1003,8 @@ void APlayerCharacter::TriggerPrimaryItemAction()
 		CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
 	}
 }
+
+
 
 void APlayerCharacter::StartAttacking()
 {
