@@ -15,6 +15,7 @@ AWorldItem::AWorldItem()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bAlwaysRelevant = true;
+	
 }
 
 
@@ -23,7 +24,6 @@ AWorldItem::AWorldItem()
 // Called when the game starts or when spawned
 void AWorldItem::BeginPlay()
 {
-	
 
 	if (IsValid(MyCharacterToAttachTo))
 	{
@@ -79,23 +79,20 @@ void AWorldItem::ActivateMaterialOnTop(UMeshComponent* MeshComponent)
 void AWorldItem::AttachToPlayer()
 {
 	this->OnHoldingInHand(MyCharacterToAttachTo->IsLocallyControlled());
+
 	if (MyCharacterToAttachTo->IsLocallyControlled())
 	{
 		this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
 	}		
 	else
-	{
-		MyCharacterToAttachTo->GetMesh()->GetBoneIndex("ItemHandle_R_001");
-		FVector tmp = MyCharacterToAttachTo->GetMesh()->GetSocketLocation("ItemHandle_R_001");
-		tmp = FVector(0,0,0);
-
-		//this->attac
+	{	
 		this->AttachToComponent(MyCharacterToAttachTo->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_R_001");
 	}
 	
 	this->SetActorScale3D(FVector(1, 1, 1));
 
 }
+
 
 void AWorldItem::Interact(APawn* InteractingPawn)
 {
