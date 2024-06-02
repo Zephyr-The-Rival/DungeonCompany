@@ -313,6 +313,7 @@ void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
 
 	Server_DestroyWorldItem_Implementation(ItemToDestroy);
 }
+
 void APlayerCharacter::Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
 {
 	ItemToDestroy->Destroy();
@@ -352,7 +353,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	if (IsValid(freeSlot))
 	{
-		freeSlot->MyItem = WorldItem->MyData;
+		freeSlot->MyItem = WorldItem->GetMyData();
 		DestroyWorldItem(WorldItem);
 
 		if (freeSlot == GetCurrentlyHeldInventorySlot())
@@ -736,6 +737,18 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 	}
 }
 
+void APlayerCharacter::RemoveInventorySlot(UInventorySlot* SlotToEmpty)
+{
+	if (!IsValid(SlotToEmpty->MyItem))
+		return;
+
+	SlotToEmpty->MyItem = nullptr;
+
+	if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
+		TakeOutItem();
+
+}
+
 void APlayerCharacter::SwitchHand()
 {
 	if (bSwichHandAllowed)
@@ -1008,10 +1021,47 @@ void APlayerCharacter::TriggerPrimaryItemAction()
 	if (!this->bPrimaryActionAllowed)
 		return;
 
-	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
+	if (!IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
+		return;
+
+	CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
+
+	if (HasAuthority())
 	{
-		CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
+		Server_TriggerPrimaryItemAction_Implementation();
+		return;
 	}
+
+	Server_TriggerPrimaryItemAction();
+}
+
+void APlayerCharacter::TriggerSecondaryItemAction()
+{
+	if (!bSecondaryActionAllowed)
+		return;
+
+	if (!IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
+		return;
+
+	CurrentlyHeldWorldItem->TriggerSecondaryAction(this);
+
+	if (HasAuthority())
+	{
+		Server_TriggerSecondaryItemAction_Implementation();
+		return;
+	}
+
+	Server_TriggerSecondaryItemAction();
+}
+
+void APlayerCharacter::Server_TriggerPrimaryItemAction_Implementation()
+{
+
+}
+
+void APlayerCharacter::Server_TriggerSecondaryItemAction_Implementation()
+{
+
 }
 
 void APlayerCharacter::StartAttacking()

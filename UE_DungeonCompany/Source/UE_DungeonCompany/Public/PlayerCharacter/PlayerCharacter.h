@@ -145,6 +145,7 @@ protected:
 	void InteractorLineTrace();
 
 	void DestroyWorldItem(AWorldItem* ItemToDestroy);
+
 	UFUNCTION(Server, Unreliable)
 	void Server_DestroyWorldItem(AWorldItem* ItemToDestroy);
 	void Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy);
@@ -336,6 +337,8 @@ protected:
 
 	void DropItem(UInventorySlot* SlotToEmpty);
 
+	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
+
 	void SwitchHand();
 
 	UFUNCTION()
@@ -345,10 +348,22 @@ protected:
 
 	void DropItemPressed();
 
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UObject> NoItemAnimationBlueprintClass;
 
+public:
 	void TriggerPrimaryItemAction();
+	void TriggerSecondaryItemAction();
+
+protected:
+	UFUNCTION(Server, Unreliable)
+	void Server_TriggerPrimaryItemAction();
+	void Server_TriggerPrimaryItemAction_Implementation();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_TriggerSecondaryItemAction();
+	void Server_TriggerSecondaryItemAction_Implementation();
 
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
@@ -412,6 +427,7 @@ public://blockers
 	bool bLookAllowed = true;
 	bool bSprintAllowed = true;
 	bool bPrimaryActionAllowed = true;
+	bool bSecondaryActionAllowed = true;
 
 public://fighting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
