@@ -405,7 +405,7 @@ public://blockers
 	bool bPrimaryActionAllowed = true;
 
 public://fighting
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float AttackBlend = 0;
 
 	void StartAttacking();

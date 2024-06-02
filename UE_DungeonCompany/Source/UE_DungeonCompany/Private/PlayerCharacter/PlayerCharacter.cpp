@@ -156,6 +156,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
+	DOREPLIFETIME(APlayerCharacter, AttackBlend);
 }
 
 bool APlayerCharacter::IsCrouchOnHold() const
