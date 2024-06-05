@@ -156,7 +156,7 @@ void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 {
 	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
 
-	if (!character)
+	if (!character || PlayerTimerHandles.Contains(character))
 		return;
 
 	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &AFunGuy::OnSafeTimerElapsed, character);
@@ -172,7 +172,7 @@ void AFunGuy::OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 {
 	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
 
-	if (!character)
+	if (!character || !PlayerTimerHandles.Contains(character))
 		return;
 
 	GetWorld()->GetTimerManager().ClearTimer(PlayerTimerHandles[character]);

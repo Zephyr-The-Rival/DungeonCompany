@@ -301,7 +301,7 @@ protected:
 	void ToggleInventory();
 
 public:
-		UInventorySlot* GetCurrentlyHeldInventorySlot();
+	UInventorySlot* GetCurrentlyHeldInventorySlot();
 
 private:
 	
