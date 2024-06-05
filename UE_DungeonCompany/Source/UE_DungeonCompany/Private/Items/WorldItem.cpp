@@ -6,6 +6,7 @@
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "Inventory/InventorySlot.h"
 
 // Sets default values
 AWorldItem::AWorldItem()
@@ -14,6 +15,7 @@ AWorldItem::AWorldItem()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bAlwaysRelevant = true;
+	
 }
 
 
@@ -22,16 +24,23 @@ AWorldItem::AWorldItem()
 // Called when the game starts or when spawned
 void AWorldItem::BeginPlay()
 {
-	Super::BeginPlay();
-
-	if (IsValid(this->ItemDataClass) && this->MyData==NULL)
-		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
 
 	if (IsValid(MyCharacterToAttachTo))
 	{
 		AttachToPlayer();
+		if(IsValid(MyCharacterToAttachTo->GetCurrentlyHeldInventorySlot()->MyItem))
+			this->MyData = MyCharacterToAttachTo->GetCurrentlyHeldInventorySlot()->MyItem;//when player spawns item in hand so it doesnt create a new item data
+	}
+
+	if (IsValid(this->ItemDataClass) && this->MyData==NULL)
+		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
+
+	if (!SerializedStringData.IsEmpty())
+	{
+		MyData->DeserializeMyData(SerializedStringData);
 	}
 	
+	Super::BeginPlay();
 }
 
 
@@ -39,6 +48,7 @@ void AWorldItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWorldItem, MyCharacterToAttachTo);
+	DOREPLIFETIME(AWorldItem, SerializedStringData);
 }
 
 
@@ -51,7 +61,7 @@ void AWorldItem::Tick(float DeltaTime)
 
 }
 
-void AWorldItem::OnHoldingInHand_Implementation()
+void AWorldItem::OnHoldingInHand_Implementation(bool locallyControlled)
 {
 	LogWarning(*(this->GetName()+"->OnHoldingInHand() was not overridden"));
 }
@@ -68,11 +78,21 @@ void AWorldItem::ActivateMaterialOnTop(UMeshComponent* MeshComponent)
 
 void AWorldItem::AttachToPlayer()
 {
-	this->OnHoldingInHand();
-	this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+	this->OnHoldingInHand(MyCharacterToAttachTo->IsLocallyControlled());
+
+	if (MyCharacterToAttachTo->IsLocallyControlled())
+	{
+		this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+	}		
+	else
+	{	
+		this->AttachToComponent(MyCharacterToAttachTo->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_R_001");
+	}
+	
 	this->SetActorScale3D(FVector(1, 1, 1));
 
 }
+
 
 void AWorldItem::Interact(APawn* InteractingPawn)
 {

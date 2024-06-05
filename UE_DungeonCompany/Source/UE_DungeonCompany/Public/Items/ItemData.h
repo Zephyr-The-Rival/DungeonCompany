@@ -28,9 +28,26 @@ public:
 	TSubclassOf<class AWorldItem> MyWorldItemClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UObject> AnimationBlueprintClass;
+	TSubclassOf<class UObject> FirstPersonAnimationBlueprintClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UObject> ThirdPersonAnimationBlueprintClass;
+
+
+
+	UFUNCTION(BlueprintNativeEvent)
+	FString SerializeMyData();
+	FString SerializeMyData_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void DeserializeMyData(const FString& StringData);
+	void DeserializeMyData_Implementation(const FString& StringData);
 
 protected:
+
+
+	UFUNCTION(BlueprintCallable)
+	TArray<FString> SeperateStringData(const FString& StringData);
 
 
 };

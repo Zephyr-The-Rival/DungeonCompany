@@ -295,11 +295,16 @@ private://inventory & Backpack
 
 	bool bInventoryIsOn = false;
 
+	
+
 protected:
 	void ToggleInventory();
 
+public:
+		UInventorySlot* GetCurrentlyHeldInventorySlot();
+
 private:
-	UInventorySlot* GetCurrentlyHeldInventorySlot();
+	
 	UInventorySlot* FindFreeSlot();
 
 	UPROPERTY(Replicated)
@@ -309,17 +314,19 @@ protected:
 	void TakeOutItem();
 
 	UFUNCTION(Server, Unreliable)
-	void Server_SetFPMeshAnimClass(UClass* NewClass);
-	void Server_SetFPMeshAnimClass_Implementation(UClass* NewClass);
+	void Server_SetTPMeshAnimClass(UClass* NewClass);
+	void Server_SetTPMeshAnimClass_Implementation(UClass* NewClass);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void Multicast_SetFPMeshAnimClass(UClass* NewClass);
-	void Multicast_SetFPMeshAnimClass_Implementation(UClass* NewClass);
+	void Multicast_SetTPMeshAnimClass(UClass* NewClass);
+	void Multicast_SetTPMeshAnimClass_Implementation(UClass* NewClass);
 
 	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
 
 	UFUNCTION(Server, Unreliable)
 	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+
 
 	void DropItem(UInventorySlot* SlotToEmpty);
 
@@ -333,9 +340,13 @@ protected:
 	void DropItemPressed();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<class UObject> NoItemAnimationBlueprintClass;
+	TSubclassOf<class UObject> NoItemFirstPersonAnimationBlueprintClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UObject> NoItemThirdPersonAnimationBlueprintClass;
 
 	void TriggerPrimaryItemAction();
+
 
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
@@ -354,10 +365,10 @@ public:
 	//bool BItemAIsInHand is protected
 
 private:
-	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 	UFUNCTION(Server,Unreliable)
-	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
-	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 public:
 	void ReportTalking(float Loudness);
@@ -394,7 +405,7 @@ public://blockers
 	bool bPrimaryActionAllowed = true;
 
 public://fighting
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float AttackBlend = 0;
 
 	void StartAttacking();

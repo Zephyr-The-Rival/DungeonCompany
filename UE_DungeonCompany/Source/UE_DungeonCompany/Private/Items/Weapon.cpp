@@ -6,6 +6,11 @@
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "Entities/DC_Entity.h"
 
+void AWeapon::BeginPlay()
+{
+	AWorldItem::BeginPlay();
+}
+
 void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVector traceStart, FVector TraceEnd)
 {
 	ADC_Entity* criticallyHitEntity;
