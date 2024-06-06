@@ -667,7 +667,7 @@ void APlayerCharacter::TakeOutItem()
 	UClass* newThirdPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->ThirdPersonAnimationBlueprintClass : NoItemThirdPersonAnimationBlueprintClass;
 
 	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
-		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass);
+		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass, GetCurrentlyHeldInventorySlot()->MyItem->SerializeMyData());
 	
 	FirstPersonMesh->SetAnimClass(newFirstPersonAnimClass);
 
@@ -693,21 +693,22 @@ void APlayerCharacter::Multicast_SetTPMeshAnimClass_Implementation(UClass* NewCl
 
 }
 
-void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	if (HasAuthority())
-		Server_SpawnItemInHand_Implementation(ItemToSpawn);
+		Server_SpawnItemInHand_Implementation(ItemToSpawn, SerializedData);
 	else
-		Server_SpawnItemInHand(ItemToSpawn);
+		Server_SpawnItemInHand(ItemToSpawn, SerializedData);
 }
 
-void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	//if is in first person or not will have to make a difference
 
 	FTransform SpawnTransform;
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this; //this property is replicated and the item will attach on begin play
+	CurrentlyHeldWorldItem->SerializedStringData = SerializedData;
 	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
 
 }
@@ -996,12 +997,13 @@ void APlayerCharacter::OnDeath_Implementation()
 
 }
 
-void APlayerCharacter::TriggerPrimaryItemAction()
+
+void APlayerCharacter::TriggerPrimaryItemAction_Implementation()
 {
 	if (!this->bPrimaryActionAllowed)
 		return;
 
-	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
+	if (IsValid(CurrentlyHeldWorldItem))
 	{
 		CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
 	}

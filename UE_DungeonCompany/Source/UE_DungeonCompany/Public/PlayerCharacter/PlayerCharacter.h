@@ -321,11 +321,11 @@ protected:
 	void Multicast_SetTPMeshAnimClass(UClass* NewClass);
 	void Multicast_SetTPMeshAnimClass_Implementation(UClass* NewClass);
 
-	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 	UFUNCTION(Server, Unreliable)
-	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
-	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 
 	void DropItem(UInventorySlot* SlotToEmpty);
@@ -345,6 +345,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> NoItemThirdPersonAnimationBlueprintClass;
 
+	UFUNCTION(Server,Unreliable)
 	void TriggerPrimaryItemAction();
 
 
