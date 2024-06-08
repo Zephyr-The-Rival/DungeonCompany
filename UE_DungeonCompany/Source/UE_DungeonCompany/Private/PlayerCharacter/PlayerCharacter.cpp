@@ -222,6 +222,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	
 	
 	EIC->BindAction(EscPressedAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::EscPressed);
+	EIC->BindAction(ControllerOptionsPressed,	ETriggerEvent::Triggered, this, &APlayerCharacter::EscPressed);
 	
 	
 

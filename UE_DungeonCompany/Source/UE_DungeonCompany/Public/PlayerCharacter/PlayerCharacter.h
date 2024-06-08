@@ -114,6 +114,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* EscPressedAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ControllerOptionsPressed;
 	
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
