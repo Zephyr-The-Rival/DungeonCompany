@@ -34,6 +34,9 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVec
 
 	for (AActor* a : overlappingActors)
 	{
+		if (a == this->MyCharacterToAttachTo)
+			continue;
+
 		if (Cast<ADC_Entity>(a))//if hit entity
 		{
 			if (IsValid(criticallyHitEntity) && a == criticallyHitEntity)//was hit on weak spot
