@@ -432,4 +432,9 @@ public://fighting
 public:
 	virtual void OnDeath_Implementation() override;
 
+
+//pause
+	
+	void ToggleOptions();
+	bool bOptionsMenuIsOn=false;
 };

@@ -45,4 +45,9 @@ void UPlayerHud::UpdateCrouchIcon_Implementation()
 	LogWarning(TEXT("UPlayerHud::UpdateCrouchIcon_Implementation has not been overidden"));
 }
 
+void UPlayerHud::ToggleOptionsMenu_Implementation(bool On)
+{
+	LogWarning(TEXT("UPlayerHud::ToggleOptioneMenu_Implementation has not been overidden"));
+}
+
 

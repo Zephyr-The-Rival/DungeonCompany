@@ -232,6 +232,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
+	if (bOptionsMenuIsOn)
+		return;
+
 	if (this->bMoveAllowed)
 	{
 		FVector2D localMoveVector = Value.Get<FVector2D>();
@@ -260,6 +263,9 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
+	if (bOptionsMenuIsOn)
+		return;
+
 	if (bLookAllowed)
 	{
 		FVector2D lookVector = Value.Get<FVector2D>();
@@ -374,6 +380,9 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 void APlayerCharacter::Jump()
 {
+	if (bOptionsMenuIsOn)
+		return;
+
 	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
 		StopClimbing();
 
@@ -982,7 +991,13 @@ void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 void APlayerCharacter::EscPressed()
 {
 	if (this->bInventoryIsOn)
+	{
 		ToggleInventory();
+		return;
+	}
+	//if in store: do stuff; return;
+	this->ToggleOptions();
+		
 	
 }
 
@@ -1053,6 +1068,12 @@ void APlayerCharacter::Multicast_AttackStart_Implementation()
 
 	AttackStart();
 
+}
+
+void APlayerCharacter::ToggleOptions()
+{
+	bOptionsMenuIsOn = !bOptionsMenuIsOn;
+	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleOptionsMenu(bOptionsMenuIsOn);
 }
 
 void APlayerCharacter::AttackLanded()
