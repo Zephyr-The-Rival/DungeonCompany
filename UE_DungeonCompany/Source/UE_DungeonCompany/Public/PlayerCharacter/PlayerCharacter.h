@@ -115,6 +115,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* EscPressedAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ControllerOptionsPressed;
 	
 public:
 	inline UInputMappingContext* GetInputMapping() const { return InputMapping; }
@@ -309,11 +312,16 @@ protected://inventory & Backpack
 
 	bool bInventoryIsOn = false;
 
+	
+
 protected:
 	void ToggleInventory();
 
-private:
+public:
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
+
+private:
+	
 	UInventorySlot* FindFreeSlot();
 
 	UPROPERTY(Replicated)
@@ -323,17 +331,19 @@ protected:
 	void TakeOutItem();
 
 	UFUNCTION(Server, Unreliable)
-	void Server_SetFPMeshAnimClass(UClass* NewClass);
-	void Server_SetFPMeshAnimClass_Implementation(UClass* NewClass);
+	void Server_SetTPMeshAnimClass(UClass* NewClass);
+	void Server_SetTPMeshAnimClass_Implementation(UClass* NewClass);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void Multicast_SetFPMeshAnimClass(UClass* NewClass);
-	void Multicast_SetFPMeshAnimClass_Implementation(UClass* NewClass);
+	void Multicast_SetTPMeshAnimClass(UClass* NewClass);
+	void Multicast_SetTPMeshAnimClass_Implementation(UClass* NewClass);
 
-	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 	UFUNCTION(Server, Unreliable)
-	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+
 
 	void DropItem(UInventorySlot* SlotToEmpty);
 
@@ -350,20 +360,15 @@ protected:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UObject> NoItemAnimationBlueprintClass;
+	TSubclassOf<class UObject> NoItemFirstPersonAnimationBlueprintClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UObject> NoItemThirdPersonAnimationBlueprintClass;
 
-public:
+	UFUNCTION(Server,Unreliable)
 	void TriggerPrimaryItemAction();
 	void TriggerSecondaryItemAction();
 
-protected:
-	UFUNCTION(Server, Unreliable)
-	void Server_TriggerPrimaryItemAction();
-	void Server_TriggerPrimaryItemAction_Implementation();
-
-	UFUNCTION(Server, Unreliable)
-	void Server_TriggerSecondaryItemAction();
-	void Server_TriggerSecondaryItemAction_Implementation();
 
 public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
@@ -382,10 +387,10 @@ public:
 	//bool BItemAIsInHand is protected
 
 private:
-	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 	UFUNCTION(Server,Unreliable)
-	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
-	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 public:
 	void ReportTalking(float Loudness);
@@ -430,7 +435,7 @@ public://blockers
 	bool bSecondaryActionAllowed = true;
 
 public://fighting
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float AttackBlend = 0;
 
 	void StartAttacking();
@@ -454,4 +459,9 @@ public://fighting
 public:
 	virtual void OnDeath_Implementation() override;
 
+
+//pause
+	
+	void ToggleOptions();
+	bool bOptionsMenuIsOn=false;
 };

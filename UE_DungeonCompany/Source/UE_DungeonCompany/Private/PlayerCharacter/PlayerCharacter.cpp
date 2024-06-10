@@ -66,6 +66,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina;
 
+
 }
 
 // Called when the game starts or when spawned
@@ -148,6 +149,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
+	DOREPLIFETIME(APlayerCharacter, AttackBlend);
 }
 
 bool APlayerCharacter::IsCrouchOnHold() const
@@ -213,6 +215,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	
 	
 	EIC->BindAction(EscPressedAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::EscPressed);
+	EIC->BindAction(ControllerOptionsPressed,	ETriggerEvent::Triggered, this, &APlayerCharacter::EscPressed);
 	
 	
 
@@ -220,6 +223,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
+	if (bOptionsMenuIsOn)
+		return;
+
 	if (this->bMoveAllowed)
 	{
 		FVector2D localMoveVector = Value.Get<FVector2D>();
@@ -248,6 +254,9 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
+	if (bOptionsMenuIsOn)
+		return;
+
 	if (bLookAllowed)
 	{
 		FVector2D lookVector = Value.Get<FVector2D>();
@@ -363,6 +372,9 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 void APlayerCharacter::Jump()
 {
+	if (bOptionsMenuIsOn)
+		return;
+
 	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
 	{
 		StopClimbing();
@@ -674,49 +686,52 @@ void APlayerCharacter::TakeOutItem()
 		DestroyWorldItem(CurrentlyHeldWorldItem);
 	}
 
-	UClass* newAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->AnimationBlueprintClass : NoItemAnimationBlueprintClass;
+	UClass* newFirstPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->FirstPersonAnimationBlueprintClass : NoItemFirstPersonAnimationBlueprintClass;
+	UClass* newThirdPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->ThirdPersonAnimationBlueprintClass : NoItemThirdPersonAnimationBlueprintClass;
 
 	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
-		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass);
+		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass, GetCurrentlyHeldInventorySlot()->MyItem->SerializeMyData());
 	
-	FirstPersonMesh->SetAnimClass(newAnimClass);
+	FirstPersonMesh->SetAnimClass(newFirstPersonAnimClass);
+
 	if(HasAuthority())
-		Multicast_SetFPMeshAnimClass(newAnimClass);
+		Multicast_SetTPMeshAnimClass(newThirdPersonAnimClass);
 	else
-		Server_SetFPMeshAnimClass(newAnimClass);
+		Server_SetTPMeshAnimClass(newThirdPersonAnimClass);
 
 }
 
-void APlayerCharacter::Server_SetFPMeshAnimClass_Implementation(UClass* NewClass)
+void APlayerCharacter::Server_SetTPMeshAnimClass_Implementation(UClass* NewClass)
 {
-	Multicast_SetFPMeshAnimClass(NewClass);
+	Multicast_SetTPMeshAnimClass(NewClass);
 
 }
 
-void APlayerCharacter::Multicast_SetFPMeshAnimClass_Implementation(UClass* NewClass)
+void APlayerCharacter::Multicast_SetTPMeshAnimClass_Implementation(UClass* NewClass)
 {
 	if(IsLocallyControlled())
 		return;
 
-	FirstPersonMesh->SetAnimClass(NewClass);
+	GetMesh()->SetAnimClass(NewClass);
 
 }
 
-void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	if (HasAuthority())
-		Server_SpawnItemInHand_Implementation(ItemToSpawn);
+		Server_SpawnItemInHand_Implementation(ItemToSpawn, SerializedData);
 	else
-		Server_SpawnItemInHand(ItemToSpawn);
+		Server_SpawnItemInHand(ItemToSpawn, SerializedData);
 }
 
-void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	//if is in first person or not will have to make a difference
 
 	FTransform SpawnTransform;
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this; //this property is replicated and the item will attach on begin play
+	CurrentlyHeldWorldItem->SerializedStringData = SerializedData;
 	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
 
 }
@@ -726,7 +741,7 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 {
 	if (IsValid(SlotToEmpty->MyItem))
 	{
-		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass);
+		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass, SlotToEmpty->MyItem->SerializeMyData());
 		SlotToEmpty->MyItem = nullptr;
 
 		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
@@ -798,23 +813,26 @@ void APlayerCharacter::DropItemPressed()
 		DropItem(GetCurrentlyHeldInventorySlot());
 }
 
-void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	if (!HasAuthority())
-		Server_SpawnDroppedWorldItem(ItemToSpawn);
+		Server_SpawnDroppedWorldItem(ItemToSpawn,SerializedData);
 	else
-	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn);
+	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SerializedData);
 }
 
-void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	LogWarning(TEXT("Spawning Item"));
 	FTransform SpawnTransform;
 	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 150 - FVector(0, 0, 20));
 
-	GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
+	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
+	i->SerializedStringData = SerializedData;
+	i->FinishSpawning(SpawnTransform);
+
+	//GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
 	//SpawnedItem->GetRootComponent()->AddImpulse()
-	//set item data
 }
 
 
@@ -845,6 +863,7 @@ void APlayerCharacter::CheckForFallDamage()
 
 	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->MovementMode != MOVE_Flying);
 }
+
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 {
@@ -998,7 +1017,13 @@ void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 void APlayerCharacter::EscPressed()
 {
 	if (this->bInventoryIsOn)
+	{
 		ToggleInventory();
+		return;
+	}
+	//if in store: do stuff; return;
+	this->ToggleOptions();
+		
 	
 }
 
@@ -1016,17 +1041,13 @@ void APlayerCharacter::OnDeath_Implementation()
 
 }
 
-void APlayerCharacter::TriggerPrimaryItemAction()
+
+void APlayerCharacter::TriggerPrimaryItemAction_Implementation()
 {
 	if (!this->bPrimaryActionAllowed)
 		return;
 
-	if (!IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
-		return;
-
-	CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
-
-	if (HasAuthority())
+	if (IsValid(CurrentlyHeldWorldItem))
 	{
 		Server_TriggerPrimaryItemAction_Implementation();
 		return;
@@ -1035,34 +1056,7 @@ void APlayerCharacter::TriggerPrimaryItemAction()
 	Server_TriggerPrimaryItemAction();
 }
 
-void APlayerCharacter::TriggerSecondaryItemAction()
-{
-	if (!bSecondaryActionAllowed)
-		return;
 
-	if (!IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
-		return;
-
-	CurrentlyHeldWorldItem->TriggerSecondaryAction(this);
-
-	if (HasAuthority())
-	{
-		Server_TriggerSecondaryItemAction_Implementation();
-		return;
-	}
-
-	Server_TriggerSecondaryItemAction();
-}
-
-void APlayerCharacter::Server_TriggerPrimaryItemAction_Implementation()
-{
-
-}
-
-void APlayerCharacter::Server_TriggerSecondaryItemAction_Implementation()
-{
-
-}
 
 void APlayerCharacter::StartAttacking()
 {
@@ -1106,6 +1100,12 @@ void APlayerCharacter::Multicast_AttackStart_Implementation()
 
 	AttackStart();
 
+}
+
+void APlayerCharacter::ToggleOptions()
+{
+	bOptionsMenuIsOn = !bOptionsMenuIsOn;
+	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleOptionsMenu(bOptionsMenuIsOn);
 }
 
 void APlayerCharacter::AttackLanded()

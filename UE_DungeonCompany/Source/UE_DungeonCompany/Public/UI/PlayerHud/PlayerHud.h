@@ -78,4 +78,8 @@ public:
 	void UpdateCrouchIcon();
 	void UpdateCrouchIcon_Implementation();
 
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ToggleOptionsMenu(bool On);
+	void ToggleOptionsMenu_Implementation(bool On);
 };

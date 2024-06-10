@@ -6,6 +6,11 @@
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "Entities/DC_Entity.h"
 
+void AWeapon::BeginPlay()
+{
+	AWorldItem::BeginPlay();
+}
+
 void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVector traceStart, FVector TraceEnd)
 {
 	ADC_Entity* criticallyHitEntity;
@@ -29,6 +34,9 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVec
 
 	for (AActor* a : overlappingActors)
 	{
+		if (a == this->MyCharacterToAttachTo)
+			continue;
+
 		if (Cast<ADC_Entity>(a))//if hit entity
 		{
 			if (IsValid(criticallyHitEntity) && a == criticallyHitEntity)//was hit on weak spot
