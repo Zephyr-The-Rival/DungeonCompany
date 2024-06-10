@@ -49,6 +49,14 @@ private:
 	UPROPERTY(EditAnywhere,BlueprintGetter=IsPushToTalkActive, BlueprintSetter=SetPushToTalkActive, Category = "Microphone")
 	bool bPushToTalkActive = false;
 
+	bool bUsingGamepad = false;
+
+public:
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInputDeviceChanged, bool, IsUsingGamepad);
+
+	FOnInputDeviceChanged OnInputDeviceChanged;
+
 public:
 	virtual void SetupInputComponent() override;
 
@@ -58,9 +66,10 @@ private:
 protected:
 	void ToggleOptions();
 	
-protected:
 	void PushToTalkStarted();
 	void PushToTalkCompleted();
+
+	void OnAnyKeyPressed(const FKey& Key);
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
@@ -68,6 +77,5 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetPushToTalkActive(bool IsActive);
-
 
 };

@@ -197,7 +197,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(ToggleInventoryPCAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
 	EIC->BindAction(ToggleInventoryControllerAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
 	
-	EIC->BindAction(FaceUpAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceUpPressed);	
+	EIC->BindAction(SwitchHandAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchHand);	
+
 	EIC->BindAction(FaceDownAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceDownPressed);
 	EIC->BindAction(FaceLeftAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceLeftPressed);
 	EIC->BindAction(FaceRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::FaceRightPressed);
@@ -746,14 +747,17 @@ void APlayerCharacter::RemoveInventorySlot(UInventorySlot* SlotToEmpty)
 
 void APlayerCharacter::SwitchHand()
 {
-	if (bSwichHandAllowed)
-	{
-		bSwichHandAllowed = false;
-		this->bSlotAIsInHand = !bSlotAIsInHand;
-		TakeOutItem();
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(bSlotAIsInHand);
-	}
+	if (!bSwichHandAllowed || bInventoryIsOn)
+		return;
+	
+	bSwichHandAllowed = false;
+
+	this->bSlotAIsInHand = !bSlotAIsInHand;
+	TakeOutItem();
+
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(bSlotAIsInHand);
+	
 }
 
 void APlayerCharacter::AllowSwitchHand()
@@ -798,7 +802,7 @@ void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn
 	if (!HasAuthority())
 		Server_SpawnDroppedWorldItem(ItemToSpawn,SerializedData);
 	else
-	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SerializedData);
+		Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SerializedData);
 }
 
 void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
@@ -905,18 +909,6 @@ void APlayerCharacter::DPadRightPressed()
 	else
 	{
 		
-	}
-}
-
-void APlayerCharacter::FaceUpPressed()
-{
-	if (bInventoryIsOn)
-	{
-		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
-	}
-	else
-	{
-		this->SwitchHand();
 	}
 }
 

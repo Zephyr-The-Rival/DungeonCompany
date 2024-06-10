@@ -44,6 +44,8 @@ public:
 	virtual void StaminaTick(float DeltaTime);
 
 private:
+	bool bUsingController = false;
+
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
 	UInputMappingContext* InputMapping;
 
@@ -101,7 +103,10 @@ private:
 	UInputAction* DropItemAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* ControllerOptionsPressed;
+	UInputAction* SwitchHandAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* SwitchWithHandAction;
 	
 public:
 	inline UInputMappingContext* GetInputMapping() const { return InputMapping; }
@@ -398,8 +403,7 @@ protected://only controller controls
 	void DPadDownPressed();
 	void DPadLeftPressed();
 	void DPadRightPressed();
-	
-	void FaceUpPressed();
+
 	void FaceDownPressed();
 	void FaceLeftPressed();
 	void FaceRightPressed();
