@@ -193,21 +193,13 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 
 	EIC->BindAction(NavigateInventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::NavigateInventory);
-	
-	EIC->BindAction(ToggleInventoryPCAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
-	EIC->BindAction(ToggleInventoryControllerAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
-	
+	EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
+	EIC->BindAction(EquipItemIA, ETriggerEvent::Started, this, &APlayerCharacter::EquipItem);
 	EIC->BindAction(SwitchHandAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchHand);	
 
-	EIC->BindAction(FaceDownAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceDownPressed);
-	EIC->BindAction(FaceLeftAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceLeftPressed);
-	EIC->BindAction(FaceRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::FaceRightPressed);
+	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryItemAction);
+	EIC->BindAction(ItemSecondaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerSecondaryItemAction);
 	
-	EIC->BindAction(MouseRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::RightMouseButtonPressed);
-	EIC->BindAction(MouseLeftAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::LeftMouseButtonPressed);
-	
-	EIC->BindAction(RightBumperAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TriggerPrimaryItemAction);
-
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
 		
 }
@@ -747,10 +739,18 @@ void APlayerCharacter::RemoveInventorySlot(UInventorySlot* SlotToEmpty)
 
 void APlayerCharacter::SwitchHand()
 {
-	if (!bSwichHandAllowed || bInventoryIsOn)
+	ADC_PC* pc = GetController<ADC_PC>();
+
+	if (pc && pc->IsUsingGamepad() && bInventoryIsOn)
+	{
+		DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot());
+		return;
+	}
+
+	if (!bSwitchHandAllowed || bInventoryIsOn)
 		return;
 	
-	bSwichHandAllowed = false;
+	bSwitchHandAllowed = false;
 
 	this->bSlotAIsInHand = !bSlotAIsInHand;
 	TakeOutItem();
@@ -762,7 +762,7 @@ void APlayerCharacter::SwitchHand()
 
 void APlayerCharacter::AllowSwitchHand()
 {
-	bSwichHandAllowed = true;
+	bSwitchHandAllowed = true;
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.RemoveAll(this);
 }
 
@@ -791,10 +791,43 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
+	ADC_PC* pc = GetController<ADC_PC>();
+
+	if (pc && pc->IsUsingGamepad() && bInventoryIsOn)
+		return;
+
 	if (this->bInventoryIsOn)
-		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
+		DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot());
 	else
 		DropItem(GetCurrentlyHeldInventorySlot());
+}
+
+void APlayerCharacter::TriggerPrimaryItemAction()
+{
+	if(bInventoryIsOn)
+		return;
+
+	if (HasAuthority())
+	{
+		Server_TriggerPrimaryItemAction_Implementation();
+		return;
+	}
+
+	Server_TriggerPrimaryItemAction();
+}
+
+void APlayerCharacter::TriggerSecondaryItemAction()
+{
+	if (bInventoryIsOn)
+		return;
+
+	if (HasAuthority())
+	{
+		Server_TriggerSecondaryItemAction_Implementation();
+		return;
+	}
+
+	Server_TriggerSecondaryItemAction();
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
@@ -864,66 +897,6 @@ float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 	return (deltaHeight- free) * factor;
 }
 
-void APlayerCharacter::DPadUpPressed()
-{
-	if (bInventoryIsOn)
-	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Up);
-	}
-	else
-	{
-		//throw
-	}
-}
-
-void APlayerCharacter::DPadDownPressed()
-{
-	if (bInventoryIsOn)
-	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Down);
-	}
-	else
-	{
-		DropItem(GetCurrentlyHeldInventorySlot());
-	}
-}
-
-void APlayerCharacter::DPadLeftPressed()
-{
-	if (bInventoryIsOn)
-	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Left);
-	}
-	else
-	{
-		
-	}
-}
-
-void APlayerCharacter::DPadRightPressed()
-{
-	if (bInventoryIsOn)
-	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Right);
-	}
-	else
-	{
-		
-	}
-}
-
-void APlayerCharacter::FaceDownPressed()
-{
-	if (bInventoryIsOn)
-	{
-
-	}
-	else
-	{
-		Jump();
-	}
-}
-
 void APlayerCharacter::FaceLeftPressed()
 {
 	if (bInventoryIsOn)
@@ -946,45 +919,6 @@ void APlayerCharacter::FaceRightPressed()
 	{
 		ToggleCrouch();
 	}
-}
-
-void APlayerCharacter::LeftMouseButtonPressed()
-{
-	if (bInventoryIsOn)
-	{
-		EquipCurrentInventorySelection(true);
-	}
-	else
-	{
-		TriggerPrimaryItemAction();
-	}
-}
-
-void APlayerCharacter::RightMouseButtonPressed()
-{
-	if (bInventoryIsOn)
-	{
-		EquipCurrentInventorySelection(false);
-
-
-	}
-	else
-	{
-		
-	}
-}
-
-void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
-{
-	if (bInventoryIsOn)
-	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlightScroll((Value.Get<float>() > 0));
-	}
-	else
-	{
-		SwitchHand();
-	}
-
 }
 
 void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
@@ -1014,6 +948,16 @@ void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 	}
 }
 
+void APlayerCharacter::EquipItem(const FInputActionValue& Value)
+{
+	if(!bInventoryIsOn)
+		return;
+
+	bool bToA = Value.Get<float>() < 0.f;
+
+	EquipCurrentInventorySelection(bToA);
+}
+
 void APlayerCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
@@ -1029,7 +973,7 @@ void APlayerCharacter::OnDeath_Implementation()
 }
 
 
-void APlayerCharacter::TriggerPrimaryItemAction_Implementation()
+void APlayerCharacter::Server_TriggerPrimaryItemAction_Implementation()
 {
 	if (!bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
@@ -1037,7 +981,7 @@ void APlayerCharacter::TriggerPrimaryItemAction_Implementation()
 	CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
 }
 
-void APlayerCharacter::TriggerSecondaryItemAction_Implementation()
+void APlayerCharacter::Server_TriggerSecondaryItemAction_Implementation()
 {
 	if (!bSecondaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
@@ -1064,7 +1008,7 @@ void APlayerCharacter::AttackStart()
 	//attack needs to cost stamina
 	this->bPrimaryActionAllowed = false;
 	this->AttackBlend = 1;
-	this->bSwichHandAllowed = false;
+	this->bSwitchHandAllowed = false;
 	//this->bMoveAllowed = false;
 	//this->bLookAllowed = false;
 
@@ -1101,7 +1045,7 @@ void APlayerCharacter::AttackLanded()
 void APlayerCharacter::OnAttackOver()
 {
 	this->AttackBlend = 0;
-	this->bSwichHandAllowed = true;
+	this->bSwitchHandAllowed = true;
 	//this->bMoveAllowed = true;
 	//this->bLookAllowed = true;
 	this->bPrimaryActionAllowed = true;

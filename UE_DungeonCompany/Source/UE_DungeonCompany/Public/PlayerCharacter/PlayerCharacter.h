@@ -33,6 +33,7 @@ public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
 	TObjectPtr<USkeletalMeshComponent> GetFirstPersonMesh() const { return this->FirstPersonMesh; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -44,8 +45,6 @@ public:
 	virtual void StaminaTick(float DeltaTime);
 
 private:
-	bool bUsingController = false;
-
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
 	UInputMappingContext* InputMapping;
 
@@ -77,36 +76,22 @@ private:
 	UInputAction* NavigateInventoryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* ToggleInventoryPCAction;
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* ToggleInventoryControllerAction;
+	UInputAction* InventoryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* FaceUpAction;
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* FaceDownAction;
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* FaceLeftAction;
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* FaceRightAction;
+	UInputAction* EquipItemIA;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* MouseRightAction;
+	UInputAction* ItemPrimaryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* MouseLeftAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* RightBumperAction;
+	UInputAction* ItemSecondaryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* DropItemAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* SwitchHandAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* SwitchWithHandAction;
 	
 public:
 	inline UInputMappingContext* GetInputMapping() const { return InputMapping; }
@@ -352,11 +337,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> NoItemThirdPersonAnimationBlueprintClass;
 
-	UFUNCTION(Server, Unreliable)
 	void TriggerPrimaryItemAction();
 
 	UFUNCTION(Server, Unreliable)
+	void Server_TriggerPrimaryItemAction();
+
 	void TriggerSecondaryItemAction();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_TriggerSecondaryItemAction();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -398,26 +387,22 @@ protected:
 	void CheckForFallDamage();
 	float FallDamageCalculation(float deltaHeight);
 
-protected://only controller controls
-	void DPadUpPressed();
-	void DPadDownPressed();
-	void DPadLeftPressed();
-	void DPadRightPressed();
-
-	void FaceDownPressed();
+protected:
 	void FaceLeftPressed();
 	void FaceRightPressed();
 
 	//only pc controls
 	void LeftMouseButtonPressed();
 	void RightMouseButtonPressed();
-	void MouseWheelScrolled(const FInputActionValue& Value);
 
 	void NavigateInventory(const FInputActionValue& Value);
 
+	void EquipItem(const FInputActionValue& Value);
+
+
 public://blockers
 
-	bool bSwichHandAllowed = true;
+	bool bSwitchHandAllowed = true;
 	bool bMoveAllowed = true;
 	bool bLookAllowed = true;
 	bool bSprintAllowed = true;

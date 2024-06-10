@@ -52,6 +52,8 @@ private:
 	bool bUsingGamepad = false;
 
 public:
+	inline bool IsUsingGamepad() const { return bUsingGamepad; }
+
 	UDELEGATE()
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInputDeviceChanged, bool, IsUsingGamepad);
 
