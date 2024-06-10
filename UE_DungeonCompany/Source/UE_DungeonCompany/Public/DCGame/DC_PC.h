@@ -43,12 +43,21 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* PushToTalkAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* OptionsAction;
+
 	UPROPERTY(EditAnywhere,BlueprintGetter=IsPushToTalkActive, BlueprintSetter=SetPushToTalkActive, Category = "Microphone")
 	bool bPushToTalkActive = false;
 
 public:
 	virtual void SetupInputComponent() override;
 
+private:
+	bool bOptionsMenuIsOn = false;
+
+protected:
+	void ToggleOptions();
+	
 protected:
 	void PushToTalkStarted();
 	void PushToTalkCompleted();

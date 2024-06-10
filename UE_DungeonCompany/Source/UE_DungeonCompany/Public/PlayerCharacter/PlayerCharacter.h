@@ -72,16 +72,7 @@ private:
 	UInputAction* InteractAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* DPadUpAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* DPadDownAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* DPadLeftAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* DPadRightAction;
+	UInputAction* NavigateInventoryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ToggleInventoryPCAction;
@@ -106,15 +97,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* RightBumperAction;
 
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* ScrollAction;
-
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* DropItemAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* EscPressedAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ControllerOptionsPressed;
@@ -321,7 +305,6 @@ public:
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
 
 private:
-	
 	UInventorySlot* FindFreeSlot();
 
 	UPROPERTY(Replicated)
@@ -344,7 +327,6 @@ protected:
 	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
-
 	void DropItem(UInventorySlot* SlotToEmpty);
 
 	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
@@ -365,14 +347,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> NoItemThirdPersonAnimationBlueprintClass;
 
-	UFUNCTION(Server,Unreliable)
+	UFUNCTION(Server, Unreliable)
 	void TriggerPrimaryItemAction();
+
+	UFUNCTION(Server, Unreliable)
 	void TriggerSecondaryItemAction();
 
-
 public:
-	UPROPERTY(EditAnywhere,BlueprintReadOnly)
-	bool BHasBackPack = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bHasBackPack = false;
 
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	UInventory* GetInventory() const { return Inventory; }
@@ -403,12 +386,14 @@ public:
 	void Cough();
 
 private:
+	float LastStandingHeight;
+	bool BWasFallingInLastFrame = false;
+
+protected:
 	void CheckForFallDamage();
 	float FallDamageCalculation(float deltaHeight);
-	float LastStandingHeight;
-	bool BWasFallingInLastFrame=false;
 
-private://only controller controls
+protected://only controller controls
 	void DPadUpPressed();
 	void DPadDownPressed();
 	void DPadLeftPressed();
@@ -423,7 +408,8 @@ private://only controller controls
 	void LeftMouseButtonPressed();
 	void RightMouseButtonPressed();
 	void MouseWheelScrolled(const FInputActionValue& Value);
-	void EscPressed();
+
+	void NavigateInventory(const FInputActionValue& Value);
 
 public://blockers
 
@@ -459,9 +445,4 @@ public://fighting
 public:
 	virtual void OnDeath_Implementation() override;
 
-
-//pause
-	
-	void ToggleOptions();
-	bool bOptionsMenuIsOn=false;
 };

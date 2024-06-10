@@ -67,21 +67,11 @@ public://item actions
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void AuthorityTriggerPrimaryAction(APlayerCharacter* User);
-	void AuthorityTriggerPrimaryAction_Implementation(APlayerCharacter* User);
-
-	UFUNCTION(BlueprintNativeEvent)
 	void TriggerSecondaryAction(APlayerCharacter* User);
 	virtual void TriggerSecondaryAction_Implementation(APlayerCharacter* User);
+
 public:	//keeping itemdata
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
-	FString SerializedStringData;
-
-	
-
-	UFUNCTION(BlueprintNativeEvent)
-	void AuthorityTriggerSecondaryAction(APlayerCharacter* User);
-	void AuthorityTriggerSecondaryAction_Implementation(APlayerCharacter* User);
-		
+	FString SerializedStringData;	
 
 };

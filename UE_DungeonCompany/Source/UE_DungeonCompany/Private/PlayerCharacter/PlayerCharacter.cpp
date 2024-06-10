@@ -192,10 +192,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 
-	EIC->BindAction(DPadUpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadUpPressed);
-	EIC->BindAction(DPadDownAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadDownPressed);
-	EIC->BindAction(DPadLeftAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadLeftPressed);
-	EIC->BindAction(DPadRightAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadRightPressed);
+	EIC->BindAction(NavigateInventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::NavigateInventory);
 	
 	EIC->BindAction(ToggleInventoryPCAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
 	EIC->BindAction(ToggleInventoryControllerAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
@@ -210,40 +207,29 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	
 	EIC->BindAction(RightBumperAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TriggerPrimaryItemAction);
 
-	EIC->BindAction(ScrollAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::MouseWheelScrolled);
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
-	
-	
-	EIC->BindAction(EscPressedAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::EscPressed);
-	EIC->BindAction(ControllerOptionsPressed,	ETriggerEvent::Triggered, this, &APlayerCharacter::EscPressed);
-	
-	
-
+		
 }
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
-	if (bOptionsMenuIsOn)
+	if (!bMoveAllowed)
 		return;
+	
+	FVector2D localMoveVector = Value.Get<FVector2D>();
 
-	if (this->bMoveAllowed)
-	{
-		FVector2D localMoveVector = Value.Get<FVector2D>();
+	FVector worldMoveVector;
 
-		FVector worldMoveVector;
+	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
+		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
+	else
+		worldMoveVector = ClimbUpVector * localMoveVector.Y;
 
+	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
+		StopSprint();
 
-
-		if (GetCharacterMovement()->MovementMode != MOVE_Flying)
-			worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
-		else
-			worldMoveVector = ClimbUpVector * localMoveVector.Y;
-
-		if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
-			StopSprint();
-
-		AddMovementInput(worldMoveVector);
-	}
+	AddMovementInput(worldMoveVector);
+	
 }
 
 void APlayerCharacter::NoMove()
@@ -254,9 +240,6 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
-	if (bOptionsMenuIsOn)
-		return;
-
 	if (bLookAllowed)
 	{
 		FVector2D lookVector = Value.Get<FVector2D>();
@@ -372,9 +355,6 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 void APlayerCharacter::Jump()
 {
-	if (bOptionsMenuIsOn)
-		return;
-
 	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
 	{
 		StopClimbing();
@@ -667,7 +647,7 @@ UInventorySlot* APlayerCharacter::FindFreeSlot()
 			return S;
 	}
 
-	if(this->BHasBackPack)//checking for free backpack slots if the player has a backpack
+	if(bHasBackPack)//checking for free backpack slots if the player has a backpack
 	{ 
 		for (UInventorySlot* S : Backpack->GetSlots())
 		{
@@ -1014,17 +994,32 @@ void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
 	}
 
 }
-void APlayerCharacter::EscPressed()
+
+void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 {
-	if (this->bInventoryIsOn)
-	{
-		ToggleInventory();
+	if(!bInventoryIsOn)
 		return;
+
+	FVector2D input = Value.Get<FVector2D>();
+
+	ADC_PC* pc = GetController<ADC_PC>();
+
+	if(!pc || !pc->GetMyPlayerHud())
+		return;
+
+	pc->GetMyPlayerHud()->MoveHighlight(EDirections::Down);
+
+	int x = 5;
+
+	if (input.Y != 0)
+	{
+		pc->GetMyPlayerHud()->MoveHighlight(input.Y > 0? EDirections::Up : EDirections::Down);
 	}
-	//if in store: do stuff; return;
-	this->ToggleOptions();
-		
 	
+	if (input.X != 0)
+	{
+		pc->GetMyPlayerHud()->MoveHighlight(input.X > 0 ? EDirections::Right : EDirections::Left);
+	}
 }
 
 void APlayerCharacter::OnDeath_Implementation()
@@ -1044,16 +1039,18 @@ void APlayerCharacter::OnDeath_Implementation()
 
 void APlayerCharacter::TriggerPrimaryItemAction_Implementation()
 {
-	if (!this->bPrimaryActionAllowed)
+	if (!bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
 
-	if (IsValid(CurrentlyHeldWorldItem))
-	{
-		Server_TriggerPrimaryItemAction_Implementation();
-		return;
-	}
+	CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
+}
 
-	Server_TriggerPrimaryItemAction();
+void APlayerCharacter::TriggerSecondaryItemAction_Implementation()
+{
+	if (!bSecondaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
+		return;
+
+	CurrentlyHeldWorldItem->TriggerSecondaryAction(this);
 }
 
 
@@ -1100,12 +1097,6 @@ void APlayerCharacter::Multicast_AttackStart_Implementation()
 
 	AttackStart();
 
-}
-
-void APlayerCharacter::ToggleOptions()
-{
-	bOptionsMenuIsOn = !bOptionsMenuIsOn;
-	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleOptionsMenu(bOptionsMenuIsOn);
 }
 
 void APlayerCharacter::AttackLanded()

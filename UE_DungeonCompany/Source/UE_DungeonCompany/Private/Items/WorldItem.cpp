@@ -111,17 +111,7 @@ void AWorldItem::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 	LogWarning(TEXT("World Item parent primary action was called"));
 }
 
-void AWorldItem::AuthorityTriggerPrimaryAction_Implementation(APlayerCharacter* User)
-{
-
-}
-
 void AWorldItem::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 {
 	LogWarning(TEXT("World Item parent secondary action was called"));
-}
-
-void AWorldItem::AuthorityTriggerSecondaryAction_Implementation(APlayerCharacter* User)
-{
-
 }
