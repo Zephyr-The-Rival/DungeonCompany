@@ -23,14 +23,16 @@ class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
 	GENERATED_BODY()
 
 private: 
-	UPROPERTY(EditAnywhere, Category = "Camera")
-	UCameraComponent* FirstPersonCamera;
+
 
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 
 public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
+
+	UPROPERTY(EditAnywhere, Category = "Camera", BlueprintReadOnly)
+	UCameraComponent* FirstPersonCamera;
 
 	TObjectPtr<USkeletalMeshComponent> GetFirstPersonMesh() const { return this->FirstPersonMesh; }
 
@@ -327,6 +329,10 @@ protected:
 	UFUNCTION(Server, Unreliable)
 	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+
+	UFUNCTION(Server, Unreliable)
+	void AddMoneyToWallet(float Amount);
+	void AddMoneyToWallet_Implementation(float Amount);
 
 	void DropItem(UInventorySlot* SlotToEmpty);
 
