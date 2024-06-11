@@ -288,7 +288,6 @@ void APlayerCharacter::InteractorLineTrace()
 {
 	//raycast to pick up and interact with stuff
 	FHitResult Hit;
-	float distance = 150;
 	FVector Start = this->FirstPersonCamera->GetComponentLocation();
 	FVector End = Start + this->FirstPersonCamera->GetForwardVector() * this->InteractionRange;
 
@@ -346,17 +345,18 @@ void APlayerCharacter::Interact()
 	if(!CurrentInteractable || !CurrentInteractable->IsInteractable())
 		return;
 
-	CurrentInteractable->Interact(this);
 
-	if (!CurrentInteractable->IsInteractionRunningOnServer())
-		return;
-	
-
-	if(!HasAuthority())
-		Server_Interact(Cast<UObject>(CurrentInteractable));
+	if (CurrentInteractable->IsInteractionRunningOnServer())
+	{
+		if (!HasAuthority())
+			Server_Interact(Cast<UObject>(CurrentInteractable));
+		else
+			Server_Interact_Implementation(Cast<UObject>(CurrentInteractable));
+	}
 	else
-		Server_Interact_Implementation(Cast<UObject>(CurrentInteractable));
-
+	{
+		CurrentInteractable->Interact(this);
+	}
 }
 
 void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
@@ -374,7 +374,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	if (Cast<AWorldCurrency>(WorldItem))
 	{
 		DestroyWorldItem(WorldItem);
-		this->AddMoneyToWallet(Cast<AWorldCurrency>(WorldItem)->value);
+		this->AddMoneyToWallet(Cast<AWorldCurrency>(WorldItem)->Value);
 		return;
 	}
 	UInventorySlot* freeSlot = FindFreeSlot();

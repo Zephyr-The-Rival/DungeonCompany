@@ -24,6 +24,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTexture2D* Icon;
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, BlueprintGetter=GetValue)
+	int32 Value;
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetValue() const { return this->Value; }
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class AWorldItem> MyWorldItemClass;
 

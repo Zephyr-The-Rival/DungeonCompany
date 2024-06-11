@@ -131,7 +131,7 @@ private://interact
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing")
-	float InteractionRange=170;
+	float InteractionRange=200;
 
 	void InteractorLineTrace();
 

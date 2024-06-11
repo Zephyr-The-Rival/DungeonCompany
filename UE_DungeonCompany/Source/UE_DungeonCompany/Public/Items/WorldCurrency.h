@@ -9,11 +9,17 @@
 /**
  * 
  */
+class AWorldCurrency;
 UCLASS()
 class UE_DUNGEONCOMPANY_API AWorldCurrency : public AWorldItem
 {
 	GENERATED_BODY()
 	
 public:
-	int32 value=1;
+	UPROPERTY(BlueprintReadWrite,Replicated)
+	int32 Value=1;
+
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 };
