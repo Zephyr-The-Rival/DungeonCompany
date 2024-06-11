@@ -11,9 +11,12 @@
 #include "Inventory/InventorySlot.h"
 #include "Items/Weapon.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Entities/DC_Entity.h"
 #include "DCGame/DC_GM.h"
+#include "Items/WorldCurrency.h"
+#include "WorldActors/SharedStatsManager.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -152,6 +155,22 @@ UEnhancedInputLocalPlayerSubsystem* APlayerCharacter::GetInputLocalPlayer() cons
 	return localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 }
 
+void APlayerCharacter::ActivateCharacterInputMappings()
+{
+	GetInputLocalPlayer()->AddMappingContext(CharacterInputMapping, 0);
+
+	if (bInventoryIsOn)
+		GetInputLocalPlayer()->AddMappingContext(InventoryInputMapping, 1);
+}
+
+void APlayerCharacter::DeactivateCharacterInputMappings()
+{
+	GetInputLocalPlayer()->RemoveMappingContext(CharacterInputMapping);
+
+	if (bInventoryIsOn)
+		GetInputLocalPlayer()->RemoveMappingContext(InventoryInputMapping);
+}
+
 bool APlayerCharacter::IsCrouchOnHold() const
 {
 	return bCrouchHold;
@@ -267,7 +286,7 @@ void APlayerCharacter::InteractorLineTrace()
 		{
 			if (CurrentInteractable != i)//if a new intractable is being looked at
 			{
-				this->CurrentInteractable = i;
+			this->CurrentInteractable = i;
 				
 				ADC_PC* c = Cast<ADC_PC>(GetController());
 				c->GetMyPlayerHud()->ShowCrosshair(TEXT("to Interact"));
@@ -337,6 +356,12 @@ void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
 
 void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 {
+	if (Cast<AWorldCurrency>(WorldItem))
+	{
+		DestroyWorldItem(WorldItem);
+		this->AddMoneyToWallet(Cast<AWorldCurrency>(WorldItem)->value);
+		return;
+	}
 	UInventorySlot* freeSlot = FindFreeSlot();
 
 	if (IsValid(freeSlot))
@@ -576,6 +601,13 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 	if(NewPlayerState)
 		VOIPTalker->RegisterWithPlayerState(NewPlayerState);
 
+}
+
+
+void APlayerCharacter::AddMoneyToWallet_Implementation(float Amount)
+{
+	ASharedStatsManager* m= Cast<ASharedStatsManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
+	m->Money += Amount;
 }
 
 void APlayerCharacter::ReportTalking(float Loudness)
