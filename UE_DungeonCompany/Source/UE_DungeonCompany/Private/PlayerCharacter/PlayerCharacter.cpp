@@ -88,10 +88,15 @@ void APlayerCharacter::BeginPlay()
 	bResting = true; 
 	});
 
-	if(!CharacterInputMapping)
+	if(!IsLocallyControlled() || !CharacterInputMapping)
 		return;
-	
-	GetInputLocalPlayer()->AddMappingContext(CharacterInputMapping, 0);
+
+	auto inputLocalPlayer = GetInputLocalPlayer();
+
+	if(!inputLocalPlayer)
+		return;
+
+	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
 	
 }
 
@@ -157,18 +162,28 @@ UEnhancedInputLocalPlayerSubsystem* APlayerCharacter::GetInputLocalPlayer() cons
 
 void APlayerCharacter::ActivateCharacterInputMappings()
 {
-	GetInputLocalPlayer()->AddMappingContext(CharacterInputMapping, 0);
+	auto inputLocalPlayer = GetInputLocalPlayer();
+
+	if(!inputLocalPlayer)
+		return;
+
+	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
 
 	if (bInventoryIsOn)
-		GetInputLocalPlayer()->AddMappingContext(InventoryInputMapping, 1);
+		inputLocalPlayer->AddMappingContext(InventoryInputMapping, 1);
 }
 
 void APlayerCharacter::DeactivateCharacterInputMappings()
 {
-	GetInputLocalPlayer()->RemoveMappingContext(CharacterInputMapping);
+	auto inputLocalPlayer = GetInputLocalPlayer();
+
+	if (!inputLocalPlayer)
+		return;
+
+	inputLocalPlayer->RemoveMappingContext(CharacterInputMapping);
 
 	if (bInventoryIsOn)
-		GetInputLocalPlayer()->RemoveMappingContext(InventoryInputMapping);
+		inputLocalPlayer->RemoveMappingContext(InventoryInputMapping);
 }
 
 bool APlayerCharacter::IsCrouchOnHold() const
@@ -630,10 +645,15 @@ void APlayerCharacter::ToggleInventory()
 	this->bInventoryIsOn = !bInventoryIsOn;
 	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(bInventoryIsOn);
 
+	auto inputLocalPlayer = GetInputLocalPlayer();
+
+	if (!inputLocalPlayer)
+		return;
+
 	if(bInventoryIsOn)
-		GetInputLocalPlayer()->AddMappingContext(InventoryInputMapping, 1);
+		inputLocalPlayer->AddMappingContext(InventoryInputMapping, 1);
 	else
-		GetInputLocalPlayer()->RemoveMappingContext(InventoryInputMapping);
+		inputLocalPlayer->RemoveMappingContext(InventoryInputMapping);
 }
 
 
