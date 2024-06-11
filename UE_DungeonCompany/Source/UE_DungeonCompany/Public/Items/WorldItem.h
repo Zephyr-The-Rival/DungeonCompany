@@ -15,22 +15,23 @@ class UE_DUNGEONCOMPANY_API AWorldItem : public AActor, public IInteractable
 {
 	GENERATED_BODY()
 	
-public:	
-
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UItemData* MyData;
 
+public:
+	inline UItemData* GetMyData() const { return MyData; }
+
+public:
 	// Sets default values for this actor's properties
 	AWorldItem();
 	AWorldItem(UItemData* ItemData);
 	virtual void Interact(APawn* InteractingPawn) override;
 
-
-
 protected:
-	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -54,7 +55,6 @@ public://attached to hand
 	
 	void AttachToPlayer();
 
-
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -66,11 +66,12 @@ public://item actions
 	void TriggerPrimaryAction(APlayerCharacter* User);
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User);
 
+	UFUNCTION(BlueprintNativeEvent)
+	void TriggerSecondaryAction(APlayerCharacter* User);
+	virtual void TriggerSecondaryAction_Implementation(APlayerCharacter* User);
 
 public:	//keeping itemdata
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
-	FString SerializedStringData;
-
-	
+	FString SerializedStringData;	
 
 };

@@ -4,11 +4,15 @@
 #include "WorldActors/Ladder.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 
-#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "PlayerCharacter/Components/DC_CMC.h"
+
+void ALadder::SetHeight(float InHeight)
+{
+	Height = InHeight;
+}
 
 // Sets default values
 ALadder::ALadder()
@@ -20,9 +24,6 @@ ALadder::ALadder()
 	bReplicates = true;
 
 	RootComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
-
-	LadderMesh = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("LadderMesh"));
-	LadderMesh->SetupAttachment(RootComponent);
 
 	BottomBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BottomBox"));
 	BottomBox->SetupAttachment(RootComponent);
@@ -45,30 +46,13 @@ void ALadder::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	LadderMesh->ClearInstances();
+	float halfHeight = Height / 2;
 
-	LadderMesh->SetStaticMesh(LadderSectionReference);
+	InteractVolume->SetBoxExtent(FVector(InteractionArea, halfHeight));
+	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, halfHeight));
 
-	if(Material)
-		LadderMesh->SetMaterial(0, Material);
-	
-	for (unsigned int i = 0; i < SectionsCount; ++i)
-	{
-		FVector translation = FVector::UpVector * (i * SectionHeight);
-		LadderMesh->AddInstance(FTransform(translation), false);	
-	}
-
-	if(bSectionOriginInMid)
-		LadderMesh->SetRelativeLocation(FVector(-SectionDepth, 0, SectionHeight/2));
-
-	float LadderHalfHeight = (SectionHeight / 2) * SectionsCount;
-
-	InteractVolume->SetBoxExtent(FVector(InteractionArea, LadderHalfHeight));
-	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, LadderHalfHeight));
-
-	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, LadderHalfHeight));
-	EasyInteractBox->SetRelativeLocation(FVector(0, 0, LadderHalfHeight));
-
+	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, halfHeight));
+	EasyInteractBox->SetRelativeLocation(FVector(0, 0, halfHeight));
 }
 
 // Called when the game starts or when spawned
