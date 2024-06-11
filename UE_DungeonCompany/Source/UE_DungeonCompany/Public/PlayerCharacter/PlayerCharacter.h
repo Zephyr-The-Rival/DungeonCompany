@@ -46,7 +46,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
-	UInputMappingContext* InputMapping;
+	UInputMappingContext* CharacterInputMapping;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* MoveAction;
@@ -73,15 +73,6 @@ private:
 	UInputAction* InteractAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* NavigateInventoryAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* InventoryAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* EquipItemIA;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ItemPrimaryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
@@ -92,9 +83,29 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* SwitchHandAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* InventoryAction;
+
+	//Inventory Input
+
+	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
+	UInputMappingContext* InventoryInputMapping;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* NavigateInventoryAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* EquipItemInvAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* DropItemInvAction;
 	
 public:
-	inline UInputMappingContext* GetInputMapping() const { return InputMapping; }
+	inline UInputMappingContext* GetCharacterInputMapping() const { return CharacterInputMapping; }
+	inline UInputMappingContext* GetInventoryInputMapping() const { return InventoryInputMapping; }
+
+	class UEnhancedInputLocalPlayerSubsystem* GetInputLocalPlayer() const;
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
@@ -331,6 +342,13 @@ protected:
 	void DropItemPressed();
 
 protected:
+	void NavigateInventory(const FInputActionValue& Value);
+
+	void EquipItem(const FInputActionValue& Value);
+
+	void DropItemInvPressed();
+
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> NoItemFirstPersonAnimationBlueprintClass;
 	
@@ -386,19 +404,6 @@ private:
 protected:
 	void CheckForFallDamage();
 	float FallDamageCalculation(float deltaHeight);
-
-protected:
-	void FaceLeftPressed();
-	void FaceRightPressed();
-
-	//only pc controls
-	void LeftMouseButtonPressed();
-	void RightMouseButtonPressed();
-
-	void NavigateInventory(const FInputActionValue& Value);
-
-	void EquipItem(const FInputActionValue& Value);
-
 
 public://blockers
 

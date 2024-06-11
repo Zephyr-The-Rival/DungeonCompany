@@ -13,22 +13,12 @@ void UDebuffBlockInputs::LocalApply()
 	if (!character)
 		return;
 
-	APlayerController* playerController = GetOuterEntity()->GetController<APlayerController>();
-
-	if (!playerController)
-		return;
-
-	ULocalPlayer* localPlayer = playerController->GetLocalPlayer();
-
-	if (!localPlayer)
-		return;
-
-	BlockingInputSystem = localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	BlockingInputSystem = character->GetInputLocalPlayer();
 
 	if (!BlockingInputSystem)
 		return;
 
-	BlockingContext = character->GetInputMapping();
+	BlockingContext = character->GetCharacterInputMapping();
 
 	BlockingInputSystem->RemoveMappingContext(BlockingContext);
 }

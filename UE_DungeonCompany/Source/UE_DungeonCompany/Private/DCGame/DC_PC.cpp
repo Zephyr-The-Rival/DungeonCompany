@@ -99,9 +99,9 @@ void ADC_PC::ToggleOptions()
 		return;
 
 	if(bOptionsMenuIsOn)
-		inputSystem->RemoveMappingContext(playerCharacter->GetInputMapping());
+		inputSystem->RemoveMappingContext(playerCharacter->GetCharacterInputMapping());
 	else
-		inputSystem->AddMappingContext(playerCharacter->GetInputMapping(), 0);
+		inputSystem->AddMappingContext(playerCharacter->GetCharacterInputMapping(), 0);
 }
 
 void ADC_PC::PushToTalkStarted()

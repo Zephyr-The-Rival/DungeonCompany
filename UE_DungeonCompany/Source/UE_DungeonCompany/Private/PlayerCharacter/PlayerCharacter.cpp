@@ -85,25 +85,10 @@ void APlayerCharacter::BeginPlay()
 	bResting = true; 
 	});
 
-	if(!InputMapping)
-		return;
-
-	APlayerController* playerController = GetController<APlayerController>();
-
-	if(!playerController)
-		return;
-
-	ULocalPlayer* localPlayer = playerController->GetLocalPlayer();
-
-	if(!localPlayer)
-		return;
-
-	UEnhancedInputLocalPlayerSubsystem* inputSystem = localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-
-	if(!inputSystem)
+	if(!CharacterInputMapping)
 		return;
 	
-	inputSystem->AddMappingContext(InputMapping, 0);
+	GetInputLocalPlayer()->AddMappingContext(CharacterInputMapping, 0);
 	
 }
 
@@ -152,6 +137,21 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
 }
 
+UEnhancedInputLocalPlayerSubsystem* APlayerCharacter::GetInputLocalPlayer() const
+{
+	APlayerController* playerController = GetController<APlayerController>();
+
+	if (!playerController)
+		return nullptr;
+
+	ULocalPlayer* localPlayer = playerController->GetLocalPlayer();
+
+	if (!localPlayer)
+		return nullptr;
+
+	return localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+}
+
 bool APlayerCharacter::IsCrouchOnHold() const
 {
 	return bCrouchHold;
@@ -192,15 +192,18 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 
-	EIC->BindAction(NavigateInventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::NavigateInventory);
 	EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
-	EIC->BindAction(EquipItemIA, ETriggerEvent::Started, this, &APlayerCharacter::EquipItem);
 	EIC->BindAction(SwitchHandAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchHand);	
 
 	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryItemAction);
 	EIC->BindAction(ItemSecondaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerSecondaryItemAction);
 	
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
+
+	EIC->BindAction(NavigateInventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::NavigateInventory);
+	EIC->BindAction(EquipItemInvAction, ETriggerEvent::Started, this, &APlayerCharacter::EquipItem);
+	EIC->BindAction(DropItemInvAction, ETriggerEvent::Started, this, &APlayerCharacter::DropItemInvPressed);
+
 		
 }
 
@@ -594,6 +597,11 @@ void APlayerCharacter::ToggleInventory()
 {
 	this->bInventoryIsOn = !bInventoryIsOn;
 	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(bInventoryIsOn);
+
+	if(bInventoryIsOn)
+		GetInputLocalPlayer()->AddMappingContext(InventoryInputMapping, 1);
+	else
+		GetInputLocalPlayer()->RemoveMappingContext(InventoryInputMapping);
 }
 
 
@@ -791,15 +799,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	ADC_PC* pc = GetController<ADC_PC>();
-
-	if (pc && pc->IsUsingGamepad() && bInventoryIsOn)
-		return;
-
-	if (this->bInventoryIsOn)
-		DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot());
-	else
-		DropItem(GetCurrentlyHeldInventorySlot());
+	DropItem(GetCurrentlyHeldInventorySlot());
 }
 
 void APlayerCharacter::TriggerPrimaryItemAction()
@@ -897,35 +897,8 @@ float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 	return (deltaHeight- free) * factor;
 }
 
-void APlayerCharacter::FaceLeftPressed()
-{
-	if (bInventoryIsOn)
-	{
-		EquipCurrentInventorySelection(true);
-	}
-	else
-	{
-		Interact();
-	}
-}
-
-void APlayerCharacter::FaceRightPressed()
-{
-	if (bInventoryIsOn)
-	{
-		EquipCurrentInventorySelection(false);
-	}
-	else
-	{
-		ToggleCrouch();
-	}
-}
-
 void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 {
-	if(!bInventoryIsOn)
-		return;
-
 	FVector2D input = Value.Get<FVector2D>();
 
 	ADC_PC* pc = GetController<ADC_PC>();
@@ -950,12 +923,19 @@ void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 
 void APlayerCharacter::EquipItem(const FInputActionValue& Value)
 {
-	if(!bInventoryIsOn)
-		return;
-
 	bool bToA = Value.Get<float>() < 0.f;
 
 	EquipCurrentInventorySelection(bToA);
+}
+
+void APlayerCharacter::DropItemInvPressed()
+{
+	ADC_PC* pc = GetController<ADC_PC>();
+
+	if (!pc)
+		return;
+
+	DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot());
 }
 
 void APlayerCharacter::OnDeath_Implementation()
