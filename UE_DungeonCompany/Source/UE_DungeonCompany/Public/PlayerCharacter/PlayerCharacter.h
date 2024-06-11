@@ -23,8 +23,6 @@ class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
 	GENERATED_BODY()
 
 private: 
-
-
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 
@@ -108,6 +106,9 @@ public:
 	inline UInputMappingContext* GetInventoryInputMapping() const { return InventoryInputMapping; }
 
 	class UEnhancedInputLocalPlayerSubsystem* GetInputLocalPlayer() const;
+
+	void ActivateCharacterInputMappings();
+	void DeactivateCharacterInputMappings();
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)

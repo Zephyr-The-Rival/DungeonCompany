@@ -155,6 +155,22 @@ UEnhancedInputLocalPlayerSubsystem* APlayerCharacter::GetInputLocalPlayer() cons
 	return localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 }
 
+void APlayerCharacter::ActivateCharacterInputMappings()
+{
+	GetInputLocalPlayer()->AddMappingContext(CharacterInputMapping, 0);
+
+	if (bInventoryIsOn)
+		GetInputLocalPlayer()->AddMappingContext(InventoryInputMapping, 1);
+}
+
+void APlayerCharacter::DeactivateCharacterInputMappings()
+{
+	GetInputLocalPlayer()->RemoveMappingContext(CharacterInputMapping);
+
+	if (bInventoryIsOn)
+		GetInputLocalPlayer()->RemoveMappingContext(InventoryInputMapping);
+}
+
 bool APlayerCharacter::IsCrouchOnHold() const
 {
 	return bCrouchHold;

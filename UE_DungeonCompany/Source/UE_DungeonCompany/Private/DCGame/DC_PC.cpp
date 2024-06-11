@@ -88,20 +88,13 @@ void ADC_PC::ToggleOptions()
 
 	APlayerCharacter* playerCharacter = GetPawn<APlayerCharacter>();
 
-	ULocalPlayer* localPlayer = GetLocalPlayer();
-
-	if (!playerCharacter || !localPlayer)
+	if(!playerCharacter)
 		return;
-
-	UEnhancedInputLocalPlayerSubsystem* inputSystem = localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-
-	if (!inputSystem)
-		return;
-
+	
 	if(bOptionsMenuIsOn)
-		inputSystem->RemoveMappingContext(playerCharacter->GetCharacterInputMapping());
+		playerCharacter->DeactivateCharacterInputMappings();
 	else
-		inputSystem->AddMappingContext(playerCharacter->GetCharacterInputMapping(), 0);
+		playerCharacter->ActivateCharacterInputMappings();
 }
 
 void ADC_PC::PushToTalkStarted()
