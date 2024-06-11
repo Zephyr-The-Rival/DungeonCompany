@@ -50,7 +50,7 @@ void AStore::SellItems()
 	{
 		if (AWorldItem* WI = Cast<AWorldItem>(a))
 		{
-			sumValue += WI->MyData->GetValue();
+			sumValue += WI->GetMyData()->GetValue();
 			WI->Destroy();
 
 		}
