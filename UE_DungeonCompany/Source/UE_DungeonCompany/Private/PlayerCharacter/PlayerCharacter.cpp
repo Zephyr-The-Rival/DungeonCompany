@@ -66,6 +66,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina;
 
+
 }
 
 // Called when the game starts or when spawned
@@ -84,25 +85,10 @@ void APlayerCharacter::BeginPlay()
 	bResting = true; 
 	});
 
-	if(!InputMapping)
-		return;
-
-	APlayerController* playerController = GetController<APlayerController>();
-
-	if(!playerController)
-		return;
-
-	ULocalPlayer* localPlayer = playerController->GetLocalPlayer();
-
-	if(!localPlayer)
-		return;
-
-	UEnhancedInputLocalPlayerSubsystem* inputSystem = localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-
-	if(!inputSystem)
+	if(!CharacterInputMapping)
 		return;
 	
-	inputSystem->AddMappingContext(InputMapping, 0);
+	GetInputLocalPlayer()->AddMappingContext(CharacterInputMapping, 0);
 	
 }
 
@@ -148,6 +134,22 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
+	DOREPLIFETIME(APlayerCharacter, AttackBlend);
+}
+
+UEnhancedInputLocalPlayerSubsystem* APlayerCharacter::GetInputLocalPlayer() const
+{
+	APlayerController* playerController = GetController<APlayerController>();
+
+	if (!playerController)
+		return nullptr;
+
+	ULocalPlayer* localPlayer = playerController->GetLocalPlayer();
+
+	if (!localPlayer)
+		return nullptr;
+
+	return localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 }
 
 bool APlayerCharacter::IsCrouchOnHold() const
@@ -190,54 +192,40 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 
-	EIC->BindAction(DPadUpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadUpPressed);
-	EIC->BindAction(DPadDownAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadDownPressed);
-	EIC->BindAction(DPadLeftAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadLeftPressed);
-	EIC->BindAction(DPadRightAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DPadRightPressed);
-	
-	EIC->BindAction(ToggleInventoryPCAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
-	EIC->BindAction(ToggleInventoryControllerAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ToggleInventory);
-	
-	EIC->BindAction(FaceUpAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceUpPressed);	
-	EIC->BindAction(FaceDownAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceDownPressed);
-	EIC->BindAction(FaceLeftAction,		ETriggerEvent::Triggered, this, &APlayerCharacter::FaceLeftPressed);
-	EIC->BindAction(FaceRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::FaceRightPressed);
-	
-	EIC->BindAction(MouseRightAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::RightMouseButtonPressed);
-	EIC->BindAction(MouseLeftAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::LeftMouseButtonPressed);
-	
-	EIC->BindAction(RightBumperAction, ETriggerEvent::Triggered, this, &APlayerCharacter::TriggerPrimaryItemAction);
+	EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
+	EIC->BindAction(SwitchHandAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchHand);	
 
-	EIC->BindAction(ScrollAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::MouseWheelScrolled);
+	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryItemAction);
+	EIC->BindAction(ItemSecondaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerSecondaryItemAction);
+	
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
-	
-	
-	EIC->BindAction(EscPressedAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::EscPressed);
-	
-	
 
+	EIC->BindAction(NavigateInventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::NavigateInventory);
+	EIC->BindAction(EquipItemInvAction, ETriggerEvent::Started, this, &APlayerCharacter::EquipItem);
+	EIC->BindAction(DropItemInvAction, ETriggerEvent::Started, this, &APlayerCharacter::DropItemInvPressed);
+
+		
 }
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
-	if (this->bMoveAllowed)
-	{
-		FVector2D localMoveVector = Value.Get<FVector2D>();
+	if (!bMoveAllowed)
+		return;
+	
+	FVector2D localMoveVector = Value.Get<FVector2D>();
 
-		FVector worldMoveVector;
+	FVector worldMoveVector;
 
+	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
+		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
+	else
+		worldMoveVector = ClimbUpVector * localMoveVector.Y;
 
+	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
+		StopSprint();
 
-		if (GetCharacterMovement()->MovementMode != MOVE_Flying)
-			worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
-		else
-			worldMoveVector = ClimbUpVector * localMoveVector.Y;
-
-		if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
-			StopSprint();
-
-		AddMovementInput(worldMoveVector);
-	}
+	AddMovementInput(worldMoveVector);
+	
 }
 
 void APlayerCharacter::NoMove()
@@ -313,6 +301,7 @@ void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
 
 	Server_DestroyWorldItem_Implementation(ItemToDestroy);
 }
+
 void APlayerCharacter::Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
 {
 	ItemToDestroy->Destroy();
@@ -352,7 +341,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	if (IsValid(freeSlot))
 	{
-		freeSlot->MyItem = WorldItem->MyData;
+		freeSlot->MyItem = WorldItem->GetMyData();
 		DestroyWorldItem(WorldItem);
 
 		if (freeSlot == GetCurrentlyHeldInventorySlot())
@@ -608,6 +597,11 @@ void APlayerCharacter::ToggleInventory()
 {
 	this->bInventoryIsOn = !bInventoryIsOn;
 	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(bInventoryIsOn);
+
+	if(bInventoryIsOn)
+		GetInputLocalPlayer()->AddMappingContext(InventoryInputMapping, 1);
+	else
+		GetInputLocalPlayer()->RemoveMappingContext(InventoryInputMapping);
 }
 
 
@@ -654,7 +648,7 @@ UInventorySlot* APlayerCharacter::FindFreeSlot()
 			return S;
 	}
 
-	if(this->BHasBackPack)//checking for free backpack slots if the player has a backpack
+	if(bHasBackPack)//checking for free backpack slots if the player has a backpack
 	{ 
 		for (UInventorySlot* S : Backpack->GetSlots())
 		{
@@ -673,49 +667,52 @@ void APlayerCharacter::TakeOutItem()
 		DestroyWorldItem(CurrentlyHeldWorldItem);
 	}
 
-	UClass* newAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->AnimationBlueprintClass : NoItemAnimationBlueprintClass;
+	UClass* newFirstPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->FirstPersonAnimationBlueprintClass : NoItemFirstPersonAnimationBlueprintClass;
+	UClass* newThirdPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->ThirdPersonAnimationBlueprintClass : NoItemThirdPersonAnimationBlueprintClass;
 
 	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
-		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass);
+		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass, GetCurrentlyHeldInventorySlot()->MyItem->SerializeMyData());
 	
-	FirstPersonMesh->SetAnimClass(newAnimClass);
+	FirstPersonMesh->SetAnimClass(newFirstPersonAnimClass);
+
 	if(HasAuthority())
-		Multicast_SetFPMeshAnimClass(newAnimClass);
+		Multicast_SetTPMeshAnimClass(newThirdPersonAnimClass);
 	else
-		Server_SetFPMeshAnimClass(newAnimClass);
+		Server_SetTPMeshAnimClass(newThirdPersonAnimClass);
 
 }
 
-void APlayerCharacter::Server_SetFPMeshAnimClass_Implementation(UClass* NewClass)
+void APlayerCharacter::Server_SetTPMeshAnimClass_Implementation(UClass* NewClass)
 {
-	Multicast_SetFPMeshAnimClass(NewClass);
+	Multicast_SetTPMeshAnimClass(NewClass);
 
 }
 
-void APlayerCharacter::Multicast_SetFPMeshAnimClass_Implementation(UClass* NewClass)
+void APlayerCharacter::Multicast_SetTPMeshAnimClass_Implementation(UClass* NewClass)
 {
 	if(IsLocallyControlled())
 		return;
 
-	FirstPersonMesh->SetAnimClass(NewClass);
+	GetMesh()->SetAnimClass(NewClass);
 
 }
 
-void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	if (HasAuthority())
-		Server_SpawnItemInHand_Implementation(ItemToSpawn);
+		Server_SpawnItemInHand_Implementation(ItemToSpawn, SerializedData);
 	else
-		Server_SpawnItemInHand(ItemToSpawn);
+		Server_SpawnItemInHand(ItemToSpawn, SerializedData);
 }
 
-void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	//if is in first person or not will have to make a difference
 
 	FTransform SpawnTransform;
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this; //this property is replicated and the item will attach on begin play
+	CurrentlyHeldWorldItem->SerializedStringData = SerializedData;
 	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
 
 }
@@ -725,7 +722,7 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 {
 	if (IsValid(SlotToEmpty->MyItem))
 	{
-		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass);
+		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass, SlotToEmpty->MyItem->SerializeMyData());
 		SlotToEmpty->MyItem = nullptr;
 
 		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
@@ -736,21 +733,44 @@ void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
 	}
 }
 
+void APlayerCharacter::RemoveInventorySlot(UInventorySlot* SlotToEmpty)
+{
+	if (!IsValid(SlotToEmpty->MyItem))
+		return;
+
+	SlotToEmpty->MyItem = nullptr;
+
+	if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
+		TakeOutItem();
+
+}
+
 void APlayerCharacter::SwitchHand()
 {
-	if (bSwichHandAllowed)
+	ADC_PC* pc = GetController<ADC_PC>();
+
+	if (pc && pc->IsUsingGamepad() && bInventoryIsOn)
 	{
-		bSwichHandAllowed = false;
-		this->bSlotAIsInHand = !bSlotAIsInHand;
-		TakeOutItem();
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(bSlotAIsInHand);
+		DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot());
+		return;
 	}
+
+	if (!bSwitchHandAllowed || bInventoryIsOn)
+		return;
+	
+	bSwitchHandAllowed = false;
+
+	this->bSlotAIsInHand = !bSlotAIsInHand;
+	TakeOutItem();
+
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(bSlotAIsInHand);
+	
 }
 
 void APlayerCharacter::AllowSwitchHand()
 {
-	bSwichHandAllowed = true;
+	bSwitchHandAllowed = true;
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.RemoveAll(this);
 }
 
@@ -779,29 +799,57 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	if (this->bInventoryIsOn)
-		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
-	else
-		DropItem(GetCurrentlyHeldInventorySlot());
+	DropItem(GetCurrentlyHeldInventorySlot());
 }
 
-void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::TriggerPrimaryItemAction()
+{
+	if(bInventoryIsOn)
+		return;
+
+	if (HasAuthority())
+	{
+		Server_TriggerPrimaryItemAction_Implementation();
+		return;
+	}
+
+	Server_TriggerPrimaryItemAction();
+}
+
+void APlayerCharacter::TriggerSecondaryItemAction()
+{
+	if (bInventoryIsOn)
+		return;
+
+	if (HasAuthority())
+	{
+		Server_TriggerSecondaryItemAction_Implementation();
+		return;
+	}
+
+	Server_TriggerSecondaryItemAction();
+}
+
+void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	if (!HasAuthority())
-		Server_SpawnDroppedWorldItem(ItemToSpawn);
+		Server_SpawnDroppedWorldItem(ItemToSpawn,SerializedData);
 	else
-	Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn);
+		Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SerializedData);
 }
 
-void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn)
+void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	LogWarning(TEXT("Spawning Item"));
 	FTransform SpawnTransform;
 	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 150 - FVector(0, 0, 20));
 
-	GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
+	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
+	i->SerializedStringData = SerializedData;
+	i->FinishSpawning(SpawnTransform);
+
+	//GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
 	//SpawnedItem->GetRootComponent()->AddImpulse()
-	//set item data
 }
 
 
@@ -833,6 +881,7 @@ void APlayerCharacter::CheckForFallDamage()
 	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->MovementMode != MOVE_Flying);
 }
 
+
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 {
 
@@ -848,145 +897,45 @@ float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 	return (deltaHeight- free) * factor;
 }
 
-void APlayerCharacter::DPadUpPressed()
+void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 {
-	if (bInventoryIsOn)
-	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Up);
-	}
-	else
-	{
-		//throw
-	}
-}
+	FVector2D input = Value.Get<FVector2D>();
 
-void APlayerCharacter::DPadDownPressed()
-{
-	if (bInventoryIsOn)
-	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Down);
-	}
-	else
-	{
-		DropItem(GetCurrentlyHeldInventorySlot());
-	}
-}
+	ADC_PC* pc = GetController<ADC_PC>();
 
-void APlayerCharacter::DPadLeftPressed()
-{
-	if (bInventoryIsOn)
-	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Left);
-	}
-	else
-	{
-		
-	}
-}
+	if(!pc || !pc->GetMyPlayerHud())
+		return;
 
-void APlayerCharacter::DPadRightPressed()
-{
-	if (bInventoryIsOn)
-	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlight(EDirections::Right);
-	}
-	else
-	{
-		
-	}
-}
+	pc->GetMyPlayerHud()->MoveHighlight(EDirections::Down);
 
-void APlayerCharacter::FaceUpPressed()
-{
-	if (bInventoryIsOn)
-	{
-		DropItem(Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot());
-	}
-	else
-	{
-		this->SwitchHand();
-	}
-}
+	int x = 5;
 
-void APlayerCharacter::FaceDownPressed()
-{
-	if (bInventoryIsOn)
+	if (input.Y != 0)
 	{
-
+		pc->GetMyPlayerHud()->MoveHighlight(input.Y > 0? EDirections::Up : EDirections::Down);
 	}
-	else
-	{
-		Jump();
-	}
-}
-
-void APlayerCharacter::FaceLeftPressed()
-{
-	if (bInventoryIsOn)
-	{
-		EquipCurrentInventorySelection(true);
-	}
-	else
-	{
-		Interact();
-	}
-}
-
-void APlayerCharacter::FaceRightPressed()
-{
-	if (bInventoryIsOn)
-	{
-		EquipCurrentInventorySelection(false);
-	}
-	else
-	{
-		ToggleCrouch();
-	}
-}
-
-void APlayerCharacter::LeftMouseButtonPressed()
-{
-	if (bInventoryIsOn)
-	{
-		EquipCurrentInventorySelection(true);
-	}
-	else
-	{
-		TriggerPrimaryItemAction();
-	}
-}
-
-void APlayerCharacter::RightMouseButtonPressed()
-{
-	if (bInventoryIsOn)
-	{
-		EquipCurrentInventorySelection(false);
-
-
-	}
-	else
-	{
-		
-	}
-}
-
-void APlayerCharacter::MouseWheelScrolled(const FInputActionValue& Value)
-{
-	if (bInventoryIsOn)
-	{
-		Cast<ADC_PC>(GetController())->GetMyPlayerHud()->MoveHighlightScroll((Value.Get<float>() > 0));
-	}
-	else
-	{
-		SwitchHand();
-	}
-
-}
-void APlayerCharacter::EscPressed()
-{
-	if (this->bInventoryIsOn)
-		ToggleInventory();
 	
+	if (input.X != 0)
+	{
+		pc->GetMyPlayerHud()->MoveHighlight(input.X > 0 ? EDirections::Right : EDirections::Left);
+	}
+}
+
+void APlayerCharacter::EquipItem(const FInputActionValue& Value)
+{
+	bool bToA = Value.Get<float>() < 0.f;
+
+	EquipCurrentInventorySelection(bToA);
+}
+
+void APlayerCharacter::DropItemInvPressed()
+{
+	ADC_PC* pc = GetController<ADC_PC>();
+
+	if (!pc)
+		return;
+
+	DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot());
 }
 
 void APlayerCharacter::OnDeath_Implementation()
@@ -1003,16 +952,24 @@ void APlayerCharacter::OnDeath_Implementation()
 
 }
 
-void APlayerCharacter::TriggerPrimaryItemAction()
+
+void APlayerCharacter::Server_TriggerPrimaryItemAction_Implementation()
 {
-	if (!this->bPrimaryActionAllowed)
+	if (!bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
 
-	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))
-	{
-		CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
-	}
+	CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
 }
+
+void APlayerCharacter::Server_TriggerSecondaryItemAction_Implementation()
+{
+	if (!bSecondaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
+		return;
+
+	CurrentlyHeldWorldItem->TriggerSecondaryAction(this);
+}
+
+
 
 void APlayerCharacter::StartAttacking()
 {
@@ -1031,7 +988,7 @@ void APlayerCharacter::AttackStart()
 	//attack needs to cost stamina
 	this->bPrimaryActionAllowed = false;
 	this->AttackBlend = 1;
-	this->bSwichHandAllowed = false;
+	this->bSwitchHandAllowed = false;
 	//this->bMoveAllowed = false;
 	//this->bLookAllowed = false;
 
@@ -1068,7 +1025,7 @@ void APlayerCharacter::AttackLanded()
 void APlayerCharacter::OnAttackOver()
 {
 	this->AttackBlend = 0;
-	this->bSwichHandAllowed = true;
+	this->bSwitchHandAllowed = true;
 	//this->bMoveAllowed = true;
 	//this->bLookAllowed = true;
 	this->bPrimaryActionAllowed = true;

@@ -20,8 +20,7 @@ void ADC_PC::BeginPlay()
 {
 	Super::BeginPlay();
 
-	FInputModeGameOnly mode;
-	this->SetInputMode(mode);
+	SetInputMode(FInputModeGameOnly());
 
 	if(!IsLocalController())
 		return;
@@ -64,8 +63,45 @@ void ADC_PC::SetupInputComponent()
 	if(!EIC)
 		return;
 
+	EIC->BindAction(OptionsAction, ETriggerEvent::Started, this, &ADC_PC::ToggleOptions);
+
 	EIC->BindAction(PushToTalkAction, ETriggerEvent::Started, this, &ADC_PC::PushToTalkStarted);
 	EIC->BindAction(PushToTalkAction, ETriggerEvent::Completed, this, &ADC_PC::PushToTalkCompleted);
+
+	FInputKeyBinding ikb(FInputChord(EKeys::AnyKey, false, false, false, false), EInputEvent::IE_Pressed);
+
+	ikb.bConsumeInput = true;
+	ikb.bExecuteWhenPaused = false;
+
+	ikb.KeyDelegate.GetDelegateWithKeyForManualSet().BindLambda([this](const FKey& Key) {
+		OnAnyKeyPressed(Key);
+	});
+
+	InputComponent->KeyBindings.Add(ikb);
+
+}
+
+void ADC_PC::ToggleOptions()
+{
+	bOptionsMenuIsOn = !bOptionsMenuIsOn;
+	GetMyPlayerHud()->ToggleOptionsMenu(bOptionsMenuIsOn);
+
+	APlayerCharacter* playerCharacter = GetPawn<APlayerCharacter>();
+
+	ULocalPlayer* localPlayer = GetLocalPlayer();
+
+	if (!playerCharacter || !localPlayer)
+		return;
+
+	UEnhancedInputLocalPlayerSubsystem* inputSystem = localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+
+	if (!inputSystem)
+		return;
+
+	if(bOptionsMenuIsOn)
+		inputSystem->RemoveMappingContext(playerCharacter->GetCharacterInputMapping());
+	else
+		inputSystem->AddMappingContext(playerCharacter->GetCharacterInputMapping(), 0);
 }
 
 void ADC_PC::PushToTalkStarted()
@@ -83,6 +119,17 @@ void ADC_PC::PushToTalkCompleted()
 		return;
 
 	ToggleSpeaking(false);
+
+}
+
+void ADC_PC::OnAnyKeyPressed(const FKey& Key)
+{
+	if(bUsingGamepad == Key.IsGamepadKey())
+		return;
+
+	bUsingGamepad = Key.IsGamepadKey();
+
+	OnInputDeviceChanged.Broadcast(bUsingGamepad);
 
 }
 

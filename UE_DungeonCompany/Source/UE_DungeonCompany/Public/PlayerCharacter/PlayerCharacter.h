@@ -33,6 +33,7 @@ public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
 	TObjectPtr<USkeletalMeshComponent> GetFirstPersonMesh() const { return this->FirstPersonMesh; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -45,7 +46,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
-	UInputMappingContext* InputMapping;
+	UInputMappingContext* CharacterInputMapping;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* MoveAction;
@@ -72,52 +73,39 @@ private:
 	UInputAction* InteractAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* DPadUpAction;
+	UInputAction* ItemPrimaryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* DPadDownAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* DPadLeftAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* DPadRightAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* ToggleInventoryPCAction;
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* ToggleInventoryControllerAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* FaceUpAction;
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* FaceDownAction;
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* FaceLeftAction;
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* FaceRightAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* MouseRightAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* MouseLeftAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* RightBumperAction;
-
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* ScrollAction;
+	UInputAction* ItemSecondaryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* DropItemAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* EscPressedAction;
+	UInputAction* SwitchHandAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* InventoryAction;
+
+	//Inventory Input
+
+	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
+	UInputMappingContext* InventoryInputMapping;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* NavigateInventoryAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* EquipItemInvAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* DropItemInvAction;
 	
 public:
-	inline UInputMappingContext* GetInputMapping() const { return InputMapping; }
+	inline UInputMappingContext* GetCharacterInputMapping() const { return CharacterInputMapping; }
+	inline UInputMappingContext* GetInventoryInputMapping() const { return InventoryInputMapping; }
+
+	class UEnhancedInputLocalPlayerSubsystem* GetInputLocalPlayer() const;
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
@@ -145,6 +133,7 @@ protected:
 	void InteractorLineTrace();
 
 	void DestroyWorldItem(AWorldItem* ItemToDestroy);
+
 	UFUNCTION(Server, Unreliable)
 	void Server_DestroyWorldItem(AWorldItem* ItemToDestroy);
 	void Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy);
@@ -308,11 +297,15 @@ protected://inventory & Backpack
 
 	bool bInventoryIsOn = false;
 
+	
+
 protected:
 	void ToggleInventory();
 
-private:
+public:
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
+
+private:
 	UInventorySlot* FindFreeSlot();
 
 	UPROPERTY(Replicated)
@@ -322,19 +315,22 @@ protected:
 	void TakeOutItem();
 
 	UFUNCTION(Server, Unreliable)
-	void Server_SetFPMeshAnimClass(UClass* NewClass);
-	void Server_SetFPMeshAnimClass_Implementation(UClass* NewClass);
+	void Server_SetTPMeshAnimClass(UClass* NewClass);
+	void Server_SetTPMeshAnimClass_Implementation(UClass* NewClass);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void Multicast_SetFPMeshAnimClass(UClass* NewClass);
-	void Multicast_SetFPMeshAnimClass_Implementation(UClass* NewClass);
+	void Multicast_SetTPMeshAnimClass(UClass* NewClass);
+	void Multicast_SetTPMeshAnimClass_Implementation(UClass* NewClass);
 
-	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	void SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 	UFUNCTION(Server, Unreliable)
-	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 	void DropItem(UInventorySlot* SlotToEmpty);
+
+	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
 
 	void SwitchHand();
 
@@ -345,14 +341,33 @@ protected:
 
 	void DropItemPressed();
 
+protected:
+	void NavigateInventory(const FInputActionValue& Value);
+
+	void EquipItem(const FInputActionValue& Value);
+
+	void DropItemInvPressed();
+
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UObject> NoItemAnimationBlueprintClass;
+	TSubclassOf<class UObject> NoItemFirstPersonAnimationBlueprintClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class UObject> NoItemThirdPersonAnimationBlueprintClass;
 
 	void TriggerPrimaryItemAction();
 
+	UFUNCTION(Server, Unreliable)
+	void Server_TriggerPrimaryItemAction();
+
+	void TriggerSecondaryItemAction();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_TriggerSecondaryItemAction();
+
 public:
-	UPROPERTY(EditAnywhere,BlueprintReadOnly)
-	bool BHasBackPack = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bHasBackPack = false;
 
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	UInventory* GetInventory() const { return Inventory; }
@@ -367,10 +382,10 @@ public:
 	//bool BItemAIsInHand is protected
 
 private:
-	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 	UFUNCTION(Server,Unreliable)
-	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn);
-	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn);
+	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 public:
 	void ReportTalking(float Loudness);
@@ -383,38 +398,24 @@ public:
 	void Cough();
 
 private:
+	float LastStandingHeight;
+	bool BWasFallingInLastFrame = false;
+
+protected:
 	void CheckForFallDamage();
 	float FallDamageCalculation(float deltaHeight);
-	float LastStandingHeight;
-	bool BWasFallingInLastFrame=false;
-
-private://only controller controls
-	void DPadUpPressed();
-	void DPadDownPressed();
-	void DPadLeftPressed();
-	void DPadRightPressed();
-	
-	void FaceUpPressed();
-	void FaceDownPressed();
-	void FaceLeftPressed();
-	void FaceRightPressed();
-
-	//only pc controls
-	void LeftMouseButtonPressed();
-	void RightMouseButtonPressed();
-	void MouseWheelScrolled(const FInputActionValue& Value);
-	void EscPressed();
 
 public://blockers
 
-	bool bSwichHandAllowed = true;
+	bool bSwitchHandAllowed = true;
 	bool bMoveAllowed = true;
 	bool bLookAllowed = true;
 	bool bSprintAllowed = true;
 	bool bPrimaryActionAllowed = true;
+	bool bSecondaryActionAllowed = true;
 
 public://fighting
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float AttackBlend = 0;
 
 	void StartAttacking();
