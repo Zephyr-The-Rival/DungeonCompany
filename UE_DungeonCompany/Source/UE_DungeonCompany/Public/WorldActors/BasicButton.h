@@ -24,8 +24,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	
-	virtual void Interact(APawn* InteractingPawn) override;
+	virtual void AuthorityInteract(APawn* InteractingPawn) override;
 
 
 public:	
@@ -35,5 +34,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnInteractedDelegate OnButtonPressed;
+
+
 };
 
