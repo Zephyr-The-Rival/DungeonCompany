@@ -14,6 +14,7 @@ class UVOIPTalker;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
+struct FSlotData;
 class UInventory;
 class UInventorySlot;
 
@@ -35,6 +36,8 @@ public:
 	TObjectPtr<USkeletalMeshComponent> GetFirstPersonMesh() const { return this->FirstPersonMesh; }
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USceneComponent* DropTransform;
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -296,6 +299,9 @@ protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetBackpack)
 	UInventory* Backpack;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AWorldItem> BackpackActor;
+
 	bool bSlotAIsInHand = true;
 
 	bool bInventoryIsOn = false;
@@ -335,7 +341,8 @@ protected:
 	void AddMoneyToWallet(float Amount);
 	void AddMoneyToWallet_Implementation(float Amount);
 
-	void DropItem(UInventorySlot* SlotToEmpty);
+	void DropItem(FSlotData SlotToEmpty);
+
 
 	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
 
@@ -393,6 +400,10 @@ private:
 	UFUNCTION(Server,Unreliable)
 	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+
+	UFUNCTION(Server,Unreliable)
+	void Server_DropBackpack();
+	void Server_DropBackpack_Implementation();
 
 public:
 	void ReportTalking(float Loudness);

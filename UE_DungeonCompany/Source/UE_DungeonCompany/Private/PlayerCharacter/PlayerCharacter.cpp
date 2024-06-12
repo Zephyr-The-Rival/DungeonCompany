@@ -2,6 +2,7 @@
 
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "PlayerCharacter/Components/DC_CMC.h"
+#include "Components/SceneComponent.h"
 #include "DCGame/DC_PC.h"
 #include "DC_Statics.h"
 #include "UI/PlayerHud/PlayerHud.h"
@@ -17,6 +18,7 @@
 #include "DCGame/DC_GM.h"
 #include "Items/WorldCurrency.h"
 #include "WorldActors/SharedStatsManager.h"
+#include "Items/BackPack.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -42,7 +44,10 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
-	//FirstPersonCamera->bUsePawnControlRotation = true;
+	
+	DropTransform = CreateDefaultSubobject<USceneComponent>(TEXT("DropTransform"));
+	DropTransform->SetupAttachment(FirstPersonCamera);
+	DropTransform->SetRelativeLocation(FVector(150, 0, -20));
 
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
@@ -377,6 +382,16 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 		this->AddMoneyToWallet(Cast<AWorldCurrency>(WorldItem)->Value);
 		return;
 	}
+
+	if (Cast<ABackPack>(WorldItem) && !this->bHasBackPack)
+	{
+		DestroyWorldItem(WorldItem);
+		this->bHasBackPack = true;
+		if(this->bInventoryIsOn)
+			Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->RefreshInventory();
+		return;
+	}
+
 	UInventorySlot* freeSlot = FindFreeSlot();
 
 	if (IsValid(freeSlot))
@@ -625,6 +640,13 @@ void APlayerCharacter::AddMoneyToWallet_Implementation(float Amount)
 	m->Money += Amount;
 }
 
+void APlayerCharacter::Server_DropBackpack_Implementation()
+{
+	FTransform SpawnTransform = this->DropTransform->GetComponentTransform();
+	AWorldItem* a = GetWorld()->SpawnActorDeferred<AWorldItem>(BackpackActor, SpawnTransform);
+	a->FinishSpawning(SpawnTransform);
+}
+
 void APlayerCharacter::ReportTalking(float Loudness)
 {
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
@@ -770,14 +792,23 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 }
 
 
-void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
+void APlayerCharacter::DropItem(FSlotData SlotToEmpty)
 {
-	if (IsValid(SlotToEmpty->MyItem))
+	if (SlotToEmpty.bIsBackpackSlot)
 	{
-		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass, SlotToEmpty->MyItem->SerializeMyData());
-		SlotToEmpty->MyItem = nullptr;
+		this->bHasBackPack = false;
+		if(this->bInventoryIsOn)
+			Cast<ADC_PC>(GetController())->GetMyPlayerHud()->RefreshInventory();
 
-		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
+		Server_DropBackpack();
+		return;
+	}
+	if (IsValid(SlotToEmpty.Slot->MyItem))
+	{
+		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData());
+		SlotToEmpty.Slot->MyItem = nullptr;
+
+		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty.Slot)
 		{
 			TakeOutItem();
 		}
@@ -837,8 +868,8 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 		slot = HandSlotB;
 	
 	//switch
-	UItemData* tmp = Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot()->MyItem;
-	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot()->MyItem = slot->MyItem;
+	UItemData* tmp = Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot().Slot->MyItem;
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot().Slot->MyItem = slot->MyItem;
 	slot->MyItem = tmp;
 
 
@@ -851,7 +882,10 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	DropItem(GetCurrentlyHeldInventorySlot());
+	FSlotData SD;
+	SD.Slot = GetCurrentlyHeldInventorySlot();
+	SD.bIsBackpackSlot = false;
+	DropItem(SD);
 }
 
 void APlayerCharacter::TriggerPrimaryItemAction()
@@ -893,9 +927,8 @@ void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn
 void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	LogWarning(TEXT("Spawning Item"));
-	FTransform SpawnTransform;
-	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 150 - FVector(0, 0, 20));
-
+	FTransform SpawnTransform= this->DropTransform->GetComponentTransform();
+	
 	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	i->SerializedStringData = SerializedData;
 	i->FinishSpawning(SpawnTransform);
@@ -958,7 +991,6 @@ void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 	if(!pc || !pc->GetMyPlayerHud())
 		return;
 
-	pc->GetMyPlayerHud()->MoveHighlight(EDirections::Down);
 
 	int x = 5;
 
