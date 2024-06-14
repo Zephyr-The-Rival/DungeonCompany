@@ -19,10 +19,21 @@ enum EDirections
 	Right UMETA(DisplayName = "Right"),
 };
 
+class UInventorySlot;
+
+USTRUCT(BlueprintType)
+struct FSlotData
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsBackpackSlot;
+	UPROPERTY(BlueprintReadWrite)
+	UInventorySlot* Slot;
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSwichDoneDelegate);
 
 class APlayerCharacter;
-class UInventorySlot;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API UPlayerHud : public UUserWidget
@@ -62,16 +73,12 @@ public:
     FSwichDoneDelegate OnSwichingDone;
 
 	UFUNCTION(BlueprintImplementableEvent)
-	UInventorySlot* GetHighlightedSlot();
+	FSlotData GetHighlightedSlot();
 
 
 	UFUNCTION(BlueprintNativeEvent)
 	void MoveHighlight(EDirections direction);
 	void MoveHighlight_Implementation(EDirections direction);
-
-	UFUNCTION(BlueprintNativeEvent)
-	void MoveHighlightScroll(bool up);
-	void MoveHighlightScroll_Implementation(bool up);
 
 	
 	UFUNCTION(BlueprintNativeEvent)

@@ -2,6 +2,7 @@
 
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "PlayerCharacter/Components/DC_CMC.h"
+#include "Components/SceneComponent.h"
 #include "DCGame/DC_PC.h"
 #include "DC_Statics.h"
 #include "UI/PlayerHud/PlayerHud.h"
@@ -17,6 +18,7 @@
 #include "DCGame/DC_GM.h"
 #include "Items/WorldCurrency.h"
 #include "WorldActors/SharedStatsManager.h"
+#include "Items/BackPack.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -42,7 +44,10 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
-	//FirstPersonCamera->bUsePawnControlRotation = true;
+	
+	DropTransform = CreateDefaultSubobject<USceneComponent>(TEXT("DropTransform"));
+	DropTransform->SetupAttachment(FirstPersonCamera);
+	DropTransform->SetRelativeLocation(FVector(150, 0, -20));
 
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
@@ -88,10 +93,15 @@ void APlayerCharacter::BeginPlay()
 	bResting = true; 
 	});
 
-	if(!CharacterInputMapping)
+	if(!IsLocallyControlled() || !CharacterInputMapping)
 		return;
-	
-	GetInputLocalPlayer()->AddMappingContext(CharacterInputMapping, 0);
+
+	auto inputLocalPlayer = GetInputLocalPlayer();
+
+	if(!inputLocalPlayer)
+		return;
+
+	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
 	
 }
 
@@ -157,18 +167,28 @@ UEnhancedInputLocalPlayerSubsystem* APlayerCharacter::GetInputLocalPlayer() cons
 
 void APlayerCharacter::ActivateCharacterInputMappings()
 {
-	GetInputLocalPlayer()->AddMappingContext(CharacterInputMapping, 0);
+	auto inputLocalPlayer = GetInputLocalPlayer();
+
+	if(!inputLocalPlayer)
+		return;
+
+	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
 
 	if (bInventoryIsOn)
-		GetInputLocalPlayer()->AddMappingContext(InventoryInputMapping, 1);
+		inputLocalPlayer->AddMappingContext(InventoryInputMapping, 1);
 }
 
 void APlayerCharacter::DeactivateCharacterInputMappings()
 {
-	GetInputLocalPlayer()->RemoveMappingContext(CharacterInputMapping);
+	auto inputLocalPlayer = GetInputLocalPlayer();
+
+	if (!inputLocalPlayer)
+		return;
+
+	inputLocalPlayer->RemoveMappingContext(CharacterInputMapping);
 
 	if (bInventoryIsOn)
-		GetInputLocalPlayer()->RemoveMappingContext(InventoryInputMapping);
+		inputLocalPlayer->RemoveMappingContext(InventoryInputMapping);
 }
 
 bool APlayerCharacter::IsCrouchOnHold() const
@@ -273,7 +293,6 @@ void APlayerCharacter::InteractorLineTrace()
 {
 	//raycast to pick up and interact with stuff
 	FHitResult Hit;
-	float distance = 150;
 	FVector Start = this->FirstPersonCamera->GetComponentLocation();
 	FVector End = Start + this->FirstPersonCamera->GetForwardVector() * this->InteractionRange;
 
@@ -331,17 +350,18 @@ void APlayerCharacter::Interact()
 	if(!CurrentInteractable || !CurrentInteractable->IsInteractable())
 		return;
 
-	CurrentInteractable->Interact(this);
 
-	if (!CurrentInteractable->IsInteractionRunningOnServer())
-		return;
-	
-
-	if(!HasAuthority())
-		Server_Interact(Cast<UObject>(CurrentInteractable));
+	if (CurrentInteractable->IsInteractionRunningOnServer())
+	{
+		if (!HasAuthority())
+			Server_Interact(Cast<UObject>(CurrentInteractable));
+		else
+			Server_Interact_Implementation(Cast<UObject>(CurrentInteractable));
+	}
 	else
-		Server_Interact_Implementation(Cast<UObject>(CurrentInteractable));
-
+	{
+		CurrentInteractable->Interact(this);
+	}
 }
 
 void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
@@ -359,9 +379,16 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	if (Cast<AWorldCurrency>(WorldItem))
 	{
 		DestroyWorldItem(WorldItem);
-		this->AddMoneyToWallet(Cast<AWorldCurrency>(WorldItem)->value);
+		this->AddMoneyToWallet(Cast<AWorldCurrency>(WorldItem)->Value);
 		return;
 	}
+
+	if (Cast<ABackPack>(WorldItem) && !this->bHasBackPack)
+	{
+		PickUpBackpack(Cast<ABackPack>(WorldItem));
+		return;
+	}
+
 	UInventorySlot* freeSlot = FindFreeSlot();
 
 	if (IsValid(freeSlot))
@@ -374,6 +401,24 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	}	
 }
 
+void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
+{
+	this->bHasBackPack = true;
+
+	for (int i = 0; i < BackpackToPickUp->Items.Num() - 1; i++)
+	{
+		if (IsValid(BackpackToPickUp->Items[i]))
+		{
+			UItemData* TmpItemData = NewObject<UItemData>(GetTransientPackage(), *BackpackToPickUp->Items[i]);
+			TmpItemData->DeserializeMyData(BackpackToPickUp->ItemDatas[i]);
+			this->Backpack->GetSlots()[i]->MyItem = TmpItemData;
+		}
+	}
+
+	DestroyWorldItem(BackpackToPickUp);
+	if (this->bInventoryIsOn)
+		Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->RefreshInventory();
+}
 void APlayerCharacter::Jump()
 {
 	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
@@ -610,6 +655,15 @@ void APlayerCharacter::AddMoneyToWallet_Implementation(float Amount)
 	m->Money += Amount;
 }
 
+void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas)
+{
+	FTransform SpawnTransform = this->DropTransform->GetComponentTransform();
+	ABackPack* a = GetWorld()->SpawnActorDeferred<ABackPack>(BackpackActor, SpawnTransform);
+	a->Items = Items;
+	a->ItemDatas = SerializedItemDatas;
+	a->FinishSpawning(SpawnTransform);
+}
+
 void APlayerCharacter::ReportTalking(float Loudness)
 {
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
@@ -630,10 +684,15 @@ void APlayerCharacter::ToggleInventory()
 	this->bInventoryIsOn = !bInventoryIsOn;
 	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(bInventoryIsOn);
 
+	auto inputLocalPlayer = GetInputLocalPlayer();
+
+	if (!inputLocalPlayer)
+		return;
+
 	if(bInventoryIsOn)
-		GetInputLocalPlayer()->AddMappingContext(InventoryInputMapping, 1);
+		inputLocalPlayer->AddMappingContext(InventoryInputMapping, 1);
 	else
-		GetInputLocalPlayer()->RemoveMappingContext(InventoryInputMapping);
+		inputLocalPlayer->RemoveMappingContext(InventoryInputMapping);
 }
 
 
@@ -750,14 +809,39 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 }
 
 
-void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
+void APlayerCharacter::DropItem(FSlotData SlotToEmpty)
 {
-	if (IsValid(SlotToEmpty->MyItem))
+	if (SlotToEmpty.bIsBackpackSlot)
 	{
-		SpawnDroppedWorldItem(SlotToEmpty->MyItem->MyWorldItemClass, SlotToEmpty->MyItem->SerializeMyData());
-		SlotToEmpty->MyItem = nullptr;
+		this->bHasBackPack = false;
+		if(this->bInventoryIsOn)
+			Cast<ADC_PC>(GetController())->GetMyPlayerHud()->RefreshInventory();
 
-		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
+		TArray<TSubclassOf<UItemData>> ItemClasses;
+		TArray<FString> ItemDatas;
+
+		ItemClasses.SetNum(this->Backpack->NumInventorySlots);
+		ItemDatas.SetNum(this->Backpack->NumInventorySlots);
+
+		for(int i=0; i< this->Backpack->NumInventorySlots; i++)
+		{ 
+			if (IsValid(this->Backpack->GetItemAtIndex(i)))
+			{
+				ItemClasses[i] = this->Backpack->GetItemAtIndex(i)->GetClass();
+				ItemDatas[i] = this->Backpack->GetItemAtIndex(i)->SerializeMyData();
+				this->Backpack->RemoveItem(i);
+			}
+		}
+
+		Server_DropBackpack(ItemClasses, ItemDatas);
+		return;
+	}
+	if (IsValid(SlotToEmpty.Slot->MyItem))
+	{
+		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData());
+		SlotToEmpty.Slot->MyItem = nullptr;
+
+		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty.Slot)
 		{
 			TakeOutItem();
 		}
@@ -808,7 +892,9 @@ void APlayerCharacter::AllowSwitchHand()
 
 void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 {
-	
+	if (Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot().bIsBackpackSlot)
+		return;
+
 	UInventorySlot* slot;
 
 	if (BToA)
@@ -817,8 +903,8 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 		slot = HandSlotB;
 	
 	//switch
-	UItemData* tmp = Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot()->MyItem;
-	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot()->MyItem = slot->MyItem;
+	UItemData* tmp = Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot().Slot->MyItem;
+	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot().Slot->MyItem = slot->MyItem;
 	slot->MyItem = tmp;
 
 
@@ -831,7 +917,10 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	DropItem(GetCurrentlyHeldInventorySlot());
+	FSlotData SD;
+	SD.Slot = GetCurrentlyHeldInventorySlot();
+	SD.bIsBackpackSlot = false;
+	DropItem(SD);
 }
 
 void APlayerCharacter::TriggerPrimaryItemAction()
@@ -873,9 +962,8 @@ void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn
 void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
 {
 	LogWarning(TEXT("Spawning Item"));
-	FTransform SpawnTransform;
-	SpawnTransform.SetLocation(this->FirstPersonCamera->GetComponentLocation() + this->FirstPersonCamera->GetForwardVector() * 150 - FVector(0, 0, 20));
-
+	FTransform SpawnTransform= this->DropTransform->GetComponentTransform();
+	
 	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	i->SerializedStringData = SerializedData;
 	i->FinishSpawning(SpawnTransform);
@@ -938,7 +1026,6 @@ void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 	if(!pc || !pc->GetMyPlayerHud())
 		return;
 
-	pc->GetMyPlayerHud()->MoveHighlight(EDirections::Down);
 
 	int x = 5;
 
