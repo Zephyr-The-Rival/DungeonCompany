@@ -17,6 +17,7 @@ struct FInputActionValue;
 struct FSlotData;
 class UInventory;
 class UInventorySlot;
+class ABackPack;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -155,6 +156,8 @@ protected:
 public:
 	void PickUpItem(AWorldItem* WorldItem);
 
+protected:
+	void PickUpBackpack(ABackPack* BackpackToPickUp);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float WalkingSpeed = 350;
@@ -300,7 +303,7 @@ protected://inventory & Backpack
 	UInventory* Backpack;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AWorldItem> BackpackActor;
+	TSubclassOf<ABackPack> BackpackActor;
 
 	bool bSlotAIsInHand = true;
 
@@ -402,8 +405,8 @@ private:
 	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 	UFUNCTION(Server,Unreliable)
-	void Server_DropBackpack();
-	void Server_DropBackpack_Implementation();
+	void Server_DropBackpack(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
+	void Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 
 public:
 	void ReportTalking(float Loudness);

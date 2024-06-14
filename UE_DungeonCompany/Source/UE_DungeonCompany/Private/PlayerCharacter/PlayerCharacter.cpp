@@ -385,10 +385,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	if (Cast<ABackPack>(WorldItem) && !this->bHasBackPack)
 	{
-		DestroyWorldItem(WorldItem);
-		this->bHasBackPack = true;
-		if(this->bInventoryIsOn)
-			Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->RefreshInventory();
+		PickUpBackpack(Cast<ABackPack>(WorldItem));
 		return;
 	}
 
@@ -404,6 +401,21 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	}	
 }
 
+void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
+{
+	this->bHasBackPack = true;
+
+	for (int i = 0; i < BackpackToPickUp->Items.Num() - 1; i++)
+	{
+		UItemData* TmpItemData = NewObject<UItemData>(GetTransientPackage(), *BackpackToPickUp->Items[i]);
+		TmpItemData->DeserializeMyData(BackpackToPickUp->ItemDatas[i]);
+		this->Backpack->GetSlots()[i]->MyItem = TmpItemData;
+	}
+
+	DestroyWorldItem(BackpackToPickUp);
+	if (this->bInventoryIsOn)
+		Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->RefreshInventory();
+}
 void APlayerCharacter::Jump()
 {
 	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
@@ -640,10 +652,12 @@ void APlayerCharacter::AddMoneyToWallet_Implementation(float Amount)
 	m->Money += Amount;
 }
 
-void APlayerCharacter::Server_DropBackpack_Implementation()
+void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas)
 {
 	FTransform SpawnTransform = this->DropTransform->GetComponentTransform();
-	AWorldItem* a = GetWorld()->SpawnActorDeferred<AWorldItem>(BackpackActor, SpawnTransform);
+	ABackPack* a = GetWorld()->SpawnActorDeferred<ABackPack>(BackpackActor, SpawnTransform);
+	a->Items = Items;
+	a->ItemDatas = SerializedItemDatas;
 	a->FinishSpawning(SpawnTransform);
 }
 
@@ -800,7 +814,23 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty)
 		if(this->bInventoryIsOn)
 			Cast<ADC_PC>(GetController())->GetMyPlayerHud()->RefreshInventory();
 
-		Server_DropBackpack();
+		TArray<TSubclassOf<UItemData>> ItemClasses;
+		TArray<FString> ItemDatas;
+
+		ItemClasses.SetNum(this->Backpack->NumInventorySlots);
+		ItemDatas.SetNum(this->Backpack->NumInventorySlots);
+
+		for(int i=0; i< this->Backpack->NumInventorySlots; i++)
+		{ 
+			if (IsValid(this->Backpack->GetItemAtIndex(i)))
+			{
+				ItemClasses[i] = this->Backpack->GetItemAtIndex(i)->StaticClass();
+				ItemDatas[i] = this->Backpack->GetItemAtIndex(i)->SerializeMyData();
+				this->Backpack->RemoveItem(i);
+			}
+		}
+
+		Server_DropBackpack(ItemClasses, ItemDatas);
 		return;
 	}
 	if (IsValid(SlotToEmpty.Slot->MyItem))

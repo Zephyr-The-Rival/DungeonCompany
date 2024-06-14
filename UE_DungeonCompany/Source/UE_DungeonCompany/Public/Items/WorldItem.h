@@ -25,7 +25,6 @@ public:
 public:
 	// Sets default values for this actor's properties
 	AWorldItem();
-	AWorldItem(UItemData* ItemData);
 	virtual void Interact(APawn* InteractingPawn) override;
 
 protected:
