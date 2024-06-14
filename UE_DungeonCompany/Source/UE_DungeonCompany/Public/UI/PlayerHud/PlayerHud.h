@@ -19,6 +19,8 @@ enum EDirections
 	Right UMETA(DisplayName = "Right"),
 };
 
+class UInventorySlot;
+
 USTRUCT(BlueprintType)
 struct FSlotData
 {
@@ -32,7 +34,6 @@ struct FSlotData
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSwichDoneDelegate);
 
 class APlayerCharacter;
-class UInventorySlot;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API UPlayerHud : public UUserWidget
