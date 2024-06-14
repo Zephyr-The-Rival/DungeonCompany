@@ -407,9 +407,12 @@ void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 
 	for (int i = 0; i < BackpackToPickUp->Items.Num() - 1; i++)
 	{
-		UItemData* TmpItemData = NewObject<UItemData>(GetTransientPackage(), *BackpackToPickUp->Items[i]);
-		TmpItemData->DeserializeMyData(BackpackToPickUp->ItemDatas[i]);
-		this->Backpack->GetSlots()[i]->MyItem = TmpItemData;
+		if (IsValid(BackpackToPickUp->Items[i]))
+		{
+			UItemData* TmpItemData = NewObject<UItemData>(GetTransientPackage(), *BackpackToPickUp->Items[i]);
+			TmpItemData->DeserializeMyData(BackpackToPickUp->ItemDatas[i]);
+			this->Backpack->GetSlots()[i]->MyItem = TmpItemData;
+		}
 	}
 
 	DestroyWorldItem(BackpackToPickUp);
@@ -824,7 +827,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty)
 		{ 
 			if (IsValid(this->Backpack->GetItemAtIndex(i)))
 			{
-				ItemClasses[i] = this->Backpack->GetItemAtIndex(i)->StaticClass();
+				ItemClasses[i] = this->Backpack->GetItemAtIndex(i)->GetClass();
 				ItemDatas[i] = this->Backpack->GetItemAtIndex(i)->SerializeMyData();
 				this->Backpack->RemoveItem(i);
 			}
@@ -889,7 +892,9 @@ void APlayerCharacter::AllowSwitchHand()
 
 void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 {
-	
+	if (Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot().bIsBackpackSlot)
+		return;
+
 	UInventorySlot* slot;
 
 	if (BToA)

@@ -2,8 +2,8 @@
 
 
 #include "Items/BackPack.h"
-/*
-#include "Net/UnrealNetwork"
+#include "Engine.h"
+#include "Net/UnrealNetwork.h"
 
 
 void ABackPack::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -13,4 +13,3 @@ void ABackPack::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(ABackPack, ItemDatas);
 
 }
-*/

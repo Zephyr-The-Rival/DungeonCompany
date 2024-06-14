@@ -17,11 +17,11 @@ class UE_DUNGEONCOMPANY_API ABackPack : public AWorldItem
 	
 
 public:
-	//UPROPERTY(Replicated)
+	UPROPERTY(Replicated)
 	TArray<TSubclassOf<UItemData>> Items;
-	//UPROPERTY(Replicated)
+	UPROPERTY(Replicated)
 	TArray<FString> ItemDatas;
 
 protected:
-	//void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
