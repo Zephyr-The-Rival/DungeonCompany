@@ -36,10 +36,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnHoldingInHand(bool locallyControlled);
-
-	virtual void OnHoldingInHand_Implementation(bool locallyControlled);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OnHoldingInHand(bool LocallyControlled);
+	virtual void OnHoldingInHand_Implementation(bool LocallyControlled);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

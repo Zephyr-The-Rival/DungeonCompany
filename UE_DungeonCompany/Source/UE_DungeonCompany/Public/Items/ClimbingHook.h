@@ -10,11 +10,23 @@
  * 
  */
  class UCableComponent;
+ class UStaticMeshComponent;
+ class USphereComponent;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AClimbingHook : public AWorldItem
 {
 	GENERATED_BODY()
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Balancing")
+	float MaxAttachDistance = 150.f;
+
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* HookMesh;
+
+	UPROPERTY(EditAnywhere)
+	USphereComponent* EasyInteract;
 
 private:
 	AClimbingHook* PartnerHook;
@@ -31,7 +43,11 @@ public:
 	virtual void Interact(APawn* InteractingPawn) override;
 
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User) override;
-	
+	virtual void TriggerSecondaryAction_Implementation(APlayerCharacter* User) override;
 
-	
+	virtual void OnHoldingInHand_Implementation(bool LocallyControlled) override;
+
+protected:
+	FVector GetAttachLocation(APlayerCharacter* User);
+
 };
