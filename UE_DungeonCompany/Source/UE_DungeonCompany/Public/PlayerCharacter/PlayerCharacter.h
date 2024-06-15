@@ -48,7 +48,8 @@ public:
 	virtual void LocalTick(float DeltaTime);
 	virtual void StaminaTick(float DeltaTime);
 
-private:
+protected:
+
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
 	UInputMappingContext* CharacterInputMapping;
 

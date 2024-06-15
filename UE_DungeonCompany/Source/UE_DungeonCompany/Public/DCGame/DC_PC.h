@@ -52,11 +52,13 @@ private:
 	bool bUsingGamepad = false;
 
 public:
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	inline bool IsUsingGamepad() const { return bUsingGamepad; }
 
 	UDELEGATE()
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInputDeviceChanged, bool, IsUsingGamepad);
 
+	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnInputDeviceChanged OnInputDeviceChanged;
 
 public:
