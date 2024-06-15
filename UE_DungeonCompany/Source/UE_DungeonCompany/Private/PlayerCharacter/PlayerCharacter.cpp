@@ -308,7 +308,7 @@ void APlayerCharacter::InteractorLineTrace()
 			this->CurrentInteractable = i;
 				
 				ADC_PC* c = Cast<ADC_PC>(GetController());
-				c->GetMyPlayerHud()->ShowCrosshair(TEXT("to Interact"));
+				c->GetMyPlayerHud()->ShowCrosshair(TEXT("to Interact"), InteractAction);
 			}
 		}
 		else
