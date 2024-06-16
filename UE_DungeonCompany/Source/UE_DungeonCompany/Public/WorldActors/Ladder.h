@@ -19,6 +19,9 @@ private:
 	UPROPERTY()
 	UBoxComponent* InteractVolume;
 
+	UPROPERTY()
+	UBoxComponent* ClimbVolume;
+
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* EasyInteractBox;
 
@@ -30,6 +33,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Interaction)
 	FVector2D InteractionArea = FVector2D(10, 20);
+
+	UPROPERTY(EditAnywhere, Category = Interaction)
+	float InteractionVolumeHeightBonus = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = Interaction)
 	FVector2D EasyInteractArea = FVector2D(5, 20);
@@ -58,6 +64,9 @@ protected:
 
 	UFUNCTION()
 	void OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+	void OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 private:
 	APlayerCharacter* LocalPlayerOnLadder;

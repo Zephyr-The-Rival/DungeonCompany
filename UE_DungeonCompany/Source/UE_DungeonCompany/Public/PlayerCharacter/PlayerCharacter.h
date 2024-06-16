@@ -14,8 +14,10 @@ class UVOIPTalker;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
+struct FSlotData;
 class UInventory;
 class UInventorySlot;
+class ABackPack;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -35,6 +37,8 @@ public:
 	TObjectPtr<USkeletalMeshComponent> GetFirstPersonMesh() const { return this->FirstPersonMesh; }
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USceneComponent* DropTransform;
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -44,7 +48,8 @@ public:
 	virtual void LocalTick(float DeltaTime);
 	virtual void StaminaTick(float DeltaTime);
 
-private:
+protected:
+
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
 	UInputMappingContext* CharacterInputMapping;
 
@@ -91,6 +96,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
 	UInputMappingContext* InventoryInputMapping;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ToggleInventoryInvAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* NavigateInventoryAction;
@@ -152,6 +160,8 @@ protected:
 public:
 	void PickUpItem(AWorldItem* WorldItem);
 
+protected:
+	void PickUpBackpack(ABackPack* BackpackToPickUp);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float WalkingSpeed = 350;
@@ -296,7 +306,10 @@ protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetBackpack)
 	UInventory* Backpack;
 
-	bool bSlotAIsInHand = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ABackPack> BackpackActor;
+
+	
 
 	bool bInventoryIsOn = false;
 
@@ -306,6 +319,8 @@ protected:
 	void ToggleInventory();
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bSlotAIsInHand = true;
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
 
 private:
@@ -335,7 +350,8 @@ protected:
 	void AddMoneyToWallet(float Amount);
 	void AddMoneyToWallet_Implementation(float Amount);
 
-	void DropItem(UInventorySlot* SlotToEmpty);
+	void DropItem(FSlotData SlotToEmpty);
+
 
 	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
 
@@ -393,6 +409,10 @@ private:
 	UFUNCTION(Server,Unreliable)
 	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+
+	UFUNCTION(Server,Unreliable)
+	void Server_DropBackpack(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
+	void Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 
 public:
 	void ReportTalking(float Loudness);
