@@ -81,7 +81,7 @@ void AFunGuy::CalculateCloudStart()
 
 	CloudMesh->SetRelativeScale3D(FVector(2, 2, 2) * (newRadius / 100));
 
-	//#if WITH_EDITOR
+	#if WITH_EDITOR
 	float maxUpscaleNum = MaxSizeAgeSeconds / CloudUpdateInterval;
 
 	float maxScaleMultiplier = 1 + MaxSizeAgeSeconds * AgeBonusScaleMultiplier;
@@ -89,7 +89,7 @@ void AFunGuy::CalculateCloudStart()
 
 	FlushPersistentDebugLines(GetWorld());
 	DrawDebugSphere(GetWorld(), CloudSphere->GetComponentLocation(), maxRadius * maxScaleMultiplier, 32, FColor::Blue, true);
-	//#endif
+	#endif
 }
 
 void AFunGuy::UpdateCloud()
