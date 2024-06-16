@@ -4,7 +4,9 @@
 #include "UI/PlayerHud/PlayerHud.h"
 #include "DC_Statics.h"
 
-void UPlayerHud::ShowCrosshair_Implementation(const FString& Text)
+#include "InputAction.h"
+
+void UPlayerHud::ShowCrosshair_Implementation(const FString& Text, UInputAction* InputAction)
 {
 	LogWarning(TEXT("UPlayerHud::ShowCrosshair has not been overidden"));
 

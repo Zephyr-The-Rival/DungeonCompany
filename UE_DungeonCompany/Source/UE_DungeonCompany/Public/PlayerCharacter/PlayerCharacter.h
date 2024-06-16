@@ -48,7 +48,8 @@ public:
 	virtual void LocalTick(float DeltaTime);
 	virtual void StaminaTick(float DeltaTime);
 
-private:
+protected:
+
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
 	UInputMappingContext* CharacterInputMapping;
 
@@ -308,7 +309,7 @@ protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<ABackPack> BackpackActor;
 
-	bool bSlotAIsInHand = true;
+	
 
 	bool bInventoryIsOn = false;
 
@@ -318,6 +319,8 @@ protected:
 	void ToggleInventory();
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bSlotAIsInHand = true;
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
 
 private:

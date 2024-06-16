@@ -10,6 +10,10 @@
  * 
  */
 
+class APlayerCharacter;
+class UInventorySlot;
+class UInputAction;
+
 UENUM(BlueprintType)
 enum EDirections
 {
@@ -46,9 +50,9 @@ public:
 	APlayerCharacter* MyCharacter;
 
 	UFUNCTION(BlueprintNativeEvent)
-	void ShowCrosshair(const FString& Text);
+	void ShowCrosshair(const FString& Text, UInputAction* InputAction);
 
-	virtual void ShowCrosshair_Implementation(const FString& Text);
+	virtual void ShowCrosshair_Implementation(const FString& Text, UInputAction* InputAction);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void HideCrosshair();
