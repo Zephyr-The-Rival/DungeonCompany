@@ -681,6 +681,9 @@ void APlayerCharacter::Cough()
 
 void APlayerCharacter::ToggleInventory()
 {
+	if (!bSwitchHandAllowed)
+		return;
+
 	this->bInventoryIsOn = !bInventoryIsOn;
 	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(bInventoryIsOn);
 
