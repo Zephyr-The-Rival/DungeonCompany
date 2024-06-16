@@ -98,6 +98,9 @@ protected:
 	UInputMappingContext* InventoryInputMapping;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ToggleInventoryInvAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* NavigateInventoryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")

@@ -36,6 +36,11 @@ ALadder::ALadder()
 
 	InteractVolume->InitBoxExtent(FVector(1, 1, 1));
 
+	ClimbVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("ClimbVolume"));
+	ClimbVolume->SetupAttachment(RootComponent);
+
+	ClimbVolume->InitBoxExtent(FVector(1, 1, 1));
+
 	EasyInteractBox = CreateDefaultSubobject<UBoxComponent>(TEXT("EasyInteractBox"));
 	EasyInteractBox->SetupAttachment(RootComponent);
 
@@ -46,13 +51,19 @@ void ALadder::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
+	float iVHalfHeight = Height / 2 + InteractionVolumeHeightBonus / 2;
+
+	InteractVolume->SetBoxExtent(FVector(InteractionArea, iVHalfHeight));
+	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, iVHalfHeight));
+
 	float halfHeight = Height / 2;
 
-	InteractVolume->SetBoxExtent(FVector(InteractionArea, halfHeight));
-	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, halfHeight));
+	ClimbVolume->SetBoxExtent(FVector({25, 5}, halfHeight));
+	ClimbVolume->SetRelativeLocation(FVector(25, 0, halfHeight));
 
 	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, halfHeight));
 	EasyInteractBox->SetRelativeLocation(FVector(0, 0, halfHeight));
+
 }
 
 // Called when the game starts or when spawned
@@ -64,12 +75,13 @@ void ALadder::BeginPlay()
 
 	InteractVolume->OnComponentBeginOverlap.AddDynamic(this, &ALadder::OnInteractVolumeEntered);
 	InteractVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnInteractVolumeLeft);
+
+	ClimbVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnClimbVolumeLeft);
 	
 }
 
 void ALadder::Interact(APawn* InteractingPawn)
 {
-
 	APlayerCharacter* character = Cast<APlayerCharacter>(InteractingPawn);
 	
 	if(!character)
@@ -78,6 +90,10 @@ void ALadder::Interact(APawn* InteractingPawn)
 	float distanceToLadder = character->GetCapsuleComponent()->GetScaledCapsuleRadius();
 
 	float distanceToStart = character->GetDistanceTo(this);
+
+	if(distanceToStart > Height)
+		distanceToStart = Height;
+
 	FVector climbPosition = GetActorLocation() + GetActorUpVector() * distanceToStart + GetActorForwardVector() * distanceToLadder;
 	bInteractable = false;
 
@@ -117,10 +133,18 @@ void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AAc
 		return;
 
 	bInteractable = false;
+
+}
+
+void ALadder::OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
+	if (!character || !character->IsLocallyControlled())
+		return;
+
 	bRemovedByLadder = true;
 
 	character->StopClimbing();
-
 }
 
 void ALadder::StoppedInteracting()
