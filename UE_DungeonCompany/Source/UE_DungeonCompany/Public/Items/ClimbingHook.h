@@ -28,8 +28,10 @@ private:
 	UPROPERTY(EditAnywhere)
 	USphereComponent* EasyInteract;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AClimbingHook> BP_StaticClass;
+
 private:
-	AClimbingHook* PartnerHook;
 	APlayerCharacter* CharacterHoldingPartnerHook;
 
 	UCableComponent* Rope;
@@ -39,15 +41,23 @@ private:
 public:
 	AClimbingHook();
 
+protected:
+	virtual void BeginPlay() override;
+
 public:
 	virtual void Interact(APawn* InteractingPawn) override;
 
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User) override;
+	virtual void TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User) override;
+
 	virtual void TriggerSecondaryAction_Implementation(APlayerCharacter* User) override;
+	virtual void TriggerLocalSecondaryAction_Implementation(APlayerCharacter* User) override;
 
 	virtual void OnHoldingInHand_Implementation(bool LocallyControlled) override;
 
 protected:
 	FVector GetAttachLocation(APlayerCharacter* User);
+
+	void AttachRopeToHooks(AClimbingHook* From, AClimbingHook* To);
 
 };
