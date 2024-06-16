@@ -77,6 +77,7 @@ protected:
 	virtual void BeginPlay() override;
 
 protected: 
+	void CalculateCloudStart();
 	void UpdateCloud();
 
 private:
