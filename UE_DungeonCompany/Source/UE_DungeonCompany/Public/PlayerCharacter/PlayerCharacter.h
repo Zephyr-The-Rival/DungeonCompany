@@ -352,7 +352,6 @@ protected:
 
 	void DropItem(FSlotData SlotToEmpty);
 
-
 	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
 
 	void SwitchHand();

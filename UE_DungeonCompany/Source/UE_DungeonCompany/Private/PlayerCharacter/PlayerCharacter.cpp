@@ -811,7 +811,7 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 
 }
 
-void APlayerCharacter::DropItem(UInventorySlot* SlotToEmpty)
+void APlayerCharacter::DropItem(FSlotData SlotToEmpty)
 {
 	if (SlotToEmpty.bIsBackpackSlot)
 	{
