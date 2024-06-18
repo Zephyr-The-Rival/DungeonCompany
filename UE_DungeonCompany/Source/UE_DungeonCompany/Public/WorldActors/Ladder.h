@@ -40,9 +40,14 @@ private:
 	UPROPERTY(EditAnywhere, Category = Interaction)
 	FVector2D EasyInteractArea = FVector2D(5, 20);
 
+	UPROPERTY(EditAnywhere, Category = Interaction)
+	bool bIgnoreInteractionVolume = false;
+
 public:
 	/*This doesn't set the height in runtime. Set this in the constructor or before calling the construction script of the Ladder class.*/
 	void SetHeight(float InHeight); 
+
+	void SetIgnoreInteractionVolume(bool InIgnore);
 
 public:	
 	ALadder();
@@ -51,6 +56,8 @@ protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 
 	virtual void BeginPlay() override;
+
+	void CalculateLadderBoxExtents();
 
 public:
 	virtual void Interact(APawn* InteractingPawn) override;
@@ -75,5 +82,8 @@ private:
 protected:
 	UFUNCTION()
 	void StoppedInteracting();
+
+public:
+	void PlaceLadder(const FVector& From, const FVector& To, const FVector& ForwardVector);
 
 };

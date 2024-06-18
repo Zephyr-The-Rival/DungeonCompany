@@ -3,15 +3,37 @@
 
 #include "WorldActors/Ladder.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "PlayerCharacter/Components/DC_CMC.h"
 
 #include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "PlayerCharacter/Components/DC_CMC.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void ALadder::SetHeight(float InHeight)
 {
 	Height = InHeight;
+}
+
+void ALadder::SetIgnoreInteractionVolume(bool InIgnore)
+{
+	bIgnoreInteractionVolume = InIgnore;
+
+	InteractVolume->OnComponentBeginOverlap.RemoveAll(this);
+	InteractVolume->OnComponentEndOverlap.RemoveAll(this);
+
+	if (!bIgnoreInteractionVolume)
+	{
+		InteractVolume->OnComponentBeginOverlap.AddDynamic(this, &ALadder::OnInteractVolumeEntered);
+		InteractVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnInteractVolumeLeft);
+		return;
+	}
+
+	if (!IsValid(LocalPlayerOnLadder))
+	{
+		bInteractable = true;
+	}
+
 }
 
 // Sets default values
@@ -51,18 +73,7 @@ void ALadder::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	float iVHalfHeight = Height / 2 + InteractionVolumeHeightBonus / 2;
-
-	InteractVolume->SetBoxExtent(FVector(InteractionArea, iVHalfHeight));
-	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, iVHalfHeight));
-
-	float halfHeight = Height / 2;
-
-	ClimbVolume->SetBoxExtent(FVector({25, 5}, halfHeight));
-	ClimbVolume->SetRelativeLocation(FVector(25, 0, halfHeight));
-
-	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, halfHeight));
-	EasyInteractBox->SetRelativeLocation(FVector(0, 0, halfHeight));
+	CalculateLadderBoxExtents();
 
 }
 
@@ -73,11 +84,30 @@ void ALadder::BeginPlay()
 
 	BottomBox->OnComponentBeginOverlap.AddDynamic(this, &ALadder::OnBottomBoxOverlap);
 
-	InteractVolume->OnComponentBeginOverlap.AddDynamic(this, &ALadder::OnInteractVolumeEntered);
-	InteractVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnInteractVolumeLeft);
+	if (!bIgnoreInteractionVolume)
+	{
+		InteractVolume->OnComponentBeginOverlap.AddDynamic(this, &ALadder::OnInteractVolumeEntered);
+		InteractVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnInteractVolumeLeft);
+	}
 
 	ClimbVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnClimbVolumeLeft);
 	
+}
+
+void ALadder::CalculateLadderBoxExtents()
+{
+	float iVHalfHeight = Height / 2 + InteractionVolumeHeightBonus / 2;
+	
+	InteractVolume->SetBoxExtent(FVector(InteractionArea, iVHalfHeight));
+	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, iVHalfHeight));
+
+	float halfHeight = Height / 2;
+
+	ClimbVolume->SetBoxExtent(FVector({ 25, 5 }, halfHeight));
+	ClimbVolume->SetRelativeLocation(FVector(25, 0, halfHeight));
+
+	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, halfHeight));
+	EasyInteractBox->SetRelativeLocation(FVector(0, 0, halfHeight));
 }
 
 void ALadder::Interact(APawn* InteractingPawn)
@@ -154,7 +184,6 @@ void ALadder::StoppedInteracting()
 		return;
 
 	LocalPlayerOnLadder->OnStoppedClimbing.RemoveAll(this);
-	APlayerCharacter* LaunchCharacter = LocalPlayerOnLadder;
 	LocalPlayerOnLadder = nullptr;
 
 	if(bRemovedByLadder)
@@ -163,11 +192,25 @@ void ALadder::StoppedInteracting()
 	FVector launchDirection = GetActorForwardVector() + FVector::UpVector * 3;
 	launchDirection.Normalize();
 
-	FVector launchVelocity = launchDirection * LaunchCharacter->GetCharacterMovement()->JumpZVelocity;
-	LaunchCharacter->LaunchCharacter(launchVelocity, false, true);
+	FVector launchVelocity = launchDirection * LocalPlayerOnLadder->GetCharacterMovement()->JumpZVelocity;
+	LocalPlayerOnLadder->LaunchCharacter(launchVelocity, false, true);
 
 	if(!HasAuthority())
-		LaunchCharacter->Server_LaunchCharacter(launchVelocity, false, true);
+		LocalPlayerOnLadder->Server_LaunchCharacter(launchVelocity, false, true);
+
+}
+
+void ALadder::PlaceLadder(const FVector& From, const FVector& To, const FVector& ForwardVector)
+{
+	SetActorLocation(From);
+
+	FVector ladderVector = To - From;
+	Height = ladderVector.Length();
+
+	FRotator ladderRotation = UKismetMathLibrary::MakeRotFromZY(ladderVector, ForwardVector);
+	SetActorRotation(ladderRotation);
+
+	CalculateLadderBoxExtents();
 
 }
 
