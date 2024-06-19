@@ -4,7 +4,9 @@
 #include "UI/PlayerHud/PlayerHud.h"
 #include "DC_Statics.h"
 
-void UPlayerHud::ShowCrosshair_Implementation(const FString& Text)
+#include "InputAction.h"
+
+void UPlayerHud::ShowCrosshair_Implementation(const FString& Text, UInputAction* InputAction)
 {
 	LogWarning(TEXT("UPlayerHud::ShowCrosshair has not been overidden"));
 
@@ -35,14 +37,14 @@ void UPlayerHud::MoveHighlight_Implementation(EDirections direction)
 	LogWarning(TEXT("UPlayerHud::MoveHighlight_Implementation has not been overidden"));
 }
 
-void UPlayerHud::MoveHighlightScroll_Implementation(bool up)
-{
-	LogWarning(TEXT("UPlayerHud::MoveHighlight_ScrollImplementation has not been overidden"));
-}
-
 void UPlayerHud::UpdateCrouchIcon_Implementation()
 {
 	LogWarning(TEXT("UPlayerHud::UpdateCrouchIcon_Implementation has not been overidden"));
+}
+
+void UPlayerHud::ToggleOptionsMenu_Implementation(bool On)
+{
+	LogWarning(TEXT("UPlayerHud::ToggleOptioneMenu_Implementation has not been overidden"));
 }
 
 

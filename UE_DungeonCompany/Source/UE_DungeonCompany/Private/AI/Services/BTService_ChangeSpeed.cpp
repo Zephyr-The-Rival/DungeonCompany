@@ -10,7 +10,7 @@
 UBTService_ChangeSpeed::UBTService_ChangeSpeed()
 {
 	bNotifyBecomeRelevant = true;
-	NodeName = "Change Speed";
+	NodeName = "ChangeSpeed";
 }
 
 void UBTService_ChangeSpeed::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)

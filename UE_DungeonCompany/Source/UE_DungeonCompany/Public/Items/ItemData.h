@@ -24,6 +24,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTexture2D* Icon;
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, BlueprintGetter=GetValue)
+	int32 Value;
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetValue() const { return this->Value; }
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class AWorldItem> MyWorldItemClass;
 
@@ -33,15 +42,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> ThirdPersonAnimationBlueprintClass;
 
-
-
 	UFUNCTION(BlueprintNativeEvent)
 	FString SerializeMyData();
-	FString SerializeMyData_Implementation();
+	virtual FString SerializeMyData_Implementation();
 
 	UFUNCTION(BlueprintNativeEvent)
 	void DeserializeMyData(const FString& StringData);
-	void DeserializeMyData_Implementation(const FString& StringData);
+	virtual void DeserializeMyData_Implementation(const FString& StringData);
 
 protected:
 

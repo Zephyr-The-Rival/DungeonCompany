@@ -34,6 +34,9 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVec
 
 	for (AActor* a : overlappingActors)
 	{
+		if (a == this->MyCharacterToAttachTo)
+			continue;
+
 		if (Cast<ADC_Entity>(a))//if hit entity
 		{
 			if (IsValid(criticallyHitEntity) && a == criticallyHitEntity)//was hit on weak spot
@@ -52,9 +55,14 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVec
 	}
 }
 
-void AWeapon::TriggerPrimaryAction_Implementation(APlayerCharacter* user)
+void AWeapon::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 {
-	user->StartAttacking();
+	User->StartAttacking();
+}
+
+void AWeapon::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User)
+{
+	User->AttackStart();
 }
 
 
