@@ -981,8 +981,6 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	//SpawnedItem->GetRootComponent()->AddImpulse()
 }
 
-
-
 void APlayerCharacter::CheckForFallDamage()
 {
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
@@ -1097,12 +1095,8 @@ void APlayerCharacter::Server_TriggerSecondaryItemAction_Implementation()
 	CurrentlyHeldWorldItem->TriggerSecondaryAction(this);
 }
 
-
-
 void APlayerCharacter::StartAttacking()
 {
-	AttackStart();
-
 	if (!HasAuthority())
 		Server_AttackStart();
 	else
@@ -1111,7 +1105,6 @@ void APlayerCharacter::StartAttacking()
 
 void APlayerCharacter::AttackStart()
 {
-
 	//different attack when sprinting?
 	//attack needs to cost stamina
 	this->bPrimaryActionAllowed = false;
@@ -1120,8 +1113,10 @@ void APlayerCharacter::AttackStart()
 	//this->bMoveAllowed = false;
 	//this->bLookAllowed = false;
 
-
 	this->bSprintAllowed = false;
+
+	OverridenWalkingSpeed = WalkingSpeed;
+	WalkingSpeed = 100;
 	GetCharacterMovement()->MaxWalkSpeed = 100;
 
 	if(IsLocallyControlled())
@@ -1131,7 +1126,7 @@ void APlayerCharacter::AttackStart()
 
 void APlayerCharacter::Server_AttackStart_Implementation()
 {
-	AttackStart();
+	Multicast_AttackStart();
 }
 
 void APlayerCharacter::Multicast_AttackStart_Implementation()
@@ -1159,6 +1154,7 @@ void APlayerCharacter::OnAttackOver()
 	this->bPrimaryActionAllowed = true;
 	//allow sprint
 	this->bSprintAllowed = true;
+	WalkingSpeed = OverridenWalkingSpeed;
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 	
 }
