@@ -407,6 +407,9 @@ void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 {
 	this->bHasBackPack = true;
 
+	if (bSprinting)
+		StopSprint();
+
 	for (int i = 0; i < BackpackToPickUp->Items.Num(); i++)
 	{
 		if (IsValid(BackpackToPickUp->Items[i]))
@@ -421,6 +424,7 @@ void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 	if (this->bInventoryIsOn)
 		Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->RefreshInventory();
 }
+
 void APlayerCharacter::Jump()
 {
 	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
@@ -506,7 +510,7 @@ void APlayerCharacter::ToggleSprint()
 
 void APlayerCharacter::StartSprint()
 {
-	if (!this->bSprintAllowed)
+	if (!this->bSprintAllowed || bHasBackPack)
 		return;
 
 	if(Stamina <= 0.f)
