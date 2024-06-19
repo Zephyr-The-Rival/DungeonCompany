@@ -383,9 +383,11 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 		return;
 	}
 
-	if (Cast<ABackPack>(WorldItem) && !this->bHasBackPack)
+	if (Cast<ABackPack>(WorldItem))
 	{
-		PickUpBackpack(Cast<ABackPack>(WorldItem));
+		if(!this->bHasBackPack)
+			PickUpBackpack(Cast<ABackPack>(WorldItem));
+		
 		return;
 	}
 
@@ -405,7 +407,7 @@ void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 {
 	this->bHasBackPack = true;
 
-	for (int i = 0; i < BackpackToPickUp->Items.Num() - 1; i++)
+	for (int i = 0; i < BackpackToPickUp->Items.Num(); i++)
 	{
 		if (IsValid(BackpackToPickUp->Items[i]))
 		{
