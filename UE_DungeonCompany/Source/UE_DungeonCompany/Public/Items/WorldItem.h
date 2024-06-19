@@ -66,8 +66,16 @@ public://item actions
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User);
 
 	UFUNCTION(BlueprintNativeEvent)
+	void TriggerLocalPrimaryAction(APlayerCharacter* User);
+	virtual void TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User);
+
+	UFUNCTION(BlueprintNativeEvent)
 	void TriggerSecondaryAction(APlayerCharacter* User);
 	virtual void TriggerSecondaryAction_Implementation(APlayerCharacter* User);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void TriggerLocalSecondaryAction(APlayerCharacter* User);
+	virtual void TriggerLocalSecondaryAction_Implementation(APlayerCharacter* User);
 
 public:	//keeping itemdata
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)

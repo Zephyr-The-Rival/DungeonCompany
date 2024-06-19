@@ -407,6 +407,9 @@ void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 {
 	this->bHasBackPack = true;
 
+	if (bSprinting)
+		StopSprint();
+
 	for (int i = 0; i < BackpackToPickUp->Items.Num(); i++)
 	{
 		if (IsValid(BackpackToPickUp->Items[i]))
@@ -421,6 +424,7 @@ void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 	if (this->bInventoryIsOn)
 		Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->RefreshInventory();
 }
+
 void APlayerCharacter::Jump()
 {
 	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
@@ -506,7 +510,7 @@ void APlayerCharacter::ToggleSprint()
 
 void APlayerCharacter::StartSprint()
 {
-	if (!this->bSprintAllowed)
+	if (!this->bSprintAllowed || bHasBackPack)
 		return;
 
 	if(Stamina <= 0.f)
@@ -930,8 +934,10 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::TriggerPrimaryItemAction()
 {
-	if(bInventoryIsOn)
+	if(bInventoryIsOn || !bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
+
+	CurrentlyHeldWorldItem->TriggerLocalPrimaryAction(this);
 
 	if (HasAuthority())
 	{
@@ -944,8 +950,10 @@ void APlayerCharacter::TriggerPrimaryItemAction()
 
 void APlayerCharacter::TriggerSecondaryItemAction()
 {
-	if (bInventoryIsOn)
+	if (bInventoryIsOn || !bSecondaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
+
+	CurrentlyHeldWorldItem->TriggerLocalSecondaryAction(this);
 
 	if (HasAuthority())
 	{
@@ -976,8 +984,6 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	//GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
 	//SpawnedItem->GetRootComponent()->AddImpulse()
 }
-
-
 
 void APlayerCharacter::CheckForFallDamage()
 {
@@ -1093,12 +1099,8 @@ void APlayerCharacter::Server_TriggerSecondaryItemAction_Implementation()
 	CurrentlyHeldWorldItem->TriggerSecondaryAction(this);
 }
 
-
-
 void APlayerCharacter::StartAttacking()
 {
-	AttackStart();
-
 	if (!HasAuthority())
 		Server_AttackStart();
 	else
@@ -1107,7 +1109,6 @@ void APlayerCharacter::StartAttacking()
 
 void APlayerCharacter::AttackStart()
 {
-
 	//different attack when sprinting?
 	//attack needs to cost stamina
 	this->bPrimaryActionAllowed = false;
@@ -1116,8 +1117,10 @@ void APlayerCharacter::AttackStart()
 	//this->bMoveAllowed = false;
 	//this->bLookAllowed = false;
 
-
 	this->bSprintAllowed = false;
+
+	OverridenWalkingSpeed = WalkingSpeed;
+	WalkingSpeed = 100;
 	GetCharacterMovement()->MaxWalkSpeed = 100;
 
 	if(IsLocallyControlled())
@@ -1127,7 +1130,7 @@ void APlayerCharacter::AttackStart()
 
 void APlayerCharacter::Server_AttackStart_Implementation()
 {
-	AttackStart();
+	Multicast_AttackStart();
 }
 
 void APlayerCharacter::Multicast_AttackStart_Implementation()
@@ -1155,6 +1158,7 @@ void APlayerCharacter::OnAttackOver()
 	this->bPrimaryActionAllowed = true;
 	//allow sprint
 	this->bSprintAllowed = true;
+	WalkingSpeed = OverridenWalkingSpeed;
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 	
 }
