@@ -83,6 +83,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 public:
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User) override;
 	virtual void TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User) override;
@@ -103,7 +105,9 @@ private:
 	TArray<ALadder*> CreatedLadders;
 
 protected:
-	void CreateLadders();
+	void CreateLadders(const TArray<FVector>& EdgeLocations);
+
+	void DestroyLadders();
 
 	void GetEdgeLocations(TArray<FVector>& Out);
 

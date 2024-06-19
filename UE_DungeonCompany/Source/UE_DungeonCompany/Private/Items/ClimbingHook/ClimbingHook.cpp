@@ -60,6 +60,7 @@ AClimbingHook::AClimbingHook()
 
 void AClimbingHook::BeginPlay()
 {
+
 	Super::BeginPlay();
 
 	Rope->SetAttachEndToComponent(RopeEnd);
@@ -77,9 +78,19 @@ void AClimbingHook::BeginPlay()
 		FTimerHandle timerHandle;
 
 		HookMesh->OnComponentHit.AddDynamic(this, &AClimbingHook::OnHookHit);
-		GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &AClimbingHook::CreateLadders, 10.f);
+		//GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &AClimbingHook::CreateLadders, 10.f);
 	}
 		
+}
+
+void AClimbingHook::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (!HasAuthority())
+		return;
+
+	DestroyLadders();
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void AClimbingHook::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User)
@@ -161,38 +172,50 @@ FHitResult AClimbingHook::GetAttachHit(APlayerCharacter* User)
 	return hit;
 }
 
-void AClimbingHook::CreateLadders()
+void AClimbingHook::CreateLadders(const TArray<FVector>& EdgeLocations)
 {
-	TArray<FVector> edgeLocations;
-
-	GetEdgeLocations(edgeLocations);
-
-	int locationsNum = edgeLocations.Num();
+	int locationsNum = EdgeLocations.Num();
 
 	for (int i = 0; i < locationsNum - 1; ++i)
 	{
+		FVector ladderVector = EdgeLocations[i] - EdgeLocations[i + 1];
 
-		if ((edgeLocations[i].Z - edgeLocations[i + 1].Z) < MinLadderHeight)
+		if (ladderVector.Z < MinLadderHeight)
 			continue;
 
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *edgeLocations[i].ToString());
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *EdgeLocations[i].ToString());
 
-		FVector ladderForwardVector;
+		FVector rightVector = FVector::CrossProduct(ladderVector, FVector::UpVector);
 
-		if (AttachNormal.Cross(FVector::UpVector).Length() < 0.5)
-		{
-			ladderForwardVector = edgeLocations[i + 1] - GetActorLocation();
-			ladderForwardVector.Z = 0.f;
-		}
-		else
-		{
-			ladderForwardVector = AttachNormal;
-		}
+		FVector ladderForwardVector = FVector::CrossProduct(rightVector, ladderVector);
+
+		//if (AttachNormal.Cross(FVector::UpVector).Length() < 0.5)
+		//{
+		//	ladderForwardVector = edgeLocations[i + 1] - GetActorLocation();
+		//	ladderForwardVector.Z = 0.f;
+		//}
+		//else
+		//{
+		//	ladderForwardVector = AttachNormal;
+		//}
 
 		ALadder* newLadder = GetWorld()->SpawnActor<ALadder>(LadderClass);
-		//newLadder->SetIgnoreInteractionVolume(true);
+		newLadder->SetIgnoreInteractionVolume(true);
 
-		newLadder->PlaceLadder(edgeLocations[i+1], edgeLocations[i], ladderForwardVector);
+		newLadder->PlaceLadder(EdgeLocations[i+1], EdgeLocations[i], ladderForwardVector);
+	}
+}
+
+void AClimbingHook::DestroyLadders()
+{
+	int laddersNum = CreatedLadders.Num();
+
+	for (int i = 0; i < laddersNum; ++i)
+	{
+		if (!IsValid(CreatedLadders[i]))
+			continue;
+
+		CreatedLadders[i]->Destroy();
 	}
 }
 
