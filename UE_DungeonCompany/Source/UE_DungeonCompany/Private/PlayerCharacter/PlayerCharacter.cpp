@@ -930,8 +930,10 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::TriggerPrimaryItemAction()
 {
-	if(bInventoryIsOn)
+	if(bInventoryIsOn || !bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
+
+	CurrentlyHeldWorldItem->TriggerLocalPrimaryAction(this);
 
 	if (HasAuthority())
 	{
@@ -944,8 +946,10 @@ void APlayerCharacter::TriggerPrimaryItemAction()
 
 void APlayerCharacter::TriggerSecondaryItemAction()
 {
-	if (bInventoryIsOn)
+	if (bInventoryIsOn || !bSecondaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
+
+	CurrentlyHeldWorldItem->TriggerLocalSecondaryAction(this);
 
 	if (HasAuthority())
 	{
