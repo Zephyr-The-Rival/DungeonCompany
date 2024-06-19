@@ -55,9 +55,14 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVec
 	}
 }
 
-void AWeapon::TriggerPrimaryAction_Implementation(APlayerCharacter* user)
+void AWeapon::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 {
-	user->StartAttacking();
+	User->StartAttacking();
+}
+
+void AWeapon::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User)
+{
+	User->AttackStart();
 }
 
 
