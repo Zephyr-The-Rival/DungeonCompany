@@ -39,6 +39,10 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USceneComponent* DropTransform;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing")
+	float throwStrengh=800;
+
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -85,6 +89,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* DropItemAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ThrowItemAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* SwitchHandAction;
@@ -350,7 +357,7 @@ protected:
 	void AddMoneyToWallet(float Amount);
 	void AddMoneyToWallet_Implementation(float Amount);
 
-	void DropItem(FSlotData SlotToEmpty);
+	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
 
 	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
@@ -363,6 +370,8 @@ protected:
 	void EquipCurrentInventorySelection(bool BToA);
 
 	void DropItemPressed();
+
+	void ThrowItemPressed();
 
 protected:
 	void NavigateInventory(const FInputActionValue& Value);
@@ -405,10 +414,10 @@ public:
 	//bool BItemAIsInHand is protected
 
 private:
-	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
 	UFUNCTION(Server,Unreliable)
-	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
-	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
+	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
 
 	UFUNCTION(Server,Unreliable)
 	void Server_DropBackpack(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);

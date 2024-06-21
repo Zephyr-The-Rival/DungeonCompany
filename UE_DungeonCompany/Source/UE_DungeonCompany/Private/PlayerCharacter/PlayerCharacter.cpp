@@ -238,6 +238,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(ItemSecondaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerSecondaryItemAction);
 	
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
+	EIC->BindAction(ThrowItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::ThrowItemPressed);
 
 	EIC->BindAction(ToggleInventoryInvAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
 	EIC->BindAction(NavigateInventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::NavigateInventory);
@@ -814,7 +815,7 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 }
 
 
-void APlayerCharacter::DropItem(FSlotData SlotToEmpty)
+void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 {
 	if (SlotToEmpty.bIsBackpackSlot)
 	{
@@ -843,7 +844,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty)
 	}
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
-		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData());
+		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(), bThrow, FirstPersonCamera->GetForwardVector());
 		SlotToEmpty.Slot->MyItem = nullptr;
 
 		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty.Slot)
@@ -872,7 +873,7 @@ void APlayerCharacter::SwitchHand()
 
 	if (pc && pc->IsUsingGamepad() && bInventoryIsOn)
 	{
-		DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot());
+		DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot(), false);
 		return;
 	}
 
@@ -925,7 +926,15 @@ void APlayerCharacter::DropItemPressed()
 	FSlotData SD;
 	SD.Slot = GetCurrentlyHeldInventorySlot();
 	SD.bIsBackpackSlot = false;
-	DropItem(SD);
+	DropItem(SD,false);
+}
+
+void APlayerCharacter::ThrowItemPressed()
+{
+	FSlotData SD;
+	SD.Slot = GetCurrentlyHeldInventorySlot();
+	SD.bIsBackpackSlot = false;
+	DropItem(SD, true);
 }
 
 void APlayerCharacter::TriggerPrimaryItemAction()
@@ -956,25 +965,31 @@ void APlayerCharacter::TriggerSecondaryItemAction()
 	Server_TriggerSecondaryItemAction();
 }
 
-void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
+void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector)
 {
 	if (!HasAuthority())
-		Server_SpawnDroppedWorldItem(ItemToSpawn,SerializedData);
+		Server_SpawnDroppedWorldItem(ItemToSpawn, SerializedData, bThrow, CameraVector);
 	else
-		Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SerializedData);
+		Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SerializedData, bThrow, CameraVector);
 }
 
-void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
+void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData,bool bThrow ,FVector CameraVector)
 {
-	LogWarning(TEXT("Spawning Item"));
+
 	FTransform SpawnTransform= this->DropTransform->GetComponentTransform();
 	
 	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	i->SerializedStringData = SerializedData;
 	i->FinishSpawning(SpawnTransform);
 
-	//GetWorld()->SpawnActor<AWorldItem>(ItemToSpawn, SpawnTransform);
-	//SpawnedItem->GetRootComponent()->AddImpulse()
+	if (bThrow)
+	{
+		if (UMeshComponent* u = Cast<UMeshComponent>(i->GetRootComponent()))
+		{
+			u->AddImpulse(CameraVector * this->throwStrengh * u->GetMass());
+		}
+	}
+	
 }
 
 
@@ -1059,7 +1074,7 @@ void APlayerCharacter::DropItemInvPressed()
 	if (!pc)
 		return;
 
-	DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot());
+	DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot(),false);
 }
 
 void APlayerCharacter::OnDeath_Implementation()
