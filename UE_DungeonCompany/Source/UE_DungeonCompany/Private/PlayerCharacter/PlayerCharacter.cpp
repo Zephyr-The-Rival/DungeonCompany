@@ -1157,6 +1157,11 @@ void APlayerCharacter::Multicast_AttackStart_Implementation()
 
 }
 
+void APlayerCharacter::Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn)
+{
+	Server_SpawnDroppedWorldItem(ItemToSpawn, FString(), false, FVector(0, 0, 0));
+}
+
 void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);

@@ -476,4 +476,11 @@ public://fighting
 public:
 	virtual void OnDeath_Implementation() override;
 
+public://cheat Stuff:
+
+	UFUNCTION(BlueprintCallable)
+	void Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	
+	
+
 };
