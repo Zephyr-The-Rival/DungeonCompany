@@ -316,8 +316,6 @@ protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<ABackPack> BackpackActor;
 
-	
-
 	bool bInventoryIsOn = false;
 
 	
@@ -449,6 +447,9 @@ public://blockers
 	bool bSprintAllowed = true;
 	bool bPrimaryActionAllowed = true;
 	bool bSecondaryActionAllowed = true;
+
+private:
+	float OverridenWalkingSpeed;
 
 public://fighting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
