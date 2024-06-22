@@ -28,6 +28,7 @@ class UE_DUNGEONCOMPANY_API UDC_CMC : public UCharacterMovementComponent
 		typedef FSavedMove_Character Super;
 
 		uint8 bWantsToSprint:1;
+		uint8 bWantsToClimb:1;
 
 		virtual bool CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter, float MaxDelta) const override;
 		virtual void Clear() override;
@@ -59,6 +60,7 @@ private:
 	bool bWantsToSprint = false;
 	bool bWantsToClimb = false;
 
+public:
 	UPROPERTY(EditDefaultsOnly)
 	float MaxSprintSpeed = 600.f;
 
@@ -67,6 +69,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	float BrakingDecelerationClimbing = 1000.f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float ClimbingStopHeight = 50.f;
 
 	UPROPERTY(EditDefaultsOnly)
 	float ClimbingDistance = 50.f;
@@ -79,12 +84,16 @@ protected:
 
 private:
 	UPROPERTY(Transient)
-	AActor* ClimbingObject;
+	class ALadder* ClimbingLadder;
 
 public:
+	UFUNCTION(Server, Unreliable)
+	void Server_SetClimbingLadder(ALadder* InClimbingLadder);
+	void Server_SetClimbingLadder_Implementation(ALadder* InClimbingLadder);
+
 	UFUNCTION(NetMulticast, Unreliable)
-	void Multicast_SetClimbingObject(AActor* InClimbingObject);
-	void Multicast_SetClimbingObject_Implementation(AActor* InClimbingObject);
+	void Multicast_SetClimbingLadder(ALadder* InClimbingLadder);
+	void Multicast_SetClimbingLadder_Implementation(ALadder* InClimbingLadder);
 
 public:
 	UDELEGATE() DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStoppedClimbing);
@@ -102,6 +111,10 @@ public:
 	virtual bool CanAttemptJump() const override;
 	virtual bool DoJump(bool bReplayingMoves) override;
 
+private:
+	bool bPrevClimbed = false;
+
+public:
 	virtual void UpdateCharacterStateBeforeMovement(float DeltaSeconds) override;
 
 public:

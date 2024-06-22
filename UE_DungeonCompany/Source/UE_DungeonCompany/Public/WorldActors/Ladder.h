@@ -61,7 +61,6 @@ protected:
 
 public:
 	virtual void Interact(APawn* InteractingPawn) override;
-	virtual void AuthorityInteract(APawn* InteractingPawn) override;
 
 protected:
 	UFUNCTION()

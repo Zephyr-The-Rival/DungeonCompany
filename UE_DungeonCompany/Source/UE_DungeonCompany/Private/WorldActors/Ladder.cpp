@@ -43,7 +43,7 @@ ALadder::ALadder()
 	PrimaryActorTick.bCanEverTick = false;
 
 	bInteractable = false;
-	bInteractOnServer = true;
+	bInteractOnServer = false;
 	bReplicates = true;
 
 	RootComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
@@ -108,20 +108,10 @@ void ALadder::Interact(APawn* InteractingPawn)
 	if (!character)
 		return;
 
+	character->GetCharacterMovement<UDC_CMC>()->StartClimbing(this);
+
 	LocalPlayerOnLadder = character;
 	LocalPlayerOnLadder->GetCharacterMovement<UDC_CMC>()->OnStoppedClimbing.AddDynamic(this, &ALadder::StoppedInteracting);
-}
-
-void ALadder::AuthorityInteract(APawn* InteractingPawn)
-{
-	APlayerCharacter* character = Cast<APlayerCharacter>(InteractingPawn);
-
-	if (!character)
-		return;
-
-	UE_LOG(LogTemp, Warning, TEXT("muuh"));
-
-	character->GetCharacterMovement<UDC_CMC>()->StartClimbing(this);
 }
 
 void ALadder::OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

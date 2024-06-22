@@ -44,6 +44,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
+
+	FirstPersonCamera->bUsePawnControlRotation = true;
 	
 	DropTransform = CreateDefaultSubobject<USceneComponent>(TEXT("DropTransform"));
 	DropTransform->SetupAttachment(FirstPersonCamera);
@@ -52,12 +54,15 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
-	GetCharacterMovement()->MaxFlySpeed = ClimbingSpeed;
+	GetCharacterMovement<UDC_CMC>()->MaxClimbSpeed = ClimbingSpeed;
 	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
+
+	bUseControllerRotationRoll = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = true;
 
 	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	VoiceSA = voiceSA.Object;
@@ -450,8 +455,6 @@ void APlayerCharacter::CrouchActionCompleted()
 		return;
 
 	UnCrouch(true);
-
-	
 
 }
 
@@ -965,7 +968,7 @@ void APlayerCharacter::CheckForFallDamage()
 		//	+ "\nFall height:\t " + FString::SanitizeFloat(deltaZ);
 		//LogWarning(*message);
 	}
-	if (GetMovementComponent()->Velocity.Z >= 0)
+	if (GetMovementComponent()->Velocity.Z >= 0 || !GetCharacterMovement()->IsFalling())
 		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
 
 	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->IsFalling());

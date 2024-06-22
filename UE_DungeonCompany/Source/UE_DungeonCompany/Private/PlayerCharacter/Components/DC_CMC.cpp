@@ -8,12 +8,13 @@
 
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 
 bool UDC_CMC::FSavedMove_PlayerCharacter::CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter, float MaxDelta) const
 {
 	FSavedMove_PlayerCharacter* newPCMove = static_cast<FSavedMove_PlayerCharacter*>(NewMove.Get());
 
-	if(bWantsToSprint != newPCMove->bWantsToSprint)
+	if(bWantsToSprint != newPCMove->bWantsToSprint || bWantsToClimb != newPCMove->bWantsToClimb)
 		return false;
 
 	return Super::CanCombineWith(NewMove, InCharacter, MaxDelta);
@@ -24,6 +25,7 @@ void UDC_CMC::FSavedMove_PlayerCharacter::Clear()
 	Super::Clear();
 
 	bWantsToSprint = 0;
+	bWantsToClimb = 0;
 }
 
 uint8 UDC_CMC::FSavedMove_PlayerCharacter::GetCompressedFlags() const
@@ -32,6 +34,9 @@ uint8 UDC_CMC::FSavedMove_PlayerCharacter::GetCompressedFlags() const
 
 	if(bWantsToSprint)
 		result |= FLAG_Custom_0;
+
+	if (bWantsToClimb)
+		result |= FLAG_Custom_1;
 
 	return result;
 }
@@ -43,6 +48,7 @@ void UDC_CMC::FSavedMove_PlayerCharacter::SetMoveFor(ACharacter* C, float InDelt
 	UDC_CMC* cmc = Cast<UDC_CMC>(C->GetCharacterMovement());
 
 	bWantsToSprint = cmc->bWantsToSprint;
+	bWantsToClimb = cmc->bWantsToClimb;
 }
 
 void UDC_CMC::FSavedMove_PlayerCharacter::PrepMoveFor(ACharacter* C)
@@ -52,6 +58,7 @@ void UDC_CMC::FSavedMove_PlayerCharacter::PrepMoveFor(ACharacter* C)
 	UDC_CMC* cmc = Cast<UDC_CMC>(C->GetCharacterMovement());
 
 	cmc->bWantsToSprint = bWantsToSprint;
+	cmc->bWantsToClimb = bWantsToClimb;
 }
 
 FNetworkPredictionData_Client* UDC_CMC::GetPredictionData_Client() const
@@ -74,11 +81,13 @@ void UDC_CMC::UpdateFromCompressedFlags(uint8 Flags)
 	Super::UpdateFromCompressedFlags(Flags);
 
 	bWantsToSprint = (Flags & FSavedMove_Character::FLAG_Custom_0) != 0;
+	bWantsToClimb = (Flags & FSavedMove_Character::FLAG_Custom_1) != 0; 
 }
 
 UDC_CMC::UDC_CMC()
 {
 	SetIsReplicatedByDefault(true);
+	NavAgentProps.bCanCrouch = true;
 }
 
 void UDC_CMC::PhysCustom(float DeltaTime, int32 Iterations)
@@ -90,8 +99,10 @@ void UDC_CMC::PhysCustom(float DeltaTime, int32 Iterations)
 	case CMOVE_Climb:
 		PhysClimb(DeltaTime, Iterations);
 		break;
+
 	default:
 		UE_LOG(LogTemp, Fatal, TEXT("Invalid Movement Mode"));
+
 	}
 }
 
@@ -100,23 +111,12 @@ void UDC_CMC::OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor
 	if(OtherActor != CharacterOwner)
 		return;
 
-	SetMovementMode(MOVE_Falling);
+	bWantsToClimb = false;
 }
 
 void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 {
-	if (!IsValid(ClimbingObject) && GetOwner()->HasAuthority())
-	{
-		SetMovementMode(MOVE_Falling);
-		StartNewPhysics(DeltaTime, Iterations);
-		return;
-
-	}
-
 	if(DeltaTime < MIN_TICK_TIME)
-		return;
-
-	if(!IsValid(ClimbingObject))
 		return;
 
 	if (!CharacterOwner || (!CharacterOwner->Controller && !bRunPhysicsWithNoController && !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() && (CharacterOwner->GetLocalRole() != ROLE_SimulatedProxy)))
@@ -132,17 +132,37 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	
 	Acceleration.Z = 0.f;
 	Acceleration.X = 0.f;
-	Acceleration = Acceleration.RotateAngleAxis(90.f, ClimbingObject->GetActorRightVector());
+	Acceleration = Acceleration.RotateAngleAxis(90.f, ClimbingLadder->GetActorRightVector());
+
+	if (Acceleration.Z < 0)
+	{
+		FHitResult hit;
+
+		FVector start = GetActorLocation();
+		FVector end = start - CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() - ClimbingLadder->GetActorUpVector() * ClimbingStopHeight;
+
+		GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
+
+		if (hit.bBlockingHit)
+		{
+			bWantsToClimb = false;
+
+			SetMovementMode(MOVE_Falling);
+			StartNewPhysics(DeltaTime, Iterations);
+
+			return;
+		}
+	}
 
 	CalcVelocity(DeltaTime, 0.f, false, GetMaxBrakingDeceleration());
-	Velocity = FVector::VectorPlaneProject(Velocity, ClimbingObject->GetActorForwardVector());
+	Velocity = FVector::VectorPlaneProject(Velocity, ClimbingLadder->GetActorForwardVector());
 
 	const FVector delta = DeltaTime * Velocity;
 	if (!delta.IsNearlyZero())
 	{
 		FHitResult hit;
 		SafeMoveUpdatedComponent(delta, UpdatedComponent->GetComponentQuat(), true, hit);
-		//FVector climbingAttractionDelta = -ClimbingObject->GetActorForwardVector() * ClimbingAttractionForce * DeltaTime;
+		//FVector climbingAttractionDelta = -ClimbingLadder->GetActorForwardVector() * ClimbingAttractionForce * DeltaTime;
 		//SafeMoveUpdatedComponent(climbingAttractionDelta, UpdatedComponent->GetComponentQuat(), true, hit);
 	}
 
@@ -161,6 +181,7 @@ float UDC_CMC::GetMaxSpeed() const
 	{
 	case CMOVE_Climb:
 		return MaxClimbSpeed;
+
 	default:
 		UE_LOG(LogTemp, Fatal, TEXT("Invalid Movement Mode"));
 		return -1.f;
@@ -176,6 +197,7 @@ float UDC_CMC::GetMaxBrakingDeceleration() const
 	{
 	case CMOVE_Climb:
 		return BrakingDecelerationClimbing;
+
 	default:
 		UE_LOG(LogTemp, Fatal, TEXT("Invalid Movement Mode"));
 		return -1.f;
@@ -190,15 +212,14 @@ bool UDC_CMC::CanAttemptJump() const
 
 bool UDC_CMC::DoJump(bool bReplayingMoves)
 {
-	bool bWasClimbing = IsCustomMovementModeActive(CMOVE_Climb);
 	if (!Super::DoJump(bReplayingMoves))
 		return false;
 
-	if (bWasClimbing)
+	if (bPrevClimbed)
 	{
 		Velocity += FVector::UpVector * JumpZVelocity * 0.25f;
 		Velocity += -CharacterOwner->GetActorForwardVector() * JumpZVelocity * 0.25f;
-		OnStoppedClimbing.Broadcast();
+		bWantsToClimb = false;
 	}
 
 	return true;
@@ -206,6 +227,36 @@ bool UDC_CMC::DoJump(bool bReplayingMoves)
 
 void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 {
+	if (bWantsToClimb && IsValid(ClimbingLadder) && !bWantsToCrouch)
+	{
+		if (CustomMovementMode != CMOVE_Climb)
+		{
+			SetMovementMode(MOVE_Custom, CMOVE_Climb);
+			bPrevClimbed = true;
+			CharacterOwner->bUseControllerRotationYaw = false;
+
+			FQuat newRotation = UKismetMathLibrary::MakeRotFromZX(ClimbingLadder->GetActorUpVector(), -ClimbingLadder->GetActorForwardVector()).Quaternion();
+
+			float distanceToStart = CharacterOwner->GetDistanceTo(ClimbingLadder);
+
+			if (distanceToStart > ClimbingLadder->GetHeight())
+				distanceToStart = ClimbingLadder->GetHeight();
+
+			FVector climbPosition = ClimbingLadder->GetActorLocation() + ClimbingLadder->GetActorUpVector() * distanceToStart + ClimbingLadder->GetActorForwardVector() * ClimbingDistance;
+
+			FHitResult moveHit;
+			SafeMoveUpdatedComponent(climbPosition - GetActorLocation(), newRotation, false, moveHit);
+		}
+	}
+	else if (bPrevClimbed)
+	{
+		SetMovementMode(MOVE_Falling);
+		CharacterOwner->bUseControllerRotationYaw = true;
+		OnStoppedClimbing.Broadcast();
+		bPrevClimbed = false;
+
+	}
+	
 	Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);
 }
 
@@ -221,42 +272,40 @@ void UDC_CMC::StopSprint()
 
 void UDC_CMC::StartClimbing(AActor* ActorClimbingAt)
 {
-	if(!CharacterOwner->HasAuthority())
-		return;
-
 	ALadder* ladder = Cast<ALadder>(ActorClimbingAt);
 	if (!IsValid(ladder))
 		return;
 
+	bWantsToClimb = true;
+
 	ladder->GetClimbVolume()->OnComponentEndOverlap.AddDynamic(this, &UDC_CMC::OnClimbVolumeLeft);
 
-	ClimbingObject = ladder;
-	Multicast_SetClimbingObject(ladder);
+	ClimbingLadder = ladder;
 
-	FQuat newRotation = UKismetMathLibrary::MakeRotFromZY(ActorClimbingAt->GetActorUpVector(), -ActorClimbingAt->GetActorForwardVector()).Quaternion();
+	if(CharacterOwner->HasAuthority())
+		Multicast_SetClimbingLadder(ladder);
+	else
+		Server_SetClimbingLadder(ladder);
 
-	float distanceToStart = CharacterOwner->GetDistanceTo(ActorClimbingAt);
+	FRotator newRotation = UKismetMathLibrary::MakeRotFromZX(ActorClimbingAt->GetActorUpVector(), -ActorClimbingAt->GetActorForwardVector());	
 
-	if (distanceToStart > ladder->GetHeight())
-		distanceToStart = ladder->GetHeight();
+	CharacterOwner->GetController()->SetControlRotation(newRotation);
 
-	FVector climbPosition = ActorClimbingAt->GetActorLocation() + ActorClimbingAt->GetActorUpVector() * distanceToStart + ActorClimbingAt->GetActorForwardVector() * ClimbingDistance;
-
-	FHitResult moveHit;
-	SafeMoveUpdatedComponent(climbPosition-GetActorLocation(), newRotation, false, moveHit);
-	SetMovementMode(MOVE_Custom, CMOVE_Climb);
-
-	bUseControllerDesiredRotation = false;
 }
 
 void UDC_CMC::StopClimbing()
 {
-	SetMovementMode(MOVE_Falling);
+	bWantsToClimb = false;
 }
 
-void UDC_CMC::Multicast_SetClimbingObject_Implementation(AActor* InClimbingObject)
+void UDC_CMC::Server_SetClimbingLadder_Implementation(ALadder* InClimbingLadder)
 {
-	ClimbingObject = InClimbingObject;
+	Multicast_SetClimbingLadder(InClimbingLadder);
+}
+
+void UDC_CMC::Multicast_SetClimbingLadder_Implementation(ALadder* InClimbingLadder)
+{
+	ClimbingLadder = InClimbingLadder;
 }
 
 bool UDC_CMC::IsCustomMovementModeActive(ECustomMovementMode InCustomMovementMode) const
