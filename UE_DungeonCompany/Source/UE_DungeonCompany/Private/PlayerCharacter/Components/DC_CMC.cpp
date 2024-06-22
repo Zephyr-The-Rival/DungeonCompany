@@ -7,7 +7,6 @@
 #include "Items/ClimbingHook/Rope.h"
 
 #include "Kismet/KismetMathLibrary.h"
-#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 
 bool UDC_CMC::FSavedMove_PlayerCharacter::CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter, float MaxDelta) const
@@ -277,8 +276,6 @@ void UDC_CMC::StartClimbing(AActor* ActorClimbingAt)
 		return;
 
 	bWantsToClimb = true;
-
-	ladder->GetClimbVolume()->OnComponentEndOverlap.AddDynamic(this, &UDC_CMC::OnClimbVolumeLeft);
 
 	ClimbingLadder = ladder;
 
