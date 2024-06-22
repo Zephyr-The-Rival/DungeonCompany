@@ -7,6 +7,7 @@
 #include "Items/ClimbingHook/Rope.h"
 
 #include "Kismet/KismetMathLibrary.h"
+#include "Components/BoxComponent.h"
 
 bool UDC_CMC::FSavedMove_PlayerCharacter::CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter, float MaxDelta) const
 {
@@ -75,6 +76,11 @@ void UDC_CMC::UpdateFromCompressedFlags(uint8 Flags)
 	bWantsToSprint = (Flags & FSavedMove_Character::FLAG_Custom_0) != 0;
 }
 
+UDC_CMC::UDC_CMC()
+{
+	SetIsReplicatedByDefault(true);
+}
+
 void UDC_CMC::PhysCustom(float DeltaTime, int32 Iterations)
 {
 	Super::PhysCustom(DeltaTime, Iterations);
@@ -89,16 +95,28 @@ void UDC_CMC::PhysCustom(float DeltaTime, int32 Iterations)
 	}
 }
 
+void UDC_CMC::OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if(OtherActor != CharacterOwner)
+		return;
+
+	SetMovementMode(MOVE_Falling);
+}
+
 void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 {
-	if (!IsValid(ClimbingObject))
+	if (!IsValid(ClimbingObject) && GetOwner()->HasAuthority())
 	{
 		SetMovementMode(MOVE_Falling);
 		StartNewPhysics(DeltaTime, Iterations);
 		return;
 
 	}
+
 	if(DeltaTime < MIN_TICK_TIME)
+		return;
+
+	if(!IsValid(ClimbingObject))
 		return;
 
 	if (!CharacterOwner || (!CharacterOwner->Controller && !bRunPhysicsWithNoController && !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() && (CharacterOwner->GetLocalRole() != ROLE_SimulatedProxy)))
@@ -113,8 +131,8 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	const FVector oldLocation = UpdatedComponent->GetComponentLocation();
 	
 	Acceleration.Z = 0.f;
-	Acceleration.Y = 0.f;
-	Acceleration = Acceleration.RotateAngleAxis(90.f, -UpdatedComponent->GetRightVector());
+	Acceleration.X = 0.f;
+	Acceleration = Acceleration.RotateAngleAxis(90.f, ClimbingObject->GetActorRightVector());
 
 	CalcVelocity(DeltaTime, 0.f, false, GetMaxBrakingDeceleration());
 	Velocity = FVector::VectorPlaneProject(Velocity, ClimbingObject->GetActorForwardVector());
@@ -180,6 +198,7 @@ bool UDC_CMC::DoJump(bool bReplayingMoves)
 	{
 		Velocity += FVector::UpVector * JumpZVelocity * 0.25f;
 		Velocity += -CharacterOwner->GetActorForwardVector() * JumpZVelocity * 0.25f;
+		OnStoppedClimbing.Broadcast();
 	}
 
 	return true;
@@ -202,11 +221,17 @@ void UDC_CMC::StopSprint()
 
 void UDC_CMC::StartClimbing(AActor* ActorClimbingAt)
 {
+	if(!CharacterOwner->HasAuthority())
+		return;
+
 	ALadder* ladder = Cast<ALadder>(ActorClimbingAt);
 	if (!IsValid(ladder))
 		return;
 
+	ladder->GetClimbVolume()->OnComponentEndOverlap.AddDynamic(this, &UDC_CMC::OnClimbVolumeLeft);
+
 	ClimbingObject = ladder;
+	Multicast_SetClimbingObject(ladder);
 
 	FQuat newRotation = UKismetMathLibrary::MakeRotFromZY(ActorClimbingAt->GetActorUpVector(), -ActorClimbingAt->GetActorForwardVector()).Quaternion();
 
@@ -222,6 +247,16 @@ void UDC_CMC::StartClimbing(AActor* ActorClimbingAt)
 	SetMovementMode(MOVE_Custom, CMOVE_Climb);
 
 	bUseControllerDesiredRotation = false;
+}
+
+void UDC_CMC::StopClimbing()
+{
+	SetMovementMode(MOVE_Falling);
+}
+
+void UDC_CMC::Multicast_SetClimbingObject_Implementation(AActor* InClimbingObject)
+{
+	ClimbingObject = InClimbingObject;
 }
 
 bool UDC_CMC::IsCustomMovementModeActive(ECustomMovementMode InCustomMovementMode) const

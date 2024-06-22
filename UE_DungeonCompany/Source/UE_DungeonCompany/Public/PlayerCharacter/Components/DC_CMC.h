@@ -15,6 +15,7 @@ enum ECustomMovementMode
 {
 	CMOVE_None		UMETA(Hidden),
 	CMOVE_Climb		UMETA(DisplayName = "Climb")
+
 };
 
 UCLASS()
@@ -51,8 +52,12 @@ public:
 protected:
 	virtual void UpdateFromCompressedFlags(uint8 Flags) override;
 
+public:
+	UDC_CMC();
+
 private:
 	bool bWantsToSprint = false;
+	bool bWantsToClimb = false;
 
 	UPROPERTY(EditDefaultsOnly)
 	float MaxSprintSpeed = 600.f;
@@ -64,19 +69,30 @@ private:
 	float BrakingDecelerationClimbing = 1000.f;
 
 	UPROPERTY(EditDefaultsOnly)
-	float ClimbingDistance = 100.f;
+	float ClimbingDistance = 50.f;
 
 	UPROPERTY(EditDefaultsOnly)
 	float ClimbingAttractionForce = 600.f;
-
-private:
-	UPROPERTY(Transient)
-	AActor* ClimbingObject;
 
 protected:
 	virtual void PhysCustom(float DeltaTime, int32 Iterations) override;
 
 private:
+	UPROPERTY(Transient)
+	AActor* ClimbingObject;
+
+public:
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_SetClimbingObject(AActor* InClimbingObject);
+	void Multicast_SetClimbingObject_Implementation(AActor* InClimbingObject);
+
+public:
+	UDELEGATE() DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStoppedClimbing);
+	FOnStoppedClimbing OnStoppedClimbing;
+
+private:
+	UFUNCTION() 
+	void OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	void PhysClimb(float DeltaTime, int32 Iterations);
 
 public:
@@ -93,6 +109,7 @@ public:
 	void StopSprint();
 
 	void StartClimbing(AActor* ActorClimbingAt);
+	void StopClimbing();
 
 	UFUNCTION(BlueprintCallable)
 	bool IsCustomMovementModeActive(ECustomMovementMode InCustomMovementMode) const;
