@@ -117,17 +117,7 @@ void ALadder::Interact(APawn* InteractingPawn)
 	if(!character)
 		return;
 
-	float distanceToLadder = character->GetCapsuleComponent()->GetScaledCapsuleRadius();
-
-	float distanceToStart = character->GetDistanceTo(this);
-
-	if(distanceToStart > Height)
-		distanceToStart = Height;
-
-	FVector climbPosition = GetActorLocation() + GetActorUpVector() * distanceToStart + GetActorForwardVector() * distanceToLadder;
-	bInteractable = false;
-
-	character->StartClimbingAtLocation(climbPosition, GetActorUpVector());
+	character->GetCharacterMovement<UDC_CMC>()->StartClimbing(this);
 
 	LocalPlayerOnLadder = character;
 	character->OnStoppedClimbing.AddDynamic(this, &ALadder::StoppedInteracting);

@@ -74,7 +74,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina;
 
-
 }
 
 // Called when the game starts or when spawned
@@ -255,10 +254,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 	FVector worldMoveVector;
 
-	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
-		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
-	else
-		worldMoveVector = ClimbUpVector * localMoveVector.Y;
+	worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
 
 	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
 		StopSprint();
@@ -510,6 +506,8 @@ void APlayerCharacter::StartSprint()
 	if(Stamina <= 0.f)
 		return;
 
+	GetCharacterMovement<UDC_CMC>()->StartSprint();
+
 	if(!HasAuthority())
 		Server_StartSprint();
 
@@ -518,12 +516,15 @@ void APlayerCharacter::StartSprint()
 
 void APlayerCharacter::Server_StartSprint_Implementation()
 {
-	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed * SprintSpeedMultiplier;
+	//GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed * SprintSpeedMultiplier;
 	bSprinting = true;
+	//GetCharacterMovement<UDC_CMC>()->StartSprint();
 }
 
 void APlayerCharacter::StopSprint()
 {
+	GetCharacterMovement<UDC_CMC>()->StopSprint();
+
 	if (!HasAuthority())
 		Server_StopSprint();
 
@@ -532,7 +533,7 @@ void APlayerCharacter::StopSprint()
 
 void APlayerCharacter::Server_StopSprint_Implementation()
 {
-	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
+	//GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 	bSprinting = false;
 }
 

@@ -44,6 +44,7 @@ private:
 	bool bIgnoreInteractionVolume = false;
 
 public:
+	inline float GetHeight() const { return Height; }
 	/*This doesn't set the height in runtime. Set this in the constructor or before calling the construction script of the Ladder class.*/
 	void SetHeight(float InHeight); 
 
