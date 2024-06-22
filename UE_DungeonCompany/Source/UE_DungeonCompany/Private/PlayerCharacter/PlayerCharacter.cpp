@@ -710,6 +710,11 @@ UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
 
 
 
+void APlayerCharacter::ClearCurrentlyHeldInventorySlot_Implementation()
+{
+	GetCurrentlyHeldInventorySlot()->MyItem = nullptr;
+}
+
 UInventorySlot* APlayerCharacter::FindFreeSlot()
 {
 	if (bSlotAIsInHand)// a is in hand check a and then b

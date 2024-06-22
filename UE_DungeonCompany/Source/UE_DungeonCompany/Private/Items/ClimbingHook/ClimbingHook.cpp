@@ -2,59 +2,11 @@
 
 
 #include "Items/ClimbingHook/ClimbingHook.h"
-#include "PlayerCharacter/PlayerCharacter.h"
-#include "Inventory/InventorySlot.h"
-#include "Items/ClimbingHook/RopeEndComponent.h"
-#include "WorldActors/Ladder.h"
-
-#include "Components/StaticMeshComponent.h"
-#include "Components/SphereComponent.h"
-#include "CableComponent.h"
-#include "PhysicsEngine/PhysicsConstraintComponent.h"
-#include "PhysicsEngine/ConstraintInstance.h"
+#include "Items/ClimbingHook/Rope.h"
 
 AClimbingHook::AClimbingHook()
 {
 	bReplicates = true;
-
-	HookMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HookMesh"));
-	RootComponent = HookMesh;
-
-	HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-	HookMesh->SetSimulatePhysics(true);
-
-	EasyInteract = CreateDefaultSubobject<USphereComponent>(TEXT("EasyInteract"));
-	EasyInteract->SetupAttachment(RootComponent);
-
-	EasyInteract->SetCollisionProfileName("EasyInteract");
-
-	//Rope Setup
-
-	PhysicsConstraint = CreateDefaultSubobject<UPhysicsConstraintComponent>(TEXT("PhysicsConstraint"));
-	PhysicsConstraint->SetupAttachment(RootComponent);
-
-	PhysicsConstraint->SetLinearXLimit(LCM_Limited, RopeLength);
-	PhysicsConstraint->SetLinearYLimit(LCM_Limited, RopeLength);
-	PhysicsConstraint->SetLinearZLimit(LCM_Limited, RopeLength);
-	PhysicsConstraint->SetAngularTwistLimit(ACM_Locked, 0);
-
-	RopeEnd = CreateDefaultSubobject<URopeEndComponent>(TEXT("RopeEnd"));
-	RopeEnd->SetupAttachment(RootComponent);
-
-	RopeEnd->SetStaticMesh(RopeEndMesh);
-	RopeEnd->SetIsReplicated(true);
-
-	Rope = CreateDefaultSubobject<UCableComponent>(TEXT("Rope"));
-	Rope->SetupAttachment(RootComponent);
-
-	Rope->bAttachEnd = true;
-	Rope->EndLocation = FVector::ZeroVector;
-	Rope->CableLength = RopeLength;
-	Rope->CableWidth = RopeWidth;
-	Rope->NumSegments = RopeSegmentsNum;
-	Rope->bEnableCollision = true;
-
-	PhysicsConstraint->SetConstrainedComponents(HookMesh, NAME_None, RopeEnd, NAME_None);
 
 }
 
@@ -63,22 +15,19 @@ void AClimbingHook::BeginPlay()
 
 	Super::BeginPlay();
 
-	Rope->SetAttachEndToComponent(RopeEnd);
+	//Rope->SetAttachEndToComponent(RopeEnd);
 
 	if(!HasAuthority())
 		return;
 
-	if (State != ClimbingHookState::InWorldActive)
+	if (State == ClimbingHookState::InWorldActive)
 	{
-		Rope->DestroyComponent();
-		RopeEnd->DestroyComponent();
-	}
-	else
-	{
-		FTimerHandle timerHandle;
-
-		HookMesh->OnComponentHit.AddDynamic(this, &AClimbingHook::OnHookHit);
-		//GetWorld()->GetTimerManager().SetTimer(timerHandle, this, &AClimbingHook::CreateLadders, 10.f);
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(GetActorLocation());
+		
+		SpawnedRope = GetWorld()->SpawnActorDeferred<ARope>(RopeClass, SpawnTransform);
+		SpawnedRope->SetAttachingActor(this);
+		SpawnedRope->FinishSpawning(SpawnTransform);
 	}
 		
 }
@@ -88,162 +37,8 @@ void AClimbingHook::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (!HasAuthority())
 		return;
 
-	DestroyLadders();
+	if(IsValid(SpawnedRope))
+		SpawnedRope->Destroy();
 
 	Super::EndPlay(EndPlayReason);
-}
-
-void AClimbingHook::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User)
-{
-
-}
-
-void AClimbingHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
-{
-	
-}
-
-void AClimbingHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
-{
-
-	FHitResult attachHit = GetAttachHit(User);
-
-	if(!attachHit.bBlockingHit)
-		return;
-
-	AttachNormal = attachHit.Normal;
-
-	FTransform SpawnTransform;
-	SpawnTransform.SetLocation(attachHit.Location);
-
-	AClimbingHook* newClimbingHook = GetWorld()->SpawnActorDeferred<AClimbingHook>(BP_StaticClass, SpawnTransform);
-
-	if (newClimbingHook)
-	{
-		newClimbingHook->HookMesh->SetSimulatePhysics(false);
-		newClimbingHook->HookMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		newClimbingHook->SerializedStringData = SerializedStringData;
-		newClimbingHook->State = ClimbingHookState::InWorldActive;
-		newClimbingHook->FinishSpawning(SpawnTransform);
-	}
-
-	Destroy(true, true);
-
-}
-
-void AClimbingHook::TriggerLocalSecondaryAction_Implementation(APlayerCharacter* User)
-{
-	User->GetCurrentlyHeldInventorySlot()->MyItem = nullptr;
-}
-
-void AClimbingHook::OnHoldingInHand_Implementation(bool LocallyControlled)
-{
-	HookMesh->SetSimulatePhysics(false);
-	HookMesh->SetCollisionProfileName("NoCollision");
-	EasyInteract->SetCollisionProfileName("NoCollision");
-
-	State = ClimbingHookState::InHand;
-}
-
-void AClimbingHook::OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
-{
-	if(!IsValid(OtherActor) || !OtherActor->IsRootComponentStatic())
-		return;
-
-	AttachNormal = Hit.Normal;
-	HookMesh->SetSimulatePhysics(false);
-
-}
-
-FHitResult AClimbingHook::GetAttachHit(APlayerCharacter* User)
-{
-	FHitResult hit;
-
-	if (!IsValid(User) || !IsValid(User->FirstPersonCamera))
-		return hit;
-
-	FVector start = User->FirstPersonCamera->GetComponentLocation();
-	FVector direction = User->FirstPersonCamera->GetForwardVector();
-	FVector end = direction * MaxAttachDistance + start;
-
-
-	GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
-
-	return hit;
-}
-
-void AClimbingHook::CreateLadders(const TArray<FVector>& EdgeLocations)
-{
-	int locationsNum = EdgeLocations.Num();
-
-	for (int i = 0; i < locationsNum - 1; ++i)
-	{
-		FVector ladderVector = EdgeLocations[i] - EdgeLocations[i + 1];
-
-		if (ladderVector.Z < MinLadderHeight)
-			continue;
-
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *EdgeLocations[i].ToString());
-
-		FVector rightVector = FVector::CrossProduct(ladderVector, FVector::UpVector);
-
-		FVector ladderForwardVector = FVector::CrossProduct(rightVector, ladderVector);
-
-		//if (AttachNormal.Cross(FVector::UpVector).Length() < 0.5)
-		//{
-		//	ladderForwardVector = edgeLocations[i + 1] - GetActorLocation();
-		//	ladderForwardVector.Z = 0.f;
-		//}
-		//else
-		//{
-		//	ladderForwardVector = AttachNormal;
-		//}
-
-		ALadder* newLadder = GetWorld()->SpawnActor<ALadder>(LadderClass);
-		newLadder->SetIgnoreInteractionVolume(true);
-
-		newLadder->PlaceLadder(EdgeLocations[i+1], EdgeLocations[i], ladderForwardVector);
-	}
-}
-
-void AClimbingHook::DestroyLadders()
-{
-	int laddersNum = CreatedLadders.Num();
-
-	for (int i = 0; i < laddersNum; ++i)
-	{
-		if (!IsValid(CreatedLadders[i]))
-			continue;
-
-		CreatedLadders[i]->Destroy();
-	}
-}
-
-void AClimbingHook::GetEdgeLocations(TArray<FVector>& Out)
-{
-	TArray<FVector> ropeLocations;
-	Rope->GetCableParticleLocations(ropeLocations);
-
-	float halfSegmentLengths = 0.5f * (Rope->CableLength / Rope->NumSegments);
-
-	int locationsNum = ropeLocations.Num();
-
-	bool bOnFloor = false;
-
-	Out.Add(HookMesh->GetComponentLocation());
-
-	for (int i = 0; i < locationsNum - 1; ++i)
-	{
-		if (!bOnFloor && ropeLocations[i].Z - ropeLocations[i + 1].Z < halfSegmentLengths)
-		{
-			bOnFloor = true;
-			Out.Add(ropeLocations[i+1]);
-		}
-		else if (bOnFloor && ropeLocations[i].Z - ropeLocations[i + 1].Z > halfSegmentLengths)
-		{
-			bOnFloor = false;
-			Out.Add(ropeLocations[i + 1]);
-		}
-	}
-
 }

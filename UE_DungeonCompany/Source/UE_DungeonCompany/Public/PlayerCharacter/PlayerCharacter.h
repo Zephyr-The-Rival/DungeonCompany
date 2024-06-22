@@ -212,7 +212,6 @@ protected:
 	void Server_StopSprint_Implementation();
 
 public:
-
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool GetIsSprinting() const {return this->bSprinting;}
 
@@ -238,7 +237,6 @@ public:
 	void StopClimbing();
 
 protected:
-
 	UFUNCTION(Server, Unreliable)
 	void Server_StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
 	void Server_StartClimbingAtLocation_Implementation(const FVector& Location, const FVector& InClimbUpVector);
@@ -309,11 +307,8 @@ protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<ABackPack> BackpackActor;
 
-	
-
 	bool bInventoryIsOn = false;
 
-	
 
 protected:
 	void ToggleInventory();
@@ -322,6 +317,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bSlotAIsInHand = true;
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
+
+	UFUNCTION(Client, Unreliable)
+	void ClearCurrentlyHeldInventorySlot();
+	void ClearCurrentlyHeldInventorySlot_Implementation();
 
 private:
 	UInventorySlot* FindFreeSlot();

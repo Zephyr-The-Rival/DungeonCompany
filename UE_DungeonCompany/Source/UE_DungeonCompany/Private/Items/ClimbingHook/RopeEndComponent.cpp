@@ -6,8 +6,8 @@
 URopeEndComponent::URopeEndComponent()
 {
 	bInteractOnServer = true;
-	SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	SetSimulatePhysics(true);
+	//SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	//SetSimulatePhysics(true);
 }
 
 void URopeEndComponent::AuthorityInteract(APawn* InteractingPawn)
