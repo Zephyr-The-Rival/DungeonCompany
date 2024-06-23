@@ -121,7 +121,7 @@ public:
 	void StartSprint();
 	void StopSprint();
 
-	void StartClimbing(AActor* ActorClimbingAt);
+	void StartClimbing(ALadder* ActorClimbingAt);
 	void StopClimbing();
 
 	UFUNCTION(BlueprintCallable)

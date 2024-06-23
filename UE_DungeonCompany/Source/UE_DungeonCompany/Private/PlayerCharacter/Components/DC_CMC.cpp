@@ -8,6 +8,7 @@
 
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/BoxComponent.h"
 
 bool UDC_CMC::FSavedMove_PlayerCharacter::CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter, float MaxDelta) const
 {
@@ -146,6 +147,7 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 		{
 			bWantsToClimb = false;
 
+			ClimbingLadder->GetClimbVolume()->OnComponentBeginOverlap.RemoveAll(this);
 			SetMovementMode(MOVE_Falling);
 			StartNewPhysics(DeltaTime, Iterations);
 
@@ -153,10 +155,20 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 		}
 	}
 
+	FVector ladderVector = ClimbingLadder->GetActorUpVector() * ClimbingLadder->GetHeight();
+
+	FVector ladderLocation = ClimbingLadder->GetActorLocation() + ClimbingLadder->GetActorForwardVector() * ClimbingDistance;
+
+	float zDelta = GetActorLocation().Z - ladderLocation.Z;
+
+	ladderVector *= (zDelta / ladderVector.Z);
+
+	FVector correctionDelta = (ladderLocation + ladderVector - GetActorLocation()) * DeltaTime;
+
 	CalcVelocity(DeltaTime, 0.f, false, GetMaxBrakingDeceleration());
 	Velocity = FVector::VectorPlaneProject(Velocity, ClimbingLadder->GetActorForwardVector());
 
-	const FVector delta = DeltaTime * Velocity;
+	const FVector delta = DeltaTime * Velocity + correctionDelta;
 	if (!delta.IsNearlyZero())
 	{
 		FHitResult hit;
@@ -249,11 +261,16 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 	}
 	else if (bPrevClimbed)
 	{
-		SetMovementMode(MOVE_Falling);
-		CharacterOwner->bUseControllerRotationYaw = true;
-		OnStoppedClimbing.Broadcast();
+		bWantsToClimb = false;
 		bPrevClimbed = false;
 
+		SetMovementMode(MOVE_Falling);
+
+		CharacterOwner->bUseControllerRotationYaw = true;
+		OnStoppedClimbing.Broadcast();
+
+		if(IsValid(ClimbingLadder))
+			ClimbingLadder->GetClimbVolume()->OnComponentBeginOverlap.RemoveAll(this);
 	}
 	
 	Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);
@@ -269,13 +286,16 @@ void UDC_CMC::StopSprint()
 	bWantsToSprint = false;
 }
 
-void UDC_CMC::StartClimbing(AActor* ActorClimbingAt)
+void UDC_CMC::StartClimbing(ALadder* ActorClimbingAt)
 {
 	ALadder* ladder = Cast<ALadder>(ActorClimbingAt);
 	if (!IsValid(ladder))
 		return;
 
 	bWantsToClimb = true;
+
+
+	ladder->GetClimbVolume()->OnComponentEndOverlap.AddDynamic(this, &UDC_CMC::OnClimbVolumeLeft);
 
 	ClimbingLadder = ladder;
 

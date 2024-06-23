@@ -108,6 +108,8 @@ void ALadder::Interact(APawn* InteractingPawn)
 	if (!character)
 		return;
 
+	bInteractable = false;
+
 	character->GetCharacterMovement<UDC_CMC>()->StartClimbing(this);
 
 	LocalPlayerOnLadder = character;
