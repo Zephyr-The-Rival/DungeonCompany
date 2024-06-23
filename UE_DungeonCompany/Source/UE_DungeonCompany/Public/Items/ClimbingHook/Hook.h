@@ -24,6 +24,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	USphereComponent* EasyInteract;
 
+public:
+	inline UStaticMeshComponent* GetHookMesh() const { return HookMesh; }
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Balancing")
 	float MaxAttachDistance = 150.f;

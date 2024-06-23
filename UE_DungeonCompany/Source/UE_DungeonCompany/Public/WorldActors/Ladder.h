@@ -35,10 +35,13 @@ private:
 	float InteractionVolumeHeightBonus = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = Interaction)
-	FVector2D EasyInteractArea = FVector2D(5, 20);
+	bool bIgnoreInteractionVolume = false;
 
 	UPROPERTY(EditAnywhere, Category = Interaction)
-	bool bIgnoreInteractionVolume = false;
+	FVector2D ClimbArea = FVector2D(25, 25);
+
+	UPROPERTY(EditAnywhere, Category = Interaction)
+	FVector2D EasyInteractArea = FVector2D(5, 20);
 
 public:
 	inline UBoxComponent* GetClimbVolume() const { return ClimbVolume; }

@@ -8,6 +8,7 @@
 #include "Rope.generated.h"
 
 class APhysicsConstraintActor;
+class USkeletalMeshComponent;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API ARope : public AActor, public IInteractable
@@ -26,6 +27,8 @@ private:
 	AActor* AttachingActor;
 
 public:
+	inline USkeletalMeshComponent* GetRopeMesh() const { return RopeMesh; }
+
 	void SetAttachingActor(AActor* InActor);
 	
 public:	
@@ -39,6 +42,8 @@ protected:
 public:
 	virtual void Interact(APawn* InteractingPawn) override;
 	virtual void AuthorityInteract(APawn* InteractingPawn) override;
+
+	void GetEdgeLocations(TArray<FVector>& Out);
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

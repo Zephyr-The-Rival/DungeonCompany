@@ -77,7 +77,7 @@ public:
 	float ClimbingDistance = 50.f;
 
 	UPROPERTY(EditDefaultsOnly)
-	float ClimbingAttractionForce = 600.f;
+	float ClimbingAttractionForce = 3.f;
 
 protected:
 	virtual void PhysCustom(float DeltaTime, int32 Iterations) override;

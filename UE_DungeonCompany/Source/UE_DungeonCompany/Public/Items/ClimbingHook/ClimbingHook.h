@@ -18,6 +18,7 @@ enum class ClimbingHookState : uint8 {
 };
 
  class ARope;
+ class ALadder;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AClimbingHook : public AHook
@@ -27,6 +28,12 @@ class UE_DUNGEONCOMPANY_API AClimbingHook : public AHook
 private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ARope> RopeClass;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ALadder> LadderClass;
+
+	UPROPERTY(EditAnywhere)
+	float MinLadderHeight = 100.f;
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -42,5 +49,12 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+private:
+	TArray<ALadder*> CreatedLadders;
+
+protected:
+	void CreateLadders(const TArray<FVector>& EdgeLocations);
+	void DestroyLadders();
 
 };
