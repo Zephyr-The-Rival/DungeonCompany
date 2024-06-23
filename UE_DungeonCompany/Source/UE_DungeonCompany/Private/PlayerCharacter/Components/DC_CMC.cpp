@@ -112,6 +112,8 @@ void UDC_CMC::OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor
 		return;
 
 	bWantsToClimb = false;
+	ClimbingLadder->GetClimbVolume()->OnComponentBeginOverlap.RemoveAll(this);
+
 }
 
 void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
@@ -131,7 +133,6 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	const FVector oldLocation = UpdatedComponent->GetComponentLocation();
 	
 	Acceleration.Z = 0.f;
-	Acceleration.X = 0.f;
 	Acceleration = Acceleration.RotateAngleAxis(90.f, ClimbingLadder->GetActorRightVector());
 
 	if (Acceleration.Z < 0)
@@ -147,7 +148,6 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 		{
 			bWantsToClimb = false;
 
-			ClimbingLadder->GetClimbVolume()->OnComponentBeginOverlap.RemoveAll(this);
 			SetMovementMode(MOVE_Falling);
 			StartNewPhysics(DeltaTime, Iterations);
 
@@ -156,14 +156,13 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	}
 
 	FVector ladderVector = ClimbingLadder->GetActorUpVector() * ClimbingLadder->GetHeight();
-
 	FVector ladderLocation = ClimbingLadder->GetActorLocation() + ClimbingLadder->GetActorForwardVector() * ClimbingDistance;
 
 	float zDelta = GetActorLocation().Z - ladderLocation.Z;
 
 	ladderVector *= (zDelta / ladderVector.Z);
 
-	FVector correctionDelta = (ladderLocation + ladderVector - GetActorLocation()) * DeltaTime;
+	FVector correctionDelta = (ladderLocation + ladderVector - GetActorLocation()) * ClimbingAttractionForce * DeltaTime;
 
 	CalcVelocity(DeltaTime, 0.f, false, GetMaxBrakingDeceleration());
 	Velocity = FVector::VectorPlaneProject(Velocity, ClimbingLadder->GetActorForwardVector());
