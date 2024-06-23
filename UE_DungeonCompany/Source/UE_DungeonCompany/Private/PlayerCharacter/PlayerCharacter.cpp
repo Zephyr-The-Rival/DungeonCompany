@@ -44,6 +44,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
+
+	FirstPersonCamera->bUsePawnControlRotation = true;
 	
 	DropTransform = CreateDefaultSubobject<USceneComponent>(TEXT("DropTransform"));
 	DropTransform->SetupAttachment(FirstPersonCamera);
@@ -52,12 +54,15 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
 	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
-	GetCharacterMovement()->MaxFlySpeed = ClimbingSpeed;
+	GetCharacterMovement<UDC_CMC>()->MaxClimbSpeed = ClimbingSpeed;
 	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
-	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
+
+	bUseControllerRotationRoll = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = true;
 
 	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	VoiceSA = voiceSA.Object;
@@ -73,7 +78,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina;
-
 
 }
 
@@ -255,10 +259,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 	FVector worldMoveVector;
 
-	if (GetCharacterMovement()->MovementMode != MOVE_Flying)
-		worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
-	else
-		worldMoveVector = ClimbUpVector * localMoveVector.Y;
+	worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
 
 	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
 		StopSprint();
@@ -421,9 +422,8 @@ void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 }
 void APlayerCharacter::Jump()
 {
-	if (GetCharacterMovement()->MovementMode == MOVE_Flying)
+	if (GetCharacterMovement()->MovementMode != MOVE_Walking)
 	{
-		StopClimbing();
 		Super::Jump();
 		return;
 	}
@@ -455,8 +455,6 @@ void APlayerCharacter::CrouchActionCompleted()
 		return;
 
 	UnCrouch(true);
-
-	
 
 }
 
@@ -510,6 +508,8 @@ void APlayerCharacter::StartSprint()
 	if(Stamina <= 0.f)
 		return;
 
+	GetCharacterMovement<UDC_CMC>()->StartSprint();
+
 	if(!HasAuthority())
 		Server_StartSprint();
 
@@ -518,12 +518,15 @@ void APlayerCharacter::StartSprint()
 
 void APlayerCharacter::Server_StartSprint_Implementation()
 {
-	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed * SprintSpeedMultiplier;
+	//GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed * SprintSpeedMultiplier;
 	bSprinting = true;
+	//GetCharacterMovement<UDC_CMC>()->StartSprint();
 }
 
 void APlayerCharacter::StopSprint()
 {
+	GetCharacterMovement<UDC_CMC>()->StopSprint();
+
 	if (!HasAuthority())
 		Server_StopSprint();
 
@@ -532,49 +535,8 @@ void APlayerCharacter::StopSprint()
 
 void APlayerCharacter::Server_StopSprint_Implementation()
 {
-	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
+	//GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 	bSprinting = false;
-}
-
-void APlayerCharacter::StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector)
-{
-	bClimbing = true;
-	ClimbUpVector = InClimbUpVector;
-
-	if (HasAuthority())
-		Server_StartClimbingAtLocation_Implementation(Location, InClimbUpVector);
-	else
-		Server_StartClimbingAtLocation(Location, InClimbUpVector);
-
-}
-
-void APlayerCharacter::StopClimbing()
-{	
-	if(!bClimbing)
-		return;
-
-	bClimbing = false;
-
-	OnStoppedClimbing.Broadcast();
-
-	if (HasAuthority())
-		Server_StopClimbing_Implementation();
-	else
-		Server_StopClimbing();
-
-}
-
-void APlayerCharacter::Server_StartClimbingAtLocation_Implementation(const FVector& Location, const FVector& InClimbUpVector)
-{
-	SetActorLocation(Location);
-	GetCharacterMovement()->MovementMode = MOVE_Flying;
-	GetCharacterMovement()->Velocity = FVector::ZeroVector;
-	ClimbUpVector = InClimbUpVector;
-}
-
-void APlayerCharacter::Server_StopClimbing_Implementation()
-{
-	GetCharacterMovement()->MovementMode = MOVE_Walking;
 }
 
 void APlayerCharacter::Server_SetActorLocation_Implementation(const FVector& InLocation)
@@ -990,7 +952,7 @@ void APlayerCharacter::CheckForFallDamage()
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
 	// that results in the jump height not being included in the fall height calculation
 
-	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame && GetCharacterMovement()->MovementMode != MOVE_Flying)//frame of impact
+	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
 	{
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
 		if (deltaZ > 200)
@@ -1006,10 +968,10 @@ void APlayerCharacter::CheckForFallDamage()
 		//	+ "\nFall height:\t " + FString::SanitizeFloat(deltaZ);
 		//LogWarning(*message);
 	}
-	if (GetMovementComponent()->Velocity.Z >= 0 || GetCharacterMovement()->MovementMode == MOVE_Flying)
+	if (GetMovementComponent()->Velocity.Z >= 0 || !GetCharacterMovement()->IsFalling())
 		LastStandingHeight = this->RootComponent->GetComponentLocation().Z;
 
-	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->MovementMode != MOVE_Flying);
+	this->BWasFallingInLastFrame = (GetMovementComponent()->Velocity.Z < 0 && GetCharacterMovement()->IsFalling());
 }
 
 

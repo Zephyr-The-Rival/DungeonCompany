@@ -223,28 +223,6 @@ public:
 	void Server_LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
 	void Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
 
-private:
-	bool bClimbing = false;
-	FVector ClimbUpVector = FVector::UpVector;
-
-public:
-	UDELEGATE()
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStoppedClimbing);
-
-	FOnStoppedClimbing OnStoppedClimbing;
-
-	void StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
-	void StopClimbing();
-
-protected:
-	UFUNCTION(Server, Unreliable)
-	void Server_StartClimbingAtLocation(const FVector& Location, const FVector& InClimbUpVector);
-	void Server_StartClimbingAtLocation_Implementation(const FVector& Location, const FVector& InClimbUpVector);
-
-	UFUNCTION(Server, Unreliable)
-	void Server_StopClimbing();
-	void Server_StopClimbing_Implementation();
-
 public:
 	virtual bool CanJumpInternal_Implementation() const override;
 

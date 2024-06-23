@@ -43,15 +43,10 @@ ALadder::ALadder()
 	PrimaryActorTick.bCanEverTick = false;
 
 	bInteractable = false;
+	bInteractOnServer = false;
 	bReplicates = true;
 
 	RootComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
-
-	BottomBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BottomBox"));
-	BottomBox->SetupAttachment(RootComponent);
-
-	BottomBox->InitBoxExtent(FVector(100, 100, 5));
-	BottomBox->SetRelativeLocation(BottomBox->GetUnscaledBoxExtent().Z * FVector::UpVector);
 
 	InteractVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionVolume"));
 	InteractVolume->SetupAttachment(RootComponent);
@@ -82,15 +77,11 @@ void ALadder::BeginPlay()
 {
 	Super::BeginPlay();
 
-	BottomBox->OnComponentBeginOverlap.AddDynamic(this, &ALadder::OnBottomBoxOverlap);
-
 	if (!bIgnoreInteractionVolume)
 	{
 		InteractVolume->OnComponentBeginOverlap.AddDynamic(this, &ALadder::OnInteractVolumeEntered);
 		InteractVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnInteractVolumeLeft);
 	}
-
-	ClimbVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnClimbVolumeLeft);
 	
 }
 
@@ -113,37 +104,16 @@ void ALadder::CalculateLadderBoxExtents()
 void ALadder::Interact(APawn* InteractingPawn)
 {
 	APlayerCharacter* character = Cast<APlayerCharacter>(InteractingPawn);
-	
-	if(!character)
+
+	if (!character)
 		return;
 
-	float distanceToLadder = character->GetCapsuleComponent()->GetScaledCapsuleRadius();
-
-	float distanceToStart = character->GetDistanceTo(this);
-
-	if(distanceToStart > Height)
-		distanceToStart = Height;
-
-	FVector climbPosition = GetActorLocation() + GetActorUpVector() * distanceToStart + GetActorForwardVector() * distanceToLadder;
 	bInteractable = false;
 
-	character->StartClimbingAtLocation(climbPosition, GetActorUpVector());
+	character->GetCharacterMovement<UDC_CMC>()->StartClimbing(this);
 
 	LocalPlayerOnLadder = character;
-	character->OnStoppedClimbing.AddDynamic(this, &ALadder::StoppedInteracting);
-	bRemovedByLadder = false;
-}
-
-void ALadder::OnBottomBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
-	if (!character || !character->IsLocallyControlled())
-		return;
-
-	bRemovedByLadder = true;
-
-	character->StopClimbing();
-	
+	LocalPlayerOnLadder->GetCharacterMovement<UDC_CMC>()->OnStoppedClimbing.AddDynamic(this, &ALadder::StoppedInteracting);
 }
 
 void ALadder::OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -166,37 +136,15 @@ void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AAc
 
 }
 
-void ALadder::OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
-	if (!character || !character->IsLocallyControlled())
-		return;
-
-	bRemovedByLadder = true;
-
-	character->StopClimbing();
-}
-
 void ALadder::StoppedInteracting()
 {
 	bInteractable = true;
+
 	if(!IsValid(LocalPlayerOnLadder))
 		return;
 
-	LocalPlayerOnLadder->OnStoppedClimbing.RemoveAll(this);
+	LocalPlayerOnLadder->GetCharacterMovement<UDC_CMC>()->OnStoppedClimbing.RemoveAll(this);
 	LocalPlayerOnLadder = nullptr;
-
-	if(bRemovedByLadder)
-		return;
-
-	FVector launchDirection = GetActorForwardVector() + FVector::UpVector * 3;
-	launchDirection.Normalize();
-
-	FVector launchVelocity = launchDirection * LocalPlayerOnLadder->GetCharacterMovement()->JumpZVelocity;
-	LocalPlayerOnLadder->LaunchCharacter(launchVelocity, false, true);
-
-	if(!HasAuthority())
-		LocalPlayerOnLadder->Server_LaunchCharacter(launchVelocity, false, true);
 
 }
 

@@ -100,7 +100,6 @@ FHitResult AHook::GetAttachHit(APlayerCharacter* User)
 	FVector direction = User->FirstPersonCamera->GetForwardVector();
 	FVector end = direction * MaxAttachDistance + start;
 
-
 	GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
 
 	return hit;
