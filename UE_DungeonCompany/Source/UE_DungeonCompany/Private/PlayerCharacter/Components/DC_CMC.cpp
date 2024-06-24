@@ -242,6 +242,8 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 		if (CustomMovementMode != CMOVE_Climb)
 		{
 			SetMovementMode(MOVE_Custom, CMOVE_Climb);
+			ClimbingLadder->GetClimbVolume()->OnComponentEndOverlap.AddDynamic(this, &UDC_CMC::OnClimbVolumeLeft);
+
 			bPrevClimbed = true;
 			CharacterOwner->bUseControllerRotationYaw = false;
 
@@ -292,10 +294,6 @@ void UDC_CMC::StartClimbing(ALadder* ActorClimbingAt)
 		return;
 
 	bWantsToClimb = true;
-
-
-	ladder->GetClimbVolume()->OnComponentEndOverlap.AddDynamic(this, &UDC_CMC::OnClimbVolumeLeft);
-
 	ClimbingLadder = ladder;
 
 	if(CharacterOwner->HasAuthority())

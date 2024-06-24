@@ -10,13 +10,6 @@
  * 
  */
 
-UENUM()
-enum class ClimbingHookState : uint8 {
-     InHand = 0 UMETA(DisplayName = "In Hand"),
-     InWorldInactive = 1  UMETA(DisplayName = "In World Inactive"),
-     InWorldActive = 2     UMETA(DisplayName = "In World Active"),
-};
-
  class ARope;
  class ALadder;
 
@@ -34,10 +27,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float MinLadderHeight = 100.f;
-
-private:
-	UPROPERTY(EditAnywhere)
-	ClimbingHookState State = ClimbingHookState::InWorldInactive;
 
 public:
 	AClimbingHook();

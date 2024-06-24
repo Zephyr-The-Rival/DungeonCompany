@@ -8,7 +8,6 @@
 AClimbingHook::AClimbingHook()
 {
 	bReplicates = true;
-
 }
 
 void AClimbingHook::BeginPlay()
@@ -21,12 +20,12 @@ void AClimbingHook::BeginPlay()
 	if(!HasAuthority())
 		return;
 
-	if (State == ClimbingHookState::InWorldActive)
+	if (GetHookState() == HookState::InWorldActive || GetHookState() == HookState::InWorldAttached)
 	{
 		FTransform SpawnTransform;
-		SpawnTransform.SetLocation(GetActorLocation());
+		//SpawnTransform.SetLocation(GetActorLocation());
 		
-		SpawnedRope = GetWorld()->SpawnActorDeferred<ARope>(RopeClass, SpawnTransform);
+		SpawnedRope = GetWorld()->SpawnActorDeferred<ARope>(RopeClass, SpawnTransform, this);
 		SpawnedRope->SetAttachingActor(this);
 		SpawnedRope->FinishSpawning(SpawnTransform);
 

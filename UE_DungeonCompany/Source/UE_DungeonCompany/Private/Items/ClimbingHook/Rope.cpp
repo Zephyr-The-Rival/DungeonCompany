@@ -6,7 +6,6 @@
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 #include "PhysicsEngine/PhysicsConstraintActor.h"
 #include "Net/UnrealNetwork.h"
-#include "Components/SkeletalMeshComponent.h"
 
 void ARope::SetAttachingActor(AActor* InActor)
 {
@@ -21,8 +20,8 @@ ARope::ARope()
 	RopeMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("RopeMesh"));
 	RootComponent = RopeMesh;
 
-	RopeMesh->SetSimulatePhysics(true);
-	RopeMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	RopeMesh->SetSimulatePhysics(false);
+	RopeMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 }
 
@@ -33,21 +32,9 @@ void ARope::BeginPlay()
 	if (!IsValid(AttachingActor))
 		return;
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("AttachedingActor exists"));
+	UpdateAttachingActor();
 
-	AttachToActor(AttachingActor, FAttachmentTransformRules::KeepRelativeTransform);	
-
-	FTransform SpawnTransform;
-	SpawnTransform.SetLocation(GetActorLocation());
-
-	PhysicsConstraintActor = GetWorld()->SpawnActorDeferred<APhysicsConstraintActor>(APhysicsConstraintActor::StaticClass(), SpawnTransform);
-
-	PhysicsConstraintActor->GetConstraintComp()->ConstraintActor1 = this;
-	PhysicsConstraintActor->GetConstraintComp()->ConstraintActor2 = AttachingActor;
-
-	PhysicsConstraintActor->GetConstraintComp()->SetDisableCollision(true);
-
-	PhysicsConstraintActor->FinishSpawning(SpawnTransform);
+	return;
 
 	FTimerHandle timerhandle;
 	FTimerDelegate timerDelegate = FTimerDelegate::CreateLambda([this]() {
@@ -55,11 +42,7 @@ void ARope::BeginPlay()
 		TArray<FVector> out;
 		GetEdgeLocations(out);
 
-		for (int i = 0; i < out.Num(); ++i)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *out[i].ToString());
-		}
-		});
+	});
 
 	GetWorld()->GetTimerManager().SetTimer(timerhandle, timerDelegate, 5.f, false);
 
@@ -88,7 +71,12 @@ void ARope::GetEdgeLocations(TArray<FVector>& Out)
 	TArray<FName> boneNames;
 
 	RopeMesh = GetComponentByClass<USkeletalMeshComponent>();
+
+	if(!RopeMesh)
+		return;
+
 	RopeMesh->SetSimulatePhysics(false);
+	RopeMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	RopeMesh->GetBoneNames(boneNames);
 	
@@ -134,6 +122,36 @@ void ARope::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ARope, AttachingActor);
+}
+
+void ARope::UpdateAttachingActor()
+{
+	if(!IsValid(AttachingActor))
+		return;
+
+	AttachToActor(AttachingActor, FAttachmentTransformRules::KeepRelativeTransform);
+
+	if(PhysicsConstraintActor)
+		PhysicsConstraintActor->Destroy();
+
+	FTransform SpawnTransform;
+	SpawnTransform.SetLocation(AttachingActor->GetActorLocation());
+
+	PhysicsConstraintActor = GetWorld()->SpawnActorDeferred<APhysicsConstraintActor>(APhysicsConstraintActor::StaticClass(), SpawnTransform);
+
+	PhysicsConstraintActor->GetConstraintComp()->ConstraintActor1 = this;
+	PhysicsConstraintActor->GetConstraintComp()->ConstraintActor2 = AttachingActor;
+
+	PhysicsConstraintActor->GetConstraintComp()->SetLinearXLimit(LCM_Limited, 30.f);
+	PhysicsConstraintActor->GetConstraintComp()->SetLinearYLimit(LCM_Limited, 30.f);
+	PhysicsConstraintActor->GetConstraintComp()->SetLinearZLimit(LCM_Limited, 30.f);
+
+	PhysicsConstraintActor->GetConstraintComp()->SetDisableCollision(true);
+
+	PhysicsConstraintActor->FinishSpawning(SpawnTransform);
+
+	RopeMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	RopeMesh->SetSimulatePhysics(true);
 }
 
 

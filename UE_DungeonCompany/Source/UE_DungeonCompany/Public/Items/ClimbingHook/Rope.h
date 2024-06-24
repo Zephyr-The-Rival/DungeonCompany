@@ -8,7 +8,6 @@
 #include "Rope.generated.h"
 
 class APhysicsConstraintActor;
-class USkeletalMeshComponent;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API ARope : public AActor, public IInteractable
@@ -19,11 +18,10 @@ private:
 	UPROPERTY(EditAnywhere)
 	USkeletalMeshComponent* RopeMesh;
 
-	UPROPERTY(EditAnywhere)
+private:
 	APhysicsConstraintActor* PhysicsConstraintActor;
 
-private:
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = UpdateAttachingActor)
 	AActor* AttachingActor;
 
 public:
@@ -47,5 +45,8 @@ public:
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION()
+	void UpdateAttachingActor();
 
 };

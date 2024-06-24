@@ -9,6 +9,45 @@
 #include "Components/SphereComponent.h"
 #include "Net/UnrealNetwork.h"
 
+void AHook::UpdateState()
+{
+
+	if (State != HookState::InWorldActive)
+	{
+		HookMesh->OnComponentHit.RemoveAll(this);
+	}
+	else if(!HookMesh->OnComponentHit.IsBound())
+	{
+		HookMesh->OnComponentHit.AddDynamic(this, &AHook::OnHookHit);
+	}
+
+	switch (State)
+	{
+		case HookState::InHand:
+			HookMesh->SetSimulatePhysics(false);
+			HookMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			break;
+
+		case HookState::InWorldInactive:
+			HookMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			HookMesh->SetSimulatePhysics(true);
+			break;
+			
+		case HookState::InWorldActive:
+			HookMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			HookMesh->SetSimulatePhysics(true);
+			break;
+
+		case HookState::InWorldAttached:
+			HookMesh->SetSimulatePhysics(false);
+			HookMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			break;
+
+		default:
+			UE_LOG(LogTemp, Warning, TEXT("Invalid Hook State"));
+	}
+}
+
 AHook::AHook()
 {
 	bReplicates = true;
@@ -30,16 +69,7 @@ void AHook::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (bAttached)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Attached"));
-		HookMesh->SetSimulatePhysics(false);
-		HookMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-	else
-	{
-		HookMesh->OnComponentHit.AddDynamic(this, &AHook::OnHookHit);
-	}
+	UpdateState();
 
 }
 
@@ -63,7 +93,7 @@ void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 
 	if (newClimbingHook)
 	{
-		bAttached = true;
+		newClimbingHook->State = HookState::InWorldAttached;
 		newClimbingHook->SerializedStringData = SerializedStringData;
 		newClimbingHook->FinishSpawning(SpawnTransform);
 	}
@@ -78,6 +108,9 @@ void AHook::OnHoldingInHand_Implementation(bool LocallyControlled)
 	HookMesh->SetSimulatePhysics(false);
 	HookMesh->SetCollisionProfileName("NoCollision");
 	EasyInteract->SetCollisionProfileName("NoCollision");
+
+	State = HookState::InHand;
+	UpdateState();
 }
 
 void AHook::OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -85,7 +118,8 @@ void AHook::OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPr
 	if (!IsValid(OtherActor) || !OtherActor->IsRootComponentStatic())
 		return;
 
-	HookMesh->SetSimulatePhysics(false);
+	State = HookState::InWorldAttached;
+	UpdateState();
 
 }
 
@@ -109,5 +143,5 @@ void AHook::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AHook, bAttached)
+	DOREPLIFETIME(AHook, State);
 }
