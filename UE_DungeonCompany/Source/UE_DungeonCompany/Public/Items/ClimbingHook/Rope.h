@@ -21,32 +21,28 @@ private:
 private:
 	APhysicsConstraintActor* PhysicsConstraintActor;
 
-	UPROPERTY(ReplicatedUsing = UpdateAttachingActor)
-	AActor* AttachingActor;
-
 public:
 	inline USkeletalMeshComponent* GetRopeMesh() const { return RopeMesh; }
-
-	void SetAttachingActor(AActor* InActor);
 	
 public:	
 	ARope();
+
+private:
+	FTimerHandle CheckOwnerHandle;
 
 protected:
 	virtual void BeginPlay() override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	int setupTries = 0;
+
+	void SetupActorAttachment();
+
 public:
 	virtual void Interact(APawn* InteractingPawn) override;
 	virtual void AuthorityInteract(APawn* InteractingPawn) override;
 
 	void GetEdgeLocations(TArray<FVector>& Out);
-
-protected:
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	UFUNCTION()
-	void UpdateAttachingActor();
 
 };

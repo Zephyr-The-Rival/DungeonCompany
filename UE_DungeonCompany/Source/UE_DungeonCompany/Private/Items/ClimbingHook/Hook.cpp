@@ -69,6 +69,8 @@ void AHook::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetOwner()->GetName());
+
 	UpdateState();
 
 }

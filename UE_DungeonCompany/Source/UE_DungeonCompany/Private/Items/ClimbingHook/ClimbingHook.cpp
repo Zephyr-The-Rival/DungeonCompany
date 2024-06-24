@@ -12,7 +12,6 @@ AClimbingHook::AClimbingHook()
 
 void AClimbingHook::BeginPlay()
 {
-
 	Super::BeginPlay();
 
 	//Rope->SetAttachEndToComponent(RopeEnd);
@@ -22,12 +21,10 @@ void AClimbingHook::BeginPlay()
 
 	if (GetHookState() == HookState::InWorldActive || GetHookState() == HookState::InWorldAttached)
 	{
-		FTransform SpawnTransform;
-		//SpawnTransform.SetLocation(GetActorLocation());
+		FActorSpawnParameters spawnParams;
+		spawnParams.Owner = this;
 		
-		SpawnedRope = GetWorld()->SpawnActorDeferred<ARope>(RopeClass, SpawnTransform, this);
-		SpawnedRope->SetAttachingActor(this);
-		SpawnedRope->FinishSpawning(SpawnTransform);
+		SpawnedRope = GetWorld()->SpawnActor<ARope>(RopeClass, GetActorLocation(), GetActorRotation(), spawnParams);
 
 	}
 }
