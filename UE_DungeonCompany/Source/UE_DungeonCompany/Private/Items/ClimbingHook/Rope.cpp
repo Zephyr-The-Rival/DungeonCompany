@@ -5,11 +5,12 @@
 
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 #include "PhysicsEngine/PhysicsConstraintActor.h"
+#include "Components/PoseableMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 
 ARope::ARope()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
 	RopeMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("RopeMesh"));
@@ -18,25 +19,29 @@ ARope::ARope()
 	RopeMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	RopeMesh->SetSimulatePhysics(true);
 
+	FixedRopeMesh = CreateDefaultSubobject<UPoseableMeshComponent>(TEXT("FixedRopeMesh"));
+	FixedRopeMesh->SetupAttachment(RootComponent);
+
 }
 
 void ARope::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetWorld()->GetTimerManager().SetTimer(CheckOwnerHandle, this, &ARope::SetupActorAttachment, 0.05f, true, 0.f);
+	SetActorTickEnabled(HasAuthority());
 
-	return;
+	GetWorld()->GetTimerManager().SetTimer(CheckOwnerHandle, this, &ARope::SetupActorAttachment, 0.05f, true, 0.f);
 
 	FTimerHandle timerhandle;
 	FTimerDelegate timerDelegate = FTimerDelegate::CreateLambda([this]() {
 
-		TArray<FVector> out;
-		GetEdgeLocations(out);
+		FreezeAndReplicate();
 
-	});
+		});
 
-	GetWorld()->GetTimerManager().SetTimer(timerhandle, timerDelegate, 5.f, false);
+	//GetWorld()->GetTimerManager().SetTimer(timerhandle, timerDelegate, 5.f, false);
+
+	RopeMesh->GetBoneNames(BoneNames);
 
 }
 
@@ -77,6 +82,34 @@ void ARope::SetupActorAttachment()
 	RopeMesh->SetSimulatePhysics(true);
 }
 
+void ARope::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (bStartedMoving)
+	{
+		SetActorTickEnabled(true);
+		return;
+	}
+
+	bStartedMoving = !IsRopeSettled(true);
+}
+
+bool ARope::IsRopeSettled(bool bIgnoreIfMovedBefore)
+{
+	if(!bIgnoreIfMovedBefore && !bStartedMoving)
+		return false;
+
+	int boneNum = BoneNames.Num();
+	for (int i = 0; i < boneNum; i++)
+	{
+		if (RopeMesh->GetBoneLinearVelocity(BoneNames[i]).Length() > SettledMaxLinearVelocity)
+			return false;
+	}
+
+	return true;
+}
+
 void ARope::Interact(APawn* InteractingPawn)
 {
 }
@@ -85,55 +118,88 @@ void ARope::AuthorityInteract(APawn* InteractingPawn)
 {
 }
 
-void ARope::GetEdgeLocations(TArray<FVector>& Out)
+void ARope::GetRopeTransforms(USkinnedMeshComponent* InRopeMesh, TArray<FTransform>& OutTransforms)
 {
-	TArray<FVector> ropeLocations;
-
 	TArray<FName> boneNames;
 
-	RopeMesh = GetComponentByClass<USkeletalMeshComponent>();
+	InRopeMesh->GetBoneNames(boneNames);
 
-	if(!RopeMesh)
+	int bonesCount = boneNames.Num();
+
+	for (int i = 0; i < bonesCount; ++i)
+	{
+		int boneIndex = InRopeMesh->GetBoneIndex(boneNames[i]);
+		OutTransforms.Add(InRopeMesh->GetBoneTransform(boneIndex));
+	}
+}
+
+void ARope::GetEdgeLocations(TArray<FVector>& OutLocations)
+{
+	TArray<FTransform> ropeTransforms;
+	GetRopeTransforms(RopeMesh, ropeTransforms);
+
+	float halfSegmentLengths = 0.4f * (1000.f / 100.f);
+	
+	int transformsNum = ropeTransforms.Num();
+
+	if (transformsNum < 4)
 		return;
+	
+	bool bOnFloor = !FMath::IsNearlyEqual(ropeTransforms[1].GetLocation().Z, ropeTransforms[2].GetLocation().Z, halfSegmentLengths * 0.8)? false : FMath::IsNearlyEqual(ropeTransforms[1].GetLocation().Z, ropeTransforms[3].GetLocation().Z, halfSegmentLengths * 0.8);
+	
+	OutLocations.Add(ropeTransforms[1].GetLocation());
+
+	for (int i = 2; i < transformsNum - 1; ++i)
+	{
+		if (!bOnFloor && ropeTransforms[i].GetLocation().Z - ropeTransforms[i + 1].GetLocation().Z < halfSegmentLengths)
+		{
+			bOnFloor = true;
+			OutLocations.Add(ropeTransforms[i + 1].GetLocation());
+		}
+		else if (bOnFloor && ropeTransforms[i].GetLocation().Z - ropeTransforms[i + 1].GetLocation().Z > halfSegmentLengths)
+		{
+			bOnFloor = false;
+			OutLocations.Add(ropeTransforms[i + 1].GetLocation());
+		}
+	}
+
+	OutLocations.Add(ropeTransforms[transformsNum-1].GetLocation());
+}
+
+void ARope::FreezeAndReplicate()
+{
+	if (!HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Rope freeze can only be initiated by the server."));
+		return;
+	}
+
+	TArray<FTransform> ropeTransforms;
+	GetRopeTransforms(RopeMesh, ropeTransforms);
+
+	Multicast_SetTransformsAndFreeze(ropeTransforms);
+}
+
+void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransform>& RopeTransforms)
+{
+	TArray<FName> boneNames;
+
+	FixedRopeMesh->SetSkeletalMesh(RopeMesh->GetSkeletalMeshAsset(), false);
+
+	FixedRopeMesh->GetBoneNames(boneNames);
+
+	int bonesNum = boneNames.Num();
+	int ropeTranNum = RopeTransforms.Num();
+
+	UE_LOG(LogTemp, Warning, TEXT("%d"), bonesNum);
+	for (int i = 0; i < bonesNum && i < ropeTranNum; ++i)
+	{
+		FixedRopeMesh->SetBoneTransformByName(boneNames[i], RopeTransforms[i], EBoneSpaces::WorldSpace);
+	}
 
 	RopeMesh->SetSimulatePhysics(false);
 	RopeMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	RopeMesh->GetBoneNames(boneNames);
+	RopeMesh->SetVisibility(false);
 	
-	int bonesCount = boneNames.Num();
-	
-	for (int i = 1; i < bonesCount; ++i)
-	{
-		ropeLocations.Add(RopeMesh->GetBoneLocation(boneNames[i], EBoneSpaces::WorldSpace));
-	}
-
-	float halfSegmentLengths = 0.5f * (1000.f / 100.f);
-	
-	int locationsNum = ropeLocations.Num();
-
-	if (locationsNum < 3)
-		return;
-	
-	bool bOnFloor = !FMath::IsNearlyEqual(ropeLocations[0].Z, ropeLocations[1].Z, halfSegmentLengths * 0.8)? false : FMath::IsNearlyEqual(ropeLocations[0].Z, ropeLocations[2].Z, halfSegmentLengths * 0.8);
-	
-	for (int i = 0; i < locationsNum - 1; ++i)
-	{
-		if (!i)
-		{
-			Out.Add(ropeLocations[i]);
-			continue;
-		}
-
-		if (!bOnFloor && ropeLocations[i].Z - ropeLocations[i + 1].Z < halfSegmentLengths)
-		{
-			bOnFloor = true;
-			Out.Add(ropeLocations[i + 1]);
-		}
-		else if (bOnFloor && ropeLocations[i].Z - ropeLocations[i + 1].Z > halfSegmentLengths)
-		{
-			bOnFloor = false;
-			Out.Add(ropeLocations[i + 1]);
-		}
-	}
 }

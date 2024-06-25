@@ -162,18 +162,30 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 
 	ladderVector *= (zDelta / ladderVector.Z);
 
-	FVector correctionDelta = (ladderLocation + ladderVector - GetActorLocation()) * ClimbingAttractionForce * DeltaTime;
+	FHitResult wallHit;
+		
+	GetWorld()->LineTraceSingleByChannel(wallHit, oldLocation, oldLocation + UpdatedComponent->GetForwardVector() * 50, ECC_GameTraceChannel3);
+
+	FVector correctionDelta = (ladderLocation + ladderVector - GetActorLocation()) * 3 * DeltaTime;
 
 	CalcVelocity(DeltaTime, 0.f, false, GetMaxBrakingDeceleration());
 	Velocity = FVector::VectorPlaneProject(Velocity, ClimbingLadder->GetActorForwardVector());
 
-	const FVector delta = DeltaTime * Velocity + correctionDelta;
+	FVector delta = DeltaTime * Velocity;
 	if (!delta.IsNearlyZero())
 	{
 		FHitResult hit;
+		if (wallHit.bBlockingHit)
+		{
+			FVector climbingAttractionDelta = -wallHit.Normal * ClimbingAttractionForce * DeltaTime;
+			SafeMoveUpdatedComponent(climbingAttractionDelta, UpdatedComponent->GetComponentQuat(), true, hit);
+		}
+		else
+		{
+			delta += correctionDelta;
+		}
+
 		SafeMoveUpdatedComponent(delta, UpdatedComponent->GetComponentQuat(), true, hit);
-		//FVector climbingAttractionDelta = -ClimbingLadder->GetActorForwardVector() * ClimbingAttractionForce * DeltaTime;
-		//SafeMoveUpdatedComponent(climbingAttractionDelta, UpdatedComponent->GetComponentQuat(), true, hit);
 	}
 
 	Velocity = (UpdatedComponent->GetComponentLocation() - oldLocation) / DeltaTime;
@@ -242,7 +254,9 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 		if (CustomMovementMode != CMOVE_Climb)
 		{
 			SetMovementMode(MOVE_Custom, CMOVE_Climb);
-			ClimbingLadder->GetClimbVolume()->OnComponentEndOverlap.AddDynamic(this, &UDC_CMC::OnClimbVolumeLeft);
+
+			if(!ClimbingLadder->GetClimbVolume()->OnComponentEndOverlap.IsBound())
+				ClimbingLadder->GetClimbVolume()->OnComponentEndOverlap.AddDynamic(this, &UDC_CMC::OnClimbVolumeLeft);
 
 			bPrevClimbed = true;
 			CharacterOwner->bUseControllerRotationYaw = false;
@@ -301,7 +315,7 @@ void UDC_CMC::StartClimbing(ALadder* ActorClimbingAt)
 	else
 		Server_SetClimbingLadder(ladder);
 
-	FRotator newRotation = UKismetMathLibrary::MakeRotFromZX(ActorClimbingAt->GetActorUpVector(), -ActorClimbingAt->GetActorForwardVector());	
+	FRotator newRotation = UKismetMathLibrary::MakeRotFromZX(FVector::UpVector, -ActorClimbingAt->GetActorForwardVector());	
 
 	CharacterOwner->GetController()->SetControlRotation(newRotation);
 

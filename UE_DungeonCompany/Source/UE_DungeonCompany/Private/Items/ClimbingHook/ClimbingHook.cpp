@@ -14,6 +14,8 @@ void AClimbingHook::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SetActorTickEnabled(HasAuthority());
+
 	//Rope->SetAttachEndToComponent(RopeEnd);
 
 	if(!HasAuthority())
@@ -25,7 +27,6 @@ void AClimbingHook::BeginPlay()
 		spawnParams.Owner = this;
 		
 		SpawnedRope = GetWorld()->SpawnActor<ARope>(RopeClass, GetActorLocation(), GetActorRotation(), spawnParams);
-
 	}
 }
 
@@ -37,7 +38,29 @@ void AClimbingHook::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if(IsValid(SpawnedRope))
 		SpawnedRope->Destroy();
 
+	DestroyLadders();
+
 	Super::EndPlay(EndPlayReason);
+}
+
+void AClimbingHook::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if(!IsValid(SpawnedRope))
+		return;
+
+	if (SpawnedRope->IsRopeSettled())
+	{
+		TArray<FVector> edgeLocations;
+		SpawnedRope->GetEdgeLocations(edgeLocations);
+
+		SpawnedRope->FreezeAndReplicate();
+
+		CreateLadders(edgeLocations);
+
+		SetActorTickEnabled(false);
+	}
 }
 
 void AClimbingHook::CreateLadders(const TArray<FVector>& EdgeLocations)
@@ -46,31 +69,50 @@ void AClimbingHook::CreateLadders(const TArray<FVector>& EdgeLocations)
 
 	for (int i = 0; i < locationsNum - 1; ++i)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *EdgeLocations[i].ToString());
+
 		FVector ladderVector = EdgeLocations[i] - EdgeLocations[i + 1];
 
 		if (ladderVector.Z < MinLadderHeight)
 			continue;
 
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *EdgeLocations[i].ToString());
+		ladderVector.Normalize();
 
 		FVector rightVector = FVector::CrossProduct(ladderVector, FVector::UpVector);
+		rightVector.Normalize();
+	
+		FVector ladderForwardVector;
 
-		FVector ladderForwardVector = FVector::CrossProduct(rightVector, ladderVector);
+		FHitResult hit;
 
-		//if (AttachNormal.Cross(FVector::UpVector).Length() < 0.5)
-		//{
-		//	ladderForwardVector = edgeLocations[i + 1] - GetActorLocation();
-		//	ladderForwardVector.Z = 0.f;
-		//}
-		//else
-		//{
-		//	ladderForwardVector = AttachNormal;
-		//}
+		const int steps = 16;
+
+		DrawDebugLine(GetWorld(), EdgeLocations[i + 1], EdgeLocations[i + 1] + ladderVector, FColor::Green, false, 5.f);
+		DrawDebugLine(GetWorld(), EdgeLocations[i], EdgeLocations[i] + rightVector * 40, FColor::Red, false, 5.f);
+
+		for (int j = 0; j < steps; ++j)
+		{
+			FVector start = EdgeLocations[i];
+
+			FVector end = start + rightVector.FVector::RotateAngleAxis((360.f / steps) * j, ladderVector) * 20;
+			//FVector end = start + FVector(FMath::Sin(sinSteps * j), FMath::Cos(sinSteps * j), 0) * 20;
+
+			GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
+
+			DrawDebugLine(GetWorld(), start, end, FColor::Blue, false, 5.f);
+
+			if(hit.bBlockingHit)
+				ladderForwardVector += hit.Normal;
+		}
+
+		ladderForwardVector.Normalize();
 
 		ALadder* newLadder = GetWorld()->SpawnActor<ALadder>(LadderClass);
 		newLadder->SetIgnoreInteractionVolume(true);
 
 		newLadder->PlaceLadder(EdgeLocations[i + 1], EdgeLocations[i], ladderForwardVector);
+
+		CreatedLadders.Add(newLadder);
 	}
 }
 

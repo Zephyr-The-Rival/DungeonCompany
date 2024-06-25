@@ -82,7 +82,6 @@ void AHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 
 void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 {
-
 	FHitResult attachHit = GetAttachHit(User);
 
 	if (!attachHit.bBlockingHit)

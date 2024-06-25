@@ -61,6 +61,8 @@ ALadder::ALadder()
 	EasyInteractBox = CreateDefaultSubobject<UBoxComponent>(TEXT("EasyInteractBox"));
 	EasyInteractBox->SetupAttachment(RootComponent);
 
+	EasyInteractBox->SetCollisionProfileName(FName("EasyInteract"));
+
 	EasyInteractBox->InitBoxExtent(FVector(1, 1, 1));
 }
 
@@ -95,7 +97,7 @@ void ALadder::CalculateLadderBoxExtents()
 	float halfHeight = Height / 2;
 
 	ClimbVolume->SetBoxExtent(FVector(ClimbArea, halfHeight));
-	ClimbVolume->SetRelativeLocation(FVector(ClimbArea.X, 0, halfHeight));
+	ClimbVolume->SetRelativeLocation(FVector(0, 0, halfHeight));
 
 	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, halfHeight));
 	EasyInteractBox->SetRelativeLocation(FVector(0, 0, halfHeight));
@@ -155,7 +157,7 @@ void ALadder::PlaceLadder(const FVector& From, const FVector& To, const FVector&
 	FVector ladderVector = To - From;
 	Height = ladderVector.Length();
 
-	FRotator ladderRotation = UKismetMathLibrary::MakeRotFromZY(ladderVector, ForwardVector);
+	FRotator ladderRotation = UKismetMathLibrary::MakeRotFromZX(ladderVector, ForwardVector);
 	SetActorRotation(ladderRotation);
 
 	CalculateLadderBoxExtents();
