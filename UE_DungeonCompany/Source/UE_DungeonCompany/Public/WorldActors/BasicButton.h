@@ -25,7 +25,10 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void AuthorityInteract(APawn* InteractingPawn) override;
+	virtual void OnHovered(APlayerCharacter* PlayerCharacter) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString InteractPromptText="Interact";
 
 public:	
 	// Called every frame

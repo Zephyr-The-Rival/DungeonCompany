@@ -18,6 +18,8 @@ struct FSlotData;
 class UInventory;
 class UInventorySlot;
 class ABackPack;
+class ABuyableItem;
+class UPlayerHud;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -327,6 +329,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bSlotAIsInHand = true;
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool HasFreeSpace();
 
 private:
 	UInventorySlot* FindFreeSlot();
@@ -352,8 +357,8 @@ protected:
 	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 	UFUNCTION(Server, Unreliable)
-	void AddMoneyToWallet(float Amount);
-	void AddMoneyToWallet_Implementation(float Amount);
+	void AddMoneyToWallet(int32 Amount);
+	void AddMoneyToWallet_Implementation(int32 Amount);
 
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
@@ -481,6 +486,8 @@ public://cheat Stuff:
 	UFUNCTION(BlueprintCallable)
 	void Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn);
 	
-	
+public://buyingItems
+	void BuyItem(ABuyableItem* ItemToBuy);
 
+	UPlayerHud* GetMyHud();
 };

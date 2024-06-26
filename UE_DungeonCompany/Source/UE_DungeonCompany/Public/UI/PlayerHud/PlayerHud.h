@@ -13,6 +13,7 @@
 class APlayerCharacter;
 class UInventorySlot;
 class UInputAction;
+class ABuyableItem;
 
 UENUM(BlueprintType)
 enum EDirections
@@ -50,9 +51,9 @@ public:
 	APlayerCharacter* MyCharacter;
 
 	UFUNCTION(BlueprintNativeEvent)
-	void ShowCrosshair(const FString& Text, UInputAction* InputAction);
+	void ShowCrosshair(UTexture2D* newTexture);
 
-	virtual void ShowCrosshair_Implementation(const FString& Text, UInputAction* InputAction);
+	virtual void ShowCrosshair_Implementation(UTexture2D* newTexture);
 
 	UFUNCTION(BlueprintNativeEvent)
 	void HideCrosshair();
@@ -93,4 +94,12 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void ToggleOptionsMenu(bool On);
 	void ToggleOptionsMenu_Implementation(bool On);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ShowTextInteractPrompt(const FString& NewText);
+	void ShowTextInteractPrompt_Implementation(const FString& NewText);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ShowBuyPrompt(ABuyableItem* BuyableItem);
+	void ShowBuyPrompt_Implementation(ABuyableItem* BuyableItem);
 };

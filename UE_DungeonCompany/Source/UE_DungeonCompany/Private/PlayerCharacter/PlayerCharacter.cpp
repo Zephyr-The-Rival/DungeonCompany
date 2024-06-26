@@ -19,6 +19,7 @@
 #include "Items/WorldCurrency.h"
 #include "WorldActors/SharedStatsManager.h"
 #include "Items/BackPack.h"
+#include "Items/BuyableItem.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -306,10 +307,12 @@ void APlayerCharacter::InteractorLineTrace()
 		{
 			if (CurrentInteractable != i)//if a new intractable is being looked at
 			{
-			this->CurrentInteractable = i;
-				
+				this->CurrentInteractable = i;
+				this->CurrentInteractable->OnHovered(this);
+
 				ADC_PC* c = Cast<ADC_PC>(GetController());
-				c->GetMyPlayerHud()->ShowCrosshair(TEXT("to Interact"), InteractAction);
+				c->GetMyPlayerHud()->ShowCrosshair(nullptr);
+
 			}
 		}
 		else
@@ -317,8 +320,10 @@ void APlayerCharacter::InteractorLineTrace()
 			if (CurrentInteractable != NULL)
 			{
 				Cast<ADC_PC>(GetController())->GetMyPlayerHud()->HideCrosshair();
+				this->CurrentInteractable->OnUnHovered(this);
+				this->CurrentInteractable = NULL;
 			}
-			this->CurrentInteractable = NULL;
+
 		}
 		
 
@@ -328,8 +333,10 @@ void APlayerCharacter::InteractorLineTrace()
 		if (CurrentInteractable != NULL)
 		{
 			Cast<ADC_PC>(GetController())->GetMyPlayerHud()->HideCrosshair();
+			this->CurrentInteractable->OnUnHovered(this);
+			this->CurrentInteractable = NULL;
 		}
-		this->CurrentInteractable = NULL;
+
 	}
 }
 
@@ -656,10 +663,10 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 }
 
 
-void APlayerCharacter::AddMoneyToWallet_Implementation(float Amount)
+void APlayerCharacter::AddMoneyToWallet_Implementation(int32 Amount)
 {
-	ASharedStatsManager* m= Cast<ASharedStatsManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
-	m->Money += Amount;
+	ASharedStatsManager* wallet= Cast<ASharedStatsManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
+	wallet->Money += Amount;
 }
 
 void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas)
@@ -957,6 +964,11 @@ void APlayerCharacter::TriggerPrimaryItemAction()
 	Server_TriggerPrimaryItemAction();
 }
 
+bool APlayerCharacter::HasFreeSpace()
+{
+	return IsValid(this->FindFreeSlot());
+}
+
 void APlayerCharacter::TriggerSecondaryItemAction()
 {
 	if (bInventoryIsOn || !bSecondaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
@@ -1181,4 +1193,25 @@ void APlayerCharacter::OnAttackOver()
 	WalkingSpeed = OverridenWalkingSpeed;
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 	
+}
+
+
+void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
+{
+	AddMoneyToWallet(-ItemToBuy->GetPrice());
+
+	UInventorySlot* freeSlot = FindFreeSlot();
+
+	if (IsValid(freeSlot))
+	{
+		freeSlot->MyItem = NewObject<UItemData>(GetTransientPackage(), ItemToBuy->MyItemDataClass);
+		
+		if (freeSlot == GetCurrentlyHeldInventorySlot())
+			TakeOutItem();
+	}
+}
+
+UPlayerHud* APlayerCharacter::GetMyHud()
+{	
+	return  Cast<ADC_PC>(GetController())->GetMyPlayerHud();
 }
