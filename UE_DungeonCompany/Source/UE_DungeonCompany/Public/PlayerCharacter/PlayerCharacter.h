@@ -315,7 +315,7 @@ protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetBackpack)
 	UInventory* Backpack;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Backpack")
 	TSubclassOf<ABackPack> BackpackActor;
 
 	bool bInventoryIsOn = false;
@@ -486,8 +486,15 @@ public://cheat Stuff:
 	UFUNCTION(BlueprintCallable)
 	void Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn);
 	
+
 public://buyingItems
 	void BuyItem(ABuyableItem* ItemToBuy);
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Backpack")
+	TSubclassOf<UItemData> BackpackClass;
+
+public:
 	UPlayerHud* GetMyHud();
+	
 };

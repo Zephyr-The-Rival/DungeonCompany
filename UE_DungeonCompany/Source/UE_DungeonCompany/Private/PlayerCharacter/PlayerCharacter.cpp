@@ -1198,8 +1198,18 @@ void APlayerCharacter::OnAttackOver()
 
 void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 {
-	AddMoneyToWallet(-ItemToBuy->GetPrice());
 
+	if (ItemToBuy->MyItemDataClass == BackpackClass)
+	{
+		if (!this->bHasBackPack)
+		{
+			AddMoneyToWallet(-ItemToBuy->GetPrice());
+			this->bHasBackPack = true;			
+		}
+		return;
+	}
+		
+	AddMoneyToWallet(-ItemToBuy->GetPrice());
 	UInventorySlot* freeSlot = FindFreeSlot();
 
 	if (IsValid(freeSlot))
@@ -1215,3 +1225,4 @@ UPlayerHud* APlayerCharacter::GetMyHud()
 {	
 	return  Cast<ADC_PC>(GetController())->GetMyPlayerHud();
 }
+
