@@ -10,6 +10,27 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
+FVector ALadder::GetLocationAtZ(float Z) const
+{
+	FVector location = GetActorLocation();
+
+	float heightDelta = Z - location.Z;
+
+	if (heightDelta < 0.f || heightDelta > Height)
+		return FVector::ZeroVector;
+
+	FVector ladderVector = Height * GetActorUpVector();
+
+	ladderVector *= (Z / ladderVector.Z);
+
+	return location + ladderVector;
+}
+
+FVector ALadder::GetUpperEndLocation() const
+{
+	return GetActorLocation() + Height * GetActorUpVector();
+}
+
 void ALadder::SetHeight(float InHeight)
 {
 	Height = InHeight;
@@ -57,6 +78,8 @@ ALadder::ALadder()
 	ClimbVolume->SetupAttachment(RootComponent);
 
 	ClimbVolume->InitBoxExtent(FVector(1, 1, 1));
+
+	RegisterClimbVolume(ClimbVolume);
 
 	EasyInteractBox = CreateDefaultSubobject<UBoxComponent>(TEXT("EasyInteractBox"));
 	EasyInteractBox->SetupAttachment(RootComponent);

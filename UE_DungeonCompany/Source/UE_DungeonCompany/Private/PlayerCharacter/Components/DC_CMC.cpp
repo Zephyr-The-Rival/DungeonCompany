@@ -3,7 +3,7 @@
 
 #include "PlayerCharacter/Components/DC_CMC.h"
 #include "PlayerCharacter/PlayerCharacter.h"
-#include "WorldActors/Ladder.h"
+#include "WorldActors/Climbable.h"
 #include "Items/ClimbingHook/Rope.h"
 
 #include "Kismet/KismetMathLibrary.h"
@@ -106,16 +106,6 @@ void UDC_CMC::PhysCustom(float DeltaTime, int32 Iterations)
 	}
 }
 
-void UDC_CMC::OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if(OtherActor != CharacterOwner)
-		return;
-
-	bWantsToClimb = false;
-	ClimbingLadder->GetClimbVolume()->OnComponentBeginOverlap.RemoveAll(this);
-
-}
-
 void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 {
 	if(DeltaTime < MIN_TICK_TIME)
@@ -133,14 +123,14 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	const FVector oldLocation = UpdatedComponent->GetComponentLocation();
 	
 	Acceleration.Z = 0.f;
-	Acceleration = Acceleration.RotateAngleAxis(90.f, ClimbingLadder->GetActorRightVector());
+	Acceleration = Acceleration.RotateAngleAxis(90.f, ClimbingObject->GetActorRightVector());
 
 	if (Acceleration.Z < 0)
 	{
 		FHitResult hit;
 
-		FVector start = GetActorLocation();
-		FVector end = start - CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() - ClimbingLadder->GetActorUpVector() * ClimbingStopHeight;
+		FVector start = oldLocation;
+		FVector end = start - CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() - ClimbingObject->GetActorUpVector() * ClimbingStopHeight;
 
 		GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
 
@@ -155,40 +145,50 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 		}
 	}
 
-	FVector ladderVector = ClimbingLadder->GetActorUpVector() * ClimbingLadder->GetHeight();
-	FVector ladderLocation = ClimbingLadder->GetActorLocation() + ClimbingLadder->GetActorForwardVector() * ClimbingDistance;
-
-	float zDelta = GetActorLocation().Z - ladderLocation.Z;
-
-	ladderVector *= (zDelta / ladderVector.Z);
+	FVector climbVector = ClimbingObject->GetUpVectorAtZ(oldLocation.Z);
+	FVector ladderLocation = ClimbingObject->GetActorLocation() + -UpdatedComponent->GetForwardVector() * ClimbingDistance;
 
 	FHitResult wallHit;
+	FHitResult ceilingHit;
+
+	FVector planeNormal = FVector::CrossProduct(climbVector, UpdatedComponent->GetRightVector());
 		
 	GetWorld()->LineTraceSingleByChannel(wallHit, oldLocation, oldLocation + UpdatedComponent->GetForwardVector() * 50, ECC_GameTraceChannel3);
-
-	FVector correctionDelta = (ladderLocation + ladderVector - GetActorLocation()) * 3 * DeltaTime;
+	GetWorld()->LineTraceSingleByChannel(ceilingHit, oldLocation, oldLocation + ClimbingObject->GetActorUpVector() * 50, ECC_GameTraceChannel3);
 
 	CalcVelocity(DeltaTime, 0.f, false, GetMaxBrakingDeceleration());
-	Velocity = FVector::VectorPlaneProject(Velocity, ClimbingLadder->GetActorForwardVector());
+	Velocity = FVector::VectorPlaneProject(Velocity, planeNormal);
 
 	FVector delta = DeltaTime * Velocity;
-	if (!delta.IsNearlyZero())
+	if (delta.IsNearlyZero())
 	{
-		FHitResult hit;
-		if (wallHit.bBlockingHit)
-		{
-			FVector climbingAttractionDelta = -wallHit.Normal * ClimbingAttractionForce * DeltaTime;
-			SafeMoveUpdatedComponent(climbingAttractionDelta, UpdatedComponent->GetComponentQuat(), true, hit);
-		}
-		else
-		{
-			delta += correctionDelta;
-		}
-
-		SafeMoveUpdatedComponent(delta, UpdatedComponent->GetComponentQuat(), true, hit);
+		Velocity = (UpdatedComponent->GetComponentLocation() - oldLocation) / DeltaTime;
+		return;
+	}
+	
+	FHitResult hit;
+	SafeMoveUpdatedComponent(delta, UpdatedComponent->GetComponentQuat(), true, hit);
+	if (ceilingHit.bBlockingHit || hit.bBlockingHit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Avoiding ceiling"));
+		//FVector avoidanceDelta = ClimbingLadder->GetActorForwardVector() * ClimbingAttractionForce * DeltaTime;
+		//SafeMoveUpdatedComponent(avoidanceDelta, UpdatedComponent->GetComponentQuat(), true, hit);
+	}
+	else if(wallHit.bBlockingHit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Attracting to wall %s"), *wallHit.Normal.ToString());
+		FVector climbingAttractionDelta = -wallHit.Normal * ClimbingAttractionForce * DeltaTime;
+		SafeMoveUpdatedComponent(climbingAttractionDelta, UpdatedComponent->GetComponentQuat(), true, hit);
+	}
+	else
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("correction to ladder position"));
+		//FVector correctionDelta = (ladderLocation + ladderVector - GetActorLocation()) * 3 * DeltaTime;
+		//SafeMoveUpdatedComponent(correctionDelta, UpdatedComponent->GetComponentQuat(), true, hit);
 	}
 
 	Velocity = (UpdatedComponent->GetComponentLocation() - oldLocation) / DeltaTime;
+
 }
 
 float UDC_CMC::GetMaxSpeed() const
@@ -249,26 +249,28 @@ bool UDC_CMC::DoJump(bool bReplayingMoves)
 
 void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 {
-	if (bWantsToClimb && IsValid(ClimbingLadder) && !bWantsToCrouch)
+	if (bWantsToClimb && IsValid(ClimbingObject) && !bWantsToCrouch && bCanClimb)
 	{
 		if (CustomMovementMode != CMOVE_Climb)
 		{
 			SetMovementMode(MOVE_Custom, CMOVE_Climb);
 
-			if(!ClimbingLadder->GetClimbVolume()->OnComponentEndOverlap.IsBound())
-				ClimbingLadder->GetClimbVolume()->OnComponentEndOverlap.AddDynamic(this, &UDC_CMC::OnClimbVolumeLeft);
-
 			bPrevClimbed = true;
 			CharacterOwner->bUseControllerRotationYaw = false;
 
-			FQuat newRotation = UKismetMathLibrary::MakeRotFromZX(ClimbingLadder->GetActorUpVector(), -ClimbingLadder->GetActorForwardVector()).Quaternion();
+			FRotator newRotation = UpdatedComponent->GetComponentRotation();
+			newRotation.Yaw = ClimbingObject->GetClimbRotationYaw();
 
-			float distanceToStart = CharacterOwner->GetDistanceTo(ClimbingLadder);
+			float startZ = GetActorLocation().Z;
 
-			if (distanceToStart > ClimbingLadder->GetHeight())
-				distanceToStart = ClimbingLadder->GetHeight();
+			FVector upperEnd = ClimbingObject->GetUpperEndLocation();
 
-			FVector climbPosition = ClimbingLadder->GetActorLocation() + ClimbingLadder->GetActorUpVector() * distanceToStart + ClimbingLadder->GetActorForwardVector() * ClimbingDistance;
+			if (ClimbingObject->GetUpperEndLocation().Z < startZ)
+				startZ = upperEnd.Z;
+
+			FVector forwardVector = FVector::CrossProduct(ClimbingObject->GetUpVectorAtZ(startZ), UpdatedComponent->GetRightVector());
+
+			FVector climbPosition = ClimbingObject->GetLocationAtZ(startZ) + forwardVector * ClimbingDistance;
 
 			FHitResult moveHit;
 			SafeMoveUpdatedComponent(climbPosition - GetActorLocation(), newRotation, false, moveHit);
@@ -284,11 +286,14 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 		CharacterOwner->bUseControllerRotationYaw = true;
 		OnStoppedClimbing.Broadcast();
 
-		if(IsValid(ClimbingLadder))
-			ClimbingLadder->GetClimbVolume()->OnComponentBeginOverlap.RemoveAll(this);
 	}
 	
 	Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);
+}
+
+void UDC_CMC::ChangeClimbAllowedState(bool IsClimbAllowed)
+{
+	bCanClimb = IsClimbAllowed;
 }
 
 void UDC_CMC::StartSprint()
@@ -301,19 +306,15 @@ void UDC_CMC::StopSprint()
 	bWantsToSprint = false;
 }
 
-void UDC_CMC::StartClimbing(ALadder* ActorClimbingAt)
+void UDC_CMC::StartClimbing(AClimbable* ActorClimbingAt)
 {
-	ALadder* ladder = Cast<ALadder>(ActorClimbingAt);
-	if (!IsValid(ladder))
-		return;
-
 	bWantsToClimb = true;
-	ClimbingLadder = ladder;
+	ClimbingObject = ActorClimbingAt;
 
 	if(CharacterOwner->HasAuthority())
-		Multicast_SetClimbingLadder(ladder);
+		Multicast_SetClimbingObject(ActorClimbingAt);
 	else
-		Server_SetClimbingLadder(ladder);
+		Server_SetClimbingObject(ActorClimbingAt);
 
 	FRotator newRotation = UKismetMathLibrary::MakeRotFromZX(FVector::UpVector, -ActorClimbingAt->GetActorForwardVector());	
 
@@ -326,14 +327,14 @@ void UDC_CMC::StopClimbing()
 	bWantsToClimb = false;
 }
 
-void UDC_CMC::Server_SetClimbingLadder_Implementation(ALadder* InClimbingLadder)
+void UDC_CMC::Server_SetClimbingObject_Implementation(AClimbable* InClimbingObject)
 {
-	Multicast_SetClimbingLadder(InClimbingLadder);
+	Multicast_SetClimbingObject(InClimbingObject);
 }
 
-void UDC_CMC::Multicast_SetClimbingLadder_Implementation(ALadder* InClimbingLadder)
+void UDC_CMC::Multicast_SetClimbingObject_Implementation(AClimbable* InClimbingObject)
 {
-	ClimbingLadder = InClimbingLadder;
+	ClimbingObject = InClimbingObject;
 }
 
 bool UDC_CMC::IsCustomMovementModeActive(ECustomMovementMode InCustomMovementMode) const

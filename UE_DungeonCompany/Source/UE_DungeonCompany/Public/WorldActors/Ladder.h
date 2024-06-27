@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "WorldActors/Climbable.h"
 #include "Interactable.h"
 #include "Ladder.generated.h"
 
@@ -11,7 +11,7 @@ class UBoxComponent;
 class APlayerCharacter;
 
 UCLASS()
-class UE_DUNGEONCOMPANY_API ALadder : public AActor, public IInteractable
+class UE_DUNGEONCOMPANY_API ALadder : public AClimbable, public IInteractable
 {
 	GENERATED_BODY()
 
@@ -44,9 +44,9 @@ private:
 	FVector2D EasyInteractArea = FVector2D(5, 20);
 
 public:
-	inline UBoxComponent* GetClimbVolume() const { return ClimbVolume; }
+	virtual FVector GetLocationAtZ(float Z) const override;
+	virtual FVector GetUpperEndLocation() const override;
 
-	inline float GetHeight() const { return Height; }
 	/*This doesn't set the height in runtime. Set this in the constructor or before calling the construction script of the Ladder class.*/
 	void SetHeight(float InHeight); 
 

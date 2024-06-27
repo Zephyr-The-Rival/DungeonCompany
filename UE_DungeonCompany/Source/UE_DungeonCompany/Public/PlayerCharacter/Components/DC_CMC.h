@@ -60,6 +60,8 @@ private:
 	bool bWantsToSprint = false;
 	bool bWantsToClimb = false;
 
+	bool bCanClimb = false;
+
 public:
 	UPROPERTY(EditDefaultsOnly)
 	float MaxSprintSpeed = 600.f;
@@ -77,31 +79,33 @@ public:
 	float ClimbingDistance = 50.f;
 
 	UPROPERTY(EditDefaultsOnly)
-	float ClimbingAttractionForce = 600.f;
+	float ClimbingAttractionForce = 200.f;
 
 protected:
 	virtual void PhysCustom(float DeltaTime, int32 Iterations) override;
 
 private:
 	UPROPERTY(Transient)
-	class ALadder* ClimbingLadder;
+	class AClimbable* ClimbingObject;
 
 public:
 	UFUNCTION(Server, Unreliable)
-	void Server_SetClimbingLadder(ALadder* InClimbingLadder);
-	void Server_SetClimbingLadder_Implementation(ALadder* InClimbingLadder);
+	void Server_SetClimbingObject(AClimbable* InClimbingObject);
+	void Server_SetClimbingObject_Implementation(AClimbable* InClimbingObject);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void Multicast_SetClimbingLadder(ALadder* InClimbingLadder);
-	void Multicast_SetClimbingLadder_Implementation(ALadder* InClimbingLadder);
+	void Multicast_SetClimbingObject(AClimbable* InClimbingObject);
+	void Multicast_SetClimbingObject_Implementation(AClimbable* InClimbingObject);
 
 public:
 	UDELEGATE() DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStoppedClimbing);
 	FOnStoppedClimbing OnStoppedClimbing;
 
 private:
-	UFUNCTION() 
-	void OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	UPROPERTY(Transient)
+	float ClimbHeightProgress;
+
+private:
 	void PhysClimb(float DeltaTime, int32 Iterations);
 
 public:
@@ -118,10 +122,12 @@ public:
 	virtual void UpdateCharacterStateBeforeMovement(float DeltaSeconds) override;
 
 public:
+	void ChangeClimbAllowedState(bool IsClimbAllowed);
+
 	void StartSprint();
 	void StopSprint();
 
-	void StartClimbing(ALadder* ActorClimbingAt);
+	void StartClimbing(AClimbable* ActorClimbingAt);
 	void StopClimbing();
 
 	UFUNCTION(BlueprintCallable)
