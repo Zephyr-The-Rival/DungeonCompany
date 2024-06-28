@@ -261,7 +261,7 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 			FRotator newRotation = UpdatedComponent->GetComponentRotation();
 			newRotation.Yaw = ClimbingObject->GetClimbRotationYaw();
 
-			float startZ = GetActorLocation().Z;
+			float startZ = UpdatedComponent->GetComponentLocation().Z;
 
 			FVector upperEnd = ClimbingObject->GetUpperEndLocation();
 
@@ -273,7 +273,7 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 			FVector climbPosition = ClimbingObject->GetLocationAtZ(startZ) + forwardVector * ClimbingDistance;
 
 			FHitResult moveHit;
-			SafeMoveUpdatedComponent(climbPosition - GetActorLocation(), newRotation, false, moveHit);
+			SafeMoveUpdatedComponent(climbPosition, newRotation, true, moveHit);
 		}
 	}
 	else if (bPrevClimbed)

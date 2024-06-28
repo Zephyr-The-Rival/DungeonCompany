@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "WorldActors/Climbable.h"
 #include "Interactable.h"
 #include "Rope.generated.h"
 
@@ -11,7 +11,7 @@ class UPoseableMeshComponent;
 class APhysicsConstraintActor;
 
 UCLASS()
-class UE_DUNGEONCOMPANY_API ARope : public AActor, public IInteractable
+class UE_DUNGEONCOMPANY_API ARope : public AClimbable, public IInteractable
 {
 	GENERATED_BODY()
 
@@ -67,5 +67,29 @@ protected:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SetTransformsAndFreeze(const TArray<FTransform>& RopeTransforms);
 	void Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransform>& RopeTransforms);
+
+
+private:
+	APlayerCharacter* CharOnRope;
+
+	mutable int CachedBoneIndex = -1;
+
+	UPROPERTY(Transient)
+	float BoneLength;
+
+protected:
+	FName GetBoneNameNearestToZ(double Z) const;
+
+	int GetBoneIndexNearestToZLinear(double Z) const;
+	int GetBoneIndexNearestToZBinary(double Z) const;
+
+	FVector GetBoneUpVectorByName(FName BoneName) const;
+
+public:
+	virtual FVector GetLocationAtZ(double Z) const;
+	virtual FVector GetUpVectorAtZ(double Z) const;
+	virtual double GetClimbRotationYaw() const;
+
+	virtual FVector GetLowerEndLocation() const;
 
 };

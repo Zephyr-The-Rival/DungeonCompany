@@ -57,7 +57,7 @@ void AClimbingHook::Tick(float DeltaTime)
 
 		SpawnedRope->FreezeAndReplicate();
 
-		CreateLadders(edgeLocations);
+		//CreateLadders(edgeLocations);
 
 		SetActorTickEnabled(false);
 	}

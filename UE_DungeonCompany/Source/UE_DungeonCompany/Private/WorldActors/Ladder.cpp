@@ -10,7 +10,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
-FVector ALadder::GetLocationAtZ(float Z) const
+FVector ALadder::GetLocationAtZ(double Z) const
 {
 	FVector location = GetActorLocation();
 
@@ -138,7 +138,9 @@ void ALadder::Interact(APawn* InteractingPawn)
 	character->GetCharacterMovement<UDC_CMC>()->StartClimbing(this);
 
 	LocalPlayerOnLadder = character;
-	LocalPlayerOnLadder->GetCharacterMovement<UDC_CMC>()->OnStoppedClimbing.AddDynamic(this, &ALadder::StoppedInteracting);
+
+	if(!LocalPlayerOnLadder->GetCharacterMovement<UDC_CMC>()->OnStoppedClimbing.IsBound())
+		LocalPlayerOnLadder->GetCharacterMovement<UDC_CMC>()->OnStoppedClimbing.AddDynamic(this, &ALadder::StoppedInteracting);
 }
 
 void ALadder::OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

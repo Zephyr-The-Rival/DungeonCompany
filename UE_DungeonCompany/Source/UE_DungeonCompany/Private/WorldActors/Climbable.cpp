@@ -80,19 +80,19 @@ void AClimbable::OnClimbVolumeEndOverlap(UPrimitiveComponent* OverlappedComponen
 	}
 }
 
-FVector AClimbable::GetLocationAtZ(float Z) const
+FVector AClimbable::GetLocationAtZ(double Z) const
 {
 	return FVector::ZeroVector;
 }
 
-FVector AClimbable::GetUpVectorAtZ(float Z) const
+FVector AClimbable::GetUpVectorAtZ(double Z) const
 {
 	return GetActorUpVector();
 }
 
 double AClimbable::GetClimbRotationYaw() const
 {
-	return -GetActorRotation().Yaw;
+	return GetActorRotation().Yaw + 180.;
 }
 
 FVector AClimbable::GetLowerEndLocation() const

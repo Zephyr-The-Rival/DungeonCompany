@@ -28,17 +28,17 @@ private:
 protected:
 	void RegisterClimbVolume(UShapeComponent* InClimbVolume);
 
-	virtual void SetupClimbVolumes();
+	void SetupClimbVolumes();
 
 	UFUNCTION()
-	virtual void OnClimbVolumeBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnClimbVolumeBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
 	UFUNCTION()
-	virtual void OnClimbVolumeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	void OnClimbVolumeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-public:	
-	virtual FVector GetLocationAtZ(float Z) const;
-	virtual FVector GetUpVectorAtZ(float Z) const;
+public:	//Climbable Interface
+	virtual FVector GetLocationAtZ(double Z) const;
+	virtual FVector GetUpVectorAtZ(double Z) const;
 	virtual double GetClimbRotationYaw() const;
 
 	virtual FVector GetLowerEndLocation() const;
