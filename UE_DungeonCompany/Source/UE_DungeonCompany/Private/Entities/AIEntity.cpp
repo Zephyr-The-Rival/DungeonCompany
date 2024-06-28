@@ -18,6 +18,9 @@ AAIEntity::AAIEntity()
 	GetMesh()->SetCollisionProfileName("EntityMesh");
 	GetMesh()->SetGenerateOverlapEvents(true);
 
+	GetMesh()->SetCollisionProfileName("EntityMesh");
+	GetMesh()->SetGenerateOverlapEvents(true);
+
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;

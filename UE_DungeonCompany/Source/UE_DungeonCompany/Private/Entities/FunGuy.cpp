@@ -37,25 +37,7 @@ void AFunGuy::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	if (AgeSeconds > MaxSizeAgeSeconds)
-		AgeSeconds = MaxSizeAgeSeconds;
-
-	FVector newScale = FVector(1, 1, 1);
-	newScale += newScale * AgeSeconds * AgeBonusScaleMultiplier;
-
-	GetCapsuleComponent()->SetRelativeScale3D(newScale);
-
-	int cloudUpscaleNum = AgeSeconds / CloudUpdateInterval;
-	float newCloudRadius = StartCloudRadius;
-
-	CloudSizeMultiplierPerUpdate = 1 + CloudSizeFactor / 1000;
-
-	for (int i = 0; i < cloudUpscaleNum; ++i)
-		newCloudRadius *= CloudSizeMultiplierPerUpdate;
-	
-	CloudMesh->SetWorldScale3D(FVector(1, 1, 1) * newCloudRadius /50);
-	CloudSphere->SetSphereRadius(newCloudRadius);
-
+	CalculateCloudStart();
 }
 
 void AFunGuy::BeginPlay()
@@ -81,6 +63,35 @@ void AFunGuy::BeginPlay()
 
 }
 
+void AFunGuy::CalculateCloudStart()
+{
+	if (AgeSeconds > MaxSizeAgeSeconds)
+		AgeSeconds = MaxSizeAgeSeconds;
+
+	FVector newScale = FVector(1, 1, 1);
+	newScale += newScale * AgeSeconds * AgeBonusScaleMultiplier;
+
+	GetCapsuleComponent()->SetRelativeScale3D(newScale);
+
+	int cloudUpscaleNum = AgeSeconds / CloudUpdateInterval;
+	CloudSizeMultiplierPerUpdate = 1 + CloudSizeFactor / 1000;
+
+	float newRadius = StartCloudRadius * FMath::Pow(CloudSizeMultiplierPerUpdate, cloudUpscaleNum);
+	CloudSphere->SetSphereRadius(newRadius);
+
+	CloudMesh->SetRelativeScale3D(FVector(2, 2, 2) * (newRadius / 100));
+
+	#if WITH_EDITOR
+	float maxUpscaleNum = MaxSizeAgeSeconds / CloudUpdateInterval;
+
+	float maxScaleMultiplier = 1 + MaxSizeAgeSeconds * AgeBonusScaleMultiplier;
+	float maxRadius = StartCloudRadius * FMath::Pow(CloudSizeMultiplierPerUpdate, maxUpscaleNum);
+
+	FlushPersistentDebugLines(GetWorld());
+	DrawDebugSphere(GetWorld(), CloudSphere->GetComponentLocation(), maxRadius * maxScaleMultiplier, 32, FColor::Blue, true);
+	#endif
+}
+
 void AFunGuy::UpdateCloud()
 {
 	FVector newScale = CloudMesh->GetRelativeScale3D() * CloudSizeMultiplierPerUpdate;
@@ -102,10 +113,8 @@ void AFunGuy::UpdateCloud()
 	}
 
 	if (HasAuthority())
-	{
-		float radius = CloudSphere->GetUnscaledSphereRadius() * CloudSizeMultiplierPerUpdate;
-		CloudSphere->SetSphereRadius(radius);
-	}
+		CloudSphere->SetSphereRadius(newScale.X*50);
+
 }
 
 void AFunGuy::Tick(float DeltaSeconds)
@@ -156,7 +165,7 @@ void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 {
 	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
 
-	if (!character)
+	if (!character || PlayerTimerHandles.Contains(character))
 		return;
 
 	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &AFunGuy::OnSafeTimerElapsed, character);
@@ -172,7 +181,7 @@ void AFunGuy::OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 {
 	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
 
-	if (!character)
+	if (!character || !PlayerTimerHandles.Contains(character))
 		return;
 
 	GetWorld()->GetTimerManager().ClearTimer(PlayerTimerHandles[character]);

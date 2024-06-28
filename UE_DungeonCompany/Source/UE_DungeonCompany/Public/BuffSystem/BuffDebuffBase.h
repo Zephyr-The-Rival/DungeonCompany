@@ -27,13 +27,15 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void Apply();
 
+	virtual void Apply();
+	virtual void AuthorityApply();
 	virtual void LocalApply();
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void Remove();
 
+	virtual void Remove();
+	virtual void AuthorityRemove();
 	virtual void LocalRemove();
 
 public:	

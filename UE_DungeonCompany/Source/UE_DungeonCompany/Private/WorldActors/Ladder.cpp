@@ -4,11 +4,15 @@
 #include "WorldActors/Ladder.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 
-#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "PlayerCharacter/Components/DC_CMC.h"
+
+void ALadder::SetHeight(float InHeight)
+{
+	Height = InHeight;
+}
 
 // Sets default values
 ALadder::ALadder()
@@ -21,9 +25,6 @@ ALadder::ALadder()
 
 	RootComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow"));
 
-	LadderMesh = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("LadderMesh"));
-	LadderMesh->SetupAttachment(RootComponent);
-
 	BottomBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BottomBox"));
 	BottomBox->SetupAttachment(RootComponent);
 
@@ -35,6 +36,11 @@ ALadder::ALadder()
 
 	InteractVolume->InitBoxExtent(FVector(1, 1, 1));
 
+	ClimbVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("ClimbVolume"));
+	ClimbVolume->SetupAttachment(RootComponent);
+
+	ClimbVolume->InitBoxExtent(FVector(1, 1, 1));
+
 	EasyInteractBox = CreateDefaultSubobject<UBoxComponent>(TEXT("EasyInteractBox"));
 	EasyInteractBox->SetupAttachment(RootComponent);
 
@@ -45,29 +51,18 @@ void ALadder::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	LadderMesh->ClearInstances();
+	float iVHalfHeight = Height / 2 + InteractionVolumeHeightBonus / 2;
 
-	LadderMesh->SetStaticMesh(LadderSectionReference);
+	InteractVolume->SetBoxExtent(FVector(InteractionArea, iVHalfHeight));
+	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, iVHalfHeight));
 
-	if(Material)
-		LadderMesh->SetMaterial(0, Material);
-	
-	for (unsigned int i = 0; i < SectionsCount; ++i)
-	{
-		FVector translation = FVector::UpVector * (i * SectionHeight);
-		LadderMesh->AddInstance(FTransform(translation), false);	
-	}
+	float halfHeight = Height / 2;
 
-	if(bSectionOriginInMid)
-		LadderMesh->SetRelativeLocation(FVector(-SectionDepth, 0, SectionHeight/2));
+	ClimbVolume->SetBoxExtent(FVector({25, 5}, halfHeight));
+	ClimbVolume->SetRelativeLocation(FVector(25, 0, halfHeight));
 
-	float LadderHalfHeight = (SectionHeight / 2) * SectionsCount;
-
-	InteractVolume->SetBoxExtent(FVector(InteractionArea, LadderHalfHeight));
-	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, LadderHalfHeight));
-
-	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, LadderHalfHeight));
-	EasyInteractBox->SetRelativeLocation(FVector(0, 0, LadderHalfHeight));
+	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, halfHeight));
+	EasyInteractBox->SetRelativeLocation(FVector(0, 0, halfHeight));
 
 }
 
@@ -80,12 +75,13 @@ void ALadder::BeginPlay()
 
 	InteractVolume->OnComponentBeginOverlap.AddDynamic(this, &ALadder::OnInteractVolumeEntered);
 	InteractVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnInteractVolumeLeft);
+
+	ClimbVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnClimbVolumeLeft);
 	
 }
 
 void ALadder::Interact(APawn* InteractingPawn)
 {
-
 	APlayerCharacter* character = Cast<APlayerCharacter>(InteractingPawn);
 	
 	if(!character)
@@ -94,6 +90,10 @@ void ALadder::Interact(APawn* InteractingPawn)
 	float distanceToLadder = character->GetCapsuleComponent()->GetScaledCapsuleRadius();
 
 	float distanceToStart = character->GetDistanceTo(this);
+
+	if(distanceToStart > Height)
+		distanceToStart = Height;
+
 	FVector climbPosition = GetActorLocation() + GetActorUpVector() * distanceToStart + GetActorForwardVector() * distanceToLadder;
 	bInteractable = false;
 
@@ -133,10 +133,18 @@ void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AAc
 		return;
 
 	bInteractable = false;
+
+}
+
+void ALadder::OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
+	if (!character || !character->IsLocallyControlled())
+		return;
+
 	bRemovedByLadder = true;
 
 	character->StopClimbing();
-
 }
 
 void ALadder::StoppedInteracting()
