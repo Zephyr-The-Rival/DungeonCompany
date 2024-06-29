@@ -781,7 +781,7 @@ void APlayerCharacter::TakeOutItem()
 	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
 		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass, GetCurrentlyHeldInventorySlot()->MyItem->SerializeMyData());
 	
-	FirstPersonMesh->AnimClass = NULL;
+	FirstPersonMesh->AnimClass = NULL;//so the animation blueprint restarts
 	FirstPersonMesh->SetAnimClass(newFirstPersonAnimClass);
 	
 
