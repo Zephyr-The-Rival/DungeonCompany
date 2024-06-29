@@ -781,7 +781,9 @@ void APlayerCharacter::TakeOutItem()
 	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
 		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass, GetCurrentlyHeldInventorySlot()->MyItem->SerializeMyData());
 	
+	FirstPersonMesh->AnimClass = NULL;
 	FirstPersonMesh->SetAnimClass(newFirstPersonAnimClass);
+	
 
 	if(HasAuthority())
 		Multicast_SetTPMeshAnimClass(newThirdPersonAnimClass);
