@@ -42,12 +42,8 @@ EBTNodeResult::Type UBTTask_GetClosestPlayer::ExecuteTask(UBehaviorTreeComponent
 		
 	}
 
-	if(!closestPlayer)
-		return EBTNodeResult::Failed;
-
 	OwnerComp.GetBlackboardComponent()->SetValueAsObject(GetSelectedBlackboardKey(), closestPlayer);
 
-	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
-	
+	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);	
 	return EBTNodeResult::Succeeded;
 }

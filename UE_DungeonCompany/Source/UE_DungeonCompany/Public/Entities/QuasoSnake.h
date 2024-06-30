@@ -86,6 +86,12 @@ protected:
 	void Multicast_OnDetachedFromPlayer_Implementation();
 
 public:
-	static AQuasoSnake* Spawn(UWorld* World);
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWantsToReturnToVolume);
+
+	FOnWantsToReturnToVolume OnWantsToReturnToVolume;
+
+public:
+	void ReturnToVolume();
 	
 };
