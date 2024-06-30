@@ -154,7 +154,7 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", false);
 		return;
 	}
-
+	
 	GetCharacterMovement()->DisableMovement();
 	Multicast_OnAttachedToPlayer();
 
@@ -177,9 +177,11 @@ void AQuasoSnake::Multicast_OnDetachedFromPlayer_Implementation()
 	GetCapsuleComponent()->SetCollisionProfileName("Pawn", true);
 }
 
-AQuasoSnake* AQuasoSnake::Spawn(UWorld* World)
+void AQuasoSnake::ReturnToVolume()
 {
-	return nullptr;
+	OnWantsToReturnToVolume.Broadcast();
+
+	Destroy();
 }
 
 void AQuasoSnake::OnDeath_Implementation()

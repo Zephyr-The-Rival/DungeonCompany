@@ -2,6 +2,9 @@
 
 
 #include "DC_Statics.h"
+#include "PlayerCharacter/PlayerCharacter.h"
+
+#include "Camera/CameraComponent.h"
 
 void UDC_Statics::SetMicInputGain(float Value)
 {
@@ -85,4 +88,30 @@ void UDC_Statics::SetVoiceDebugPrintAmplitude(bool Value)
 {
 	static IConsoleVariable* printAmplitude = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.debug.PrintAmplitude"));
 	printAmplitude->Set(Value);
+}
+
+bool UDC_Statics::IsLocationInViewportOfPlayer(APlayerController* PlayerController, const FVector& Location)
+{
+	APawn* playerPawn = PlayerController->GetPawn();
+	if(!playerPawn)	
+		return false;
+
+	FVector compareVector = Location - playerPawn->GetActorLocation();
+
+	if(compareVector.Dot(playerPawn->GetActorRotation().Vector()) < 0.2f)
+		return false;
+
+	FVector2D screenLocation;
+	PlayerController->ProjectWorldLocationToScreen(Location, screenLocation);
+
+	FVector2D screenSize;
+	GEngine->GameViewport->GetViewportSize(screenSize);
+
+	if (!PlayerController->IsLocalPlayerController())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, screenLocation.ToString());
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, screenSize.ToString());
+	}
+
+	return screenLocation >= FVector2D::ZeroVector && screenLocation < screenSize;
 }
