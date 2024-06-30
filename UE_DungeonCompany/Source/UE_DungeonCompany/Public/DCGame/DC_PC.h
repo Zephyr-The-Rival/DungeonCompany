@@ -33,6 +33,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UPlayerHud* GetMyPlayerHud() const { return MyPlayerHud; }
 
+
 protected:
 	virtual void BeginPlay() override;
 

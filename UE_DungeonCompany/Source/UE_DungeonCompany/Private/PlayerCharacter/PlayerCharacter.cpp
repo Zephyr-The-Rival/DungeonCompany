@@ -82,10 +82,11 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//this did not work on begin play
+	
 	this->HandSlotA = NewObject<UInventorySlot>();
 	this->HandSlotB = NewObject<UInventorySlot>();
+
+
 
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
@@ -150,6 +151,8 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
 }
+
+
 
 UEnhancedInputLocalPlayerSubsystem* APlayerCharacter::GetInputLocalPlayer() const
 {
