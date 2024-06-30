@@ -62,7 +62,13 @@ public:
 
 public:
 	/* Remote Controllers will only be checked via their pawns rotation. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Vision")
 	static bool IsLocationInViewportOfPlayer(APlayerController* PlayerController, const FVector& Location);
+
+	UFUNCTION(BlueprintCallable, Category = "Vision")
+	static bool IsLocationVisibleToPlayer(APlayerController* PlayerController, const FVector& Location);
+
+	UFUNCTION(BlueprintCallable, Category = "Vision")
+	static bool IsActorVisibleToPlayer(APlayerController* PlayerController, const AActor* Actor);
 
 };

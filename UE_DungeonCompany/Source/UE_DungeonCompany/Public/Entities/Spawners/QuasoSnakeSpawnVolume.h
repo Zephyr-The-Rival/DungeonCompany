@@ -19,16 +19,22 @@ class UE_DUNGEONCOMPANY_API AQuasoSnakeSpawnVolume : public ATriggerVolume
 private:
 	TSubclassOf<AQuasoSnake> QuasoSnakeClass;
 
-	UPROPERTY(EditAnywhere, Category = "Balancing")
+	UPROPERTY(EditAnywhere, Category = "Balancing|Spawn")
 	float MinSpawnRadiusAroundPlayer = 200.f;
 
-	UPROPERTY(EditAnywhere, Category = "Balancing")
+	UPROPERTY(EditAnywhere, Category = "Balancing|Spawn")
 	float MaxSpawnRadiusAroundPlayer = 500.f;
 
-	UPROPERTY(EditAnywhere, Category = "Balancing")
-	float DespawnSeconds = 30.f;
+	UPROPERTY(EditAnywhere, Category = "Balancing|Spawn")
+	TArray<AActor*> SpawnsurfaceActors;
 
-	UPROPERTY(EditAnywhere, Category = "Balancing")
+	UPROPERTY(EditAnywhere, Category = "Balancing|Timer")
+	float OutOfRangeDespawnSeconds = 30.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Timer")
+	float NotVisibleDespawnSeconds = 10.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Timer")
 	float RespawnSeconds = 60.f;
 
 public:
@@ -39,12 +45,18 @@ protected:
 
 private:
 	FTimerHandle DespawnHandle;
-	bool bDespawnTimerRunning = false;
+	FTimerDelegate DespawnDelegate;
+	bool bQuasoShouldBeDespawned = false;
 
 	FTimerHandle RespawnHandle;
-
 	bool bSpawnedQuasoSnake = false;
 	bool bQuasoSnakeReturned = false;
+
+	FTimerHandle NotVisibleHandle;
+	FTimerDelegate NotVisibleDelegate;
+	bool bPlayersCanSeeQuaso = false;
+
+	bool bNotVisibleDespawn = false;
 
 protected:
 	UFUNCTION()
@@ -65,5 +77,5 @@ private:
 
 public:
 	void SpawnCloseToPlayer(ACharacter* Character);
-	void DespawnQuasoSnake();
+	
 };

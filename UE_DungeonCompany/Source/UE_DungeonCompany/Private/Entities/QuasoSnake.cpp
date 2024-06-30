@@ -161,7 +161,7 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	AttachToActor(character, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	PlayerAttachedTo = character;
 
-	SetActorLocation(character->GetActorLocation() + FVector::UpVector * 50);
+	SetActorLocation(character->GetActorLocation() + FVector::UpVector * 100);
 
 	GetWorld()->GetTimerManager().SetTimer(StageProgressHandle, this, &AQuasoSnake::ProgressStage, DeathSeconds/3, true, 0.f);
 

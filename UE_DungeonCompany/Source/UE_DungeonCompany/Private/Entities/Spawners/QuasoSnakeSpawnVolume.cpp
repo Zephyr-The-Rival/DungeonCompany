@@ -25,9 +25,20 @@ void AQuasoSnakeSpawnVolume::BeginPlay()
 	{
 		GetBrushComponent()->SetCollisionProfileName("NoCollision");
 		SetActorTickEnabled(false);
+		return;
 	} 
-	else
-		SetActorTickEnabled(true);
+	
+	SetActorTickEnabled(true);
+
+	DespawnDelegate = FTimerDelegate::CreateLambda([this]() 
+	{
+		bQuasoShouldBeDespawned = true;
+	});
+
+	NotVisibleDelegate = FTimerDelegate::CreateLambda([this]()
+	{
+		bNotVisibleDespawn = true;
+	});
 
 }
 
@@ -49,11 +60,40 @@ void AQuasoSnakeSpawnVolume::Tick(float DeltaSeconds)
 		return;
 	}
 
-	if (!IsValid(PlayerSpawningCloseTo) && bSpawnedQuasoSnake && !bDespawnTimerRunning)
-	{
-		GetWorld()->GetTimerManager().SetTimer(RespawnHandle, this, &AQuasoSnakeSpawnVolume::DespawnQuasoSnake, bDespawnTimerRunning);
+	if(!IsValid(SpawnedQuasoSnake) || !bSpawnedQuasoSnake)
+		return;
 
+	if (bQuasoShouldBeDespawned && bNotVisibleDespawn)
+	{
+		SpawnedQuasoSnake->Destroy();
+		return;
 	}
+
+	FTimerManager& timerManager = GetWorld()->GetTimerManager();
+
+	if (!IsValid(PlayerSpawningCloseTo) && !timerManager.IsTimerActive(DespawnHandle))
+	{
+		timerManager.SetTimer(DespawnHandle, DespawnDelegate, OutOfRangeDespawnSeconds, false);
+	}
+	
+	bool bPlayersCurrentlySeeQuaso = SpawnedQuasoSnake->IsVisibleToPlayers();
+
+	if (bPlayersCurrentlySeeQuaso == bPlayersCanSeeQuaso)
+		return;
+		
+	bPlayersCanSeeQuaso = bPlayersCurrentlySeeQuaso;
+
+	if (!bPlayersCanSeeQuaso)
+	{
+		timerManager.SetTimer(NotVisibleHandle, NotVisibleDelegate, NotVisibleDespawnSeconds, false);
+		return;
+	}
+
+	bNotVisibleDespawn = false;
+
+	if (timerManager.IsTimerActive(NotVisibleHandle))
+		timerManager.ClearTimer(NotVisibleHandle);
+	
 }
 
 void AQuasoSnakeSpawnVolume::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -112,7 +152,7 @@ void AQuasoSnakeSpawnVolume::SpawnCloseToPlayer(ACharacter* Character)
 
 		double hitDistance = (hit.Location - start).Length();
 
-		failedHit = !hit.bBlockingHit || (hitDistance < MinSpawnRadiusAroundPlayer && hitDistance > -MinSpawnRadiusAroundPlayer);
+		failedHit = !hit.bBlockingHit || (hitDistance < MinSpawnRadiusAroundPlayer && hitDistance > -MinSpawnRadiusAroundPlayer) || !SpawnsurfaceActors.Contains(hit.GetActor());
 
 		if(failedHit)
 			continue;
@@ -125,7 +165,6 @@ void AQuasoSnakeSpawnVolume::SpawnCloseToPlayer(ACharacter* Character)
 				break;
 			}
 		}
-
 	}
 
 	if (failedHit)
@@ -140,12 +179,4 @@ void AQuasoSnakeSpawnVolume::SpawnCloseToPlayer(ACharacter* Character)
 
 	SpawnedQuasoSnake->OnWantsToReturnToVolume.AddDynamic(this, &AQuasoSnakeSpawnVolume::ReturnQuasoSnake);
 	SpawnedQuasoSnake->OnEndPlay.AddDynamic(this, &AQuasoSnakeSpawnVolume::EndQuasoSnake);
-}
-
-void AQuasoSnakeSpawnVolume::DespawnQuasoSnake()
-{
-	if(!IsValid(SpawnedQuasoSnake))
-		return;
-
-	SpawnedQuasoSnake->Destroy();
 }

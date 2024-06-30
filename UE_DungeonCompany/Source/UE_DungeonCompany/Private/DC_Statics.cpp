@@ -97,8 +97,9 @@ bool UDC_Statics::IsLocationInViewportOfPlayer(APlayerController* PlayerControll
 		return false;
 
 	FVector compareVector = Location - playerPawn->GetActorLocation();
+	compareVector.Normalize();
 
-	if(compareVector.Dot(playerPawn->GetActorRotation().Vector()) < 0.2f)
+	if(compareVector.Dot(playerPawn->GetActorRotation().Vector()) < 0.65f)
 		return false;
 
 	FVector2D screenLocation;
@@ -107,11 +108,34 @@ bool UDC_Statics::IsLocationInViewportOfPlayer(APlayerController* PlayerControll
 	FVector2D screenSize;
 	GEngine->GameViewport->GetViewportSize(screenSize);
 
-	if (!PlayerController->IsLocalPlayerController())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, screenLocation.ToString());
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, screenSize.ToString());
-	}
-
 	return screenLocation >= FVector2D::ZeroVector && screenLocation < screenSize;
+}
+
+bool UDC_Statics::IsLocationVisibleToPlayer(APlayerController* PlayerController, const FVector& Location)
+{
+	if(!IsLocationInViewportOfPlayer(PlayerController, Location))
+		return false;
+
+	APawn* playerPawn = PlayerController->GetPawn();
+	if(!playerPawn)
+		return false;
+
+	FVector start = playerPawn->GetActorLocation();
+
+	FCollisionQueryParams params;
+	params.AddIgnoredActor(playerPawn);
+
+	FHitResult hit;
+
+	PlayerController->GetWorld()->LineTraceSingleByChannel(hit, start, Location, ECC_Visibility, params);
+
+	return !hit.bBlockingHit;
+}
+
+bool UDC_Statics::IsActorVisibleToPlayer(APlayerController* PlayerController, const AActor* Actor)
+{
+	if (!IsLocationInViewportOfPlayer(PlayerController, Actor->GetActorLocation()))
+		return false;
+
+	return PlayerController->LineOfSightTo(Actor);
 }
