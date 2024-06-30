@@ -7,6 +7,7 @@
 #include "QuasoSnakeSpawnVolume.generated.h"
 
 class AQuasoSnake;
+class ADC_AIController;
 
 /**
  * 
@@ -64,6 +65,10 @@ protected:
 
 	UFUNCTION()
 	void EndQuasoSnake(AActor* Actor, EEndPlayReason::Type EndPlayReason);
+
+private:
+	ADC_AIController* QuasoSnakeController;
+	bool bQuasoMovementStarted = false;
 	
 public:
 	virtual void Tick(float DeltaSeconds) override;

@@ -4,10 +4,12 @@
 #include "Entities/Spawners/QuasoSnakeSpawnVolume.h"
 #include "Entities/QuasoSnake.h"
 #include "DC_Statics.h"
+#include "AI/DC_AIController.h"
 
 #include "Components/BrushComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 AQuasoSnakeSpawnVolume::AQuasoSnakeSpawnVolume()
 {
@@ -45,6 +47,9 @@ void AQuasoSnakeSpawnVolume::BeginPlay()
 void AQuasoSnakeSpawnVolume::ReturnQuasoSnake()
 {
 	bSpawnedQuasoSnake = false;
+	bQuasoMovementStarted = false;
+	bQuasoShouldBeDespawned = false;
+	bNotVisibleDespawn = false;
 }
 
 void AQuasoSnakeSpawnVolume::EndQuasoSnake(AActor* Actor, EEndPlayReason::Type EndPlayReason)
@@ -54,6 +59,9 @@ void AQuasoSnakeSpawnVolume::EndQuasoSnake(AActor* Actor, EEndPlayReason::Type E
 
 void AQuasoSnakeSpawnVolume::Tick(float DeltaSeconds)
 {
+	if(bQuasoMovementStarted)
+		return;
+
 	if (IsValid(PlayerSpawningCloseTo) && !bSpawnedQuasoSnake)
 	{
 		SpawnCloseToPlayer(PlayerSpawningCloseTo);
@@ -63,13 +71,22 @@ void AQuasoSnakeSpawnVolume::Tick(float DeltaSeconds)
 	if(!IsValid(SpawnedQuasoSnake) || !bSpawnedQuasoSnake)
 		return;
 
+	if (!IsValid(QuasoSnakeController))
+		QuasoSnakeController = SpawnedQuasoSnake->GetController<ADC_AIController>();
+
+	if(IsValid(QuasoSnakeController) && QuasoSnakeController->GetBlackboardComponent()->GetValueAsBool("MovementStarted"))
+	{
+		bQuasoMovementStarted = true;
+		return;
+	}
+
+	FTimerManager& timerManager = GetWorld()->GetTimerManager();
+
 	if (bQuasoShouldBeDespawned && bNotVisibleDespawn)
 	{
 		SpawnedQuasoSnake->Destroy();
 		return;
 	}
-
-	FTimerManager& timerManager = GetWorld()->GetTimerManager();
 
 	if (!IsValid(PlayerSpawningCloseTo) && !timerManager.IsTimerActive(DespawnHandle))
 	{
