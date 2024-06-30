@@ -14,6 +14,9 @@ AGeneratedLadder::AGeneratedLadder()
 
 void AGeneratedLadder::OnConstruction(const FTransform& Transform)
 {
+	SetHeight((SectionHeight) * SectionsCount);
+
+	Super::OnConstruction(Transform);
 	LadderMesh->ClearInstances();
 
 	LadderMesh->SetStaticMesh(LadderSectionReference);
@@ -27,12 +30,9 @@ void AGeneratedLadder::OnConstruction(const FTransform& Transform)
 		LadderMesh->AddInstance(FTransform(translation), false);
 	}
 
-	if (bSectionOriginInMid)
-		LadderMesh->SetRelativeLocation(FVector(-SectionDepth, 0, SectionHeight / 2));
+	LadderMesh->SetRelativeLocation(FVector(-SectionDepth, 0, bSectionOriginInMid * (SectionHeight / 2)));
 
-	SetHeight((SectionHeight) * SectionsCount);
 
-	Super::OnConstruction(Transform);
 
 }
 

@@ -44,6 +44,8 @@ ALadder::ALadder()
 	EasyInteractBox = CreateDefaultSubobject<UBoxComponent>(TEXT("EasyInteractBox"));
 	EasyInteractBox->SetupAttachment(RootComponent);
 
+	EasyInteractBox->SetCollisionProfileName(FName("EasyInteract"));
+
 	EasyInteractBox->InitBoxExtent(FVector(1, 1, 1));
 }
 
