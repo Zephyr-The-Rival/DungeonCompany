@@ -27,7 +27,7 @@ EBTNodeResult::Type UBTTask_RotateToActor::ExecuteTask(UBehaviorTreeComponent& O
 	if(!targetActor)
 		return EBTNodeResult::Failed;
 
-	FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(aiCharacter->GetActorLocation(), targetActor->GetActorLocation());
+	FRotator newRotation = UKismetMathLibrary::FindLookAtRotation(aiCharacter->GetActorLocation(), targetActor->GetActorLocation() + FVector::UpVector * 100);
 
 	newRotation = UKismetMathLibrary::RInterpTo(aiCharacter->GetActorRotation(), newRotation, GetWorld()->DeltaTimeSeconds, RotationSpeed);
 
