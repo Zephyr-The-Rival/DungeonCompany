@@ -20,10 +20,14 @@ void ADC_PC::BeginPlay()
 {
 	Super::BeginPlay();
 
+
 	SetInputMode(FInputModeGameOnly());
 
 	if(!IsLocalController())
 		return;
+
+	this->MyPlayerHud = CreateWidget<UPlayerHud>(this, PlayerHudClass);
+	this->MyPlayerHud->AddToViewport();
 
 	UVOIPStatics::SetMicThreshold(-3.0);
 
@@ -33,9 +37,7 @@ void ADC_PC::BeginPlay()
 	if(bPushToTalkActive)
 		ToggleSpeaking(false);
 
-	MyPlayerHud = CreateWidget<UPlayerHud>(this, PlayerHudClass);
-	MyPlayerHud->MyCharacter = Cast<APlayerCharacter>(this->GetPawn());
-	MyPlayerHud->AddToViewport();
+
 
 	if (!InputMapping)
 		return;
@@ -136,3 +138,4 @@ void ADC_PC::SetPushToTalkActive(bool IsActive)
 	ToggleSpeaking(!IsActive);
 	bPushToTalkActive = IsActive;
 }
+

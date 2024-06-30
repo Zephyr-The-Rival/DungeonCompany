@@ -165,8 +165,6 @@ void AQuasoSnakeSpawnVolume::SpawnCloseToPlayer(ACharacter* Character)
 
 		GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
 
-		DrawDebugLine(GetWorld(), start, end, FColor::Blue, false, 10.f);
-
 		double hitDistance = (hit.Location - start).Length();
 
 		failedHit = !hit.bBlockingHit || (hitDistance < MinSpawnRadiusAroundPlayer && hitDistance > -MinSpawnRadiusAroundPlayer) || !SpawnsurfaceActors.Contains(hit.GetActor());
