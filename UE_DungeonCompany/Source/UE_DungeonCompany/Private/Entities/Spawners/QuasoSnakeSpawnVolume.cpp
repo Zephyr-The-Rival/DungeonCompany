@@ -32,6 +32,7 @@ void AQuasoSnakeSpawnVolume::BeginPlay()
 		return;
 	} 
 	
+	GetBrushComponent()->SetCollisionProfileName("Trigger");
 	SetActorTickEnabled(true);
 
 	DespawnDelegate = FTimerDelegate::CreateLambda([this]() 
@@ -167,6 +168,8 @@ void AQuasoSnakeSpawnVolume::SpawnCloseToPlayer(ACharacter* Character)
 
 		GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
 
+		DrawDebugLine(GetWorld(), start, end, FColor::Blue, false, 3.f);
+
 		double hitDistance = (hit.Location - start).Length();
 
 		failedHit = !hit.bBlockingHit || (hitDistance < MinSpawnRadiusAroundPlayer && hitDistance > -MinSpawnRadiusAroundPlayer) || !SpawnsurfaceActors.Contains(hit.GetActor());
@@ -187,7 +190,7 @@ void AQuasoSnakeSpawnVolume::SpawnCloseToPlayer(ACharacter* Character)
 	if (failedHit)
 		return;
 
-	SpawnedQuasoSnake = GetWorld()->SpawnActor<AQuasoSnake>(QuasoSnakeClass, hit.Location + hit.Normal * 50, hit.Normal.Rotation());
+	SpawnedQuasoSnake = GetWorld()->SpawnActor<AQuasoSnake>(QuasoSnakeClass, hit.Location + hit.Normal * SpawnDistance, hit.Normal.Rotation());
 
 	if (!SpawnedQuasoSnake)
 		return;
