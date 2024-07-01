@@ -5,6 +5,7 @@
 #include "Items/ItemData.h"
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "UI/PlayerHud/PlayerHud.h"
 #include "Net/UnrealNetwork.h"
 #include "Inventory/InventorySlot.h"
 
@@ -106,7 +107,27 @@ void AWorldItem::Interact(APawn* InteractingPawn)
 	character->PickUpItem(this);
 }
 
+void AWorldItem::OnHovered(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Pick up");
+}
+
 void AWorldItem::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 {
 	LogWarning(TEXT("World Item parent primary action was called"));
+}
+
+void AWorldItem::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent local primary action was called"));
+}
+
+void AWorldItem::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent secondary action was called"));
+}
+
+void AWorldItem::TriggerLocalSecondaryAction_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent local secondary action was called"));
 }
