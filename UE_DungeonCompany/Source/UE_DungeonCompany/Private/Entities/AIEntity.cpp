@@ -3,6 +3,7 @@
 
 #include "Entities/AIEntity.h"
 #include "AI/DC_AIController.h"
+#include "DC_Statics.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -31,4 +32,16 @@ AAIEntity::AAIEntity()
 void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 {
 	UE_LOG(LogTemp, Log, TEXT("Attacking Player"));
+}
+
+bool AAIEntity::IsVisibleToPlayers() const
+{
+	for (FConstPlayerControllerIterator iterator = GetWorld()->GetPlayerControllerIterator(); iterator; ++iterator)
+	{
+		if (UDC_Statics::IsActorVisibleToPlayer(iterator->Get(), this))
+			return true;
+
+	}
+
+	return false;
 }

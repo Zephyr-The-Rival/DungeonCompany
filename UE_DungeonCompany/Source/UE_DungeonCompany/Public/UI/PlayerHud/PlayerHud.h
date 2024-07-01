@@ -47,8 +47,7 @@ class UE_DUNGEONCOMPANY_API UPlayerHud : public UUserWidget
 	
 public:
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	APlayerCharacter* MyCharacter;
+
 
 	UFUNCTION(BlueprintNativeEvent)
 	void ShowCrosshair(UTexture2D* newTexture);
@@ -102,4 +101,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void ShowBuyPrompt(ABuyableItem* BuyableItem);
 	void ShowBuyPrompt_Implementation(ABuyableItem* BuyableItem);
+
+
 };

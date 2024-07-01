@@ -25,7 +25,6 @@ EBTNodeResult::Type UBTTask_StartMovement::ExecuteTask(UBehaviorTreeComponent& O
 	if (!aiEntity)
 		return EBTNodeResult::Failed;
 
-
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool("MovementStarted", true);
 	aiEntity->GetCharacterMovement()->SetMovementMode(DefaultMovementMode);
 
