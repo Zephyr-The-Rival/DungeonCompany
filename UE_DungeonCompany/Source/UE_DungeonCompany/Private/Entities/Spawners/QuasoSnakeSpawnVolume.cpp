@@ -11,12 +11,14 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-AQuasoSnakeSpawnVolume::AQuasoSnakeSpawnVolume()
+AQuasoSnakeSpawnVolume::AQuasoSnakeSpawnVolume(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	static ConstructorHelpers::FClassFinder<AQuasoSnake> BPClass(TEXT("/Game/_DungeonCompanyContent/Code/Entities/BP_QuasoSnake"));
 	QuasoSnakeClass = BPClass.Class;
 
 	PrimaryActorTick.bCanEverTick = true;
+
 }
 
 void AQuasoSnakeSpawnVolume::BeginPlay()
