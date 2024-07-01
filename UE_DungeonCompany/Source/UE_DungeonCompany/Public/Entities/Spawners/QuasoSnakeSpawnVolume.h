@@ -30,6 +30,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Balancing|Spawn")
 	TArray<AActor*> SpawnsurfaceActors;
 
+	UPROPERTY(EditAnywhere, Category = "Balancing|Spawn")
+	float SpawnDistance = 20.f;
+
 	UPROPERTY(EditAnywhere, Category = "Balancing|Timer")
 	float OutOfRangeDespawnSeconds = 30.f;
 
