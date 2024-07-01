@@ -75,5 +75,7 @@ private:
 protected:
 	UFUNCTION()
 	void StoppedInteracting();
+public:
+	virtual void OnHovered(APlayerCharacter* PlayerCharacter);
 
 };
