@@ -34,6 +34,7 @@
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Interfaces/VoiceInterface.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -86,8 +87,6 @@ void APlayerCharacter::BeginPlay()
 	this->HandSlotA = NewObject<UInventorySlot>();
 	this->HandSlotB = NewObject<UInventorySlot>();
 
-
-
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
 
@@ -97,6 +96,15 @@ void APlayerCharacter::BeginPlay()
 
 	if(!IsLocallyControlled() || !CharacterInputMapping)
 		return;
+
+
+	ADC_PC* pc = GetController<ADC_PC>();
+
+	if(!pc)
+		return;
+
+	OnInputDeviceChanged(pc->IsUsingGamepad());
+	pc->OnInputDeviceChanged.AddDynamic(this, &APlayerCharacter::OnInputDeviceChanged);
 
 	auto inputLocalPlayer = GetInputLocalPlayer();
 
@@ -227,6 +235,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 	EIC->BindAction(MoveAction, ETriggerEvent::None, this, &APlayerCharacter::NoMove);
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
+	EIC->BindAction(LookAction, ETriggerEvent::None, this, &APlayerCharacter::NoLook);
 	EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &APlayerCharacter::Jump);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::CrouchActionStarted);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Completed, this, &APlayerCharacter::CrouchActionCompleted);
@@ -280,18 +289,46 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
-	if (bLookAllowed)
-	{
-		FVector2D lookVector = Value.Get<FVector2D>();
+	if (!bLookAllowed)
+		return;
 
-		AddControllerYawInput(lookVector.X);
+	(this->*LookFunction)(Value);
 
-		AddControllerPitchInput(lookVector.Y);
-		FRotator newRotation = FRotator(0, 0, 0);
-		newRotation.Pitch = GetControlRotation().Euler().Y;
+	FRotator newRotation = FRotator(0, 0, 0);
+	newRotation.Pitch = GetControlRotation().Euler().Y;
 
-		FirstPersonMesh->SetRelativeRotation(newRotation);
-	}
+	FirstPersonMesh->SetRelativeRotation(newRotation);
+}
+
+void APlayerCharacter::LookMouse(const FInputActionValue& Value)
+{
+	FVector2D lookVector = Value.Get<FVector2D>();
+
+	AddControllerYawInput(lookVector.X);
+	AddControllerPitchInput(lookVector.Y);
+}
+
+void APlayerCharacter::LookGamepad(const FInputActionValue& Value)
+{
+	FVector2D lookVector = Value.Get<FVector2D>();
+
+	float lookVectorLength = lookVector.Length();
+
+	if (lookVectorLength > LastLookVectorLength)
+		lookVectorLength = UKismetMathLibrary::FInterpTo(LastLookVectorLength, lookVectorLength, GetWorld()->GetDeltaSeconds(), GamepadAccelerationSpeed);
+	
+	LastLookVectorLength = lookVectorLength;
+
+	lookVector.Normalize();
+	lookVector *= lookVectorLength;
+
+	AddControllerYawInput(lookVector.X );
+	AddControllerPitchInput(lookVector.Y);
+}
+
+void APlayerCharacter::NoLook()
+{
+	LastLookVectorLength = 0.f;
 }
 
 void APlayerCharacter::InteractorLineTrace()
@@ -602,6 +639,11 @@ void APlayerCharacter::Server_SetActorLocation_Implementation(const FVector& InL
 void APlayerCharacter::Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride)
 {
 	LaunchCharacter(LaunchVelocity, bXYOverride, bZOverride);
+}
+
+void APlayerCharacter::OnInputDeviceChanged(bool IsUsingGamepad)
+{
+	LookFunction = IsUsingGamepad ? &APlayerCharacter::LookGamepad : &APlayerCharacter::LookMouse;
 }
 
 void APlayerCharacter::AddStamina(float AddingStamina)
