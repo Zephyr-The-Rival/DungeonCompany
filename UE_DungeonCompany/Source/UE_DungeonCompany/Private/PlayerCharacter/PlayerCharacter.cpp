@@ -314,15 +314,17 @@ void APlayerCharacter::LookGamepad(const FInputActionValue& Value)
 
 	float lookVectorLength = lookVector.Length();
 
+	float deltaSeconds = GetWorld()->GetDeltaSeconds();
+
 	if (lookVectorLength > LastLookVectorLength)
-		lookVectorLength = UKismetMathLibrary::FInterpTo(LastLookVectorLength, lookVectorLength, GetWorld()->GetDeltaSeconds(), GamepadAccelerationSpeed);
+		lookVectorLength = UKismetMathLibrary::FInterpTo(LastLookVectorLength, lookVectorLength, deltaSeconds, GamepadAccelerationSpeed);
 	
 	LastLookVectorLength = lookVectorLength;
 
 	lookVector.Normalize();
-	lookVector *= lookVectorLength;
+	lookVector *= lookVectorLength * deltaSeconds * 100.f;
 
-	AddControllerYawInput(lookVector.X );
+	AddControllerYawInput(lookVector.X);
 	AddControllerPitchInput(lookVector.Y);
 }
 
