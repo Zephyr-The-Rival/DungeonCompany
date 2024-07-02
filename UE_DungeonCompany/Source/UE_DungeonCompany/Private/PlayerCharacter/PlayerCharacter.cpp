@@ -330,7 +330,8 @@ void APlayerCharacter::LookGamepad(const FInputActionValue& Value)
 
 void APlayerCharacter::NoLook()
 {
-	LastLookVectorLength = 0.f;
+	if(LastLookVectorLength)
+		LastLookVectorLength = 0.f;
 }
 
 void APlayerCharacter::InteractorLineTrace()
