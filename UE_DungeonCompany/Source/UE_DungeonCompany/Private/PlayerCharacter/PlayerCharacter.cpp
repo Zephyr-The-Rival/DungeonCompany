@@ -984,6 +984,9 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
+	if(AttackBlend == 1)
+		return;
+
 	FSlotData SD;
 	SD.Slot = GetCurrentlyHeldInventorySlot();
 	SD.bIsBackpackSlot = false;
@@ -992,6 +995,9 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::ThrowItemPressed()
 {
+	if (AttackBlend == 1)
+		return;
+
 	FSlotData SD;
 	SD.Slot = GetCurrentlyHeldInventorySlot();
 	SD.bIsBackpackSlot = false;
