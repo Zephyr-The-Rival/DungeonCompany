@@ -70,16 +70,27 @@ void ADC_PC::SetupInputComponent()
 	EIC->BindAction(PushToTalkAction, ETriggerEvent::Started, this, &ADC_PC::PushToTalkStarted);
 	EIC->BindAction(PushToTalkAction, ETriggerEvent::Completed, this, &ADC_PC::PushToTalkCompleted);
 
-	FInputKeyBinding ikb(FInputChord(EKeys::AnyKey, false, false, false, false), EInputEvent::IE_Pressed);
+	FInputKeyBinding keysIKB(FInputChord(EKeys::AnyKey, false, false, false, false), EInputEvent::IE_Pressed);
 
-	ikb.bConsumeInput = true;
-	ikb.bExecuteWhenPaused = false;
+	keysIKB.bConsumeInput = true;
+	keysIKB.bExecuteWhenPaused = false;
 
-	ikb.KeyDelegate.GetDelegateWithKeyForManualSet().BindLambda([this](const FKey& Key) {
+	keysIKB.KeyDelegate.GetDelegateWithKeyForManualSet().BindLambda([this](const FKey& Key) {
 		OnAnyKeyPressed(Key);
 	});
 
-	InputComponent->KeyBindings.Add(ikb);
+	InputComponent->KeyBindings.Add(keysIKB);
+
+	FInputKeyBinding mouseIKB(FInputChord(EKeys::Mouse2D, false, false, false, false), EInputEvent::IE_Pressed);
+
+	mouseIKB.bConsumeInput = true;
+	mouseIKB.bExecuteWhenPaused = false;
+
+	mouseIKB.KeyDelegate.GetDelegateWithKeyForManualSet().BindLambda([this](const FKey& Key) {
+		OnAnyKeyPressed(Key);
+	});
+
+	InputComponent->KeyBindings.Add(mouseIKB);
 
 }
 

@@ -314,21 +314,24 @@ void APlayerCharacter::LookGamepad(const FInputActionValue& Value)
 
 	float lookVectorLength = lookVector.Length();
 
+	float deltaSeconds = GetWorld()->GetDeltaSeconds();
+
 	if (lookVectorLength > LastLookVectorLength)
-		lookVectorLength = UKismetMathLibrary::FInterpTo(LastLookVectorLength, lookVectorLength, GetWorld()->GetDeltaSeconds(), GamepadAccelerationSpeed);
+		lookVectorLength = UKismetMathLibrary::FInterpTo(LastLookVectorLength, lookVectorLength, deltaSeconds, GamepadAccelerationSpeed);
 	
 	LastLookVectorLength = lookVectorLength;
 
 	lookVector.Normalize();
-	lookVector *= lookVectorLength;
+	lookVector *= lookVectorLength * deltaSeconds * 100.f;
 
-	AddControllerYawInput(lookVector.X );
+	AddControllerYawInput(lookVector.X);
 	AddControllerPitchInput(lookVector.Y);
 }
 
 void APlayerCharacter::NoLook()
 {
-	LastLookVectorLength = 0.f;
+	if(LastLookVectorLength)
+		LastLookVectorLength = 0.f;
 }
 
 void APlayerCharacter::InteractorLineTrace()
@@ -981,6 +984,9 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
+	if(AttackBlend == 1)
+		return;
+
 	FSlotData SD;
 	SD.Slot = GetCurrentlyHeldInventorySlot();
 	SD.bIsBackpackSlot = false;
@@ -989,6 +995,9 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::ThrowItemPressed()
 {
+	if (AttackBlend == 1)
+		return;
+
 	FSlotData SD;
 	SD.Slot = GetCurrentlyHeldInventorySlot();
 	SD.bIsBackpackSlot = false;
