@@ -118,7 +118,4 @@ protected:
 	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter);
 	void OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter);
 
-public:
-	virtual void OnDeath_Implementation() override;
-
 };
