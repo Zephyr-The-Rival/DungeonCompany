@@ -2,6 +2,9 @@
 
 
 #include "DC_Statics.h"
+#include "PlayerCharacter/PlayerCharacter.h"
+
+#include "Camera/CameraComponent.h"
 
 void UDC_Statics::SetMicInputGain(float Value)
 {
@@ -85,4 +88,54 @@ void UDC_Statics::SetVoiceDebugPrintAmplitude(bool Value)
 {
 	static IConsoleVariable* printAmplitude = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.debug.PrintAmplitude"));
 	printAmplitude->Set(Value);
+}
+
+bool UDC_Statics::IsLocationInViewportOfPlayer(APlayerController* PlayerController, const FVector& Location)
+{
+	APawn* playerPawn = PlayerController->GetPawn();
+	if(!playerPawn)	
+		return false;
+
+	FVector compareVector = Location - playerPawn->GetActorLocation();
+	compareVector.Normalize();
+
+	if(compareVector.Dot(playerPawn->GetActorRotation().Vector()) < 0.65f)
+		return false;
+
+	FVector2D screenLocation;
+	PlayerController->ProjectWorldLocationToScreen(Location, screenLocation);
+
+	FVector2D screenSize;
+	GEngine->GameViewport->GetViewportSize(screenSize);
+
+	return screenLocation.ComponentwiseAllGreaterOrEqual(FVector2D::ZeroVector) && screenLocation.ComponentwiseAllLessThan(screenSize);
+}
+
+bool UDC_Statics::IsLocationVisibleToPlayer(APlayerController* PlayerController, const FVector& Location)
+{
+	if(!IsLocationInViewportOfPlayer(PlayerController, Location))
+		return false;
+
+	APawn* playerPawn = PlayerController->GetPawn();
+	if(!playerPawn)
+		return false;
+
+	FVector start = playerPawn->GetActorLocation();
+
+	FCollisionQueryParams params;
+	params.AddIgnoredActor(playerPawn);
+
+	FHitResult hit;
+
+	PlayerController->GetWorld()->LineTraceSingleByChannel(hit, start, Location, ECC_Visibility, params);
+
+	return !hit.bBlockingHit;
+}
+
+bool UDC_Statics::IsActorVisibleToPlayer(APlayerController* PlayerController, const AActor* Actor)
+{
+	if (!IsLocationInViewportOfPlayer(PlayerController, Actor->GetActorLocation()))
+		return false;
+
+	return PlayerController->LineOfSightTo(Actor);
 }

@@ -3,6 +3,7 @@
 
 #include "Entities/AIEntity.h"
 #include "AI/DC_AIController.h"
+#include "DC_Statics.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -13,6 +14,10 @@ AAIEntity::AAIEntity()
 	PrimaryActorTick.bCanEverTick = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 360.f, 0.0f);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+
+	GetMesh()->SetCollisionProfileName("EntityMesh");
+	GetMesh()->SetGenerateOverlapEvents(true);
 
 	GetMesh()->SetCollisionProfileName("EntityMesh");
 	GetMesh()->SetGenerateOverlapEvents(true);
@@ -20,4 +25,30 @@ AAIEntity::AAIEntity()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+}
+
+void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
+{
+	UE_LOG(LogTemp, Log, TEXT("Attacking Player"));
+}
+
+bool AAIEntity::IsVisibleToPlayers() const
+{
+	for (FConstPlayerControllerIterator iterator = GetWorld()->GetPlayerControllerIterator(); iterator; ++iterator)
+	{
+		if (UDC_Statics::IsActorVisibleToPlayer(iterator->Get(), this))
+			return true;
+
+	}
+
+	return false;
+}
+
+void AAIEntity::OnDeath_Implementation()
+{
+	Super::OnDeath_Implementation();
+
+	Destroy();
 }

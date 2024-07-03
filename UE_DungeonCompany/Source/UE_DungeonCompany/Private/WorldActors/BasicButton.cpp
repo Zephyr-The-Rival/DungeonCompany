@@ -3,12 +3,15 @@
 
 #include "WorldActors/BasicButton.h"
 #include "DC_Statics.h"
+#include "PlayerCharacter/PlayerCharacter.h"
+#include "UI/PlayerHud/PlayerHud.h"
 
 // Sets default values
 ABasicButton::ABasicButton()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	this->bInteractOnServer = true;
 
 }
 
@@ -26,9 +29,14 @@ void ABasicButton::Tick(float DeltaTime)
 
 }
 
-void ABasicButton::Interact(APawn* InteractingPawn)
+void ABasicButton::AuthorityInteract(APawn* InteractingPawn)
 {
 	this->OnButtonPressed.Broadcast(InteractingPawn);
+}
+
+void ABasicButton::OnHovered(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt(InteractPromptText);
 }
 
 
