@@ -8,6 +8,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "PlayerCharacter/Components/DC_CMC.h"
+#include "UI/PlayerHud/PlayerHud.h"
 
 void ALadder::SetHeight(float InHeight)
 {
@@ -43,6 +44,8 @@ ALadder::ALadder()
 
 	EasyInteractBox = CreateDefaultSubobject<UBoxComponent>(TEXT("EasyInteractBox"));
 	EasyInteractBox->SetupAttachment(RootComponent);
+
+	EasyInteractBox->SetCollisionProfileName(FName("EasyInteract"));
 
 	EasyInteractBox->InitBoxExtent(FVector(1, 1, 1));
 }
@@ -169,5 +172,10 @@ void ALadder::StoppedInteracting()
 	if(!HasAuthority())
 		LaunchCharacter->Server_LaunchCharacter(launchVelocity, false, true);
 
+}
+
+void ALadder::OnHovered(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Climb");
 }
 

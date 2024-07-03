@@ -29,5 +29,9 @@ public:
 	inline UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 
 	virtual void AttackPlayer(APlayerCharacter* TargetPlayer);
+
+	bool IsVisibleToPlayers() const;
+
+	virtual void OnDeath_Implementation() override;
 	
 };

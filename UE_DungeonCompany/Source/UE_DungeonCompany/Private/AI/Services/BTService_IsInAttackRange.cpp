@@ -32,9 +32,11 @@ void UBTService_IsInAttackRange::OnBecomeRelevant(UBehaviorTreeComponent& OwnerC
 	if (!aiPawn)
 		WriteResult(false);
 
-	if(aiPawn->GetDistanceTo(targetPlayer) > AttackRange)
-		WriteResult(false);
+	FVector targetLocation = targetPlayer->GetActorLocation();
 
-	WriteResult(true);
+	if(bIgnoreZValue)
+		targetLocation.Z = aiPawn->GetActorLocation().Z;
+
+	WriteResult((targetLocation - aiPawn->GetActorLocation()).Length() <= AttackRange);
 
 }
