@@ -168,7 +168,9 @@ void AQuasoSnakeSpawnVolume::SpawnCloseToPlayer(ACharacter* Character)
 
 		GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
 
+#if WITH_EDITOR
 		DrawDebugLine(GetWorld(), start, end, FColor::Blue, false, 3.f);
+#endif
 
 		double hitDistance = (hit.Location - start).Length();
 
