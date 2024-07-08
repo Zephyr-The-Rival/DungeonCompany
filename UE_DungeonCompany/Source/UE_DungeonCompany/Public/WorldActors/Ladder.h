@@ -16,32 +16,33 @@ class UE_DUNGEONCOMPANY_API ALadder : public AActor, public IInteractable
 	GENERATED_BODY()
 
 private:
-	UPROPERTY(EditAnywhere)
-	UStaticMesh* LadderSectionReference;
-
-	UPROPERTY(EditAnywhere)
-	UMaterialInterface* Material;
-
-	UInstancedStaticMeshComponent* LadderMesh;
-
+	UPROPERTY()
 	UBoxComponent* InteractVolume;
 
+	UPROPERTY()
+	UBoxComponent* ClimbVolume;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* EasyInteractBox;
+
+	UPROPERTY()
 	UBoxComponent* BottomBox;
 
-	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
-	unsigned int SectionsCount = 1;
-
-	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
-	float SectionHeight = 100.f;
-
-	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
-	float SectionDepth = 20.f;
-
-	UPROPERTY(EditAnywhere, Category = ProceduralGeneration)
-	bool bSectionOriginInMid = false;
+	UPROPERTY(EditAnywhere, Category = Balancing)
+	float Height = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = Interaction)
 	FVector2D InteractionArea = FVector2D(10, 20);
+
+	UPROPERTY(EditAnywhere, Category = Interaction)
+	float InteractionVolumeHeightBonus = 100.f;
+
+	UPROPERTY(EditAnywhere, Category = Interaction)
+	FVector2D EasyInteractArea = FVector2D(5, 20);
+
+public:
+	/*This doesn't set the height in runtime. Set this in the constructor or before calling the construction script of the Ladder class.*/
+	void SetHeight(float InHeight); 
 
 public:	
 	ALadder();
@@ -64,6 +65,9 @@ protected:
 	UFUNCTION()
 	void OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UFUNCTION()
+	void OnClimbVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 private:
 	APlayerCharacter* LocalPlayerOnLadder;
 	bool bRemovedByLadder = false;
@@ -71,5 +75,7 @@ private:
 protected:
 	UFUNCTION()
 	void StoppedInteracting();
+public:
+	virtual void OnHovered(APlayerCharacter* PlayerCharacter);
 
 };

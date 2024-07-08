@@ -9,6 +9,7 @@
 
 #include "Net/VoiceConfig.h"
 #include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 ADC_PC::ADC_PC()
 {
@@ -19,11 +20,14 @@ void ADC_PC::BeginPlay()
 {
 	Super::BeginPlay();
 
-	FInputModeGameOnly mode;
-	this->SetInputMode(mode);
+
+	SetInputMode(FInputModeGameOnly());
 
 	if(!IsLocalController())
 		return;
+
+	this->MyPlayerHud = CreateWidget<UPlayerHud>(this, PlayerHudClass);
+	this->MyPlayerHud->AddToViewport();
 
 	UVOIPStatics::SetMicThreshold(-3.0);
 
@@ -33,9 +37,22 @@ void ADC_PC::BeginPlay()
 	if(bPushToTalkActive)
 		ToggleSpeaking(false);
 
-	MyPlayerHud = CreateWidget<UPlayerHud>(this, PlayerHudClass);
-	MyPlayerHud->MyCharacter = Cast<APlayerCharacter>(this->GetPawn());
-	MyPlayerHud->AddToViewport();
+
+
+	if (!InputMapping)
+		return;
+
+	ULocalPlayer* localPlayer = GetLocalPlayer();
+
+	if (!localPlayer)
+		return;
+
+	UEnhancedInputLocalPlayerSubsystem* inputSystem = localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+
+	if (!inputSystem)
+		return;
+
+	inputSystem->AddMappingContext(InputMapping, 1);
 
 }
 
@@ -48,8 +65,49 @@ void ADC_PC::SetupInputComponent()
 	if(!EIC)
 		return;
 
+	EIC->BindAction(OptionsAction, ETriggerEvent::Started, this, &ADC_PC::ToggleOptions);
+
 	EIC->BindAction(PushToTalkAction, ETriggerEvent::Started, this, &ADC_PC::PushToTalkStarted);
 	EIC->BindAction(PushToTalkAction, ETriggerEvent::Completed, this, &ADC_PC::PushToTalkCompleted);
+
+	FInputKeyBinding keysIKB(FInputChord(EKeys::AnyKey, false, false, false, false), EInputEvent::IE_Pressed);
+
+	keysIKB.bConsumeInput = true;
+	keysIKB.bExecuteWhenPaused = false;
+
+	keysIKB.KeyDelegate.GetDelegateWithKeyForManualSet().BindLambda([this](const FKey& Key) {
+		OnAnyKeyPressed(Key);
+	});
+
+	InputComponent->KeyBindings.Add(keysIKB);
+
+	FInputKeyBinding mouseIKB(FInputChord(EKeys::Mouse2D, false, false, false, false), EInputEvent::IE_Pressed);
+
+	mouseIKB.bConsumeInput = true;
+	mouseIKB.bExecuteWhenPaused = false;
+
+	mouseIKB.KeyDelegate.GetDelegateWithKeyForManualSet().BindLambda([this](const FKey& Key) {
+		OnAnyKeyPressed(Key);
+	});
+
+	InputComponent->KeyBindings.Add(mouseIKB);
+
+}
+
+void ADC_PC::ToggleOptions()
+{
+	bOptionsMenuIsOn = !bOptionsMenuIsOn;
+	GetMyPlayerHud()->ToggleOptionsMenu(bOptionsMenuIsOn);
+
+	APlayerCharacter* playerCharacter = GetPawn<APlayerCharacter>();
+
+	if(!playerCharacter)
+		return;
+	
+	if(bOptionsMenuIsOn)
+		playerCharacter->DeactivateCharacterInputMappings();
+	else
+		playerCharacter->ActivateCharacterInputMappings();
 }
 
 void ADC_PC::PushToTalkStarted()
@@ -70,6 +128,17 @@ void ADC_PC::PushToTalkCompleted()
 
 }
 
+void ADC_PC::OnAnyKeyPressed(const FKey& Key)
+{
+	if(bUsingGamepad == Key.IsGamepadKey())
+		return;
+
+	bUsingGamepad = Key.IsGamepadKey();
+
+	OnInputDeviceChanged.Broadcast(bUsingGamepad);
+
+}
+
 bool ADC_PC::IsPushToTalkActive() const
 {
 	return bPushToTalkActive;
@@ -80,3 +149,4 @@ void ADC_PC::SetPushToTalkActive(bool IsActive)
 	ToggleSpeaking(!IsActive);
 	bPushToTalkActive = IsActive;
 }
+
