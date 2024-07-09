@@ -1234,7 +1234,7 @@ void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
 	
-	weapon->DealHits(NULL, FVector(), FVector());
+	weapon->DealHits(NULL, TArray<FVector>(), TArray<FVector>());// is overridden in blueprints to get trace points
 }
 
 void APlayerCharacter::OnAttackOver()

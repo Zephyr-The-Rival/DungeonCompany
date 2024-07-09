@@ -7,6 +7,8 @@
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 ADC_Entity::ADC_Entity()
 {
@@ -20,6 +22,11 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 	
 }
 
+void ADC_Entity::SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint)
+{
+	UNiagaraFunctionLibrary::SpawnSystemAttached(this->bloodEffect, hitComponent, BoneName, hitPoint, FRotator(0.f), EAttachLocation::Type::KeepWorldPosition, true);
+}
+
 void ADC_Entity::CheckIfDead()
 {
 	if (HP <= 0.f)
@@ -28,6 +35,7 @@ void ADC_Entity::CheckIfDead()
 
 void ADC_Entity::TakeDamage(float Damage)
 {
+	//blood particle have to be spawned speperately look at this->SpawnHitEffect
 	if (HP <= 0.f)
 		return;
 
