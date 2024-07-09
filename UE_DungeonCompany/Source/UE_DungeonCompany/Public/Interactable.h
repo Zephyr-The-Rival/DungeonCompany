@@ -28,9 +28,12 @@ protected:
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void Interact(APawn* InteractingPawn)=0;
+	virtual void Interact(APawn* InteractingPawn) {};
 	virtual void AuthorityInteract(APawn* InteractingPawn){};
 	
 	inline bool IsInteractable() const { return bInteractable; }
 	inline bool IsInteractionRunningOnServer() const { return bInteractOnServer; }
+
+	virtual void OnHovered(APlayerCharacter* PlayerCharacter) {};
+	virtual void OnUnHovered(APlayerCharacter* PlayerCharacter) {};
 };

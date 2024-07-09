@@ -37,5 +37,9 @@ protected:
 
 	void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus);
 	void HandleHearingSense(FAIStimulus const Stimulus);
+
+public:
+	void SetSightRadius(float Radius);
+	void SetLoseSightRadius(float Radius);
 	
 };

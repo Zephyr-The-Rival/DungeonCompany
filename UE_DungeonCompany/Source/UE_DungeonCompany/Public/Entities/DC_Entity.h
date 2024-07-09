@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "DC_Entity.generated.h"
 
+class UBuffDebuffBase;
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_Entity : public ACharacter
 {
@@ -15,7 +17,7 @@ protected:
 	UPROPERTY(EditAnywhere,	BlueprintGetter = GetMaxHealth, Category = "Balancing|Health")
 	float MaxHP = 100.f;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintGetter = GetHealth)
+	UPROPERTY(EditAnywhere, ReplicatedUsing = CheckIfDead, BlueprintGetter = GetHealth)
 	float HP = 100.f;
 
 public:
@@ -29,13 +31,24 @@ public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetMaxHealth() const { return MaxHP; }
 
+	inline bool IsDead() const { return HP <= 0.f; }
+
 	using Super::TakeDamage;
 	virtual void TakeDamage(float Damage);
 
-	UFUNCTION(BlueprintNativeEvent)
+protected:
+	UFUNCTION()
+	void CheckIfDead();
+
+public:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnDeath();
 	virtual void OnDeath_Implementation();
 
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+public:
+	UBuffDebuffBase* AddBuffOrDebuff(TSubclassOf<UBuffDebuffBase> BuffDebuffClass, float ActiveTime = 0.f);
+	void RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass);
 
 };
