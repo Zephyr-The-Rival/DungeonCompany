@@ -30,7 +30,7 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, cons
 		FHitResult hitResult;
 		GetWorld()->LineTraceSingleByChannel(hitResult, TraceStarts[i], TraceEnd[i], ECC_GameTraceChannel4);
 
-		DrawDebugLine(GetWorld(), TraceStarts[i], TraceEnd[i], FColor::Green, false, 1.0f, 0, 1.0f);
+		//DrawDebugLine(GetWorld(), TraceStarts[i], TraceEnd[i], FColor::Green, false, 1.0f, 0, 1.0f);
 		
 		if(!hitResult.bBlockingHit)
 			continue;
