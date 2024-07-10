@@ -4,6 +4,7 @@
 #include "Entities/DC_Entity.h"
 #include "AI/DC_AIController.h"
 #include "BuffSystem/BuffDebuffBase.h"
+#include "DC_Statics.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -22,9 +23,10 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 	
 }
 
-void ADC_Entity::SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint)
+void ADC_Entity::SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
 {
-	UNiagaraFunctionLibrary::SpawnSystemAttached(this->bloodEffect, hitComponent, BoneName, hitPoint, FRotator(0.f), EAttachLocation::Type::KeepWorldPosition, true);
+	UNiagaraComponent* tmp= UNiagaraFunctionLibrary::SpawnSystemAttached(this->bloodEffect, hitComponent, BoneName, hitPoint, FRotator(0.f), EAttachLocation::Type::KeepWorldPosition, true);
+	tmp->SetNiagaraVariableVec3("Direction", HitNormal*-1);
 }
 
 void ADC_Entity::CheckIfDead()

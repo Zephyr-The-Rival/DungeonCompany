@@ -38,7 +38,7 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, cons
 		hitEntity = Cast<ADC_Entity>(hitResult.GetActor());	 	 	 		
 
 		hitEntity->TakeDamage(10);
-		hitEntity->SpawnHitEffect(Cast<USceneComponent>(hitResult.GetComponent()), hitResult.BoneName, hitResult.Location);
+		hitEntity->SpawnHitEffect(Cast<USceneComponent>(hitResult.GetComponent()), hitResult.BoneName, hitResult.Location, TraceEnd[i] - TraceStarts[i]);
 		break;
 
 	}
