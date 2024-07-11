@@ -4,7 +4,7 @@
 
 void UDebuffImpairedVision::LocalApply()
 {
-	
+	Super::LocalApply();
 }
 
 void UDebuffImpairedVision::LocalRemove()

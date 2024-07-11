@@ -25,8 +25,11 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 
 void ADC_Entity::SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
 {
-	UNiagaraComponent* tmp= UNiagaraFunctionLibrary::SpawnSystemAttached(this->bloodEffect, hitComponent, BoneName, hitPoint, FRotator(0.f), EAttachLocation::Type::KeepWorldPosition, true);
-	tmp->SetNiagaraVariableVec3("Direction", HitNormal*-1);
+	if (IsValid(this->bloodEffect))
+	{
+		UNiagaraComponent* tmp = UNiagaraFunctionLibrary::SpawnSystemAttached(this->bloodEffect, hitComponent, BoneName, hitPoint, FRotator(0.f), EAttachLocation::Type::KeepWorldPosition, true);
+		tmp->SetNiagaraVariableVec3("Direction", HitNormal * -1);
+	}
 }
 
 void ADC_Entity::CheckIfDead()
