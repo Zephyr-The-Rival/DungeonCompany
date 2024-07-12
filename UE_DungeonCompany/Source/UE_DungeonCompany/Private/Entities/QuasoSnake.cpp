@@ -154,14 +154,14 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", false);
 		return;
 	}
-
+	
 	GetCharacterMovement()->DisableMovement();
 	Multicast_OnAttachedToPlayer();
 
 	AttachToActor(character, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	PlayerAttachedTo = character;
 
-	SetActorLocation(character->GetActorLocation() + FVector::UpVector * 50);
+	SetActorLocation(character->GetActorLocation() + FVector::UpVector * 100);
 
 	GetWorld()->GetTimerManager().SetTimer(StageProgressHandle, this, &AQuasoSnake::ProgressStage, DeathSeconds/3, true, 0.f);
 
@@ -177,9 +177,11 @@ void AQuasoSnake::Multicast_OnDetachedFromPlayer_Implementation()
 	GetCapsuleComponent()->SetCollisionProfileName("Pawn", true);
 }
 
-AQuasoSnake* AQuasoSnake::Spawn(UWorld* World)
+void AQuasoSnake::ReturnToVolume()
 {
-	return nullptr;
+	OnWantsToReturnToVolume.Broadcast();
+
+	Destroy();
 }
 
 void AQuasoSnake::OnDeath_Implementation()
@@ -203,16 +205,16 @@ void AQuasoSnake::ProgressStage()
 	switch (CurrentStage)
 	{
 		case 0:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffDisableMovement::StaticClass()));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->DisableMovementDebuff));
 			break;
 
 		case 1:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffBlockInputs::StaticClass()));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->BlockInputsDebuff));
 			break;
 
 		case 2:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffMuffledVoice::StaticClass()));
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffImpairedVision::StaticClass()));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->MuffledVoiceDebuff));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->ImpairedVisionDebuff));
 			break;
 
 		case 3:

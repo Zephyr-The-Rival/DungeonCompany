@@ -3,6 +3,8 @@
 
 #include "WorldActors/BasicButton.h"
 #include "DC_Statics.h"
+#include "PlayerCharacter/PlayerCharacter.h"
+#include "UI/PlayerHud/PlayerHud.h"
 
 // Sets default values
 ABasicButton::ABasicButton()
@@ -30,6 +32,11 @@ void ABasicButton::Tick(float DeltaTime)
 void ABasicButton::AuthorityInteract(APawn* InteractingPawn)
 {
 	this->OnButtonPressed.Broadcast(InteractingPawn);
+}
+
+void ABasicButton::OnHovered(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt(InteractPromptText);
 }
 
 

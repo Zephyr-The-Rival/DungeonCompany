@@ -5,6 +5,7 @@
 #include "Items/ItemData.h"
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "UI/PlayerHud/PlayerHud.h"
 #include "Net/UnrealNetwork.h"
 #include "Inventory/InventorySlot.h"
 
@@ -104,6 +105,11 @@ void AWorldItem::Interact(APawn* InteractingPawn)
 		return;
 
 	character->PickUpItem(this);
+}
+
+void AWorldItem::OnHovered(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Pick up");
 }
 
 void AWorldItem::TriggerPrimaryAction_Implementation(APlayerCharacter* User)

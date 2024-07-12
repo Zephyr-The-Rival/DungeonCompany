@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class UE_DUNGEONCOMPANY_API UDebuffImpairedVision : public UBuffDebuffBase
 {
 	GENERATED_BODY()

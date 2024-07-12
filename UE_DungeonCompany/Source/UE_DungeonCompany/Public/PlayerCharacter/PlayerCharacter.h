@@ -18,6 +18,8 @@ struct FSlotData;
 class UInventory;
 class UInventorySlot;
 class ABackPack;
+class ABuyableItem;
+class UPlayerHud;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -39,6 +41,10 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USceneComponent* DropTransform;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing")
+	float throwStrengh=800;
+
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -85,6 +91,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* DropItemAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ThrowItemAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* SwitchHandAction;
@@ -162,6 +171,7 @@ public:
 
 protected:
 	void PickUpBackpack(ABackPack* BackpackToPickUp);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float WalkingSpeed = 350;
@@ -178,14 +188,27 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float JumpVelocity = 420.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float GamepadAccelerationSpeed = 7.f;
+
 private:
 	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
+
+	float LastLookVectorLength = 0.f;
 	
+private:
+	void (APlayerCharacter::*LookFunction)(const FInputActionValue& Value) = &APlayerCharacter::LookGamepad;
+
 protected:
 	void Move(const FInputActionValue& Value);
 	void NoMove();
+
 	void Look(const FInputActionValue& Value);
+	void LookMouse(const FInputActionValue& Value);
+	void LookGamepad(const FInputActionValue& Value);
+
+	void NoLook();
 	
 	virtual void Jump() override;
 
@@ -212,7 +235,6 @@ protected:
 	void Server_StopSprint_Implementation();
 
 public:
-
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool GetIsSprinting() const {return this->bSprinting;}
 
@@ -223,6 +245,10 @@ public:
 	UFUNCTION(Server, Unreliable)
 	void Server_LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
 	void Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
+
+protected:
+	UFUNCTION()
+	void OnInputDeviceChanged(bool IsUsingGamepad);
 
 private:
 	bool bClimbing = false;
@@ -306,7 +332,7 @@ protected://inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetBackpack)
 	UInventory* Backpack;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Backpack")
 	TSubclassOf<ABackPack> BackpackActor;
 
 	bool bInventoryIsOn = false;
@@ -320,6 +346,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bSlotAIsInHand = true;
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool HasFreeSpace();
 
 private:
 	UInventorySlot* FindFreeSlot();
@@ -345,10 +374,10 @@ protected:
 	void Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
 
 	UFUNCTION(Server, Unreliable)
-	void AddMoneyToWallet(float Amount);
-	void AddMoneyToWallet_Implementation(float Amount);
+	void AddMoneyToWallet(int32 Amount);
+	void AddMoneyToWallet_Implementation(int32 Amount);
 
-	void DropItem(FSlotData SlotToEmpty);
+	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
 
 	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
@@ -361,6 +390,8 @@ protected:
 	void EquipCurrentInventorySelection(bool BToA);
 
 	void DropItemPressed();
+
+	void ThrowItemPressed();
 
 protected:
 	void NavigateInventory(const FInputActionValue& Value);
@@ -403,10 +434,10 @@ public:
 	//bool BItemAIsInHand is protected
 
 private:
-	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
 	UFUNCTION(Server,Unreliable)
-	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
-	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData);
+	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
+	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
 
 	UFUNCTION(Server,Unreliable)
 	void Server_DropBackpack(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
@@ -467,4 +498,20 @@ public://fighting
 public:
 	virtual void OnDeath_Implementation() override;
 
+public://cheat Stuff:
+
+	UFUNCTION(BlueprintCallable)
+	void Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn);
+	
+
+public://buyingItems
+	void BuyItem(ABuyableItem* ItemToBuy);
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Backpack")
+	TSubclassOf<UItemData> BackpackClass;
+
+public:
+	UPlayerHud* GetMyHud();
+	
 };
