@@ -950,6 +950,8 @@ void APlayerCharacter::SwitchHand()
 	if (UTorch_Data* torch = Cast<UTorch_Data>(GetCurrentlyHeldInventorySlot()->MyItem))
 		torch->bOn = false;
 
+	//refreshing the prompt message
+	this->CurrentInteractable = nullptr;
 	TakeOutItem();
 
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
