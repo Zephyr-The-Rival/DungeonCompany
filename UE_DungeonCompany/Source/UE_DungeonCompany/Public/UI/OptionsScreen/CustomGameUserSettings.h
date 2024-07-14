@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameUserSettings.h"
+#include "Sound/SoundMix.h"
+#include "Sound/SoundClass.h"
 #include "CustomGameUserSettings.generated.h"
 
 /**
@@ -29,6 +31,27 @@ protected:
 
 	UPROPERTY(Config)
 	float ambienceVolume;
+
+	UPROPERTY(Config)
+	bool bIsToggleCrouch;
+	
+	UPROPERTY(Config)
+	bool bIsToggleSprint;
+
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Audio")
+	TSoftObjectPtr<USoundMix> MasterSoundMix;
+
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Audio")
+	TSoftObjectPtr<USoundClass> SC_Master;
+
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Audio")
+	TSoftObjectPtr<USoundClass> SC_Music;
+
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Audio")
+	TSoftObjectPtr<USoundClass> SC_Effects;
+
+	UPROPERTY(EditDefaultsOnly, Config, Category = "Audio")
+	TSoftObjectPtr<USoundClass> SC_Ambience;
 
 public:
 
@@ -64,4 +87,21 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	float GetAmbianceVolume() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetToggleCrouch(bool bNewToggleCrouch);
+
+	UFUNCTION(BlueprintPure)
+	bool GetToggleCrouch() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetToggleSprint(bool bNewToggleSprint);
+
+	UFUNCTION(BlueprintPure)
+	bool GetToggleSprint() const;
+
+	virtual void ApplySettings(bool bCheckForCommandLineOverride) override;
+
+	UFUNCTION(BlueprintCallable)
+	void ApplyAudioSettings();
 };

@@ -2,6 +2,9 @@
 
 
 #include "UI/OptionsScreen/CustomGameUserSettings.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundMix.h"
+#include "Sound/SoundClass.h"
 
 UCustomGameUserSettings::UCustomGameUserSettings(const FObjectInitializer& ObjectInitializer):Super(ObjectInitializer)
 {
@@ -10,6 +13,8 @@ UCustomGameUserSettings::UCustomGameUserSettings(const FObjectInitializer& Objec
 	musicVolume = 1.0F;
 	effectsVolume = 1.0F;
 	ambienceVolume = 1.0F;
+	bIsToggleCrouch = false;
+	bIsToggleSprint = false;
 }
 
 UCustomGameUserSettings* UCustomGameUserSettings::GetCustomGameUserSettings()
@@ -65,4 +70,74 @@ void UCustomGameUserSettings::SetAmbianceVolume(float newValue)
 float UCustomGameUserSettings::GetAmbianceVolume() const
 {
 	return ambienceVolume;
+}
+
+void UCustomGameUserSettings::SetToggleCrouch(bool bNewToggleCrouch)
+{
+	bIsToggleCrouch = bNewToggleCrouch;
+}
+
+bool UCustomGameUserSettings::GetToggleCrouch() const
+{
+	return bIsToggleCrouch;
+}
+
+void UCustomGameUserSettings::SetToggleSprint(bool bNewToggleSprint)
+{
+	bIsToggleSprint = bNewToggleSprint;
+}
+
+bool UCustomGameUserSettings::GetToggleSprint() const
+{
+	return bIsToggleSprint;
+}
+
+void UCustomGameUserSettings::ApplySettings(bool bCheckForCommandLineOverrides)
+{
+	Super::ApplySettings(bCheckForCommandLineOverrides);
+
+	FString GammaCommand = FString::Printf(TEXT("gamma %f"), gammaValue);
+	GEngine->Exec(GetWorld(), *GammaCommand);
+
+	if (MasterSoundMix.IsValid())
+	{
+		if (SC_Master.IsValid())
+		{
+			UGameplayStatics::SetSoundMixClassOverride(this, MasterSoundMix.Get(), SC_Master.Get(), masterVolume, 1.0f, 0.1f, true);
+		}
+		if (SC_Music.IsValid())
+		{
+			UGameplayStatics::SetSoundMixClassOverride(this, MasterSoundMix.Get(), SC_Music.Get(), musicVolume, 1.0f, 0.1f, true);
+		}
+		if (SC_Effects.IsValid())
+		{
+			UGameplayStatics::SetSoundMixClassOverride(this, MasterSoundMix.Get(), SC_Effects.Get(), effectsVolume, 1.0f, 0.1f, true);
+		}
+		if (SC_Ambience.IsValid())
+		{
+			UGameplayStatics::SetSoundMixClassOverride(this, MasterSoundMix.Get(), SC_Ambience.Get(), ambienceVolume, 1.0f, 0.1f, true);
+		}
+		UGameplayStatics::PushSoundMixModifier(this, MasterSoundMix.Get());
+	}
+}
+
+void UCustomGameUserSettings::ApplyAudioSettings()
+{
+	if (SC_Master.IsValid())
+	{
+		UGameplayStatics::SetSoundMixClassOverride(this, MasterSoundMix.Get(), SC_Master.Get(), masterVolume, 1.0f, 0.1f, true);
+	}
+	if (SC_Music.IsValid())
+	{
+		UGameplayStatics::SetSoundMixClassOverride(this, MasterSoundMix.Get(), SC_Music.Get(), musicVolume, 1.0f, 0.1f, true);
+	}
+	if (SC_Effects.IsValid())
+	{
+		UGameplayStatics::SetSoundMixClassOverride(this, MasterSoundMix.Get(), SC_Effects.Get(), effectsVolume, 1.0f, 0.1f, true);
+	}
+	if (SC_Ambience.IsValid())
+	{
+		UGameplayStatics::SetSoundMixClassOverride(this, MasterSoundMix.Get(), SC_Ambience.Get(), ambienceVolume, 1.0f, 0.1f, true);
+	}
+	UGameplayStatics::PushSoundMixModifier(this, MasterSoundMix.Get());
 }
