@@ -990,7 +990,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	if(AttackBlend == 1)
+	if(AttackBlend)
 		return;
 
 	FSlotData SD;
@@ -1001,7 +1001,7 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::ThrowItemPressed()
 {
-	if (AttackBlend == 1)
+	if (AttackBlend)
 		return;
 
 	FSlotData SD;
