@@ -7,19 +7,19 @@
 #include "Interactable.h"
 #include "Items/ItemData.h"
 
-#include "ItemAltar.generated.h"
+#include "ItemSocket.generated.h"
 
 
 class APlayerCharacter;
 
-UCLASS()
-class UE_DUNGEONCOMPANY_API AItemAltar : public AActor, public IInteractable
+UCLASS(Blueprintable)
+class UE_DUNGEONCOMPANY_API AItemSocket : public AActor, public IInteractable
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AItemAltar();
+	AItemSocket();
 
 protected:
 	// Called when the game starts or when spawned
@@ -35,8 +35,17 @@ public:
 	
 	//interact stuff
 	//virtual void Interact(APawn* InteractingPawn) override;
-	virtual void AuthorityInteract(APawn* InteractingPawn) override;
+	virtual void Interact(APawn* InteractingPawn) override;
 
 	virtual void OnHovered(APlayerCharacter* PlayerCharacter) override;
+protected:
+
+	UFUNCTION(Server, Unreliable)
+	void Server_ItemPlaced();
+	void Server_ItemPlaced_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnItemPlaced();
+	void OnItemPlaced_Implementation();
 
 };
