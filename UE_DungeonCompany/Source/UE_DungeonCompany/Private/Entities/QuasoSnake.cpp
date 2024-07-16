@@ -205,16 +205,16 @@ void AQuasoSnake::ProgressStage()
 	switch (CurrentStage)
 	{
 		case 0:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffDisableMovement::StaticClass()));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->DisableMovementDebuff));
 			break;
 
 		case 1:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffBlockInputs::StaticClass()));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->BlockInputsDebuff));
 			break;
 
 		case 2:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffMuffledVoice::StaticClass()));
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffImpairedVision::StaticClass()));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->MuffledVoiceDebuff));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->ImpairedVisionDebuff));
 			break;
 
 		case 3:

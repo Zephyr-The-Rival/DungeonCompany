@@ -20,6 +20,7 @@
 #include "WorldActors/SharedStatsManager.h"
 #include "Items/BackPack.h"
 #include "Items/BuyableItem.h"
+#include "Items/Torch_Data.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -944,6 +945,11 @@ void APlayerCharacter::SwitchHand()
 	bSwitchHandAllowed = false;
 
 	this->bSlotAIsInHand = !bSlotAIsInHand;
+
+	//when switching to torch, it should always be turned off
+	if (UTorch_Data* torch = Cast<UTorch_Data>(GetCurrentlyHeldInventorySlot()->MyItem))
+		torch->bOn = false;
+
 	TakeOutItem();
 
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
@@ -1234,7 +1240,7 @@ void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
 	
-	weapon->DealHits(NULL, FVector(), FVector());
+	weapon->DealHits(NULL, TArray<FVector>(), TArray<FVector>());// is overridden in blueprints to get trace points
 }
 
 void APlayerCharacter::OnAttackOver()

@@ -24,8 +24,8 @@ protected:
 
 public:
 	UFUNCTION(BlueprintNativeEvent)
-    void DealHits(UPrimitiveComponent* WeaponCollision, FVector traceStart, FVector TraceEnd);
-	void DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVector traceStart, FVector TraceEnd);
+    void DealHits(UPrimitiveComponent* WeaponCollision, const TArray<FVector>& TraceStarts, const TArray<FVector>&  TraceEnd);
+	void DealHits_Implementation(UPrimitiveComponent* WeaponCollision, const TArray<FVector>& TraceStarts, const TArray<FVector>&  TraceEnd);
 
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User) override;
 	virtual void TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User) override;
