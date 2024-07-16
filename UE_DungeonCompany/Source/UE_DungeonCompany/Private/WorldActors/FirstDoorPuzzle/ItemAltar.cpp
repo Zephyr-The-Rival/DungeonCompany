@@ -8,7 +8,7 @@
 #include "UI/PlayerHud/PlayerHud.h"
 #include "Items/ItemData.h"
 #include "Items/WorldItem.h"
-#include "Items/ManaCrystal_Data.h"
+
 // Sets default values
 AItemAltar::AItemAltar()
 {
@@ -34,9 +34,15 @@ void AItemAltar::Tick(float DeltaTime)
 
 void AItemAltar::OnHovered(APlayerCharacter* PlayerCharacter)
 {
-	if (Cast<UManaCrystal_Data>(PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem))
-		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("InsertCrystal");
-	else
+
+	if (IsValid(PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem))
+	{
+		if (PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem->IsA(ItemToSacrifice))
+		{
+			PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("InsertCrystal");
+			return;
+		}
+	}
 		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Can't Interact");
 }
 
@@ -44,10 +50,10 @@ void AItemAltar::AuthorityInteract(APawn* InteractingPawn)
 {
 	if (APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(InteractingPawn))
 	{
-		if (Cast<UManaCrystal_Data>(playerCharacter->GetCurrentlyHeldInventorySlot()))
+		if (IsValid(playerCharacter->GetCurrentlyHeldInventorySlot()->MyItem))
 		{
-			return;
-		}
+			if (playerCharacter->GetCurrentlyHeldInventorySlot()->MyItem->IsA(ItemToSacrifice))
+				playerCharacter->RemoveItemFromInventorySlot(playerCharacter->GetCurrentlyHeldInventorySlot());
+		}		
 	}		
-
 }

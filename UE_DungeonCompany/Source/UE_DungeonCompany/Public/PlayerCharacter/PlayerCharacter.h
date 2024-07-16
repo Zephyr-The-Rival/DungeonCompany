@@ -380,8 +380,11 @@ protected:
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
 
-	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
+public:
 
+	void RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty);
+
+protected:
 	void SwitchHand();
 
 	UFUNCTION()

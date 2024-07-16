@@ -384,6 +384,7 @@ void APlayerCharacter::InteractorLineTrace()
 	}
 }
 
+
 void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
 {
 	if (!HasAuthority())
@@ -904,20 +905,16 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		Server_DropBackpack(ItemClasses, ItemDatas);
 		return;
 	}
+	
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
 		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(), bThrow, FirstPersonCamera->GetForwardVector());
-		SlotToEmpty.Slot->MyItem = nullptr;
-
-		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty.Slot)
-		{
-			TakeOutItem();
-		}
-
+		
+		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
 	}
 }
 
-void APlayerCharacter::RemoveInventorySlot(UInventorySlot* SlotToEmpty)
+void APlayerCharacter::RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty)
 {
 	if (!IsValid(SlotToEmpty->MyItem))
 		return;
