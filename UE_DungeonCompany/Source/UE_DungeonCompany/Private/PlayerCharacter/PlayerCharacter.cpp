@@ -21,6 +21,7 @@
 #include "Items/BackPack.h"
 #include "Items/BuyableItem.h"
 #include "Items/Torch_Data.h"
+#include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -403,7 +404,6 @@ void APlayerCharacter::Interact()
 	if(!CurrentInteractable || !CurrentInteractable->IsInteractable())
 		return;
 
-
 	if (CurrentInteractable->IsInteractionRunningOnServer())
 	{
 		if (!HasAuthority())
@@ -415,6 +415,11 @@ void APlayerCharacter::Interact()
 	{
 		CurrentInteractable->Interact(this);
 	}
+}
+
+void APlayerCharacter::ResetInteractPrompt()
+{
+	this->CurrentInteractable = nullptr;
 }
 
 void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
@@ -948,7 +953,7 @@ void APlayerCharacter::SwitchHand()
 		torch->bOn = false;
 
 	//refreshing the prompt message
-	this->CurrentInteractable = nullptr;
+	this->ResetInteractPrompt();
 	TakeOutItem();
 
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
@@ -1285,5 +1290,10 @@ void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 UPlayerHud* APlayerCharacter::GetMyHud()
 {	
 	return  Cast<ADC_PC>(GetController())->GetMyPlayerHud();
+}
+
+void APlayerCharacter::PlaceItemOnSocket_Implementation(AItemSocket* Socket)
+{
+	Socket->OnItemPlaced();
 }
 

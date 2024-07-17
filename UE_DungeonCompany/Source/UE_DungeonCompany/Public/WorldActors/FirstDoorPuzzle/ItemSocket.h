@@ -38,14 +38,19 @@ public:
 	virtual void Interact(APawn* InteractingPawn) override;
 
 	virtual void OnHovered(APlayerCharacter* PlayerCharacter) override;
-protected:
-
-	UFUNCTION(Server, Unreliable)
-	void Server_ItemPlaced();
-	void Server_ItemPlaced_Implementation();
+public:
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnItemPlaced();
 	void OnItemPlaced_Implementation();
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	bool bUseable=true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bOneTimeUse;
+
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 };

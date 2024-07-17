@@ -8,6 +8,7 @@
 #include "UI/PlayerHud/PlayerHud.h"
 #include "Items/ItemData.h"
 #include "Items/WorldItem.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AItemSocket::AItemSocket()
@@ -40,29 +41,22 @@ void AItemSocket::OnHovered(APlayerCharacter* PlayerCharacter)
 		return;
 	}
 
-	if (IsValid(PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem))
+	if (IsValid(PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem) 
+		&& this->bUseable 
+		&& PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem->IsA(ItemToSacrifice))
 	{
-		if (PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem->IsA(ItemToSacrifice))
-		{
-			PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("InsertCrystal");
-			return;
-		}
+		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("InsertCrystal");
+		return;
 	}
 		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Can't Interact");
 }
 
-void AItemSocket::Server_ItemPlaced_Implementation()
-{
-	OnItemPlaced();
-}
 
-void AItemSocket::OnItemPlaced_Implementation()
-{
-}
+
 
 void AItemSocket::Interact(APawn* InteractingPawn)
 {
-	if (!IsValid(this->ItemToSacrifice))
+	if (!IsValid(this->ItemToSacrifice) || !this->bUseable)
 		return;
 
 	if (APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(InteractingPawn))
@@ -70,7 +64,22 @@ void AItemSocket::Interact(APawn* InteractingPawn)
 		if (IsValid(playerCharacter->GetCurrentlyHeldInventorySlot()->MyItem) && playerCharacter->GetCurrentlyHeldInventorySlot()->MyItem->IsA(ItemToSacrifice))
 		{
 			playerCharacter->RemoveItemFromInventorySlot(playerCharacter->GetCurrentlyHeldInventorySlot());
-			this->Server_ItemPlaced();
+			playerCharacter->PlaceItemOnSocket(this);
+			playerCharacter->ResetInteractPrompt();
+			if (this->bOneTimeUse)
+				this->bUseable = false;
+			
 		}
 	}		
+}
+
+void AItemSocket::OnItemPlaced_Implementation()
+{
+
+}
+
+void AItemSocket::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AItemSocket, bUseable);
 }

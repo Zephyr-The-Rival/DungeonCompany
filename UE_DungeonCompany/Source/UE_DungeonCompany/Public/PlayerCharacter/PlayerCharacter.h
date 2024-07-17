@@ -20,6 +20,7 @@ class UInventorySlot;
 class ABackPack;
 class ABuyableItem;
 class UPlayerHud;
+class AItemSocket;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -160,6 +161,7 @@ protected:
 
 public:
 	void Interact();
+	void ResetInteractPrompt();
 
 protected:
 	UFUNCTION(Server, Unreliable)
@@ -516,5 +518,10 @@ protected:
 
 public:
 	UPlayerHud* GetMyHud();
+
+public:
+	UFUNCTION(Server, Unreliable)
+	void PlaceItemOnSocket(AItemSocket* Socket);
+	void PlaceItemOnSocket_Implementation(AItemSocket* Socket);
 	
 };
