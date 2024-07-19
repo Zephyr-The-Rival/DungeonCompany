@@ -53,4 +53,10 @@ public:
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString PromptOnCorrectItemHovered = "Place Item";
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString PromptOnWrongItemHovered = "Can't Interact";
+
 };

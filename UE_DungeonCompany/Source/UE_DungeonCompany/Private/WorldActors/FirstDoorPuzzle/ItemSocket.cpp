@@ -45,10 +45,10 @@ void AItemSocket::OnHovered(APlayerCharacter* PlayerCharacter)
 		&& this->bUseable 
 		&& PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem->IsA(ItemToSacrifice))
 	{
-		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("InsertCrystal");
+		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt(this->PromptOnCorrectItemHovered);
 		return;
 	}
-		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Can't Interact");
+		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt(this->PromptOnWrongItemHovered);
 }
 
 
