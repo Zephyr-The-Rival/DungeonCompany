@@ -10,6 +10,8 @@
 /**
  * 
  */
+class AAIEntity;
+
  class UAISenseConfig_Sight;
  class UAISenseConfig_Hearing;
 
@@ -19,10 +21,9 @@ class UE_DUNGEONCOMPANY_API ADC_AIController : public AAIController
 	GENERATED_BODY()
 
 private:
-	UAISenseConfig_Sight* SightConfig;
-	UAISenseConfig_Hearing* HearingConfig;
-
 	bool bUsingBlackboard = false;
+
+	AAIEntity* AIEntity;
 
 public:
 	explicit ADC_AIController(FObjectInitializer const& ObjectInitializer);
@@ -30,16 +31,7 @@ public:
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 
-	void SetupPerceptionSystem();
-
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus const Stimulus);
-
-	void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus);
-	void HandleHearingSense(FAIStimulus const Stimulus);
-
-public:
-	void SetSightRadius(float Radius);
-	void SetLoseSightRadius(float Radius);
 	
 };

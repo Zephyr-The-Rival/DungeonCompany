@@ -4,8 +4,6 @@
 #include "Animation/AnimNotifies/AnimNotify_PlayRandomSound.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 
-#include "Perception/AISense_Hearing.h"
-
 void UAnimNotify_PlayRandomSound::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
 	if (Sounds.Num() <= 0)
@@ -44,6 +42,6 @@ void UAnimNotify_PlayRandomSound::Notify(USkeletalMeshComponent* MeshComp, UAnim
 	if(!playerCharacter)
 		return;
 
-	UAISense_Hearing::ReportNoiseEvent(GetWorld(), playerCharacter->GetActorLocation(), VolumeMultiplier, playerCharacter);
+	playerCharacter->ReportNoise(VolumeMultiplier);
 	
 }

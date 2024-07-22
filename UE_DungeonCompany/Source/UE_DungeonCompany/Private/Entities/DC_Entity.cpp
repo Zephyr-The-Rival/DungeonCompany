@@ -28,7 +28,7 @@ void ADC_Entity::SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, F
 	if (IsValid(this->bloodEffect))
 	{
 		UNiagaraComponent* tmp = UNiagaraFunctionLibrary::SpawnSystemAttached(this->bloodEffect, hitComponent, BoneName, hitPoint, FRotator(0.f), EAttachLocation::Type::KeepWorldPosition, true);
-		tmp->SetNiagaraVariableVec3("Direction", HitNormal * -1);
+		tmp->SetVariableVec3(TEXT("Direction"), HitNormal * -1);
 	}
 }
 
