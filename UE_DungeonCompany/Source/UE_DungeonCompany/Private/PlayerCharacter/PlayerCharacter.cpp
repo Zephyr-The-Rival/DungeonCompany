@@ -20,6 +20,7 @@
 #include "WorldActors/SharedStatsManager.h"
 #include "Items/BackPack.h"
 #include "Items/BuyableItem.h"
+#include "Items/Torch_Data.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -34,6 +35,7 @@
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Interfaces/VoiceInterface.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -86,8 +88,6 @@ void APlayerCharacter::BeginPlay()
 	this->HandSlotA = NewObject<UInventorySlot>();
 	this->HandSlotB = NewObject<UInventorySlot>();
 
-
-
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
 
@@ -97,6 +97,15 @@ void APlayerCharacter::BeginPlay()
 
 	if(!IsLocallyControlled() || !CharacterInputMapping)
 		return;
+
+
+	ADC_PC* pc = GetController<ADC_PC>();
+
+	if(!pc)
+		return;
+
+	OnInputDeviceChanged(pc->IsUsingGamepad());
+	pc->OnInputDeviceChanged.AddDynamic(this, &APlayerCharacter::OnInputDeviceChanged);
 
 	auto inputLocalPlayer = GetInputLocalPlayer();
 
@@ -227,6 +236,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 	EIC->BindAction(MoveAction, ETriggerEvent::None, this, &APlayerCharacter::NoMove);
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
+	EIC->BindAction(LookAction, ETriggerEvent::None, this, &APlayerCharacter::NoLook);
 	EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &APlayerCharacter::Jump);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::CrouchActionStarted);
 	EIC->BindAction(CrouchAction, ETriggerEvent::Completed, this, &APlayerCharacter::CrouchActionCompleted);
@@ -280,18 +290,49 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
-	if (bLookAllowed)
-	{
-		FVector2D lookVector = Value.Get<FVector2D>();
+	if (!bLookAllowed)
+		return;
 
-		AddControllerYawInput(lookVector.X);
+	(this->*LookFunction)(Value);
 
-		AddControllerPitchInput(lookVector.Y);
-		FRotator newRotation = FRotator(0, 0, 0);
-		newRotation.Pitch = GetControlRotation().Euler().Y;
+	FRotator newRotation = FRotator(0, 0, 0);
+	newRotation.Pitch = GetControlRotation().Euler().Y;
 
-		FirstPersonMesh->SetRelativeRotation(newRotation);
-	}
+	FirstPersonMesh->SetRelativeRotation(newRotation);
+}
+
+void APlayerCharacter::LookMouse(const FInputActionValue& Value)
+{
+	FVector2D lookVector = Value.Get<FVector2D>();
+
+	AddControllerYawInput(lookVector.X);
+	AddControllerPitchInput(lookVector.Y);
+}
+
+void APlayerCharacter::LookGamepad(const FInputActionValue& Value)
+{
+	FVector2D lookVector = Value.Get<FVector2D>();
+
+	float lookVectorLength = lookVector.Length();
+
+	float deltaSeconds = GetWorld()->GetDeltaSeconds();
+
+	if (lookVectorLength > LastLookVectorLength)
+		lookVectorLength = UKismetMathLibrary::FInterpTo(LastLookVectorLength, lookVectorLength, deltaSeconds, GamepadAccelerationSpeed);
+	
+	LastLookVectorLength = lookVectorLength;
+
+	lookVector.Normalize();
+	lookVector *= lookVectorLength * deltaSeconds * 100.f;
+
+	AddControllerYawInput(lookVector.X);
+	AddControllerPitchInput(lookVector.Y);
+}
+
+void APlayerCharacter::NoLook()
+{
+	if(LastLookVectorLength)
+		LastLookVectorLength = 0.f;
 }
 
 void APlayerCharacter::InteractorLineTrace()
@@ -604,6 +645,11 @@ void APlayerCharacter::Server_LaunchCharacter_Implementation(FVector LaunchVeloc
 	LaunchCharacter(LaunchVelocity, bXYOverride, bZOverride);
 }
 
+void APlayerCharacter::OnInputDeviceChanged(bool IsUsingGamepad)
+{
+	LookFunction = IsUsingGamepad ? &APlayerCharacter::LookGamepad : &APlayerCharacter::LookMouse;
+}
+
 void APlayerCharacter::AddStamina(float AddingStamina)
 {
 	if (AddingStamina < 0.f)
@@ -899,6 +945,11 @@ void APlayerCharacter::SwitchHand()
 	bSwitchHandAllowed = false;
 
 	this->bSlotAIsInHand = !bSlotAIsInHand;
+
+	//when switching to torch, it should always be turned off
+	if (UTorch_Data* torch = Cast<UTorch_Data>(GetCurrentlyHeldInventorySlot()->MyItem))
+		torch->bOn = false;
+
 	TakeOutItem();
 
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
@@ -939,6 +990,9 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
+	if(AttackBlend == 1)
+		return;
+
 	FSlotData SD;
 	SD.Slot = GetCurrentlyHeldInventorySlot();
 	SD.bIsBackpackSlot = false;
@@ -947,6 +1001,9 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::ThrowItemPressed()
 {
+	if (AttackBlend == 1)
+		return;
+
 	FSlotData SD;
 	SD.Slot = GetCurrentlyHeldInventorySlot();
 	SD.bIsBackpackSlot = false;
@@ -1183,7 +1240,7 @@ void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
 	
-	weapon->DealHits(NULL, FVector(), FVector());
+	weapon->DealHits(NULL, TArray<FVector>(), TArray<FVector>());// is overridden in blueprints to get trace points
 }
 
 void APlayerCharacter::OnAttackOver()

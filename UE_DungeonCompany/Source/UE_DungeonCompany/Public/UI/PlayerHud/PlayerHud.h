@@ -102,5 +102,9 @@ public:
 	void ShowBuyPrompt(ABuyableItem* BuyableItem);
 	void ShowBuyPrompt_Implementation(ABuyableItem* BuyableItem);
 
+	UFUNCTION(BlueprintNativeEvent)
+	void UdateBuffs();
+	void UdateBuffs_Implementation();
+
 
 };

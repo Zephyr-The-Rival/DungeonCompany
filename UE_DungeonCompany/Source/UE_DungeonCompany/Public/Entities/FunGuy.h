@@ -13,6 +13,7 @@ class UStaticMeshComponent;
 class USphereComponent;
 class APlayerCharacter;
 class UNiagaraComponent;
+class UDebuffPoisonGas;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity
@@ -118,7 +119,8 @@ protected:
 	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter);
 	void OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter);
 
-public:
-	virtual void OnDeath_Implementation() override;
-
+protected:
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
+	TSubclassOf<UDebuffPoisonGas> PosionGasDebuff;
 };

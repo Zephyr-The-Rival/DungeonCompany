@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class UE_DUNGEONCOMPANY_API UDebuffDisableMovement : public UBuffDebuffBase
 {
 	GENERATED_BODY()

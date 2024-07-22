@@ -12,7 +12,7 @@
 class UEnhancedInputLocalPlayerSubsystem;
 class UInputMappingContext;
 
-UCLASS()
+UCLASS(Blueprintable)
 class UE_DUNGEONCOMPANY_API UDebuffBlockInputs : public UBuffDebuffBase
 {
 	GENERATED_BODY()

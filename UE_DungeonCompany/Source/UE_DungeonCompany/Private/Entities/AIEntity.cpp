@@ -45,3 +45,10 @@ bool AAIEntity::IsVisibleToPlayers() const
 
 	return false;
 }
+
+void AAIEntity::OnDeath_Implementation()
+{
+	Super::OnDeath_Implementation();
+
+	Destroy();
+}
