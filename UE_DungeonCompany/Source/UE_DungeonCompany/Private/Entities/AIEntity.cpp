@@ -64,6 +64,9 @@ void AAIEntity::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if(!HasAuthority())
+		return;
+
 	ADC_AIController* aiController = GetController<ADC_AIController>();
 
 	if (!aiController)

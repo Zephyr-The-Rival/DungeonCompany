@@ -55,6 +55,8 @@ void ASpurchin::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 void ASpurchin::BeginPlay()
 {
 	Super::BeginPlay();
+	if(!HasAuthority())
+		return;
 
 	OriginalSightRadius = GetSenseConfig<UAISenseConfig_Sight>()->SightRadius;
 	GetSenseConfig<UAISenseConfig_Sight>()->SightRadius = 0.f;
