@@ -15,6 +15,20 @@ class UE_DUNGEONCOMPANY_API ASpurchin : public AAIEntity
 	GENERATED_BODY()
 
 private:
+	UPROPERTY(EditAnywhere, Category = "Balancing")
+	float HallwaySpeed = 280.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing")
+	float OpenSpaceSpeed = 700.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing")
+	float MaxHallwayWidth = 400.f;
+
+public:
+	ASpurchin();
+
+private:
+	UPROPERTY(Transient)
 	float OriginalSightRadius;
 
 protected:
@@ -23,8 +37,13 @@ protected:
 public:
 	virtual void Tick(float DeltaSeconds) override;
 
+protected:
+	bool IsInHallway();
+
 public:
 	virtual void OnTargetingPlayer_Implementation(APlayerCharacter* Target) override;
+
+
 
 protected:
 	virtual void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
