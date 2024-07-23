@@ -61,6 +61,8 @@ void ADC_Entity::OnDeath_Implementation()
 {
 	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName());
 
+	OnPlayerDeath.Broadcast(this);
+
 }
 
 void ADC_Entity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

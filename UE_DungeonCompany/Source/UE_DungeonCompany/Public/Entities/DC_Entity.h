@@ -49,6 +49,12 @@ public:
 	void OnDeath();
 	virtual void OnDeath_Implementation();
 
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerDeath, ADC_Entity*, DeadPlayer);
+
+	FOnPlayerDeath OnPlayerDeath;
+
+public:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 public:
