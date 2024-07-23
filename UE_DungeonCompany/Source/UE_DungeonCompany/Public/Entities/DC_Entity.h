@@ -7,7 +7,7 @@
 #include "DC_Entity.generated.h"
 
 class UBuffDebuffBase;
-
+class UNiagaraSystem;
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_Entity : public ACharacter
 {
@@ -35,8 +35,12 @@ public:
 
 	using Super::TakeDamage;
 	virtual void TakeDamage(float Damage);
+	void SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UNiagaraSystem* bloodEffect;
+
 	UFUNCTION()
 	void CheckIfDead();
 

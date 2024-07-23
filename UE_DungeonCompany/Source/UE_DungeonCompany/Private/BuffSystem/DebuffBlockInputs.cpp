@@ -8,6 +8,8 @@
 
 void UDebuffBlockInputs::LocalApply()
 {
+	Super::LocalApply();
+
 	APlayerCharacter* character = GetOuterEntity<APlayerCharacter>();
 
 	if (!character)

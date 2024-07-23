@@ -8,6 +8,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "PlayerCharacter/Components/DC_CMC.h"
+#include "UI/PlayerHud/PlayerHud.h"
 
 void ALadder::SetHeight(float InHeight)
 {
@@ -171,5 +172,10 @@ void ALadder::StoppedInteracting()
 	if(!HasAuthority())
 		LaunchCharacter->Server_LaunchCharacter(launchVelocity, false, true);
 
+}
+
+void ALadder::OnHovered(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Climb");
 }
 

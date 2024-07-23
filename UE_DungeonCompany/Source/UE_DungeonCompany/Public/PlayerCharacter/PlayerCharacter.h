@@ -20,6 +20,7 @@ class UInventorySlot;
 class ABackPack;
 class ABuyableItem;
 class UPlayerHud;
+class AItemSocket;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -160,6 +161,7 @@ protected:
 
 public:
 	void Interact();
+	void ResetInteractPrompt();
 
 protected:
 	UFUNCTION(Server, Unreliable)
@@ -171,6 +173,7 @@ public:
 
 protected:
 	void PickUpBackpack(ABackPack* BackpackToPickUp);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float WalkingSpeed = 350;
@@ -187,14 +190,27 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float JumpVelocity = 420.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float GamepadAccelerationSpeed = 7.f;
+
 private:
 	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
+
+	float LastLookVectorLength = 0.f;
 	
+private:
+	void (APlayerCharacter::*LookFunction)(const FInputActionValue& Value) = &APlayerCharacter::LookGamepad;
+
 protected:
 	void Move(const FInputActionValue& Value);
 	void NoMove();
+
 	void Look(const FInputActionValue& Value);
+	void LookMouse(const FInputActionValue& Value);
+	void LookGamepad(const FInputActionValue& Value);
+
+	void NoLook();
 	
 	virtual void Jump() override;
 
@@ -221,7 +237,6 @@ protected:
 	void Server_StopSprint_Implementation();
 
 public:
-
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool GetIsSprinting() const {return this->bSprinting;}
 
@@ -232,6 +247,10 @@ public:
 	UFUNCTION(Server, Unreliable)
 	void Server_LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
 	void Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
+
+protected:
+	UFUNCTION()
+	void OnInputDeviceChanged(bool IsUsingGamepad);
 
 private:
 	bool bClimbing = false;
@@ -363,8 +382,11 @@ protected:
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
 
-	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
+public:
 
+	void RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty);
+
+protected:
 	void SwitchHand();
 
 	UFUNCTION()
@@ -496,5 +518,10 @@ protected:
 
 public:
 	UPlayerHud* GetMyHud();
+
+public:
+	UFUNCTION(Server, Unreliable)
+	void PlaceItemOnSocket(AItemSocket* Socket);
+	void PlaceItemOnSocket_Implementation(AItemSocket* Socket);
 	
 };

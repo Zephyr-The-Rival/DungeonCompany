@@ -5,53 +5,55 @@
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "Entities/DC_Entity.h"
+#include "NiagaraFunctionLibrary.h"
 
 void AWeapon::BeginPlay()
 {
 	AWorldItem::BeginPlay();
 }
 
-void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, FVector traceStart, FVector TraceEnd)
+void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, const TArray<FVector>& TraceStarts, const TArray<FVector>&  TraceEnd)
 {
-	ADC_Entity* criticallyHitEntity;
 
-	FHitResult hitResult;
-	GetWorld()->LineTraceSingleByChannel(hitResult, traceStart, TraceEnd, ECC_GameTraceChannel2);
-
-	if (hitResult.bBlockingHit)
+	if (TraceStarts.Num() != TraceEnd.Num() || TraceStarts.Num() == 0)
 	{
-		criticallyHitEntity = Cast<ADC_Entity>(hitResult.GetActor());
-	}
-	else
-	{
-		criticallyHitEntity = nullptr;
+		LogWarning(TEXT("Include all trace starts and ends in correct order"));
+		return;
 	}
 
-	//DrawDebugLine(GetWorld(), traceStart, TraceEnd, FColor::Green, false, 1.0f, 0, 1.0f);
+	
+	ADC_Entity* hitEntity;
+	FName bonename;
+	FVector impactPoint;
+	for (int i = 0; i < TraceStarts.Num(); i++)
+	{
+		FHitResult hitResult;
+		GetWorld()->LineTraceSingleByChannel(hitResult, TraceStarts[i], TraceEnd[i], ECC_GameTraceChannel4);
+
+		//DrawDebugLine(GetWorld(), TraceStarts[i], TraceEnd[i], FColor::Green, false, 1.0f, 0, 1.0f);
 		
+		if(!hitResult.bBlockingHit)
+			continue;
+		
+		hitEntity = Cast<ADC_Entity>(hitResult.GetActor());	 	 	 		
+
+		hitEntity->TakeDamage(10);
+		hitEntity->SpawnHitEffect(Cast<USceneComponent>(hitResult.GetComponent()), hitResult.BoneName, hitResult.Location, TraceEnd[i] - TraceStarts[i]);
+		break;
+
+	}
+	
+
+
+		
+
 	TArray<AActor*> overlappingActors;
 	WeaponCollision->GetOverlappingActors(overlappingActors);
 
+
 	for (AActor* a : overlappingActors)
 	{
-		if (a == this->MyCharacterToAttachTo)
-			continue;
-
-		if (Cast<ADC_Entity>(a))//if hit entity
-		{
-			if (IsValid(criticallyHitEntity) && a == criticallyHitEntity)//was hit on weak spot
-			{
-				criticallyHitEntity->TakeDamage(20);
-			}
-			else
-			{
-				Cast<ADC_Entity>(a)->TakeDamage(10);
-			}
-		}
-		else
-		{
-			//if hit non-alive thing
-		}
+		//only for non alive things
 	}
 }
 
