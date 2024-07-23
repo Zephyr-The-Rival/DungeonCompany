@@ -10,6 +10,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISenseConfig_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Perception/AIPerceptionComponent.h"
 
 AAIEntity::AAIEntity()
 {
@@ -76,29 +77,32 @@ bool AAIEntity::IsVisibleToPlayers() const
 	return false;
 }
 
+UAISenseConfig* AAIEntity::GetSenseConfig(FAISenseID SenseID)
+{
+	AAIController* aiController = GetController<AAIController>();
+
+	if(!aiController)
+		return nullptr;
+
+	return aiController->GetPerceptionComponent()->GetSenseConfig(SenseID);
+}
+
 void AAIEntity::HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
 {
-	int senseConfigsNum = SenseConfigs.Num();
+	static const FAISenseID sightID = UAISense::GetSenseID<UAISenseConfig_Sight>();
+	static const FAISenseID hearingID = UAISense::GetSenseID<UAISenseConfig_Hearing>();
 
-	TSubclassOf<UAISense> updatingSense;
-
-	for (int i = 0; i < senseConfigsNum; ++i)
-	{
-		if (Stimulus.Type != SenseConfigs[i]->GetSenseID())
-			continue;
-
-		updatingSense = SenseConfigs[i]->StaticClass();
-		break;
-	}
-
-	if (updatingSense == UAISenseConfig_Sight::StaticClass())
+	if (Stimulus.Type == sightID)
 		HandleSightSense(Actor, Stimulus, BlackboardComponent);
-	else if (updatingSense == UAISenseConfig_Hearing::StaticClass())
+	else if (Stimulus.Type == hearingID)
 		HandleHearingSense(Actor, Stimulus, BlackboardComponent);
+
 }
 
 void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, Stimulus.Type.Name.ToString() + FString::FromInt(Stimulus.WasSuccessfullySensed()));
+
 	APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(Actor);
 
 	if (!playerCharacter)
@@ -112,7 +116,7 @@ void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBla
 
 void AAIEntity::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, Actor->GetName());
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, Stimulus.Type.Name.ToString());
 
 	if (!Stimulus.WasSuccessfullySensed())
 		return;

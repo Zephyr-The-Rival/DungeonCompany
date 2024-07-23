@@ -49,7 +49,6 @@ void ADC_AIController::OnPossess(APawn* InPawn)
 
 void ADC_AIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus const Stimulus)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, Stimulus.Type.Name.ToString());
 	if (!bUsingBlackboard || !IsValid(AIEntity))
 		return;
 

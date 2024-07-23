@@ -44,6 +44,9 @@ public:
 
 	bool IsVisibleToPlayers() const;
 
+protected:
+	UAISenseConfig* GetSenseConfig(FAISenseID SenseID);
+
 public:
 	virtual void HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
 
