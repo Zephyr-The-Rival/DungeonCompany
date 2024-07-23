@@ -449,7 +449,7 @@ private:
 	void Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 
 public:
-	void ReportTalking(float Loudness);
+	void ReportNoise(float Loudness);
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Sounds")
