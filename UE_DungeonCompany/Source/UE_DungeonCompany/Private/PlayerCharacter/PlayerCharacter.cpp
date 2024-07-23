@@ -1086,13 +1086,11 @@ void APlayerCharacter::CheckForFallDamage()
 	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame && GetCharacterMovement()->MovementMode != MOVE_Flying)//frame of impact
 	{
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
-		if (deltaZ > 200)
-		{
 			
-			float damage = this->FallDamageCalculation(deltaZ);
+		float damage = this->FallDamageCalculation(deltaZ);
+		if(damage>0)
 			TakeDamage(damage);
-		}
-
+		
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
 		//	"\nEnd height:\t"+FString::SanitizeFloat(RootComponent->GetComponentLocation().Z)
@@ -1108,9 +1106,8 @@ void APlayerCharacter::CheckForFallDamage()
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 {
-
-	float free = 300;
-	float max = 1000;
+	const float free = 300;
+	const float max = 1000;
 
 	if (deltaHeight <= free)
 		return 0;
