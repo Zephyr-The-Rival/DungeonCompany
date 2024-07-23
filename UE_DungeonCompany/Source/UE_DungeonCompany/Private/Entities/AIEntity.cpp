@@ -130,8 +130,6 @@ void AAIEntity::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 
 void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, Stimulus.Type.Name.ToString() + FString::FromInt(Stimulus.WasSuccessfullySensed()));
-
 	APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(Actor);
 
 	if (!playerCharacter)

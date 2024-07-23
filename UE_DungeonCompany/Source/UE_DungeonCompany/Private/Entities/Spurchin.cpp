@@ -19,16 +19,12 @@ bool ASpurchin::IsInHallway()
 	FHitResult rightHit;
 	FHitResult leftHit;
 	GetWorld()->LineTraceSingleByChannel(rightHit, start, start + rightVector * 1000.f, ECC_GameTraceChannel3);
-	DrawDebugLine(GetWorld(), start, start + rightVector * 1000.f, FColor::Blue);
 	GetWorld()->LineTraceSingleByChannel(leftHit, start, start - rightVector * 1000.f, ECC_GameTraceChannel3);
-	DrawDebugLine(GetWorld(), start, start - rightVector * 1000.f, FColor::Blue);
 
 	if(!rightHit.bBlockingHit || !leftHit.bBlockingHit)
 		return false;
 
 	float estimatedWidth = (rightHit.Location - leftHit.Location).Length();
-
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::SanitizeFloat(estimatedWidth));
 
 	return estimatedWidth < MaxHallwayWidth;
 }
