@@ -35,6 +35,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "AI|Perception")
 	TSubclassOf<UAISense> DominantSense;
 
+protected:
+	virtual void BeginPlay() override;
+
 public:
 	inline UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
 	inline const TArray<UAISenseConfig*>& GetSenseConfigs() const { return SenseConfigs; }
@@ -45,7 +48,19 @@ public:
 	bool IsVisibleToPlayers() const;
 
 protected:
+	template <typename T>
+	T* GetSenseConfig()
+	{
+		return Cast<T>(GetSenseConfig(UAISense::GetSenseID<T>()));
+	}
+
 	UAISenseConfig* GetSenseConfig(FAISenseID SenseID);
+	void UpdatePerception();
+
+public:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OnTargetingPlayer(APlayerCharacter* Target);
+	virtual void OnTargetingPlayer_Implementation(APlayerCharacter* Target);
 
 public:
 	virtual void HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);

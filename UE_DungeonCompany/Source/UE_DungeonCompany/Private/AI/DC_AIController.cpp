@@ -3,6 +3,7 @@
 
 #include "AI/DC_AIController.h"
 #include "Entities/AIEntity.h"
+#include "PlayerCharacter/PlayerCharacter.h"
 
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -53,4 +54,13 @@ void ADC_AIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus cons
 		return;
 
 	AIEntity->HandleSenseUpdate(Actor, Stimulus, GetBlackboardComponent());
+}
+
+void ADC_AIController::PutAggroOnPlayer(APlayerCharacter* AggroPullingPlayer)
+{
+	if(!AggroPullingPlayer)
+		return;
+
+	GetBlackboardComponent()->SetValueAsObject(FName("TargetPlayer"), AggroPullingPlayer);
+	OnTargetingPlayer.Broadcast(AggroPullingPlayer);
 }

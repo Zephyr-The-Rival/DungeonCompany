@@ -33,5 +33,13 @@ protected:
 
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus const Stimulus);
+
+public:
+	void PutAggroOnPlayer(APlayerCharacter* AggroPullingPlayer);
+
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTargetingPlayer, APlayerCharacter*, TargetPlayer);
+
+	FOnTargetingPlayer OnTargetingPlayer;
 	
 };

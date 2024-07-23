@@ -8,18 +8,41 @@
 
 void ASpurchin::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
 {
-	if(!bSightEnabled)
+	if (!Stimulus.WasSuccessfullySensed())
+	{
+		GetSenseConfig<UAISenseConfig_Sight>()->SightRadius = 0.f;
+		UpdatePerception();
+		Super::HandleSightSense(Actor, Stimulus, BlackboardComponent);
+	}
+
+}
+
+void ASpurchin::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+}
+
+void ASpurchin::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
+{
+	if(!Target)
 		return;
 
-	if(!Stimulus.WasSuccessfullySensed())
-		bSightEnabled = false;
+	GetSenseConfig<UAISenseConfig_Sight>()->SightRadius = OriginalSightRadius;
+	UpdatePerception();
+}
 
-	Super::HandleSightSense(Actor, Stimulus, BlackboardComponent);
+void ASpurchin::BeginPlay()
+{
+	Super::BeginPlay();
+
+	OriginalSightRadius = GetSenseConfig<UAISenseConfig_Sight>()->SightRadius;
+	GetSenseConfig<UAISenseConfig_Sight>()->SightRadius = 0.f;
+
+	UpdatePerception();
 }
 
 void ASpurchin::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
 {
 	Super::HandleHearingSense(Actor, Stimulus, BlackboardComponent);
-
-	bSightEnabled = true;
 }

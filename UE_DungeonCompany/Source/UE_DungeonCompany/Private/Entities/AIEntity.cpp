@@ -60,6 +60,18 @@ AAIEntity::AAIEntity()
 
 }
 
+void AAIEntity::BeginPlay()
+{
+	Super::BeginPlay();
+
+	ADC_AIController* aiController = GetController<ADC_AIController>();
+
+	if (!aiController)
+		return;
+
+	aiController->OnTargetingPlayer.AddDynamic(this, &AAIEntity::OnTargetingPlayer);
+}
+
 void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 {
 	UE_LOG(LogTemp, Log, TEXT("Attacking Player"));
@@ -84,7 +96,17 @@ UAISenseConfig* AAIEntity::GetSenseConfig(FAISenseID SenseID)
 	if(!aiController)
 		return nullptr;
 
-	return aiController->GetPerceptionComponent()->GetSenseConfig(SenseID);
+	return aiController->GetAIPerceptionComponent()->GetSenseConfig(SenseID);
+}
+
+void AAIEntity::UpdatePerception()
+{
+	AAIController* aiController = GetController<AAIController>();
+
+	if (!aiController)
+		return;
+
+	aiController->GetAIPerceptionComponent()->RequestStimuliListenerUpdate();
 }
 
 void AAIEntity::HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
@@ -97,6 +119,10 @@ void AAIEntity::HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBl
 	else if (Stimulus.Type == hearingID)
 		HandleHearingSense(Actor, Stimulus, BlackboardComponent);
 
+}
+
+void AAIEntity::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
+{
 }
 
 void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
@@ -116,8 +142,6 @@ void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBla
 
 void AAIEntity::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, Stimulus.Type.Name.ToString());
-
 	if (!Stimulus.WasSuccessfullySensed())
 		return;
 

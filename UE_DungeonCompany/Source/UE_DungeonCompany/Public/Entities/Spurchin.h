@@ -15,7 +15,16 @@ class UE_DUNGEONCOMPANY_API ASpurchin : public AAIEntity
 	GENERATED_BODY()
 
 private:
-	bool bSightEnabled = false;
+	float OriginalSightRadius;
+
+protected:
+	virtual void BeginPlay() override;
+
+public:
+	virtual void Tick(float DeltaSeconds) override;
+
+public:
+	virtual void OnTargetingPlayer_Implementation(APlayerCharacter* Target) override;
 
 protected:
 	virtual void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
