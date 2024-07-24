@@ -20,6 +20,8 @@
 #include "WorldActors/SharedStatsManager.h"
 #include "Items/BackPack.h"
 #include "Items/BuyableItem.h"
+#include "Items/Torch_Data.h"
+#include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -125,7 +127,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	CheckForFallDamage();
 
 	if(voiceLevel > 0.f)
-		ReportTalking(voiceLevel);
+		ReportNoise(voiceLevel);
 	
 	if(IsLocallyControlled())
 		LocalTick(DeltaTime);
@@ -383,6 +385,7 @@ void APlayerCharacter::InteractorLineTrace()
 	}
 }
 
+
 void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
 {
 	if (!HasAuthority())
@@ -401,7 +404,6 @@ void APlayerCharacter::Interact()
 	if(!CurrentInteractable || !CurrentInteractable->IsInteractable())
 		return;
 
-
 	if (CurrentInteractable->IsInteractionRunningOnServer())
 	{
 		if (!HasAuthority())
@@ -413,6 +415,11 @@ void APlayerCharacter::Interact()
 	{
 		CurrentInteractable->Interact(this);
 	}
+}
+
+void APlayerCharacter::ResetInteractPrompt()
+{
+	this->CurrentInteractable = nullptr;
 }
 
 void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
@@ -726,15 +733,15 @@ void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclass
 	a->FinishSpawning(SpawnTransform);
 }
 
-void APlayerCharacter::ReportTalking(float Loudness)
+void APlayerCharacter::ReportNoise(float Loudness)
 {
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
 }
 
 void APlayerCharacter::Cough()
 {
-	if(HasAuthority())
-		UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), 1.0f, this);
+	if (HasAuthority())
+		ReportNoise(1.f);
 
 	if(CoughSound)
 		UGameplayStatics::SpawnSoundAtLocation(this, CoughSound, GetActorLocation());
@@ -903,20 +910,16 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		Server_DropBackpack(ItemClasses, ItemDatas);
 		return;
 	}
+	
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
 		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(), bThrow, FirstPersonCamera->GetForwardVector());
-		SlotToEmpty.Slot->MyItem = nullptr;
-
-		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty.Slot)
-		{
-			TakeOutItem();
-		}
-
+		
+		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
 	}
 }
 
-void APlayerCharacter::RemoveInventorySlot(UInventorySlot* SlotToEmpty)
+void APlayerCharacter::RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty)
 {
 	if (!IsValid(SlotToEmpty->MyItem))
 		return;
@@ -944,6 +947,13 @@ void APlayerCharacter::SwitchHand()
 	bSwitchHandAllowed = false;
 
 	this->bSlotAIsInHand = !bSlotAIsInHand;
+
+	//when switching to torch, it should always be turned off
+	if (UTorch_Data* torch = Cast<UTorch_Data>(GetCurrentlyHeldInventorySlot()->MyItem))
+		torch->bOn = false;
+
+	//refreshing the prompt message
+	this->ResetInteractPrompt();
 	TakeOutItem();
 
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
@@ -984,7 +994,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	if(AttackBlend == 1)
+	if(AttackBlend)
 		return;
 
 	FSlotData SD;
@@ -995,7 +1005,7 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::ThrowItemPressed()
 {
-	if (AttackBlend == 1)
+	if (AttackBlend)
 		return;
 
 	FSlotData SD;
@@ -1076,13 +1086,11 @@ void APlayerCharacter::CheckForFallDamage()
 	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame && GetCharacterMovement()->MovementMode != MOVE_Flying)//frame of impact
 	{
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
-		if (deltaZ > 200)
-		{
 			
-			float damage = this->FallDamageCalculation(deltaZ);
+		float damage = this->FallDamageCalculation(deltaZ);
+		if(damage>0)
 			TakeDamage(damage);
-		}
-
+		
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
 		//	"\nEnd height:\t"+FString::SanitizeFloat(RootComponent->GetComponentLocation().Z)
@@ -1098,9 +1106,8 @@ void APlayerCharacter::CheckForFallDamage()
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 {
-
-	float free = 300;
-	float max = 1000;
+	const float free = 300;
+	const float max = 1000;
 
 	if (deltaHeight <= free)
 		return 0;
@@ -1234,7 +1241,7 @@ void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
 	
-	weapon->DealHits(NULL, FVector(), FVector());
+	weapon->DealHits(NULL, TArray<FVector>(), TArray<FVector>());// is overridden in blueprints to get trace points
 }
 
 void APlayerCharacter::OnAttackOver()
@@ -1280,5 +1287,10 @@ void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 UPlayerHud* APlayerCharacter::GetMyHud()
 {	
 	return  Cast<ADC_PC>(GetController())->GetMyPlayerHud();
+}
+
+void APlayerCharacter::PlaceItemOnSocket_Implementation(AItemSocket* Socket)
+{
+	Socket->OnItemPlaced();
 }
 

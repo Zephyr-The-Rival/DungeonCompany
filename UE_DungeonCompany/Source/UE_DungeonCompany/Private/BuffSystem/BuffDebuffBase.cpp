@@ -3,6 +3,8 @@
 
 #include "BuffSystem/BuffDebuffBase.h"
 #include "Entities/DC_Entity.h"
+#include "PlayerCharacter/PlayerCharacter.h"
+#include "UI/PlayerHud/PlayerHud.h"
 
 UBuffDebuffBase::UBuffDebuffBase()
 {
@@ -47,7 +49,8 @@ void UBuffDebuffBase::AuthorityApply()
 
 void UBuffDebuffBase::LocalApply()
 {
-
+	if (APlayerCharacter* player = Cast<APlayerCharacter>(OuterEntity))
+		player->GetMyHud()->UdateBuffs();
 }
 
 void UBuffDebuffBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -77,7 +80,8 @@ void UBuffDebuffBase::AuthorityRemove()
 
 void UBuffDebuffBase::LocalRemove()
 {
-
+	if (APlayerCharacter* player = Cast<APlayerCharacter>(OuterEntity))
+		player->GetMyHud()->UdateBuffs();
 }
 
 void UBuffDebuffBase::Destroy()

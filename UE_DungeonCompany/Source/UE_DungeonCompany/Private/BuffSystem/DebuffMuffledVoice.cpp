@@ -12,6 +12,8 @@ UDebuffMuffledVoice::UDebuffMuffledVoice()
 
 void UDebuffMuffledVoice::Apply()
 {
+	Super::Apply();
+
 	APlayerCharacter* character = GetOuterEntity<APlayerCharacter>();
 
 	if(!character)

@@ -20,6 +20,7 @@ class UInventorySlot;
 class ABackPack;
 class ABuyableItem;
 class UPlayerHud;
+class AItemSocket;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -160,6 +161,7 @@ protected:
 
 public:
 	void Interact();
+	void ResetInteractPrompt();
 
 protected:
 	UFUNCTION(Server, Unreliable)
@@ -380,8 +382,11 @@ protected:
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
 
-	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
+public:
 
+	void RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty);
+
+protected:
 	void SwitchHand();
 
 	UFUNCTION()
@@ -444,7 +449,7 @@ private:
 	void Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 
 public:
-	void ReportTalking(float Loudness);
+	void ReportNoise(float Loudness);
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Sounds")
@@ -513,5 +518,10 @@ protected:
 
 public:
 	UPlayerHud* GetMyHud();
+
+public:
+	UFUNCTION(Server, Unreliable)
+	void PlaceItemOnSocket(AItemSocket* Socket);
+	void PlaceItemOnSocket_Implementation(AItemSocket* Socket);
 	
 };

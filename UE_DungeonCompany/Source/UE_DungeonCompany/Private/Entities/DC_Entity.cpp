@@ -4,9 +4,12 @@
 #include "Entities/DC_Entity.h"
 #include "AI/DC_AIController.h"
 #include "BuffSystem/BuffDebuffBase.h"
+#include "DC_Statics.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 ADC_Entity::ADC_Entity()
 {
@@ -20,6 +23,15 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 	
 }
 
+void ADC_Entity::SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
+{
+	if (IsValid(this->bloodEffect))
+	{
+		UNiagaraComponent* tmp = UNiagaraFunctionLibrary::SpawnSystemAttached(this->bloodEffect, hitComponent, BoneName, hitPoint, FRotator(0.f), EAttachLocation::Type::KeepWorldPosition, true);
+		tmp->SetVariableVec3(TEXT("Direction"), HitNormal * -1);
+	}
+}
+
 void ADC_Entity::CheckIfDead()
 {
 	if (HP <= 0.f)
@@ -28,6 +40,7 @@ void ADC_Entity::CheckIfDead()
 
 void ADC_Entity::TakeDamage(float Damage)
 {
+	//blood particle have to be spawned speperately look at this->SpawnHitEffect
 	if (HP <= 0.f)
 		return;
 
@@ -47,6 +60,8 @@ void ADC_Entity::TakeDamage(float Damage)
 void ADC_Entity::OnDeath_Implementation()
 {
 	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName());
+
+	OnPlayerDeath.Broadcast(this);
 
 }
 
