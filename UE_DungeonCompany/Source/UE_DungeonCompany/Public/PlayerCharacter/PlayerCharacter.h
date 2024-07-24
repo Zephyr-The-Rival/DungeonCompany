@@ -21,6 +21,10 @@ class ABackPack;
 class ABuyableItem;
 class UPlayerHud;
 class AItemSocket;
+class AWeapon;
+
+struct  FWeaponInfo;
+
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -500,6 +504,10 @@ public://fighting
 	UFUNCTION(BlueprintCallable)
 	void OnAttackOver();
 
+private:
+	UFUNCTION(Server, Unreliable)
+	void Server_DealHits(FWeaponInfo WeaponInfo);
+	void Server_DealHits_Implementation(FWeaponInfo WeaponInfo);
 public:
 	virtual void OnDeath_Implementation() override;
 

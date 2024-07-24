@@ -1158,6 +1158,7 @@ void APlayerCharacter::DropItemInvPressed()
 	DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot(),false);
 }
 
+
 void APlayerCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
@@ -1240,8 +1241,14 @@ void APlayerCharacter::Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn)
 void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
-	
-	weapon->DealHits(NULL, TArray<FVector>(), TArray<FVector>());// is overridden in blueprints to get trace points
+	FWeaponInfo info= weapon->GetWeaponInfo();
+	Server_DealHits(info);
+}
+
+void APlayerCharacter::Server_DealHits_Implementation(FWeaponInfo WeaponInfo)
+{
+	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
+	weapon->DealHits(WeaponInfo);
 }
 
 void APlayerCharacter::OnAttackOver()
