@@ -4,6 +4,7 @@
 #include "Items/Weapon.h"
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "WorldActors/BreakableProp.h"
 #include "Entities/DC_Entity.h"
 #include "NiagaraFunctionLibrary.h"
 
@@ -53,7 +54,9 @@ void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, cons
 
 	for (AActor* a : overlappingActors)
 	{
-		//only for non alive things
+		if(ABreakableProp* Prop=Cast<ABreakableProp>(a))
+			Prop->Hit(TraceEnd[0]-TraceStarts[0]);
+		
 	}
 }
 
