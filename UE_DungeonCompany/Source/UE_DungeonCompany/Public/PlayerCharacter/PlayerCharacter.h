@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Entities/DC_Entity.h"
 #include "Camera/CameraComponent.h"
+#include "InputFunctionLibrary.h"
 #include "Interactable.h"
 #include "PlayerCharacter.generated.h"
 
@@ -31,6 +32,9 @@ private:
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ADC_PostMortemPawn> PostMortemPawnClass;
+
 public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
@@ -56,7 +60,6 @@ public:
 	virtual void StaminaTick(float DeltaTime);
 
 protected:
-
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
 	UInputMappingContext* CharacterInputMapping;
 
@@ -196,19 +199,15 @@ protected:
 private:
 	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
-
-	float LastLookVectorLength = 0.f;
 	
 private:
-	void (APlayerCharacter::*LookFunction)(const FInputActionValue& Value) = &APlayerCharacter::LookGamepad;
+	void (*LookFunction)(const FInputActionValue& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
 
 protected:
 	void Move(const FInputActionValue& Value);
 	void NoMove();
 
 	void Look(const FInputActionValue& Value);
-	void LookMouse(const FInputActionValue& Value);
-	void LookGamepad(const FInputActionValue& Value);
 
 	void NoLook();
 	
