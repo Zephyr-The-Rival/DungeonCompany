@@ -1168,7 +1168,7 @@ void APlayerCharacter::OnDeath_Implementation()
 	if (!HasAuthority())
 		return;
 
-	GetWorld()->GetAuthGameMode<ADC_GM>()->Respawn(GetController());
+	GetWorld()->GetAuthGameMode<ADC_GM>()->StartSpectating(GetController());
 
 }
 

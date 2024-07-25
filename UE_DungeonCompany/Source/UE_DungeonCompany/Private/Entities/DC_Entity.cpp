@@ -89,7 +89,6 @@ UBuffDebuffBase* ADC_Entity::AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> 
 	UBuffDebuffBase* DeBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
 
 	DeBuff->RegisterComponent();
-
 	DeBuff->Timegate(ActiveTime);
 
 	return DeBuff;

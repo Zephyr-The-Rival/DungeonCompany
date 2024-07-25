@@ -40,12 +40,16 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-protected:
 	void SpectatePlayer(APlayerCharacter* InSpecatingPlayer);
 
+protected:
 	UFUNCTION(Server, Unreliable)
 	void Server_SpectatePlayer(APlayerCharacter* InSpecatingPlayer);
 	void Server_SpectatePlayer_Implementation(APlayerCharacter* InSpecatingPlayer);
+
+	UFUNCTION(Server, Unreliable)
+	void Client_SpectatePlayer(APlayerCharacter* InSpecatingPlayer);
+	void Client_SpectatePlayer_Implementation(APlayerCharacter* InSpecatingPlayer);
 
 
 	void SpectateLastPlayer();

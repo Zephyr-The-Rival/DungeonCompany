@@ -22,7 +22,7 @@ void ADC_PostMortemPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	VOIPTalker->RegisterWithPlayerState(GetPlayerState());
+	//VOIPTalker->RegisterWithPlayerState(GetPlayerState());
 
 	if(!IsLocallyControlled())
 		return;
@@ -73,13 +73,26 @@ void ADC_PostMortemPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void ADC_PostMortemPawn::SpectatePlayer(APlayerCharacter* InSpecatingPlayer)
 {
-	if(HasAuthority())
-		Server_SpectatePlayer_Implementation(InSpecatingPlayer);
+	if (InSpecatingPlayer->IsDead())
+	{
+		SpectateLastPlayer();
+		return;
+	}
+
+	if (HasAuthority())
+		Client_SpectatePlayer(InSpecatingPlayer);
 	else
 		Server_SpectatePlayer(InSpecatingPlayer);
+
+	AttachToActor(InSpecatingPlayer, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 void ADC_PostMortemPawn::Server_SpectatePlayer_Implementation(APlayerCharacter* InSpecatingPlayer)
+{
+	AttachToActor(InSpecatingPlayer, FAttachmentTransformRules::KeepRelativeTransform);
+}
+
+void ADC_PostMortemPawn::Client_SpectatePlayer_Implementation(APlayerCharacter* InSpecatingPlayer)
 {
 	AttachToActor(InSpecatingPlayer, FAttachmentTransformRules::KeepRelativeTransform);
 }
