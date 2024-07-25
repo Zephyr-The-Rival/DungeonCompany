@@ -15,6 +15,13 @@
  class UInputMappingContext;
  class UInputAction;
 
+UENUM(BlueprintType)
+enum class EPawnType : uint8 {
+     None = 0 UMETA(DisplayName = "None"),
+     Gameplay = 1  UMETA(DisplayName = "Gameplay"),
+     Spectator = 2     UMETA(DisplayName = "Spectator"),
+};
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_PC : public APlayerController
 {
@@ -27,15 +34,19 @@ private:
 	UPROPERTY(BlueprintGetter = GetMyPlayerHud)
 	UPlayerHud* MyPlayerHud;
 
+	EPawnType PawnType;
+
 public:
 	ADC_PC();
 
 	UFUNCTION(BlueprintCallable)
 	UPlayerHud* GetMyPlayerHud() const { return MyPlayerHud; }
 
-
 protected:
 	virtual void BeginPlay() override;
+
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnUnPossess() override;
 
 private:
 	UPROPERTY(EditAnywhere, Category="Balancing/Controls")

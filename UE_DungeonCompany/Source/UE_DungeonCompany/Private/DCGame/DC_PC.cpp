@@ -6,6 +6,7 @@
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "UI/PlayerHud/PlayerHud.h"
 #include "DC_Statics.h"
+#include "DCGame/DC_PostMortemPawn.h"
 
 #include "Net/VoiceConfig.h"
 #include "EnhancedInputComponent.h"
@@ -19,7 +20,6 @@ ADC_PC::ADC_PC()
 void ADC_PC::BeginPlay()
 {
 	Super::BeginPlay();
-
 
 	SetInputMode(FInputModeGameOnly());
 
@@ -53,7 +53,28 @@ void ADC_PC::BeginPlay()
 		return;
 
 	inputSystem->AddMappingContext(InputMapping, 1);
+}
 
+void ADC_PC::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	if(!InPawn)
+		return;
+
+	UClass* pawnClass = InPawn->StaticClass();
+
+	if(pawnClass->IsChildOf<APlayerCharacter>())
+		PawnType = EPawnType::Gameplay;
+	else if(pawnClass->IsChildOf<ADC_PostMortemPawn>())
+		PawnType = EPawnType::Spectator;
+	else
+		PawnType = EPawnType::None;
+}
+
+void ADC_PC::OnUnPossess()
+{
+	PawnType = EPawnType::None;
 }
 
 void ADC_PC::SetGamePadAccelerationSpeed(float InSpeed)
