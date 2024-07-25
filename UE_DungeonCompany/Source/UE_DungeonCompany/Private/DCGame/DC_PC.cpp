@@ -34,10 +34,9 @@ void ADC_PC::BeginPlay()
 	GetWorld()->Exec(GetWorld(), TEXT("OSS.VoiceLoopback 1"));
 
 	ToggleSpeaking(true);
+
 	if(bPushToTalkActive)
 		ToggleSpeaking(false);
-
-
 
 	if (!InputMapping)
 		return;

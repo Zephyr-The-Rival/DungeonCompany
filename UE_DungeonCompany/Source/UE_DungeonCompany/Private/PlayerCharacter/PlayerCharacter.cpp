@@ -1142,6 +1142,7 @@ void APlayerCharacter::OnDeath_Implementation()
 	GetCapsuleComponent()->SetCollisionProfileName("DeadPawn", true);
 	StimulusSource->DestroyComponent(false);
 
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	GetMesh()->SetAnimation(nullptr);
 
 	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));

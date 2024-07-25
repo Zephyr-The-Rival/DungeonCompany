@@ -20,6 +20,10 @@ class UE_DUNGEONCOMPANY_API ADC_PostMortemPawn : public APawn
 	GENERATED_BODY()
 
 private:
+	UPROPERTY(EditAnywhere, Category = "Balancing")
+	float SpectateSwitchAfterDeathDelay = 4.f;
+
+private:
 	TArray<APlayerCharacter*> PlayerCharacters;
 	int SpecatingPlayerIndex = 0;
 	
@@ -35,6 +39,8 @@ protected:
 
 	UFUNCTION()
 	void OnPlayerDied(ADC_Entity* DeadPlayer);
+
+	void StopSpectatingPlayer(APlayerCharacter* InPlayer);
 
 public:	
 	// Called every frame
@@ -63,16 +69,13 @@ protected:
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	void SpectatePlayer(APlayerCharacter* InSpecatingPlayer);
+	UFUNCTION(Client, Unreliable)
+	void Client_ForceSpectatePlayer(APlayerCharacter* InSpectatingPlayer);
+	void Client_ForceSpectatePlayer_Implementation(APlayerCharacter* InSpectatingPlayer);
 
 protected:
-	UFUNCTION(Server, Unreliable)
-	void Server_SpectatePlayer(APlayerCharacter* InSpecatingPlayer);
-	void Server_SpectatePlayer_Implementation(APlayerCharacter* InSpecatingPlayer);
-
-	UFUNCTION(Server, Unreliable)
-	void Client_SpectatePlayer(APlayerCharacter* InSpecatingPlayer);
-	void Client_SpectatePlayer_Implementation(APlayerCharacter* InSpecatingPlayer);
+	void SpectatePlayer(APlayerCharacter* InSpectatingPlayer);
+	bool IsSpectatingPlayer(APlayerCharacter* InPlayer);
 
 	UFUNCTION()
 	void OnInputDeviceChanged(bool IsUsingGamepad);
@@ -84,7 +87,7 @@ protected:
 	void Look(const FInputActionValue& Value);
 	void NoLook();
 
-	void SpectateLastPlayer();
+	void SpectatePreviousPlayer();
 	void SpectateNextPlayer();
 
 };

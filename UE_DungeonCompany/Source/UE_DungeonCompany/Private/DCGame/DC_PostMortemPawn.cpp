@@ -31,15 +31,23 @@ void ADC_PostMortemPawn::OnPlayerDied(ADC_Entity* DeadPlayer)
 {
 	APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(DeadPlayer);
 
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, DeadPlayer->GetName());
+
 	if(!playerCharacter)
 		return;
 
-	bool bSpecatingDeadPlayer = PlayerCharacters[SpecatingPlayerIndex] == playerCharacter;
+	FTimerHandle stopSpectatingHandle;
+	FTimerDelegate stopSpectatingDelegate = FTimerDelegate::CreateUObject(this, &ADC_PostMortemPawn::StopSpectatingPlayer, playerCharacter);
 
-	if(bSpecatingDeadPlayer)
-		SpectateLastPlayer();
-		
+	GetWorld()->GetTimerManager().SetTimer(stopSpectatingHandle, stopSpectatingDelegate, SpectateSwitchAfterDeathDelay, false);
+}
 
+void ADC_PostMortemPawn::StopSpectatingPlayer(APlayerCharacter* InPlayer)
+{
+	if(!IsSpectatingPlayer(InPlayer))
+		return;
+
+	SpectatePreviousPlayer();
 }
 
 // Called every frame
@@ -102,29 +110,37 @@ void ADC_PostMortemPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADC_PostMortemPawn::Look);
 	EIC->BindAction(LookAction, ETriggerEvent::None, this, &ADC_PostMortemPawn::NoLook);
 
-	EIC->BindAction(SpectateLastAction, ETriggerEvent::Started, this, &ADC_PostMortemPawn::SpectateLastPlayer);
+	EIC->BindAction(SpectateLastAction, ETriggerEvent::Started, this, &ADC_PostMortemPawn::SpectatePreviousPlayer);
 	EIC->BindAction(SpectateNextAction, ETriggerEvent::Started, this, &ADC_PostMortemPawn::SpectateNextPlayer);
-
 }
 
-void ADC_PostMortemPawn::SpectatePlayer(APlayerCharacter* InSpecatingPlayer)
+void ADC_PostMortemPawn::SpectatePlayer(APlayerCharacter* InSpectatingPlayer)
 {
-	if (HasAuthority())
-		Client_SpectatePlayer(InSpecatingPlayer);
-	else
-		Server_SpectatePlayer(InSpecatingPlayer);
-
-	AttachToActor(InSpecatingPlayer, FAttachmentTransformRules::KeepRelativeTransform);
+	AttachToActor(InSpectatingPlayer, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
-void ADC_PostMortemPawn::Server_SpectatePlayer_Implementation(APlayerCharacter* InSpecatingPlayer)
+void ADC_PostMortemPawn::Client_ForceSpectatePlayer_Implementation(APlayerCharacter* InSpectatingPlayer)
 {
-	AttachToActor(InSpecatingPlayer, FAttachmentTransformRules::KeepRelativeTransform);
+	int playersNum = PlayerCharacters.Num();
+
+	for (int i = 0; i < playersNum; ++i)
+	{
+		if(PlayerCharacters[i] != InSpectatingPlayer)
+			continue;
+
+		SpecatingPlayerIndex = i;
+		break;
+	}
+
+	AttachToActor(InSpectatingPlayer, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
-void ADC_PostMortemPawn::Client_SpectatePlayer_Implementation(APlayerCharacter* InSpecatingPlayer)
+bool ADC_PostMortemPawn::IsSpectatingPlayer(APlayerCharacter* InPlayer)
 {
-	AttachToActor(InSpecatingPlayer, FAttachmentTransformRules::KeepRelativeTransform);
+	if(SpecatingPlayerIndex < 0 || SpecatingPlayerIndex >= PlayerCharacters.Num())
+		return false;
+
+	return InPlayer == PlayerCharacters[SpecatingPlayerIndex];
 }
 
 void ADC_PostMortemPawn::OnInputDeviceChanged(bool IsUsingGamepad)
@@ -147,7 +163,7 @@ void ADC_PostMortemPawn::NoLook()
 	pc->SetLastLookVectorLength(0.f);
 }
 
-void ADC_PostMortemPawn::SpectateLastPlayer()
+void ADC_PostMortemPawn::SpectatePreviousPlayer()
 {
 	--SpecatingPlayerIndex;
 	int playersNum = PlayerCharacters.Num();
