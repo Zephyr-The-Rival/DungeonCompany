@@ -107,4 +107,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetPushToTalkActive(bool IsActive);
 
+public:
+	UFUNCTION(Server, Reliable)
+	void Server_RequestRespawn();
+	void Server_RequestRespawn_Implementation();
+
 };

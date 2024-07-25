@@ -7,6 +7,7 @@
 #include "UI/PlayerHud/PlayerHud.h"
 #include "DC_Statics.h"
 #include "DCGame/DC_PostMortemPawn.h"
+#include "DCGame/DC_GM.h"
 
 #include "Net/VoiceConfig.h"
 #include "EnhancedInputComponent.h"
@@ -178,5 +179,10 @@ void ADC_PC::SetPushToTalkActive(bool IsActive)
 {
 	ToggleSpeaking(!IsActive);
 	bPushToTalkActive = IsActive;
+}
+
+void ADC_PC::Server_RequestRespawn_Implementation()
+{
+	GetWorld()->GetAuthGameMode<ADC_GM>()->Respawn(this);
 }
 
