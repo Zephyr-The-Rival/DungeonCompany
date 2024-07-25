@@ -55,7 +55,7 @@ void AWeapon::DealHits(FWeaponInfo WeaponInfo)
 
 	if (ABreakableProp* Prop = Cast<ABreakableProp>(HitActor))
 	{
-		Prop->Hit(TraceEnds[i] - TraceStarts[i]);
+		Prop->Hit(TraceEnds[i] - TraceStarts[i], this->GetClass());
 	}
 	
 }
