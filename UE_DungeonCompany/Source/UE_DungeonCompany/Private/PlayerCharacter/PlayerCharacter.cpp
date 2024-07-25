@@ -37,6 +37,7 @@
 #include "Interfaces/VoiceInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "DCGame/DC_PostMortemPawn.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -99,7 +100,6 @@ void APlayerCharacter::BeginPlay()
 	if(!IsLocallyControlled() || !CharacterInputMapping)
 		return;
 
-
 	ADC_PC* pc = GetController<ADC_PC>();
 
 	if(!pc)
@@ -127,7 +127,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	CheckForFallDamage();
 
 	if(voiceLevel > 0.f)
-		ReportTalking(voiceLevel);
+		ReportNoise(voiceLevel);
 	
 	if(IsLocallyControlled())
 		LocalTick(DeltaTime);
@@ -294,7 +294,7 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 	if (!bLookAllowed)
 		return;
 
-	(this->*LookFunction)(Value);
+	(*LookFunction)(Value, this);
 
 	FRotator newRotation = FRotator(0, 0, 0);
 	newRotation.Pitch = GetControlRotation().Euler().Y;
@@ -302,38 +302,14 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 	FirstPersonMesh->SetRelativeRotation(newRotation);
 }
 
-void APlayerCharacter::LookMouse(const FInputActionValue& Value)
-{
-	FVector2D lookVector = Value.Get<FVector2D>();
-
-	AddControllerYawInput(lookVector.X);
-	AddControllerPitchInput(lookVector.Y);
-}
-
-void APlayerCharacter::LookGamepad(const FInputActionValue& Value)
-{
-	FVector2D lookVector = Value.Get<FVector2D>();
-
-	float lookVectorLength = lookVector.Length();
-
-	float deltaSeconds = GetWorld()->GetDeltaSeconds();
-
-	if (lookVectorLength > LastLookVectorLength)
-		lookVectorLength = UKismetMathLibrary::FInterpTo(LastLookVectorLength, lookVectorLength, deltaSeconds, GamepadAccelerationSpeed);
-	
-	LastLookVectorLength = lookVectorLength;
-
-	lookVector.Normalize();
-	lookVector *= lookVectorLength * deltaSeconds * 100.f;
-
-	AddControllerYawInput(lookVector.X);
-	AddControllerPitchInput(lookVector.Y);
-}
-
 void APlayerCharacter::NoLook()
 {
-	if(LastLookVectorLength)
-		LastLookVectorLength = 0.f;
+	auto pc = Cast<ADC_PC>(Controller);
+
+	if(!pc)
+		return;
+
+	pc->SetLastLookVectorLength(0.f);
 }
 
 void APlayerCharacter::InteractorLineTrace()
@@ -653,7 +629,7 @@ void APlayerCharacter::Server_LaunchCharacter_Implementation(FVector LaunchVeloc
 
 void APlayerCharacter::OnInputDeviceChanged(bool IsUsingGamepad)
 {
-	LookFunction = IsUsingGamepad ? &APlayerCharacter::LookGamepad : &APlayerCharacter::LookMouse;
+	LookFunction = IsUsingGamepad ? &UInputFunctionLibrary::LookGamepad : &UInputFunctionLibrary::LookMouse;
 }
 
 void APlayerCharacter::AddStamina(float AddingStamina)
@@ -733,15 +709,15 @@ void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclass
 	a->FinishSpawning(SpawnTransform);
 }
 
-void APlayerCharacter::ReportTalking(float Loudness)
+void APlayerCharacter::ReportNoise(float Loudness)
 {
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
 }
 
 void APlayerCharacter::Cough()
 {
-	if(HasAuthority())
-		UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), 1.0f, this);
+	if (HasAuthority())
+		ReportNoise(1.f);
 
 	if(CoughSound)
 		UGameplayStatics::SpawnSoundAtLocation(this, CoughSound, GetActorLocation());
@@ -994,7 +970,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	if(AttackBlend == 1)
+	if(AttackBlend)
 		return;
 
 	FSlotData SD;
@@ -1005,7 +981,7 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::ThrowItemPressed()
 {
-	if (AttackBlend == 1)
+	if (AttackBlend)
 		return;
 
 	FSlotData SD;
@@ -1166,10 +1142,18 @@ void APlayerCharacter::OnDeath_Implementation()
 	GetCapsuleComponent()->SetCollisionProfileName("DeadPawn", true);
 	StimulusSource->DestroyComponent(false);
 
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	GetMesh()->SetAnimation(nullptr);
+
+	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	GetMesh()->SetAllBodiesSimulatePhysics(true);
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->WakeAllRigidBodies();
+
 	if (!HasAuthority())
 		return;
-
-	GetWorld()->GetAuthGameMode<ADC_GM>()->Respawn(GetController());
+	
+	GetWorld()->GetAuthGameMode<ADC_GM>()->StartSpectating(GetController());
 
 }
 

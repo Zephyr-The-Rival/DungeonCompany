@@ -6,6 +6,7 @@
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "Entities/FunGuy.h"
 #include "Entities/QuasoSnake.h"
+#include "DCGame/DC_PostMortemPawn.h"
 
 #include "NavigationSystem.h"
 #include "Components/CapsuleComponent.h"
@@ -142,6 +143,26 @@ void ADC_GM::Respawn(AController* Controller)
 	
 	Controller->ClientSetRotation(playerStart->GetActorRotation());
 	Controller->Possess(newCharacter);
+
+}
+
+void ADC_GM::StartSpectating(AController* Controller)
+{
+	if (!IsValid(Controller))
+		return;
+
+	APlayerCharacter* oldPawn = Controller->GetPawn<APlayerCharacter>();
+	ADC_PostMortemPawn* postMortemPawn = GetWorld()->SpawnActor<ADC_PostMortemPawn>(PostMortemPawnClass);
+
+	if (!postMortemPawn)
+		return;
+
+	Controller->Possess(postMortemPawn);
+
+	if (!oldPawn)
+		return;
+	
+	postMortemPawn->Client_ForceSpectatePlayer(oldPawn);
 
 }
 
