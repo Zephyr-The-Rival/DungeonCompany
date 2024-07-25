@@ -153,7 +153,9 @@ void ADC_GM::StartSpectating(AController* Controller)
 
 	APlayerCharacter* oldPawn = Controller->GetPawn<APlayerCharacter>();
 
-	ADC_PostMortemPawn* postMortemPawn = GetWorld()->SpawnActor<ADC_PostMortemPawn>(PostMortemPawnClass);
+	FTransform transform;
+
+	ADC_PostMortemPawn* postMortemPawn = GetWorld()->SpawnActorDeferred<ADC_PostMortemPawn>(PostMortemPawnClass, transform);
 
 	if (!postMortemPawn)
 		return;
@@ -162,6 +164,8 @@ void ADC_GM::StartSpectating(AController* Controller)
 
 	if (!oldPawn)
 		return;
+
+	postMortemPawn->FinishSpawning(transform);
 	
 	postMortemPawn->SpectatePlayer(oldPawn);
 

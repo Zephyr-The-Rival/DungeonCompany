@@ -4,12 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "InputFunctionLibrary.h"
 #include "DC_PostMortemPawn.generated.h"
 
 class APlayerCharacter;
 class ADC_Entity;
 
 class UVOIPTalker;
+class UInputMappingContext;
+class UInputAction;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_PostMortemPawn : public APawn
@@ -18,7 +21,7 @@ class UE_DUNGEONCOMPANY_API ADC_PostMortemPawn : public APawn
 
 private:
 	TArray<APlayerCharacter*> PlayerCharacters;
-	int SpecatingPlayerIndex = -1;
+	int SpecatingPlayerIndex = 0;
 	
 	UVOIPTalker* VOIPTalker;
 
@@ -37,7 +40,27 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
+	virtual void PossessedBy(AController* NewController) override;
+
+protected:
+	UFUNCTION(Client, Reliable)
+	void Client_PossessedBy(AController* NewController);
+	void Client_PossessedBy_Implementation(AController* NewController);
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
+	UInputMappingContext* PMPawnInputMapping;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* LookAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* SpectateLastAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* SpectateNextAction;
+
+public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void SpectatePlayer(APlayerCharacter* InSpecatingPlayer);
@@ -51,6 +74,15 @@ protected:
 	void Client_SpectatePlayer(APlayerCharacter* InSpecatingPlayer);
 	void Client_SpectatePlayer_Implementation(APlayerCharacter* InSpecatingPlayer);
 
+	UFUNCTION()
+	void OnInputDeviceChanged(bool IsUsingGamepad);
+
+private:
+	void (*LookFunction)(const FInputActionValue& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
+
+protected:
+	void Look(const FInputActionValue& Value);
+	void NoLook();
 
 	void SpectateLastPlayer();
 	void SpectateNextPlayer();

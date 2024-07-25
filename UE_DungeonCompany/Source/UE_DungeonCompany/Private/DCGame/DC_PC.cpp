@@ -56,6 +56,16 @@ void ADC_PC::BeginPlay()
 
 }
 
+void ADC_PC::SetGamePadAccelerationSpeed(float InSpeed)
+{
+	GamepadAccelerationSpeed = InSpeed;
+}
+
+void ADC_PC::SetLastLookVectorLength(float InLength)
+{
+	LastLookVectorLength = InLength;
+}
+
 void ADC_PC::SetupInputComponent()
 {
 	Super::SetupInputComponent();

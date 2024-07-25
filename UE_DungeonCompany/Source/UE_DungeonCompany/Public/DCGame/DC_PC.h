@@ -38,6 +38,19 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	UPROPERTY(EditAnywhere, Category="Balancing/Controls")
+	float GamepadAccelerationSpeed = 7.f;
+
+	float LastLookVectorLength = 0.f;
+
+public:
+	inline float GetGamePadAccelerationSpeed() const { return GamepadAccelerationSpeed; }
+	void SetGamePadAccelerationSpeed(float InSpeed);
+
+	inline float GetLastLookVectorLength() const { return LastLookVectorLength; }
+	void SetLastLookVectorLength(float InLength);
+
+private:
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
 	UInputMappingContext* InputMapping;
 
