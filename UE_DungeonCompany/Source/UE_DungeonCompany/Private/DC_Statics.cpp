@@ -108,7 +108,7 @@ bool UDC_Statics::IsLocationInViewportOfPlayer(APlayerController* PlayerControll
 	FVector2D screenSize;
 	GEngine->GameViewport->GetViewportSize(screenSize);
 
-	return screenLocation >= FVector2D::ZeroVector && screenLocation < screenSize;
+	return screenLocation.ComponentwiseAllGreaterOrEqual(FVector2D::ZeroVector) && screenLocation.ComponentwiseAllLessThan(screenSize);
 }
 
 bool UDC_Statics::IsLocationVisibleToPlayer(APlayerController* PlayerController, const FVector& Location)

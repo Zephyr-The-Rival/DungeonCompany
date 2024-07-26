@@ -49,5 +49,9 @@ private:
 
 public:
 	void Timegate(float TimeSeconds);
-		
+	
+
+	//player hud stuff
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* HudIcon;
 };
