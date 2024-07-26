@@ -65,16 +65,31 @@ void ADC_PC::OnPossess(APawn* InPawn)
 	UClass* pawnClass = InPawn->StaticClass();
 
 	if(pawnClass->IsChildOf<APlayerCharacter>())
-		PawnType = EPawnType::Gameplay;
+		SetPawnType(EPawnType::Gameplay);
 	else if(pawnClass->IsChildOf<ADC_PostMortemPawn>())
-		PawnType = EPawnType::Spectator;
+		SetPawnType(EPawnType::Spectator);
 	else
-		PawnType = EPawnType::None;
+		SetPawnType(EPawnType::None);
 }
 
 void ADC_PC::OnUnPossess()
 {
-	PawnType = EPawnType::None;
+	SetPawnType(EPawnType::None);
+}
+
+void ADC_PC::SetPawnType(EPawnType NewPawnType)
+{
+	if(NewPawnType == PawnType)
+		return;
+
+	PawnType = NewPawnType;
+	OnPawnTypeChanged(NewPawnType);
+	EventOnPawnTypeChanged.Broadcast(NewPawnType);
+}
+
+void ADC_PC::OnPawnTypeChanged_Implementation(EPawnType NewPawnType)
+{
+
 }
 
 void ADC_PC::SetGamePadAccelerationSpeed(float InSpeed)

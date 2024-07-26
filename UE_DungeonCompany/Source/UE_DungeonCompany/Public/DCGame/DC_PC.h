@@ -48,6 +48,19 @@ protected:
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
 
+	void SetPawnType(EPawnType NewPawnType);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent)
+	void OnPawnTypeChanged(EPawnType NewPawnType);
+	virtual void OnPawnTypeChanged_Implementation(EPawnType NewPawnType);
+
+public:
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPawnTypeChanged, EPawnType, NewPawnType);
+
+	FOnPawnTypeChanged EventOnPawnTypeChanged;
+
 private:
 	UPROPERTY(EditAnywhere, Category="Balancing/Controls")
 	float GamepadAccelerationSpeed = 7.f;
