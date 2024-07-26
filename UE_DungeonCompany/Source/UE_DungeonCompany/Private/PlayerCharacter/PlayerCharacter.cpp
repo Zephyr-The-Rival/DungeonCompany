@@ -1237,6 +1237,20 @@ void APlayerCharacter::Server_DealHits_Implementation(FWeaponInfo WeaponInfo)
 
 void APlayerCharacter::OnAttackOver()
 {
+	if(HasAuthority())
+		Multicast_EndAttack();
+	else
+		Server_EndAttack();
+}
+
+
+void APlayerCharacter::Server_EndAttack_Implementation()
+{
+	Multicast_EndAttack();
+}
+
+void APlayerCharacter::Multicast_EndAttack_Implementation()
+{
 	this->AttackBlend = 0;
 	this->bSwitchHandAllowed = true;
 	//this->bMoveAllowed = true;
@@ -1246,10 +1260,7 @@ void APlayerCharacter::OnAttackOver()
 	this->bSprintAllowed = true;
 	WalkingSpeed = OverridenWalkingSpeed;
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
-	
 }
-
-
 void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 {
 

@@ -505,6 +505,15 @@ public://fighting
 
 private:
 	UFUNCTION(Server, Unreliable)
+	void Server_EndAttack();
+	void Server_EndAttack_Implementation();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_EndAttack();
+	void Multicast_EndAttack_Implementation();
+
+private:
+	UFUNCTION(Server, Unreliable)
 	void Server_DealHits(FWeaponInfo WeaponInfo);
 	void Server_DealHits_Implementation(FWeaponInfo WeaponInfo);
 public:
