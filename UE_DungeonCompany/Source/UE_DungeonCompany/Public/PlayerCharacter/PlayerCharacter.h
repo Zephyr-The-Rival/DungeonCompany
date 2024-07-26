@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Entities/DC_Entity.h"
 #include "Camera/CameraComponent.h"
+#include "InputFunctionLibrary.h"
 #include "Interactable.h"
 #include "PlayerCharacter.generated.h"
 
@@ -20,6 +21,11 @@ class UInventorySlot;
 class ABackPack;
 class ABuyableItem;
 class UPlayerHud;
+class AItemSocket;
+class AWeapon;
+
+struct  FWeaponInfo;
+
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -29,6 +35,9 @@ class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
 private: 
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ADC_PostMortemPawn> PostMortemPawnClass;
 
 public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
@@ -55,7 +64,6 @@ public:
 	virtual void StaminaTick(float DeltaTime);
 
 protected:
-
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
 	UInputMappingContext* CharacterInputMapping;
 
@@ -160,6 +168,7 @@ protected:
 
 public:
 	void Interact();
+	void ResetInteractPrompt();
 
 protected:
 	UFUNCTION(Server, Unreliable)
@@ -194,19 +203,15 @@ protected:
 private:
 	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
-
-	float LastLookVectorLength = 0.f;
 	
 private:
-	void (APlayerCharacter::*LookFunction)(const FInputActionValue& Value) = &APlayerCharacter::LookGamepad;
+	void (*LookFunction)(const FInputActionValue& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
 
 protected:
 	void Move(const FInputActionValue& Value);
 	void NoMove();
 
 	void Look(const FInputActionValue& Value);
-	void LookMouse(const FInputActionValue& Value);
-	void LookGamepad(const FInputActionValue& Value);
 
 	void NoLook();
 	
@@ -380,8 +385,11 @@ protected:
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
 
-	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
+public:
 
+	void RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty);
+
+protected:
 	void SwitchHand();
 
 	UFUNCTION()
@@ -495,6 +503,10 @@ public://fighting
 	UFUNCTION(BlueprintCallable)
 	void OnAttackOver();
 
+private:
+	UFUNCTION(Server, Unreliable)
+	void Server_DealHits(FWeaponInfo WeaponInfo);
+	void Server_DealHits_Implementation(FWeaponInfo WeaponInfo);
 public:
 	virtual void OnDeath_Implementation() override;
 
@@ -513,5 +525,10 @@ protected:
 
 public:
 	UPlayerHud* GetMyHud();
+
+public:
+	UFUNCTION(Server, Unreliable)
+	void PlaceItemOnSocket(AItemSocket* Socket);
+	void PlaceItemOnSocket_Implementation(AItemSocket* Socket);
 	
 };

@@ -21,6 +21,7 @@
 #include "Items/BackPack.h"
 #include "Items/BuyableItem.h"
 #include "Items/Torch_Data.h"
+#include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -36,6 +37,7 @@
 #include "Interfaces/VoiceInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "DCGame/DC_PostMortemPawn.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -97,7 +99,6 @@ void APlayerCharacter::BeginPlay()
 
 	if(!IsLocallyControlled() || !CharacterInputMapping)
 		return;
-
 
 	ADC_PC* pc = GetController<ADC_PC>();
 
@@ -293,7 +294,7 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 	if (!bLookAllowed)
 		return;
 
-	(this->*LookFunction)(Value);
+	(*LookFunction)(Value, this);
 
 	FRotator newRotation = FRotator(0, 0, 0);
 	newRotation.Pitch = GetControlRotation().Euler().Y;
@@ -301,38 +302,14 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 	FirstPersonMesh->SetRelativeRotation(newRotation);
 }
 
-void APlayerCharacter::LookMouse(const FInputActionValue& Value)
-{
-	FVector2D lookVector = Value.Get<FVector2D>();
-
-	AddControllerYawInput(lookVector.X);
-	AddControllerPitchInput(lookVector.Y);
-}
-
-void APlayerCharacter::LookGamepad(const FInputActionValue& Value)
-{
-	FVector2D lookVector = Value.Get<FVector2D>();
-
-	float lookVectorLength = lookVector.Length();
-
-	float deltaSeconds = GetWorld()->GetDeltaSeconds();
-
-	if (lookVectorLength > LastLookVectorLength)
-		lookVectorLength = UKismetMathLibrary::FInterpTo(LastLookVectorLength, lookVectorLength, deltaSeconds, GamepadAccelerationSpeed);
-	
-	LastLookVectorLength = lookVectorLength;
-
-	lookVector.Normalize();
-	lookVector *= lookVectorLength * deltaSeconds * 100.f;
-
-	AddControllerYawInput(lookVector.X);
-	AddControllerPitchInput(lookVector.Y);
-}
-
 void APlayerCharacter::NoLook()
 {
-	if(LastLookVectorLength)
-		LastLookVectorLength = 0.f;
+	auto pc = Cast<ADC_PC>(Controller);
+
+	if(!pc)
+		return;
+
+	pc->SetLastLookVectorLength(0.f);
 }
 
 void APlayerCharacter::InteractorLineTrace()
@@ -384,6 +361,7 @@ void APlayerCharacter::InteractorLineTrace()
 	}
 }
 
+
 void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
 {
 	if (!HasAuthority())
@@ -402,7 +380,6 @@ void APlayerCharacter::Interact()
 	if(!CurrentInteractable || !CurrentInteractable->IsInteractable())
 		return;
 
-
 	if (CurrentInteractable->IsInteractionRunningOnServer())
 	{
 		if (!HasAuthority())
@@ -414,6 +391,11 @@ void APlayerCharacter::Interact()
 	{
 		CurrentInteractable->Interact(this);
 	}
+}
+
+void APlayerCharacter::ResetInteractPrompt()
+{
+	this->CurrentInteractable = nullptr;
 }
 
 void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
@@ -647,7 +629,7 @@ void APlayerCharacter::Server_LaunchCharacter_Implementation(FVector LaunchVeloc
 
 void APlayerCharacter::OnInputDeviceChanged(bool IsUsingGamepad)
 {
-	LookFunction = IsUsingGamepad ? &APlayerCharacter::LookGamepad : &APlayerCharacter::LookMouse;
+	LookFunction = IsUsingGamepad ? &UInputFunctionLibrary::LookGamepad : &UInputFunctionLibrary::LookMouse;
 }
 
 void APlayerCharacter::AddStamina(float AddingStamina)
@@ -904,20 +886,16 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		Server_DropBackpack(ItemClasses, ItemDatas);
 		return;
 	}
+	
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
 		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(), bThrow, FirstPersonCamera->GetForwardVector());
-		SlotToEmpty.Slot->MyItem = nullptr;
-
-		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty.Slot)
-		{
-			TakeOutItem();
-		}
-
+		
+		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
 	}
 }
 
-void APlayerCharacter::RemoveInventorySlot(UInventorySlot* SlotToEmpty)
+void APlayerCharacter::RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty)
 {
 	if (!IsValid(SlotToEmpty->MyItem))
 		return;
@@ -950,6 +928,8 @@ void APlayerCharacter::SwitchHand()
 	if (UTorch_Data* torch = Cast<UTorch_Data>(GetCurrentlyHeldInventorySlot()->MyItem))
 		torch->bOn = false;
 
+	//refreshing the prompt message
+	this->ResetInteractPrompt();
 	TakeOutItem();
 
 	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
@@ -1082,13 +1062,11 @@ void APlayerCharacter::CheckForFallDamage()
 	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame && GetCharacterMovement()->MovementMode != MOVE_Flying)//frame of impact
 	{
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
-		if (deltaZ > 200)
-		{
 			
-			float damage = this->FallDamageCalculation(deltaZ);
+		float damage = this->FallDamageCalculation(deltaZ);
+		if(damage>0)
 			TakeDamage(damage);
-		}
-
+		
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
 		//	"\nEnd height:\t"+FString::SanitizeFloat(RootComponent->GetComponentLocation().Z)
@@ -1104,9 +1082,8 @@ void APlayerCharacter::CheckForFallDamage()
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 {
-
-	float free = 300;
-	float max = 1000;
+	const float free = 300;
+	const float max = 1000;
 
 	if (deltaHeight <= free)
 		return 0;
@@ -1157,6 +1134,7 @@ void APlayerCharacter::DropItemInvPressed()
 	DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot(),false);
 }
 
+
 void APlayerCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
@@ -1164,10 +1142,18 @@ void APlayerCharacter::OnDeath_Implementation()
 	GetCapsuleComponent()->SetCollisionProfileName("DeadPawn", true);
 	StimulusSource->DestroyComponent(false);
 
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	GetMesh()->SetAnimation(nullptr);
+
+	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	GetMesh()->SetAllBodiesSimulatePhysics(true);
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->WakeAllRigidBodies();
+
 	if (!HasAuthority())
 		return;
-
-	GetWorld()->GetAuthGameMode<ADC_GM>()->Respawn(GetController());
+	
+	GetWorld()->GetAuthGameMode<ADC_GM>()->StartSpectating(GetController());
 
 }
 
@@ -1239,8 +1225,14 @@ void APlayerCharacter::Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn)
 void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
-	
-	weapon->DealHits(NULL, TArray<FVector>(), TArray<FVector>());// is overridden in blueprints to get trace points
+	FWeaponInfo info= weapon->GetWeaponInfo();
+	Server_DealHits(info);
+}
+
+void APlayerCharacter::Server_DealHits_Implementation(FWeaponInfo WeaponInfo)
+{
+	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
+	weapon->DealHits(WeaponInfo);
 }
 
 void APlayerCharacter::OnAttackOver()
@@ -1286,5 +1278,10 @@ void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 UPlayerHud* APlayerCharacter::GetMyHud()
 {	
 	return  Cast<ADC_PC>(GetController())->GetMyPlayerHud();
+}
+
+void APlayerCharacter::PlaceItemOnSocket_Implementation(AItemSocket* Socket)
+{
+	Socket->OnItemPlaced();
 }
 

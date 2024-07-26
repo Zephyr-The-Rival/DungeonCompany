@@ -26,8 +26,13 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+private:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ADC_PostMortemPawn> PostMortemPawnClass;
+
 public:
 	void Respawn(AController* Controller);
+	void StartSpectating(AController* Controller);
 
 	/* If you want to Spawn the AI randomly on the map then leave the NearActor param on null.
 	In this case the Radius parameter can be ignored */
