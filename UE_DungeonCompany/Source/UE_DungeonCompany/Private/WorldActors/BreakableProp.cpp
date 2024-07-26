@@ -25,7 +25,7 @@ void ABreakableProp::Tick(float DeltaTime)
 
 }
 
-void ABreakableProp::Hit_Implementation(FVector ImpulseDirection)
+void ABreakableProp::Hit_Implementation(FVector ImpulseDirection, TSubclassOf<AWeapon> WeaponClass)
 {
 	
 }
