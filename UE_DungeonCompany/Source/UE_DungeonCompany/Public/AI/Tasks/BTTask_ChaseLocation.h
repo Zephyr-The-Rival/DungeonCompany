@@ -4,24 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/Tasks/BTTask_BlackboardBase.h"
-#include "BTTask_GetClosestPlayer.generated.h"
+#include "BTTask_ChaseLocation.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE_DUNGEONCOMPANY_API UBTTask_GetClosestPlayer : public UBTTask_BlackboardBase
+class UE_DUNGEONCOMPANY_API UBTTask_ChaseLocation : public UBTTask_BlackboardBase
 {
 	GENERATED_BODY()
-private:
-	UPROPERTY(EditAnywhere)
-	float MaxDistance = 2000.f;
-
-	UPROPERTY(EditAnywhere)
-	bool bResetValueIfNoPlayerFound = true;
 
 public:
-	UBTTask_GetClosestPlayer();
+	explicit UBTTask_ChaseLocation(FObjectInitializer const& ObjectInitializer);
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	
 };
