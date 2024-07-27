@@ -26,7 +26,6 @@ void ADC_PC::BeginPlay()
 
 	if(!IsLocalController())
 		return;
-	
 
 	UVOIPStatics::SetMicThreshold(-3.0);
 
@@ -63,11 +62,7 @@ void ADC_PC::OnPossess(APawn* InPawn)
 	UClass* pawnClass = InPawn->StaticClass();
 
 	if(InPawn->IsA(APlayerCharacter::StaticClass()))
-	{
 		SetPawnType(EPawnType::Gameplay);
-		if(InPawn)
-			Cast<APlayerCharacter>(InPawn)->CreatePlayerHud();	
-	}
 	else if (InPawn->IsA(ADC_PostMortemPawn::StaticClass()))
 		SetPawnType(EPawnType::Spectator);
 	else

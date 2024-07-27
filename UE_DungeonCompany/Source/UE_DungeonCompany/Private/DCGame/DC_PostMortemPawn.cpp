@@ -27,6 +27,31 @@ void ADC_PostMortemPawn::BeginPlay()
 
 }
 
+void ADC_PostMortemPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if(!IsLocallyControlled())
+		return;
+
+	APlayerController* playerController = GetController<APlayerController>();
+
+	if (!playerController)
+		return;
+
+	ULocalPlayer* localPlayer = playerController->GetLocalPlayer();
+
+	if (!localPlayer)
+		return;
+
+	UEnhancedInputLocalPlayerSubsystem* inputLocalPlayer =  localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+
+	if (!inputLocalPlayer)
+		return;
+
+	inputLocalPlayer->RemoveMappingContext(PMPawnInputMapping);
+}
+
 void ADC_PostMortemPawn::OnPlayerDied(ADC_Entity* DeadPlayer)
 {
 	APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(DeadPlayer);
@@ -57,15 +82,14 @@ void ADC_PostMortemPawn::Tick(float DeltaTime)
 
 }
 
-void ADC_PostMortemPawn::PossessedBy(AController* NewController)
+void ADC_PostMortemPawn::Restart()
 {
-	Super::PossessedBy(NewController);
-	Client_PossessedBy(NewController);
-}
+	Super::Restart();
 
-void ADC_PostMortemPawn::Client_PossessedBy_Implementation(AController* NewController)
-{
-	ADC_PC* playerController = Cast<ADC_PC>(NewController);
+	if(!IsLocallyControlled() || !PMPawnInputMapping)
+		return;
+
+	ADC_PC* playerController = Cast<ADC_PC>(Controller);
 
 	if (!playerController)
 		return;

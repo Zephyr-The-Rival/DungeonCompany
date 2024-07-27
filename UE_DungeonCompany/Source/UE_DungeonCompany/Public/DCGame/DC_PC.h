@@ -27,14 +27,12 @@ class UE_DUNGEONCOMPANY_API ADC_PC : public APlayerController
 {
 	GENERATED_BODY()
 
-
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EPawnType PawnType;
 
 public:
 	ADC_PC();
-
 
 protected:
 	virtual void BeginPlay() override;
