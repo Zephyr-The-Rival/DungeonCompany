@@ -1251,7 +1251,7 @@ void APlayerCharacter::OnAttackOver()
 {
 	if(HasAuthority())
 		Multicast_EndAttack();
-	else
+	else if(IsLocallyControlled())
 		Server_EndAttack();
 }
 
