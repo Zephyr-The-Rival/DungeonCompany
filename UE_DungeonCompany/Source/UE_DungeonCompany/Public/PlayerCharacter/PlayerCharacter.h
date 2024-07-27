@@ -36,9 +36,6 @@ private:
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class ADC_PostMortemPawn> PostMortemPawnClass;
-
 public:
 	APlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
@@ -55,6 +52,7 @@ protected:
 	float throwStrengh=800;
 
 	virtual void BeginPlay() override;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
@@ -62,6 +60,8 @@ public:
 
 	virtual void LocalTick(float DeltaTime);
 	virtual void StaminaTick(float DeltaTime);
+
+	virtual void Restart() override;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")

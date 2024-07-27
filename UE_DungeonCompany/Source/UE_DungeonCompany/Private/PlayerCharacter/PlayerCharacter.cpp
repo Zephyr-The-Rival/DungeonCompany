@@ -97,26 +97,6 @@ void APlayerCharacter::BeginPlay()
 	bResting = true; 
 	});
 
-	if(!IsLocallyControlled() || !CharacterInputMapping)
-		return;
-
-	ADC_PC* pc = GetController<ADC_PC>();
-
-	if(!pc)
-		return;
-
-	OnInputDeviceChanged(pc->IsUsingGamepad());
-	pc->OnInputDeviceChanged.AddDynamic(this, &APlayerCharacter::OnInputDeviceChanged);
-
-	auto inputLocalPlayer = GetInputLocalPlayer();
-
-	if(!inputLocalPlayer)
-		return;
-
-	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
-
-	if(!MyPlayerHud)
-		CreatePlayerHud();
 }
 
 // Called every frame
@@ -155,6 +135,33 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 
 	if (Stamina < 0.f)
 		ToggleSprint();
+}
+
+void APlayerCharacter::Restart()
+{
+	Super::Restart();
+
+	if (!IsLocallyControlled() || !CharacterInputMapping)
+		return;
+
+	ADC_PC* pc = Cast<ADC_PC>(Controller);
+
+	if (!pc)
+		return;
+
+	OnInputDeviceChanged(pc->IsUsingGamepad());
+	pc->OnInputDeviceChanged.AddDynamic(this, &APlayerCharacter::OnInputDeviceChanged);
+
+	auto inputLocalPlayer = GetInputLocalPlayer();
+
+	if (!inputLocalPlayer)
+		return;
+
+	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
+
+	if (!MyPlayerHud)
+		CreatePlayerHud();
+
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -1148,8 +1155,11 @@ void APlayerCharacter::OnDeath_Implementation()
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->WakeAllRigidBodies();
 
-	if(IsLocallyControlled())
+	if (IsLocallyControlled())
+	{
 		this->GetMyHud()->RemoveFromParent();
+		DeactivateCharacterInputMappings();
+	}
 	
 	if (!HasAuthority())
 		return;
@@ -1241,7 +1251,7 @@ void APlayerCharacter::OnAttackOver()
 {
 	if(HasAuthority())
 		Multicast_EndAttack();
-	else
+	else if(IsLocallyControlled())
 		Server_EndAttack();
 }
 
@@ -1296,6 +1306,9 @@ void APlayerCharacter::PlaceItemOnSocket_Implementation(AItemSocket* Socket)
 
 void APlayerCharacter::CreatePlayerHud()
 {
+	if(!IsLocallyControlled())
+		return;
+
 	this->MyPlayerHud = CreateWidget<UPlayerHud>(GetWorld(),PlayerHudClass);
 	this->MyPlayerHud->AddToViewport();	
 }

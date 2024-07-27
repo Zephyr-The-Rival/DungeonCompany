@@ -36,6 +36,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION()
 	void OnPlayerDied(ADC_Entity* DeadPlayer);
@@ -46,12 +47,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void PossessedBy(AController* NewController) override;
-
-protected:
-	UFUNCTION(Client, Reliable)
-	void Client_PossessedBy(AController* NewController);
-	void Client_PossessedBy_Implementation(AController* NewController);
+	virtual void Restart() override;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
