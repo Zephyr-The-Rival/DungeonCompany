@@ -27,26 +27,34 @@ class UE_DUNGEONCOMPANY_API ADC_PC : public APlayerController
 {
 	GENERATED_BODY()
 
-private:
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UPlayerHud> PlayerHudClass;
 
-	UPROPERTY(BlueprintGetter = GetMyPlayerHud)
-	UPlayerHud* MyPlayerHud;
-
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EPawnType PawnType;
 
 public:
 	ADC_PC();
 
-	UFUNCTION(BlueprintCallable)
-	UPlayerHud* GetMyPlayerHud() const { return MyPlayerHud; }
 
 protected:
 	virtual void BeginPlay() override;
 
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
+
+public:
+	void SetPawnType(EPawnType NewPawnType);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent)
+	void OnPawnTypeChanged(EPawnType NewPawnType);
+	virtual void OnPawnTypeChanged_Implementation(EPawnType NewPawnType);
+
+public:
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPawnTypeChanged, EPawnType, NewPawnType);
+
+	FOnPawnTypeChanged EventOnPawnTypeChanged;
 
 private:
 	UPROPERTY(EditAnywhere, Category="Balancing/Controls")
@@ -108,8 +116,9 @@ public:
 	void SetPushToTalkActive(bool IsActive);
 
 public:
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_RequestRespawn();
 	void Server_RequestRespawn_Implementation();
 
+	
 };

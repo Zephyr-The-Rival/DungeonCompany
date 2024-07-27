@@ -26,9 +26,7 @@ void ADC_PC::BeginPlay()
 
 	if(!IsLocalController())
 		return;
-
-	this->MyPlayerHud = CreateWidget<UPlayerHud>(this, PlayerHudClass);
-	this->MyPlayerHud->AddToViewport();
+	
 
 	UVOIPStatics::SetMicThreshold(-3.0);
 
@@ -64,17 +62,36 @@ void ADC_PC::OnPossess(APawn* InPawn)
 
 	UClass* pawnClass = InPawn->StaticClass();
 
-	if(pawnClass->IsChildOf<APlayerCharacter>())
-		PawnType = EPawnType::Gameplay;
-	else if(pawnClass->IsChildOf<ADC_PostMortemPawn>())
-		PawnType = EPawnType::Spectator;
+	if(InPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		SetPawnType(EPawnType::Gameplay);
+		if(InPawn)
+			Cast<APlayerCharacter>(InPawn)->CreatePlayerHud();	
+	}
+	else if (InPawn->IsA(ADC_PostMortemPawn::StaticClass()))
+		SetPawnType(EPawnType::Spectator);
 	else
-		PawnType = EPawnType::None;
+		SetPawnType(EPawnType::None);
 }
 
 void ADC_PC::OnUnPossess()
 {
-	PawnType = EPawnType::None;
+	SetPawnType(EPawnType::None);
+}
+
+void ADC_PC::SetPawnType(EPawnType NewPawnType)
+{
+	if(NewPawnType == PawnType)
+		return;
+
+	PawnType = NewPawnType;
+	OnPawnTypeChanged(NewPawnType);
+	EventOnPawnTypeChanged.Broadcast(NewPawnType);
+}
+
+void ADC_PC::OnPawnTypeChanged_Implementation(EPawnType NewPawnType)
+{
+
 }
 
 void ADC_PC::SetGamePadAccelerationSpeed(float InSpeed)
@@ -128,10 +145,11 @@ void ADC_PC::SetupInputComponent()
 void ADC_PC::ToggleOptions()
 {
 	bOptionsMenuIsOn = !bOptionsMenuIsOn;
-	GetMyPlayerHud()->ToggleOptionsMenu(bOptionsMenuIsOn);
+
 
 	APlayerCharacter* playerCharacter = GetPawn<APlayerCharacter>();
 
+	playerCharacter->GetMyHud()->ToggleOptionsMenu(bOptionsMenuIsOn);
 	if(!playerCharacter)
 		return;
 	

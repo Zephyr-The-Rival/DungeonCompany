@@ -143,6 +143,7 @@ void ADC_GM::Respawn(AController* Controller)
 	
 	Controller->ClientSetRotation(playerStart->GetActorRotation());
 	Controller->Possess(newCharacter);
+	
 
 }
 

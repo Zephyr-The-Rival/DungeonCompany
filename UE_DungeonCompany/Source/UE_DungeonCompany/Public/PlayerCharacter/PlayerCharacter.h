@@ -505,6 +505,15 @@ public://fighting
 
 private:
 	UFUNCTION(Server, Unreliable)
+	void Server_EndAttack();
+	void Server_EndAttack_Implementation();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_EndAttack();
+	void Multicast_EndAttack_Implementation();
+
+private:
+	UFUNCTION(Server, Unreliable)
 	void Server_DealHits(FWeaponInfo WeaponInfo);
 	void Server_DealHits_Implementation(FWeaponInfo WeaponInfo);
 public:
@@ -523,12 +532,22 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Backpack")
 	TSubclassOf<UItemData> BackpackClass;
 
-public:
-	UPlayerHud* GetMyHud();
+
 
 public:
 	UFUNCTION(Server, Unreliable)
 	void PlaceItemOnSocket(AItemSocket* Socket);
 	void PlaceItemOnSocket_Implementation(AItemSocket* Socket);
+
+protected://player hud
+	UPlayerHud* MyPlayerHud;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UPlayerHud> PlayerHudClass;
+public:
+	void CreatePlayerHud();
+
+	UFUNCTION(BlueprintPure,BlueprintCallable)
+	UPlayerHud* GetMyHud() const {return MyPlayerHud;}
 	
 };

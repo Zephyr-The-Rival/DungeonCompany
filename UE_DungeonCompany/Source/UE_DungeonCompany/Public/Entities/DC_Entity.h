@@ -31,6 +31,7 @@ public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetMaxHealth() const { return MaxHP; }
 
+	UFUNCTION(BlueprintPure, BlueprintCallable)
 	inline bool IsDead() const { return HP <= 0.f; }
 
 	using Super::TakeDamage;
