@@ -56,8 +56,6 @@ void ADC_PostMortemPawn::OnPlayerDied(ADC_Entity* DeadPlayer)
 {
 	APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(DeadPlayer);
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, DeadPlayer->GetName());
-
 	if(!playerCharacter)
 		return;
 
