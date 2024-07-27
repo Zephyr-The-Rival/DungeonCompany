@@ -4,20 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "EnvironmentQuery/EnvQueryContext.h"
-#include "EnvQueryContext_Player.generated.h"
+#include "EnvQueryContext_Light.generated.h"
 
 /**
  * 
  */
+class ALight;
+
 UCLASS()
-class UE_DUNGEONCOMPANY_API UEnvQueryContext_Player : public UEnvQueryContext
+class UE_DUNGEONCOMPANY_API UEnvQueryContext_Light : public UEnvQueryContext
 {
 	GENERATED_BODY()
-
 public:
-	UEnvQueryContext_Player(const FObjectInitializer& ObjectInitializer);
-
 	virtual void ProvideContext(FEnvQueryInstance& QueryInstance, FEnvQueryContextData& ContextData) const override;
-	AActor* GetClosestPlayer(APawn* QueryOwner) const;
+	void GetAllLights(TArray<AActor*>& Out) const;
+
 	
 };
