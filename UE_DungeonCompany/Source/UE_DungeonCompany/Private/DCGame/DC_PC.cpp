@@ -26,9 +26,7 @@ void ADC_PC::BeginPlay()
 
 	if(!IsLocalController())
 		return;
-
-	this->MyPlayerHud = CreateWidget<UPlayerHud>(this, PlayerHudClass);
-	this->MyPlayerHud->AddToViewport();
+	
 
 	UVOIPStatics::SetMicThreshold(-3.0);
 
@@ -64,9 +62,13 @@ void ADC_PC::OnPossess(APawn* InPawn)
 
 	UClass* pawnClass = InPawn->StaticClass();
 
-	if(pawnClass->IsChildOf<APlayerCharacter>())
+	if(InPawn->IsA(APlayerCharacter::StaticClass()))
+	{
 		SetPawnType(EPawnType::Gameplay);
-	else if(pawnClass->IsChildOf<ADC_PostMortemPawn>())
+		if(InPawn)
+			Cast<APlayerCharacter>(InPawn)->CreatePlayerHud();	
+	}
+	else if (InPawn->IsA(ADC_PostMortemPawn::StaticClass()))
 		SetPawnType(EPawnType::Spectator);
 	else
 		SetPawnType(EPawnType::None);
@@ -143,10 +145,11 @@ void ADC_PC::SetupInputComponent()
 void ADC_PC::ToggleOptions()
 {
 	bOptionsMenuIsOn = !bOptionsMenuIsOn;
-	GetMyPlayerHud()->ToggleOptionsMenu(bOptionsMenuIsOn);
+
 
 	APlayerCharacter* playerCharacter = GetPawn<APlayerCharacter>();
 
+	playerCharacter->GetMyHud()->ToggleOptionsMenu(bOptionsMenuIsOn);
 	if(!playerCharacter)
 		return;
 	

@@ -532,12 +532,22 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Backpack")
 	TSubclassOf<UItemData> BackpackClass;
 
-public:
-	UPlayerHud* GetMyHud();
+
 
 public:
 	UFUNCTION(Server, Unreliable)
 	void PlaceItemOnSocket(AItemSocket* Socket);
 	void PlaceItemOnSocket_Implementation(AItemSocket* Socket);
+
+protected://player hud
+	UPlayerHud* MyPlayerHud;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UPlayerHud> PlayerHudClass;
+public:
+	void CreatePlayerHud();
+
+	UFUNCTION(BlueprintPure,BlueprintCallable)
+	UPlayerHud* GetMyHud() const {return MyPlayerHud;}
 	
 };
