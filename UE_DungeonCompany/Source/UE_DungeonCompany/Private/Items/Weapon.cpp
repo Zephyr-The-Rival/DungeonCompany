@@ -49,8 +49,12 @@ void AWeapon::DealHits(FWeaponInfo WeaponInfo)
 	
 	if(ADC_Entity* hitEntity= Cast<ADC_Entity>(HitActor))
 	{
-		hitEntity->TakeDamage(10);
-		hitEntity->SpawnHitEffect(Cast<USceneComponent>(hitResult.GetComponent()), hitResult.BoneName, hitResult.Location, TraceEnds[i] - TraceStarts[i]);	
+		if(hitEntity!=MyCharacterToAttachTo)
+		{
+			hitEntity->TakeDamage(10);
+			hitEntity->SpawnHitEffect(Cast<USceneComponent>(hitResult.GetComponent()), hitResult.BoneName, hitResult.Location, TraceEnds[i] - TraceStarts[i]);
+		}
+			
 	}
 
 	if (ABreakableProp* Prop = Cast<ABreakableProp>(HitActor))
