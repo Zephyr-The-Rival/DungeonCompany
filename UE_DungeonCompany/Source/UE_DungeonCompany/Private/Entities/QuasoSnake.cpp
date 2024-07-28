@@ -38,6 +38,8 @@ void AQuasoSnake::BeginPlay()
 
 	GetCharacterMovement()->DisableMovement();
 
+	SetIsLurking(true);
+
 }
 
 void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
@@ -46,6 +48,7 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 		return;
 
 	bInAttack = true;
+	SetIsAttacking(true);
 
 	FTimerHandle handle;
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AQuasoSnake::LaunchAtActor, Cast<AActor>(TargetPlayer));
@@ -128,6 +131,8 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	bLaunched = false;
 	AttackTime = 0.f;
 
+	SetIsAttacking(false);
+
 	ADC_AIController* aiController = GetController<ADC_AIController>();
 	if (!aiController)
 		return;
@@ -150,6 +155,8 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 
 	AttachToActor(character, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	PlayerAttachedTo = character;
+
+	SetIsAttachedToPlayer(true);
 
 	SetActorLocation(character->GetActorLocation() + FVector::UpVector * 100);
 
@@ -174,6 +181,22 @@ void AQuasoSnake::ReturnToVolume()
 	Destroy();
 }
 
+void AQuasoSnake::SetIsAttachedToPlayer(bool InIsAttached)
+{
+	if(InIsAttached == IsAttachedToPlayer())
+		return;
+
+	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_0);
+}
+
+void AQuasoSnake::SetIsLurking(bool InIsLurking)
+{
+	if (InIsLurking == IsLurking())
+		return;
+
+	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_1);
+}
+
 void AQuasoSnake::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
@@ -182,6 +205,7 @@ void AQuasoSnake::OnDeath_Implementation()
 		return;
 
 	ResetPlayerEffects();
+	SetIsAttachedToPlayer(false);
 
 }
 
@@ -243,10 +267,13 @@ void AQuasoSnake::DetachFromPlayer()
 
 	bInAttack = false;
 
+	SetIsAttachedToPlayer(false);
+
 	ADC_AIController* aiController = Cast<ADC_AIController>(GetController());
 	if (!aiController)
 		return;
 
 	aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", false);
 	aiController->GetBlackboardComponent()->ClearValue("TargetPlayer");
+
 }

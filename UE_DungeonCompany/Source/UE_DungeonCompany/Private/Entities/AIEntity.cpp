@@ -11,6 +11,7 @@
 #include "Perception/AISenseConfig_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AIPerceptionComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AAIEntity::AAIEntity()
 {
@@ -215,4 +216,33 @@ void AAIEntity::OnDeath_Implementation()
 	Super::OnDeath_Implementation();
 
 	Destroy();
+}
+
+void AAIEntity::SetIsAttacking(bool InAttacking)
+{
+	if(InAttacking == IsAttacking())
+		return;
+
+	ToggleAnimationBitFlag(FLAG_Attacking);
+}
+
+void AAIEntity::SetAnimationBitFlag(EAnimationFlags InBit)
+{
+	AnimationFlags |= InBit;
+}
+
+void AAIEntity::ClearAnimatinoBitFlag(EAnimationFlags InBit)
+{
+	AnimationFlags &= ~InBit;
+}
+
+void AAIEntity::ToggleAnimationBitFlag(EAnimationFlags InBit)
+{
+	AnimationFlags ^= InBit;
+}
+
+void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AAIEntity, AnimationFlags);
 }
