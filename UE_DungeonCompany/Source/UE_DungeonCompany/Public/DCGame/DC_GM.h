@@ -20,11 +20,15 @@ private:
 	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<AAIEntity>> AIClasses;
 
+	UPROPERTY(EditAnywhere)
+	int SpurchinCount = 10.f;
+
 public:
 	ADC_GM();
 
 protected:
 	virtual void BeginPlay() override;
+	void SpawnSpurchins();
 
 private:
 	UPROPERTY(EditAnywhere)
