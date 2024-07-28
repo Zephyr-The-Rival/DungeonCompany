@@ -86,6 +86,9 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	this->HP = this->MaxHP;
+	this->Stamina = this->MaxStamina;//doesnt seem to take the blueprint changes during construction
 	
 	this->HandSlotA = NewObject<UInventorySlot>();
 	this->HandSlotB = NewObject<UInventorySlot>();
@@ -929,6 +932,8 @@ void APlayerCharacter::SwitchHand()
 		return;
 	
 	bSwitchHandAllowed = false;
+	this->bPrimaryActionAllowed = false;
+	this->bSecondaryActionAllowed=false;
 
 	this->bSlotAIsInHand = !bSlotAIsInHand;
 
@@ -940,14 +945,16 @@ void APlayerCharacter::SwitchHand()
 	this->ResetInteractPrompt();
 	TakeOutItem();
 
-	this->MyPlayerHud->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
+	this->MyPlayerHud->OnSwichingDone.AddDynamic(this, &APlayerCharacter::SwitchHandFinished);
 	this->MyPlayerHud->SwichHandDisplays(bSlotAIsInHand);
 	
 }
 
-void APlayerCharacter::AllowSwitchHand()
+void APlayerCharacter::SwitchHandFinished()
 {
 	bSwitchHandAllowed = true;
+	this->bPrimaryActionAllowed=true;
+	this->bSecondaryActionAllowed=true;
 	MyPlayerHud->OnSwichingDone.RemoveAll(this);
 }
 

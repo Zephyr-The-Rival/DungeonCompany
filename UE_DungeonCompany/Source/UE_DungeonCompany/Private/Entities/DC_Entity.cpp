@@ -23,7 +23,7 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 	
 }
 
-void ADC_Entity::SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
+void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
 {
 	if (IsValid(this->bloodEffect))
 	{
