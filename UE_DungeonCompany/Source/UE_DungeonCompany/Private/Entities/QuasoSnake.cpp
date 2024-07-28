@@ -45,8 +45,6 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 	if(!HasAuthority() || bInAttack)
 		return;
 
-	Super::AttackPlayer(TargetPlayer);
-	
 	bInAttack = true;
 
 	FTimerHandle handle;

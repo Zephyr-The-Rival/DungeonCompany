@@ -77,6 +77,12 @@ void AAIEntity::BeginPlay()
 
 void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 {
+	if (TargetPlayer->IsDead())
+	{
+		SetTargetPlayer(nullptr);
+		return;
+	}
+
 	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
 
@@ -123,6 +129,15 @@ void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
 
 	if (aiController)
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
+}
+
+void AAIEntity::SetTargetPlayer(APlayerCharacter* TargetPlayer)
+{
+	ADC_AIController* aiController = GetController<ADC_AIController>();
+
+	if (aiController)
+		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", TargetPlayer);
+
 }
 
 bool AAIEntity::IsVisibleToPlayers() const

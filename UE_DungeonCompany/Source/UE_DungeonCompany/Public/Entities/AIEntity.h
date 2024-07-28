@@ -48,13 +48,13 @@ protected:
 	float AttackDamage = 20.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
-	float AttackRange = 100.f;
+	float AttackRange = 250.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
 	float AttackRadius = 30.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
-	float AttackDelay = 1.f;
+	float AttackDelay = 0.5f;
 
 private:
 	FTimerHandle ExecuteAttackHandle;
@@ -64,7 +64,10 @@ public:
 
 protected:
 	virtual void ExecuteAttack(FVector Direction);
+
+public:
 	void SetInAttackOnBlackboard(bool InAttack);
+	void SetTargetPlayer(APlayerCharacter* TargetPlayer);
 
 public:
 	bool IsVisibleToPlayers() const;
