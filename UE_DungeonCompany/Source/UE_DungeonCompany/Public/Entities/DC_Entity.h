@@ -36,7 +36,9 @@ public:
 
 	using Super::TakeDamage;
 	virtual void TakeDamage(float Damage);
+	UFUNCTION(NetMulticast, Unreliable)
 	void SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
+	void SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
