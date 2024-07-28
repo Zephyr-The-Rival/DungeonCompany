@@ -17,6 +17,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MaxDistance = 2000.f;
 
+	UPROPERTY(EditAnywhere)
+	bool bResetValueIfNoPlayerFound = true;
+
 public:
 	UBTTask_GetClosestPlayer();
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

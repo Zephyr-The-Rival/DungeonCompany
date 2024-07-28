@@ -13,6 +13,10 @@ class USphereComponent;
 class USplineComponent;
 class APlayerCharacter;
 class UBuffDebuffBase;
+class UDebuffDisableMovement;
+class UDebuffBlockInputs;
+class UDebuffMuffledVoice;
+class UDebuffImpairedVision;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AQuasoSnake : public AAIEntity
@@ -93,5 +97,26 @@ public:
 
 public:
 	void ReturnToVolume();
+
+protected://blueprint debuffs
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
+	TSubclassOf<UDebuffDisableMovement> DisableMovementDebuff;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
+	TSubclassOf<UDebuffBlockInputs> BlockInputsDebuff;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
+	TSubclassOf<UDebuffMuffledVoice> MuffledVoiceDebuff;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
+	TSubclassOf<UDebuffImpairedVision> ImpairedVisionDebuff;
+
+public:
+	inline bool IsAttachedToPlayer() const { return (AnimationFlags & FLAG_Custom_0) != 0; }
+	void SetIsAttachedToPlayer(bool InIsAttached);
+
+	inline bool IsLurking() const { return (AnimationFlags & FLAG_Custom_1) != 0; }
+	void SetIsLurking(bool InIsLurking);
 	
 };

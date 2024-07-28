@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Entities/DC_Entity.h"
 #include "Camera/CameraComponent.h"
+#include "InputFunctionLibrary.h"
 #include "Interactable.h"
 #include "PlayerCharacter.generated.h"
 
@@ -20,6 +21,11 @@ class UInventorySlot;
 class ABackPack;
 class ABuyableItem;
 class UPlayerHud;
+class AItemSocket;
+class AWeapon;
+
+struct  FWeaponInfo;
+
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -46,6 +52,7 @@ protected:
 	float throwStrengh=800;
 
 	virtual void BeginPlay() override;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
@@ -54,8 +61,9 @@ public:
 	virtual void LocalTick(float DeltaTime);
 	virtual void StaminaTick(float DeltaTime);
 
-protected:
+	virtual void Restart() override;
 
+protected:
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
 	UInputMappingContext* CharacterInputMapping;
 
@@ -160,6 +168,7 @@ protected:
 
 public:
 	void Interact();
+	void ResetInteractPrompt();
 
 protected:
 	UFUNCTION(Server, Unreliable)
@@ -171,6 +180,7 @@ public:
 
 protected:
 	void PickUpBackpack(ABackPack* BackpackToPickUp);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float WalkingSpeed = 350;
@@ -187,14 +197,23 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float JumpVelocity = 420.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float GamepadAccelerationSpeed = 7.f;
+
 private:
 	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
 	
+private:
+	void (*LookFunction)(const FInputActionValue& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
+
 protected:
 	void Move(const FInputActionValue& Value);
 	void NoMove();
+
 	void Look(const FInputActionValue& Value);
+
+	void NoLook();
 	
 	virtual void Jump() override;
 
@@ -221,7 +240,6 @@ protected:
 	void Server_StopSprint_Implementation();
 
 public:
-
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool GetIsSprinting() const {return this->bSprinting;}
 
@@ -232,6 +250,10 @@ public:
 	UFUNCTION(Server, Unreliable)
 	void Server_LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
 	void Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
+
+protected:
+	UFUNCTION()
+	void OnInputDeviceChanged(bool IsUsingGamepad);
 
 private:
 	bool bClimbing = false;
@@ -282,7 +304,7 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
-	float MaxStamina = 5.f;
+	float MaxStamina;
 
 	void AddStamina(float AddingStamina);
 	void SubstractStamina(float SubStamina);
@@ -363,12 +385,15 @@ protected:
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
 
-	void RemoveInventorySlot(UInventorySlot* SlotToEmpty);
+public:
 
+	void RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty);
+
+protected:
 	void SwitchHand();
 
 	UFUNCTION()
-	void AllowSwitchHand();
+	void SwitchHandFinished();
 
 	void EquipCurrentInventorySelection(bool BToA);
 
@@ -427,7 +452,7 @@ private:
 	void Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 
 public:
-	void ReportTalking(float Loudness);
+	void ReportNoise(float Loudness);
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Sounds")
@@ -478,6 +503,19 @@ public://fighting
 	UFUNCTION(BlueprintCallable)
 	void OnAttackOver();
 
+private:
+	UFUNCTION(Server, Unreliable)
+	void Server_EndAttack();
+	void Server_EndAttack_Implementation();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_EndAttack();
+	void Multicast_EndAttack_Implementation();
+
+private:
+	UFUNCTION(Server, Unreliable)
+	void Server_DealHits(FWeaponInfo WeaponInfo);
+	void Server_DealHits_Implementation(FWeaponInfo WeaponInfo);
 public:
 	virtual void OnDeath_Implementation() override;
 
@@ -494,7 +532,22 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Backpack")
 	TSubclassOf<UItemData> BackpackClass;
 
+
+
 public:
-	UPlayerHud* GetMyHud();
+	UFUNCTION(Server, Unreliable)
+	void PlaceItemOnSocket(AItemSocket* Socket);
+	void PlaceItemOnSocket_Implementation(AItemSocket* Socket);
+
+protected://player hud
+	UPlayerHud* MyPlayerHud;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UPlayerHud> PlayerHudClass;
+public:
+	void CreatePlayerHud();
+
+	UFUNCTION(BlueprintPure,BlueprintCallable)
+	UPlayerHud* GetMyHud() const {return MyPlayerHud;}
 	
 };

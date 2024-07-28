@@ -18,6 +18,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	float AttackRange = 100.f;
 
+	UPROPERTY(EditAnywhere)
+	bool bIgnoreZValue = false;
+
 public:
 	UBTService_IsInAttackRange();
 	virtual void OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
