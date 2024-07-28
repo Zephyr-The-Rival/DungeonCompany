@@ -118,5 +118,9 @@ public:
 	void Server_RequestRespawn();
 	void Server_RequestRespawn_Implementation();
 
-	
+
+protected:
+	UFUNCTION(BlueprintNativeEvent)
+	void ToggleOptionsMenu(bool On);
+	void ToggleOptionsMenu_Implementation(bool On);
 };
