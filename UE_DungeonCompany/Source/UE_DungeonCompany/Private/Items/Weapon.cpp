@@ -4,57 +4,60 @@
 #include "Items/Weapon.h"
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "WorldActors/BreakableProp.h"
 #include "Entities/DC_Entity.h"
 #include "NiagaraFunctionLibrary.h"
+
 
 void AWeapon::BeginPlay()
 {
 	AWorldItem::BeginPlay();
 }
 
-void AWeapon::DealHits_Implementation(UPrimitiveComponent* WeaponCollision, const TArray<FVector>& TraceStarts, const TArray<FVector>&  TraceEnd)
+void AWeapon::DealHits(FWeaponInfo WeaponInfo)
 {
-
-	if (TraceStarts.Num() != TraceEnd.Num() || TraceStarts.Num() == 0)
+	
+	TArray<FVector> TraceStarts= WeaponInfo.TraceStarts;
+	TArray<FVector> TraceEnds= WeaponInfo.TraceEnds;
+	
+	if (TraceStarts.Num() != TraceEnds.Num() || TraceStarts.Num() == 0)
 	{
-		LogWarning(TEXT("Include all trace starts and ends in correct order"));
+		LogWarning(TEXT("Do Include all trace starts and ends in correct order!"));
 		return;
 	}
 
 	
-	ADC_Entity* hitEntity;
-	FName bonename;
-	FVector impactPoint;
-	for (int i = 0; i < TraceStarts.Num(); i++)
+	AActor* HitActor=nullptr;
+	FHitResult hitResult;
+	int i = 0;
+	for (; i < TraceStarts.Num(); i++)
 	{
-		FHitResult hitResult;
-		GetWorld()->LineTraceSingleByChannel(hitResult, TraceStarts[i], TraceEnd[i], ECC_GameTraceChannel4);
 
-		//DrawDebugLine(GetWorld(), TraceStarts[i], TraceEnd[i], FColor::Green, false, 1.0f, 0, 1.0f);
+		GetWorld()->LineTraceSingleByChannel(hitResult, TraceStarts[i], TraceEnds[i], ECC_GameTraceChannel4);
+
+		DrawDebugLine(GetWorld(), TraceStarts[i], TraceEnds[i], FColor::Green, false, 1.0f, 0, 1.0f);
 		
 		if(!hitResult.bBlockingHit)
 			continue;
 		
-		hitEntity = Cast<ADC_Entity>(hitResult.GetActor());	 	 	 		
-
-		hitEntity->TakeDamage(10);
-		hitEntity->SpawnHitEffect(Cast<USceneComponent>(hitResult.GetComponent()), hitResult.BoneName, hitResult.Location, TraceEnd[i] - TraceStarts[i]);
+		HitActor = hitResult.GetActor();	 	 	 		
 		break;
+	}
 
+	if(!IsValid(HitActor))
+		return;
+	
+	if(ADC_Entity* hitEntity= Cast<ADC_Entity>(HitActor))
+	{
+		hitEntity->TakeDamage(10);
+		hitEntity->SpawnHitEffect(Cast<USceneComponent>(hitResult.GetComponent()), hitResult.BoneName, hitResult.Location, TraceEnds[i] - TraceStarts[i]);	
+	}
+
+	if (ABreakableProp* Prop = Cast<ABreakableProp>(HitActor))
+	{
+		Prop->Hit(TraceEnds[i] - TraceStarts[i], this->GetClass());
 	}
 	
-
-
-		
-
-	TArray<AActor*> overlappingActors;
-	WeaponCollision->GetOverlappingActors(overlappingActors);
-
-
-	for (AActor* a : overlappingActors)
-	{
-		//only for non alive things
-	}
 }
 
 void AWeapon::TriggerPrimaryAction_Implementation(APlayerCharacter* User)

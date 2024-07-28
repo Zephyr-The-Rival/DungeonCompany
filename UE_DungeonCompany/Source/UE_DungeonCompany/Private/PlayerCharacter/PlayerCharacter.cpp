@@ -20,6 +20,8 @@
 #include "WorldActors/SharedStatsManager.h"
 #include "Items/BackPack.h"
 #include "Items/BuyableItem.h"
+#include "Items/Torch_Data.h"
+#include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -35,6 +37,7 @@
 #include "Interfaces/VoiceInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "DCGame/DC_PostMortemPawn.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -94,25 +97,6 @@ void APlayerCharacter::BeginPlay()
 	bResting = true; 
 	});
 
-	if(!IsLocallyControlled() || !CharacterInputMapping)
-		return;
-
-
-	ADC_PC* pc = GetController<ADC_PC>();
-
-	if(!pc)
-		return;
-
-	OnInputDeviceChanged(pc->IsUsingGamepad());
-	pc->OnInputDeviceChanged.AddDynamic(this, &APlayerCharacter::OnInputDeviceChanged);
-
-	auto inputLocalPlayer = GetInputLocalPlayer();
-
-	if(!inputLocalPlayer)
-		return;
-
-	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
-	
 }
 
 // Called every frame
@@ -125,7 +109,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	CheckForFallDamage();
 
 	if(voiceLevel > 0.f)
-		ReportTalking(voiceLevel);
+		ReportNoise(voiceLevel);
 	
 	if(IsLocallyControlled())
 		LocalTick(DeltaTime);
@@ -151,6 +135,33 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 
 	if (Stamina < 0.f)
 		ToggleSprint();
+}
+
+void APlayerCharacter::Restart()
+{
+	Super::Restart();
+
+	if (!IsLocallyControlled() || !CharacterInputMapping)
+		return;
+
+	ADC_PC* pc = Cast<ADC_PC>(Controller);
+
+	if (!pc)
+		return;
+
+	OnInputDeviceChanged(pc->IsUsingGamepad());
+	pc->OnInputDeviceChanged.AddDynamic(this, &APlayerCharacter::OnInputDeviceChanged);
+
+	auto inputLocalPlayer = GetInputLocalPlayer();
+
+	if (!inputLocalPlayer)
+		return;
+
+	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
+
+	if (!MyPlayerHud)
+		CreatePlayerHud();
+
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -292,7 +303,7 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 	if (!bLookAllowed)
 		return;
 
-	(this->*LookFunction)(Value);
+	(*LookFunction)(Value, this);
 
 	FRotator newRotation = FRotator(0, 0, 0);
 	newRotation.Pitch = GetControlRotation().Euler().Y;
@@ -300,38 +311,14 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 	FirstPersonMesh->SetRelativeRotation(newRotation);
 }
 
-void APlayerCharacter::LookMouse(const FInputActionValue& Value)
-{
-	FVector2D lookVector = Value.Get<FVector2D>();
-
-	AddControllerYawInput(lookVector.X);
-	AddControllerPitchInput(lookVector.Y);
-}
-
-void APlayerCharacter::LookGamepad(const FInputActionValue& Value)
-{
-	FVector2D lookVector = Value.Get<FVector2D>();
-
-	float lookVectorLength = lookVector.Length();
-
-	float deltaSeconds = GetWorld()->GetDeltaSeconds();
-
-	if (lookVectorLength > LastLookVectorLength)
-		lookVectorLength = UKismetMathLibrary::FInterpTo(LastLookVectorLength, lookVectorLength, deltaSeconds, GamepadAccelerationSpeed);
-	
-	LastLookVectorLength = lookVectorLength;
-
-	lookVector.Normalize();
-	lookVector *= lookVectorLength * deltaSeconds * 100.f;
-
-	AddControllerYawInput(lookVector.X);
-	AddControllerPitchInput(lookVector.Y);
-}
-
 void APlayerCharacter::NoLook()
 {
-	if(LastLookVectorLength)
-		LastLookVectorLength = 0.f;
+	auto pc = Cast<ADC_PC>(Controller);
+
+	if(!pc)
+		return;
+
+	pc->SetLastLookVectorLength(0.f);
 }
 
 void APlayerCharacter::InteractorLineTrace()
@@ -352,9 +339,8 @@ void APlayerCharacter::InteractorLineTrace()
 			{
 				this->CurrentInteractable = i;
 				this->CurrentInteractable->OnHovered(this);
-
-				ADC_PC* c = Cast<ADC_PC>(GetController());
-				c->GetMyPlayerHud()->ShowCrosshair(nullptr);
+				
+				MyPlayerHud->ShowCrosshair(nullptr);
 
 			}
 		}
@@ -362,7 +348,7 @@ void APlayerCharacter::InteractorLineTrace()
 		{
 			if (CurrentInteractable != NULL)
 			{
-				Cast<ADC_PC>(GetController())->GetMyPlayerHud()->HideCrosshair();
+				this->MyPlayerHud->HideCrosshair();
 				this->CurrentInteractable->OnUnHovered(this);
 				this->CurrentInteractable = NULL;
 			}
@@ -375,13 +361,14 @@ void APlayerCharacter::InteractorLineTrace()
 	{
 		if (CurrentInteractable != NULL)
 		{
-			Cast<ADC_PC>(GetController())->GetMyPlayerHud()->HideCrosshair();
+			this->MyPlayerHud->HideCrosshair();
 			this->CurrentInteractable->OnUnHovered(this);
 			this->CurrentInteractable = NULL;
 		}
 
 	}
 }
+
 
 void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
 {
@@ -401,7 +388,6 @@ void APlayerCharacter::Interact()
 	if(!CurrentInteractable || !CurrentInteractable->IsInteractable())
 		return;
 
-
 	if (CurrentInteractable->IsInteractionRunningOnServer())
 	{
 		if (!HasAuthority())
@@ -413,6 +399,11 @@ void APlayerCharacter::Interact()
 	{
 		CurrentInteractable->Interact(this);
 	}
+}
+
+void APlayerCharacter::ResetInteractPrompt()
+{
+	this->CurrentInteractable = nullptr;
 }
 
 void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
@@ -473,7 +464,7 @@ void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 
 	DestroyWorldItem(BackpackToPickUp);
 	if (this->bInventoryIsOn)
-		Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->RefreshInventory();
+		MyPlayerHud->RefreshInventory();
 }
 
 void APlayerCharacter::Jump()
@@ -494,7 +485,7 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::CrouchActionStarted()
 {
-	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
+	this->MyPlayerHud->UpdateCrouchIcon();
 	if (!bCrouchHold)
 	{
 		ToggleCrouch();
@@ -507,7 +498,7 @@ void APlayerCharacter::CrouchActionStarted()
 
 void APlayerCharacter::CrouchActionCompleted()
 {
-	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
+	this->MyPlayerHud->UpdateCrouchIcon();
 	if (!bCrouchHold)
 		return;
 
@@ -524,7 +515,7 @@ void APlayerCharacter::ToggleCrouch()
 	else
 		Crouch(true);
 
-	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->UpdateCrouchIcon();
+	this->MyPlayerHud->UpdateCrouchIcon();
 }
 
 void APlayerCharacter::SprintActionStarted()
@@ -646,7 +637,7 @@ void APlayerCharacter::Server_LaunchCharacter_Implementation(FVector LaunchVeloc
 
 void APlayerCharacter::OnInputDeviceChanged(bool IsUsingGamepad)
 {
-	LookFunction = IsUsingGamepad ? &APlayerCharacter::LookGamepad : &APlayerCharacter::LookMouse;
+	LookFunction = IsUsingGamepad ? &UInputFunctionLibrary::LookGamepad : &UInputFunctionLibrary::LookMouse;
 }
 
 void APlayerCharacter::AddStamina(float AddingStamina)
@@ -726,15 +717,15 @@ void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclass
 	a->FinishSpawning(SpawnTransform);
 }
 
-void APlayerCharacter::ReportTalking(float Loudness)
+void APlayerCharacter::ReportNoise(float Loudness)
 {
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), Loudness, this);
 }
 
 void APlayerCharacter::Cough()
 {
-	if(HasAuthority())
-		UAISense_Hearing::ReportNoiseEvent(GetWorld(), GetActorLocation(), 1.0f, this);
+	if (HasAuthority())
+		ReportNoise(1.f);
 
 	if(CoughSound)
 		UGameplayStatics::SpawnSoundAtLocation(this, CoughSound, GetActorLocation());
@@ -747,7 +738,7 @@ void APlayerCharacter::ToggleInventory()
 		return;
 
 	this->bInventoryIsOn = !bInventoryIsOn;
-	Cast<ADC_PC>(this->GetController())->GetMyPlayerHud()->ToggleInventory(bInventoryIsOn);
+	this->MyPlayerHud->ToggleInventory(bInventoryIsOn);
 
 	auto inputLocalPlayer = GetInputLocalPlayer();
 
@@ -882,7 +873,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 	{
 		this->bHasBackPack = false;
 		if(this->bInventoryIsOn)
-			Cast<ADC_PC>(GetController())->GetMyPlayerHud()->RefreshInventory();
+			this->MyPlayerHud->RefreshInventory();
 
 		TArray<TSubclassOf<UItemData>> ItemClasses;
 		TArray<FString> ItemDatas;
@@ -903,20 +894,16 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		Server_DropBackpack(ItemClasses, ItemDatas);
 		return;
 	}
+	
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
 		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(), bThrow, FirstPersonCamera->GetForwardVector());
-		SlotToEmpty.Slot->MyItem = nullptr;
-
-		if (GetCurrentlyHeldInventorySlot() == SlotToEmpty.Slot)
-		{
-			TakeOutItem();
-		}
-
+		
+		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
 	}
 }
 
-void APlayerCharacter::RemoveInventorySlot(UInventorySlot* SlotToEmpty)
+void APlayerCharacter::RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty)
 {
 	if (!IsValid(SlotToEmpty->MyItem))
 		return;
@@ -934,7 +921,7 @@ void APlayerCharacter::SwitchHand()
 
 	if (pc && pc->IsUsingGamepad() && bInventoryIsOn)
 	{
-		DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot(), false);
+		DropItem(this->MyPlayerHud->GetHighlightedSlot(), false);
 		return;
 	}
 
@@ -944,22 +931,29 @@ void APlayerCharacter::SwitchHand()
 	bSwitchHandAllowed = false;
 
 	this->bSlotAIsInHand = !bSlotAIsInHand;
+
+	//when switching to torch, it should always be turned off
+	if (UTorch_Data* torch = Cast<UTorch_Data>(GetCurrentlyHeldInventorySlot()->MyItem))
+		torch->bOn = false;
+
+	//refreshing the prompt message
+	this->ResetInteractPrompt();
 	TakeOutItem();
 
-	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
-	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->SwichHandDisplays(bSlotAIsInHand);
+	this->MyPlayerHud->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
+	this->MyPlayerHud->SwichHandDisplays(bSlotAIsInHand);
 	
 }
 
 void APlayerCharacter::AllowSwitchHand()
 {
 	bSwitchHandAllowed = true;
-	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->OnSwichingDone.RemoveAll(this);
+	MyPlayerHud->OnSwichingDone.RemoveAll(this);
 }
 
 void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 {
-	if (Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot().bIsBackpackSlot)
+	if (MyPlayerHud->GetHighlightedSlot().bIsBackpackSlot)
 		return;
 
 	UInventorySlot* slot;
@@ -970,8 +964,8 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 		slot = HandSlotB;
 	
 	//switch
-	UItemData* tmp = Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot().Slot->MyItem;
-	Cast<ADC_PC>(GetController())->GetMyPlayerHud()->GetHighlightedSlot().Slot->MyItem = slot->MyItem;
+	UItemData* tmp = MyPlayerHud->GetHighlightedSlot().Slot->MyItem;
+	MyPlayerHud->GetHighlightedSlot().Slot->MyItem = slot->MyItem;
 	slot->MyItem = tmp;
 
 
@@ -984,7 +978,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	if(AttackBlend == 1)
+	if(AttackBlend)
 		return;
 
 	FSlotData SD;
@@ -995,7 +989,7 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::ThrowItemPressed()
 {
-	if (AttackBlend == 1)
+	if (AttackBlend)
 		return;
 
 	FSlotData SD;
@@ -1076,13 +1070,11 @@ void APlayerCharacter::CheckForFallDamage()
 	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame && GetCharacterMovement()->MovementMode != MOVE_Flying)//frame of impact
 	{
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
-		if (deltaZ > 200)
-		{
 			
-			float damage = this->FallDamageCalculation(deltaZ);
+		float damage = this->FallDamageCalculation(deltaZ);
+		if(damage>0)
 			TakeDamage(damage);
-		}
-
+		
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
 		//	"\nEnd height:\t"+FString::SanitizeFloat(RootComponent->GetComponentLocation().Z)
@@ -1098,9 +1090,8 @@ void APlayerCharacter::CheckForFallDamage()
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 {
-
-	float free = 300;
-	float max = 1000;
+	const float free = 300;
+	const float max = 1000;
 
 	if (deltaHeight <= free)
 		return 0;
@@ -1114,23 +1105,20 @@ float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 {
 	FVector2D input = Value.Get<FVector2D>();
+	
 
-	ADC_PC* pc = GetController<ADC_PC>();
-
-	if(!pc || !pc->GetMyPlayerHud())
+	if(!MyPlayerHud)
 		return;
-
-
-	int x = 5;
+	
 
 	if (input.Y != 0)
 	{
-		pc->GetMyPlayerHud()->MoveHighlight(input.Y > 0? EDirections::Up : EDirections::Down);
+		MyPlayerHud->MoveHighlight(input.Y > 0? EDirections::Up : EDirections::Down);
 	}
 	
 	if (input.X != 0)
 	{
-		pc->GetMyPlayerHud()->MoveHighlight(input.X > 0 ? EDirections::Right : EDirections::Left);
+		MyPlayerHud->MoveHighlight(input.X > 0 ? EDirections::Right : EDirections::Left);
 	}
 }
 
@@ -1148,8 +1136,9 @@ void APlayerCharacter::DropItemInvPressed()
 	if (!pc)
 		return;
 
-	DropItem(pc->GetMyPlayerHud()->GetHighlightedSlot(),false);
+	DropItem(this->MyPlayerHud->GetHighlightedSlot(),false);
 }
+
 
 void APlayerCharacter::OnDeath_Implementation()
 {
@@ -1158,10 +1147,24 @@ void APlayerCharacter::OnDeath_Implementation()
 	GetCapsuleComponent()->SetCollisionProfileName("DeadPawn", true);
 	StimulusSource->DestroyComponent(false);
 
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	GetMesh()->SetAnimation(nullptr);
+
+	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	GetMesh()->SetAllBodiesSimulatePhysics(true);
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->WakeAllRigidBodies();
+
+	if (IsLocallyControlled())
+	{
+		this->GetMyHud()->RemoveFromParent();
+		DeactivateCharacterInputMappings();
+	}
+	
 	if (!HasAuthority())
 		return;
-
-	GetWorld()->GetAuthGameMode<ADC_GM>()->Respawn(GetController());
+	
+	GetWorld()->GetAuthGameMode<ADC_GM>()->StartSpectating(GetController());
 
 }
 
@@ -1233,11 +1236,32 @@ void APlayerCharacter::Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn)
 void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
-	
-	weapon->DealHits(NULL, TArray<FVector>(), TArray<FVector>());// is overridden in blueprints to get trace points
+	FWeaponInfo info= weapon->GetWeaponInfo();
+	Server_DealHits(info);
+}
+
+
+void APlayerCharacter::Server_DealHits_Implementation(FWeaponInfo WeaponInfo)
+{
+	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
+	weapon->DealHits(WeaponInfo);
 }
 
 void APlayerCharacter::OnAttackOver()
+{
+	if(HasAuthority())
+		Multicast_EndAttack();
+	else if(IsLocallyControlled())
+		Server_EndAttack();
+}
+
+
+void APlayerCharacter::Server_EndAttack_Implementation()
+{
+	Multicast_EndAttack();
+}
+
+void APlayerCharacter::Multicast_EndAttack_Implementation()
 {
 	this->AttackBlend = 0;
 	this->bSwitchHandAllowed = true;
@@ -1248,10 +1272,7 @@ void APlayerCharacter::OnAttackOver()
 	this->bSprintAllowed = true;
 	WalkingSpeed = OverridenWalkingSpeed;
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
-	
 }
-
-
 void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 {
 
@@ -1277,8 +1298,17 @@ void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 	}
 }
 
-UPlayerHud* APlayerCharacter::GetMyHud()
-{	
-	return  Cast<ADC_PC>(GetController())->GetMyPlayerHud();
+
+void APlayerCharacter::PlaceItemOnSocket_Implementation(AItemSocket* Socket)
+{
+	Socket->OnItemPlaced();
 }
 
+void APlayerCharacter::CreatePlayerHud()
+{
+	if(!IsLocallyControlled())
+		return;
+
+	this->MyPlayerHud = CreateWidget<UPlayerHud>(GetWorld(),PlayerHudClass);
+	this->MyPlayerHud->AddToViewport();	
+}
