@@ -77,7 +77,52 @@ void AAIEntity::BeginPlay()
 
 void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 {
-	UE_LOG(LogTemp, Log, TEXT("Attacking Player"));
+	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
+	attackDirection.Normalize();
+
+	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AAIEntity::ExecuteAttack, attackDirection);
+	GetWorld()->GetTimerManager().SetTimer(ExecuteAttackHandle, delegate, AttackDelay, false);
+
+	SetInAttackOnBlackboard(true);
+
+	SetActorRotation(attackDirection.Rotation());
+}
+
+void AAIEntity::ExecuteAttack(FVector Direction)
+{
+	FCollisionShape shape = FCollisionShape::MakeSphere(AttackRadius);
+
+	TArray<FHitResult> hits;
+
+	FVector start = GetActorLocation();
+	FVector end = start + Direction * AttackRange;
+
+	FCollisionQueryParams params;
+	params.AddIgnoredActor(this);
+
+	GetWorld()->SweepMultiByChannel(hits, start, end, FQuat(), ECC_Pawn, shape, params);
+
+	int hitsNum = hits.Num();
+
+	for (int i = 0; i < hitsNum; ++i)
+	{
+		APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(hits[i].GetActor());
+
+		if(!playerCharacter)
+			continue;
+
+		playerCharacter->TakeDamage(AttackDamage);
+	}
+
+	SetInAttackOnBlackboard(false);
+}
+
+void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
+{
+	ADC_AIController* aiController = GetController<ADC_AIController>();
+
+	if (aiController)
+		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
 }
 
 bool AAIEntity::IsVisibleToPlayers() const

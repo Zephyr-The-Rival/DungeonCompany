@@ -43,8 +43,30 @@ public:
 	inline const TArray<UAISenseConfig*>& GetSenseConfigs() const { return SenseConfigs; }
 	inline TSubclassOf<UAISense> GetDominantSense() const { return DominantSense; }
 
+protected:
+	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
+	float AttackDamage = 20.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
+	float AttackRange = 100.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
+	float AttackRadius = 30.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
+	float AttackDelay = 1.f;
+
+private:
+	FTimerHandle ExecuteAttackHandle;
+
+public:
 	virtual void AttackPlayer(APlayerCharacter* TargetPlayer);
 
+protected:
+	virtual void ExecuteAttack(FVector Direction);
+	void SetInAttackOnBlackboard(bool InAttack);
+
+public:
 	bool IsVisibleToPlayers() const;
 
 protected:

@@ -53,9 +53,7 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AQuasoSnake::LaunchAtActor, Cast<AActor>(TargetPlayer));
 	GetWorld()->GetTimerManager().SetTimer(handle, delegate, WindUpSeconds, false);
 
-	ADC_AIController* aiController = GetController<ADC_AIController>();
-	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", true);
+	SetInAttackOnBlackboard(true);
 
 	GetCharacterMovement()->Velocity = FVector(0, 0, 0);
 
