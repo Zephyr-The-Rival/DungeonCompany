@@ -255,10 +255,9 @@ void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransf
 	int bonesNum = BoneNames.Num();
 	int ropeTranNum = RopeTransforms.Num();
 
-	USplineComponent* SplineComponent = NewObject<USplineComponent>(this);
+	SplineComponent = NewObject<USplineComponent>(this);
 	SplineComponent->RegisterComponent();
 	SplineComponent->ClearSplinePoints();
-	//SplineComponent->Point
 
 	UE_LOG(LogTemp, Warning, TEXT("%d"), bonesNum);
 	for (int i = 0; i < bonesNum && i < ropeTranNum; ++i)
@@ -274,11 +273,6 @@ void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransf
 		newBox->AttachToComponent(FixedRopeMesh, FAttachmentTransformRules::KeepRelativeTransform);
 		newBox->SetWorldLocation(RopeTransforms[i].GetLocation());
 
-		//if (!i)
-		//{
-		//	SplineComponent->SetLocationAtSplinePoint(0, RopeTransforms[i].GetLocation(), ESplineCoordinateSpace::World);
-		//	continue;
-		//}
 		SplineComponent->AddSplineWorldPoint(RopeTransforms[i].GetLocation());
 	}
 
@@ -397,34 +391,17 @@ FVector ARope::GetBoneUpVectorByName(FName BoneName) const
 
 FVector ARope::GetLocationAtZ(double Z) const
 {
-	FVector upperLocation = GetUpperEndLocation();
-	FVector lowerLocation = GetLowerEndLocation();
-
-	if(upperLocation.Z < Z)
-		return upperLocation;
-	else if(lowerLocation.Z > Z)
-		return lowerLocation;
-
-	FName boneAtLocation = GetBoneNameNearestToZ(Z);
-
-	FVector boneLocation = FixedRopeMesh->GetBoneLocationByName(boneAtLocation, EBoneSpaces::WorldSpace);
-	FVector boneUpVector = GetBoneUpVectorByName(boneAtLocation);
-
-	FVector boneStartLocation = boneLocation - boneUpVector * 0.5f;
-	FVector boneVector = BoneLength * boneUpVector;
-
-	boneVector *= (Z / boneVector.Z);
-
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, (boneStartLocation + boneVector).ToString());
-
-	return boneStartLocation + boneVector;
+	FVector tempLocation = GetActorLocation();
+	tempLocation.Z = Z;
+	return SplineComponent->FindLocationClosestToWorldLocation(tempLocation, ESplineCoordinateSpace::World);
 }
 
 FVector ARope::GetUpVectorAtZ(double Z) const
 {
-	FName boneAtLocation = GetBoneNameNearestToZ(Z);
+	FVector tempLocation = GetActorLocation();
+	tempLocation.Z = Z;
 
-	return GetBoneUpVectorByName(boneAtLocation);
+	return SplineComponent->FindDirectionClosestToWorldLocation(tempLocation, ESplineCoordinateSpace::World);
 }
 
 double ARope::GetClimbRotationYaw(AActor* ClimbingActor) const

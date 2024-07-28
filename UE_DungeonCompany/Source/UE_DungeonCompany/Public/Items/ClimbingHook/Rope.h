@@ -90,6 +90,9 @@ protected:
 
 	FVector GetBoneUpVectorByName(FName BoneName) const;
 
+private:
+	class USplineComponent* SplineComponent;
+
 public:
 	virtual FVector GetLocationAtZ(double Z) const;
 	virtual FVector GetUpVectorAtZ(double Z) const;
