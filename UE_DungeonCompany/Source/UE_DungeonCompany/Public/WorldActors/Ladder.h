@@ -78,6 +78,8 @@ private:
 protected:
 	UFUNCTION()
 	void StoppedInteracting();
+public:
+	virtual void OnHovered(APlayerCharacter* PlayerCharacter);
 
 public:
 	void PlaceLadder(const FVector& From, const FVector& To, const FVector& ForwardVector);

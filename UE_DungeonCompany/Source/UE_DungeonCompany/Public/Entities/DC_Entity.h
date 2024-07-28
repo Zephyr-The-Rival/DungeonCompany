@@ -7,7 +7,7 @@
 #include "DC_Entity.generated.h"
 
 class UBuffDebuffBase;
-
+class UNiagaraSystem;
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_Entity : public ACharacter
 {
@@ -31,12 +31,17 @@ public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetMaxHealth() const { return MaxHP; }
 
+	UFUNCTION(BlueprintPure, BlueprintCallable)
 	inline bool IsDead() const { return HP <= 0.f; }
 
 	using Super::TakeDamage;
 	virtual void TakeDamage(float Damage);
+	void SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UNiagaraSystem* bloodEffect;
+
 	UFUNCTION()
 	void CheckIfDead();
 
@@ -45,6 +50,12 @@ public:
 	void OnDeath();
 	virtual void OnDeath_Implementation();
 
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerDeath, ADC_Entity*, DeadPlayer);
+
+	FOnPlayerDeath OnPlayerDeath;
+
+public:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 public:

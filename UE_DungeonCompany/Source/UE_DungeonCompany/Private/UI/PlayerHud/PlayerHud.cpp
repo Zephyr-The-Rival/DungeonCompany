@@ -6,10 +6,9 @@
 
 #include "InputAction.h"
 
-void UPlayerHud::ShowCrosshair_Implementation(const FString& Text, UInputAction* InputAction)
+void UPlayerHud::ShowCrosshair_Implementation(UTexture2D* newTexture)
 {
 	LogWarning(TEXT("UPlayerHud::ShowCrosshair has not been overidden"));
-
 }
 
 void UPlayerHud::HideCrosshair_Implementation()
@@ -45,6 +44,21 @@ void UPlayerHud::UpdateCrouchIcon_Implementation()
 void UPlayerHud::ToggleOptionsMenu_Implementation(bool On)
 {
 	LogWarning(TEXT("UPlayerHud::ToggleOptioneMenu_Implementation has not been overidden"));
+}
+
+void UPlayerHud::ShowTextInteractPrompt_Implementation(const FString& NewText)
+{
+	LogWarning(TEXT("UPlayerHud::ShowTextPrompt_Implementation has not been overidden"));
+}
+
+void UPlayerHud::ShowBuyPrompt_Implementation(ABuyableItem* BuyableItem)
+{
+	LogWarning(TEXT("UPlayerHud::ShowBuyPrompt_Implementation has not been overidden"));
+}
+
+void UPlayerHud::UdateBuffs_Implementation()
+{
+	LogWarning(TEXT("UPlayerHud::UpdateDebuffs_Implementation has not been overidden"));
 }
 
 

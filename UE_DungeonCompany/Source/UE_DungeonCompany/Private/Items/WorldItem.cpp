@@ -5,6 +5,7 @@
 #include "Items/ItemData.h"
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "UI/PlayerHud/PlayerHud.h"
 #include "Net/UnrealNetwork.h"
 #include "Inventory/InventorySlot.h"
 
@@ -82,7 +83,7 @@ void AWorldItem::AttachToPlayer()
 
 	if (MyCharacterToAttachTo->IsLocallyControlled())
 	{
-		this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+		this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_R_001");
 	}		
 	else
 	{	
@@ -104,6 +105,11 @@ void AWorldItem::Interact(APawn* InteractingPawn)
 		return;
 
 	character->PickUpItem(this);
+}
+
+void AWorldItem::OnHovered(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Pick up");
 }
 
 void AWorldItem::TriggerPrimaryAction_Implementation(APlayerCharacter* User)

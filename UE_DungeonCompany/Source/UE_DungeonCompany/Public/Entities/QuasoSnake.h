@@ -13,6 +13,10 @@ class USphereComponent;
 class USplineComponent;
 class APlayerCharacter;
 class UBuffDebuffBase;
+class UDebuffDisableMovement;
+class UDebuffBlockInputs;
+class UDebuffMuffledVoice;
+class UDebuffImpairedVision;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AQuasoSnake : public AAIEntity
@@ -86,6 +90,26 @@ protected:
 	void Multicast_OnDetachedFromPlayer_Implementation();
 
 public:
-	static AQuasoSnake* Spawn(UWorld* World);
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWantsToReturnToVolume);
+
+	FOnWantsToReturnToVolume OnWantsToReturnToVolume;
+
+public:
+	void ReturnToVolume();
+
+protected://blueprint debuffs
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
+	TSubclassOf<UDebuffDisableMovement> DisableMovementDebuff;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
+	TSubclassOf<UDebuffBlockInputs> BlockInputsDebuff;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
+	TSubclassOf<UDebuffMuffledVoice> MuffledVoiceDebuff;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
+	TSubclassOf<UDebuffImpairedVision> ImpairedVisionDebuff;
 	
 };

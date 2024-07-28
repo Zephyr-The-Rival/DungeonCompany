@@ -7,6 +7,7 @@
 #include "Items/WorldItem.h"
 #include "Items/ItemData.h"
 #include "Items/WorldCurrency.h"
+#include "Items/BackPack.h"
 
 // Sets default values
 AStore::AStore()
@@ -50,6 +51,17 @@ void AStore::SellItems()
 	{
 		if (AWorldItem* WI = Cast<AWorldItem>(a))
 		{
+			if (ABackPack* BP = Cast<ABackPack>(WI))
+			{
+				for (TSubclassOf<UItemData> data : BP->Items)
+				{
+					if (IsValid(data))
+					{
+						UItemData* d = Cast<UItemData>(data->GetDefaultObject(true));
+						sumValue += d->GetValue();
+					}					
+				}
+			}
 			sumValue += WI->GetMyData()->GetValue();
 			WI->Destroy();
 

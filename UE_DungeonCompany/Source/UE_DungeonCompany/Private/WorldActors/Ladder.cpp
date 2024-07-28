@@ -4,6 +4,7 @@
 #include "WorldActors/Ladder.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "PlayerCharacter/Components/DC_CMC.h"
+#include "UI/PlayerHud/PlayerHud.h"
 
 #include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
@@ -187,5 +188,10 @@ void ALadder::PlaceLadder(const FVector& From, const FVector& To, const FVector&
 
 	CalculateLadderBoxExtents();
 
+}
+
+void ALadder::OnHovered(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Climb");
 }
 

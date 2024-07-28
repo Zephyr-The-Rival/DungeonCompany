@@ -33,4 +33,7 @@ public:
 	
 	inline bool IsInteractable() const { return bInteractable; }
 	inline bool IsInteractionRunningOnServer() const { return bInteractOnServer; }
+
+	virtual void OnHovered(APlayerCharacter* PlayerCharacter) {};
+	virtual void OnUnHovered(APlayerCharacter* PlayerCharacter) {};
 };

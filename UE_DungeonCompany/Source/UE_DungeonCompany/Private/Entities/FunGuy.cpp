@@ -209,10 +209,3 @@ void AFunGuy::OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter)
 	UAISense_Hearing::ReportNoiseEvent(GetWorld(), PlayerCharacter->GetActorLocation(), 2.f, PlayerCharacter);
 
 }
-
-void AFunGuy::OnDeath_Implementation()
-{
-	Super::OnDeath_Implementation();
-
-	Destroy();
-}
