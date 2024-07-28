@@ -17,7 +17,6 @@ class UE_DUNGEONCOMPANY_API AQuasoSnakeSpawnVolume : public ATriggerVolume
 {
 	GENERATED_UCLASS_BODY()
 
-
 private:
 	TSubclassOf<AQuasoSnake> QuasoSnakeClass;
 
