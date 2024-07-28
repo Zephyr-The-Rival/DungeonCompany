@@ -393,7 +393,7 @@ protected:
 	void SwitchHand();
 
 	UFUNCTION()
-	void AllowSwitchHand();
+	void SwitchHandFinished();
 
 	void EquipCurrentInventorySelection(bool BToA);
 
