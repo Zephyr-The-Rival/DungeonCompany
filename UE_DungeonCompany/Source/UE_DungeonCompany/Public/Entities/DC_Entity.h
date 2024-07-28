@@ -31,6 +31,7 @@ public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetMaxHealth() const { return MaxHP; }
 
+	UFUNCTION(BlueprintPure, BlueprintCallable)
 	inline bool IsDead() const { return HP <= 0.f; }
 
 	using Super::TakeDamage;
@@ -49,6 +50,12 @@ public:
 	void OnDeath();
 	virtual void OnDeath_Implementation();
 
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerDeath, ADC_Entity*, DeadPlayer);
+
+	FOnPlayerDeath OnPlayerDeath;
+
+public:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 public:

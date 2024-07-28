@@ -38,12 +38,6 @@ void AQuasoSnake::BeginPlay()
 
 	GetCharacterMovement()->DisableMovement();
 
-	ADC_AIController* aiController = GetController<ADC_AIController>();
-	if (!aiController)
-		return;
-
-	aiController->SetLoseSightRadius(0.f);
-
 }
 
 void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
