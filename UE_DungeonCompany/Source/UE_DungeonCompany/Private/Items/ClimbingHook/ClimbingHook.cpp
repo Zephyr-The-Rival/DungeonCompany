@@ -7,6 +7,7 @@
 
 AClimbingHook::AClimbingHook()
 {
+	PrimaryActorTick.TickInterval = 0.1f;
 	bReplicates = true;
 }
 
@@ -50,7 +51,7 @@ void AClimbingHook::Tick(float DeltaTime)
 	if(!IsValid(SpawnedRope))
 		return;
 
-	if (SpawnedRope->IsRopeSettled())
+	if (SpawnedRope->IsRopeSettled(DeltaTime))
 	{
 		TArray<FVector> edgeLocations;
 		SpawnedRope->GetEdgeLocations(edgeLocations);

@@ -164,7 +164,7 @@ void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AAc
 
 }
 
-void ALadder::StoppedInteracting()
+void ALadder::StoppedInteracting(APlayerCharacter* PlayerCharacter)
 {
 	bInteractable = true;
 

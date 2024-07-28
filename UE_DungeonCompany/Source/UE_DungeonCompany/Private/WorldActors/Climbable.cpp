@@ -90,7 +90,7 @@ FVector AClimbable::GetUpVectorAtZ(double Z) const
 	return GetActorUpVector();
 }
 
-double AClimbable::GetClimbRotationYaw() const
+double AClimbable::GetClimbRotationYaw(AActor* ClimbingActor) const
 {
 	return GetActorRotation().Yaw + 180.;
 }

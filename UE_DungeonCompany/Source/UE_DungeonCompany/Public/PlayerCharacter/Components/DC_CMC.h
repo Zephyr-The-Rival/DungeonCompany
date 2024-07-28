@@ -98,7 +98,7 @@ public:
 	void Multicast_SetClimbingObject_Implementation(AClimbable* InClimbingObject);
 
 public:
-	UDELEGATE() DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStoppedClimbing);
+	UDELEGATE() DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStoppedClimbing, APlayerCharacter*, CharacterStoppedClimbing);
 	FOnStoppedClimbing OnStoppedClimbing;
 
 private:

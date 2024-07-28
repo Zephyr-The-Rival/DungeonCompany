@@ -39,7 +39,7 @@ protected:
 public:	//Climbable Interface
 	virtual FVector GetLocationAtZ(double Z) const;
 	virtual FVector GetUpVectorAtZ(double Z) const;
-	virtual double GetClimbRotationYaw() const;
+	virtual double GetClimbRotationYaw(AActor* ClimbingActor) const;
 
 	virtual FVector GetLowerEndLocation() const;
 	virtual FVector GetUpperEndLocation() const;
