@@ -12,7 +12,7 @@ class ADC_AIController;
 /**
  * 
  */
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, ClassGroup=Spawner)
 class UE_DUNGEONCOMPANY_API AQuasoSnakeSpawnVolume : public ATriggerVolume
 {
 	GENERATED_UCLASS_BODY()
