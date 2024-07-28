@@ -304,7 +304,7 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
-	float MaxStamina = 5.f;
+	float MaxStamina;
 
 	void AddStamina(float AddingStamina);
 	void SubstractStamina(float SubStamina);

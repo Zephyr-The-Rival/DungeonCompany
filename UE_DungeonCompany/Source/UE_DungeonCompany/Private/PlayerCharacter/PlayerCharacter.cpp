@@ -86,6 +86,9 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	this->HP = this->MaxHP;
+	this->Stamina = this->MaxStamina;//doesnt seem to take the blueprint changes during construction
 	
 	this->HandSlotA = NewObject<UInventorySlot>();
 	this->HandSlotB = NewObject<UInventorySlot>();
