@@ -28,12 +28,4 @@ void UQuasoSnakeAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	bAttachedToPlayer = OwningQuaso->IsAttachedToPlayer();
 	bLurking = OwningQuaso->IsLurking();
-
-	FlushDebugStrings(GetWorld());
-	FString debugString = "bIsAttacking = " + FString::FromInt(bAttacking) + 
-							"\n bHit = " + FString::FromInt(bHit) + 
-							"\n bDead = " + FString::FromInt(bDead) +
-							"\n bLurking = " + FString::FromInt(bLurking);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, debugString);
-
 }
