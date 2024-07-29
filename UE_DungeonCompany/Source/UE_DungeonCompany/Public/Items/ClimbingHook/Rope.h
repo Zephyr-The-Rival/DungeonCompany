@@ -98,6 +98,7 @@ public:
 	virtual FVector GetUpVectorAtZ(double Z) const;
 	virtual double GetClimbRotationYaw(AActor* ClimbingActor) const;
 
-	virtual FVector GetLowerEndLocation() const;
+protected:
+	virtual void CalculateLowerEndLocation() const override;
 
 };

@@ -27,9 +27,9 @@ FVector ALadder::GetLocationAtZ(double Z) const
 	return location + ladderVector;
 }
 
-FVector ALadder::GetUpperEndLocation() const
+void ALadder::CalculateUpperEndLocation() const
 {
-	return GetActorLocation() + Height * GetActorUpVector();
+	UpperEnd = GetActorLocation() + Height * GetActorUpVector();
 }
 
 void ALadder::SetHeight(float InHeight)
@@ -80,14 +80,15 @@ ALadder::ALadder()
 
 	ClimbVolume->InitBoxExtent(FVector(1, 1, 1));
 
-	RegisterClimbVolume(ClimbVolume);
-
 	EasyInteractBox = CreateDefaultSubobject<UBoxComponent>(TEXT("EasyInteractBox"));
 	EasyInteractBox->SetupAttachment(RootComponent);
 
 	EasyInteractBox->SetCollisionProfileName(FName("EasyInteract"));
 
 	EasyInteractBox->InitBoxExtent(FVector(1, 1, 1));
+
+	SetActorTickEnabled(false);
+
 }
 
 void ALadder::OnConstruction(const FTransform& Transform)
@@ -101,6 +102,8 @@ void ALadder::OnConstruction(const FTransform& Transform)
 // Called when the game starts or when spawned
 void ALadder::BeginPlay()
 {
+	RegisterClimbVolume(ClimbVolume);
+
 	Super::BeginPlay();
 
 	if (!bIgnoreInteractionVolume)
@@ -108,6 +111,11 @@ void ALadder::BeginPlay()
 		InteractVolume->OnComponentBeginOverlap.AddDynamic(this, &ALadder::OnInteractVolumeEntered);
 		InteractVolume->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnInteractVolumeLeft);
 	}
+
+	FTimerHandle timerHandle;
+	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &ALadder::SetActorTickEnabled, true);
+
+	GetWorld()->GetTimerManager().SetTimer(timerHandle, timerDelegate, 1.f, false);
 	
 }
 

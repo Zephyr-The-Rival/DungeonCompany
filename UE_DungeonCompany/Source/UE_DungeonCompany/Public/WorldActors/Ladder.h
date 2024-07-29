@@ -45,12 +45,14 @@ private:
 
 public:
 	virtual FVector GetLocationAtZ(double Z) const override;
-	virtual FVector GetUpperEndLocation() const override;
 
 	/*This doesn't set the height in runtime. Set this in the constructor or before calling the construction script of the Ladder class.*/
 	void SetHeight(float InHeight); 
 
 	void SetIgnoreInteractionVolume(bool InIgnore);
+
+protected:
+	virtual void CalculateUpperEndLocation() const override;
 
 public:	
 	ALadder();

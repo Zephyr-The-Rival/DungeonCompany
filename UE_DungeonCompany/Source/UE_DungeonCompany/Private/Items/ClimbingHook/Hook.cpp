@@ -25,21 +25,25 @@ void AHook::UpdateState()
 	{
 		case HookState::InHand:
 			HookMesh->SetSimulatePhysics(false);
+			HookMesh->SetCollisionProfileName(FName("NoCollision"));
 			HookMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			break;
 
 		case HookState::InWorldInactive:
 			HookMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			HookMesh->SetCollisionProfileName(FName("BlockAll"));
 			HookMesh->SetSimulatePhysics(true);
 			break;
 			
 		case HookState::InWorldActive:
 			HookMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			HookMesh->SetCollisionProfileName(FName("BlockAll"));
 			HookMesh->SetSimulatePhysics(true);
 			break;
 
 		case HookState::InWorldAttached:
 			HookMesh->SetSimulatePhysics(false);
+			HookMesh->SetCollisionProfileName(FName("BlockAll"));
 			HookMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 			break;
 
@@ -69,15 +73,13 @@ void AHook::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetOwner()->GetName());
-
 	UpdateState();
 
 }
 
 void AHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 {
-
+	
 }
 
 void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)

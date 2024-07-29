@@ -36,12 +36,20 @@ protected:
 	UFUNCTION()
 	void OnClimbVolumeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+protected:
+	mutable FVector UpperEnd = FVector::ZeroVector;
+	mutable FVector LowerEnd = FVector::ZeroVector;
+
 public:	//Climbable Interface
 	virtual FVector GetLocationAtZ(double Z) const;
 	virtual FVector GetUpVectorAtZ(double Z) const;
 	virtual double GetClimbRotationYaw(AActor* ClimbingActor) const;
 
-	virtual FVector GetLowerEndLocation() const;
-	virtual FVector GetUpperEndLocation() const;
+	FVector GetLowerEndLocation() const;
+	FVector GetUpperEndLocation() const;
+
+protected:
+	virtual void CalculateLowerEndLocation() const;
+	virtual void CalculateUpperEndLocation() const;
 
 };

@@ -9,6 +9,9 @@
 #include "PhysicsEngine/PhysicsConstraintActor.h"
 #include "Components/PoseableMeshComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Components/SphereComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/SplineComponent.h"
 
 ARope::ARope()
 {
@@ -243,9 +246,6 @@ void ARope::FreezeAndReplicate()
 	Multicast_SetTransformsAndFreeze(ropeTransforms);
 }
 
-#include "Components/BoxComponent.h"
-#include "Components/SplineComponent.h"
-
 void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransform>& RopeTransforms)
 {
 	FixedRopeMesh->SetSkeletalMesh(RopeMesh->GetSkeletalMeshAsset(), false);
@@ -259,13 +259,12 @@ void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransf
 	SplineComponent->RegisterComponent();
 	SplineComponent->ClearSplinePoints();
 
-	UE_LOG(LogTemp, Warning, TEXT("%d"), bonesNum);
 	for (int i = 0; i < bonesNum && i < ropeTranNum; ++i)
 	{
 		UBoxComponent* newBox = NewObject<UBoxComponent>(this);
 
 		FixedRopeMesh->SetBoneTransformByName(BoneNames[i], RopeTransforms[i], EBoneSpaces::WorldSpace);
-		newBox->InitBoxExtent(FVector(40, 40, 40));
+		newBox->InitBoxExtent(FVector(10, 10, 10));
 		newBox->SetRelativeLocation(FVector(0, 0, -100));
 		newBox->SetCollisionProfileName(FName("EasyInteract"));
 
@@ -273,8 +272,18 @@ void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransf
 		newBox->AttachToComponent(FixedRopeMesh, FAttachmentTransformRules::KeepRelativeTransform);
 		newBox->SetWorldLocation(RopeTransforms[i].GetLocation());
 
+		UBoxComponent* climbVolume = NewObject<UBoxComponent>(this);
+		climbVolume->InitBoxExtent(FVector(50, 50, 5));
+		climbVolume->RegisterComponent();
+		climbVolume->AttachToComponent(FixedRopeMesh, FAttachmentTransformRules::KeepRelativeTransform);
+		climbVolume->SetWorldLocation(RopeTransforms[i].GetLocation());
+
+		RegisterClimbVolume(climbVolume);
+
 		SplineComponent->AddSplineWorldPoint(RopeTransforms[i].GetLocation());
 	}
+
+	SplineComponent->SetUpVectorAtSplinePoint(0, SplineComponent->GetUpVectorAtSplinePoint(1, ESplineCoordinateSpace::World), ESplineCoordinateSpace::World);
 
 	RopeMesh->SetSimulatePhysics(false);
 	RopeMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -409,7 +418,7 @@ double ARope::GetClimbRotationYaw(AActor* ClimbingActor) const
 	return ClimbingActor->GetActorRotation().Yaw;
 }
 
-FVector ARope::GetLowerEndLocation() const
+void ARope::CalculateLowerEndLocation() const
 {
 	int boneNum = BoneNames.Num();
 	FName lastBoneLocation = BoneNames[boneNum - 1];
@@ -417,5 +426,5 @@ FVector ARope::GetLowerEndLocation() const
 	FVector boneLocation = FixedRopeMesh->GetBoneLocationByName(lastBoneLocation, EBoneSpaces::WorldSpace);
 	FVector boneUpVector = GetBoneUpVectorByName(lastBoneLocation);
 
-	return boneLocation - boneUpVector * 0.5f;
+	LowerEnd = boneLocation - boneUpVector * 0.5f;
 }

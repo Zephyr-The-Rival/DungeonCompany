@@ -97,10 +97,26 @@ double AClimbable::GetClimbRotationYaw(AActor* ClimbingActor) const
 
 FVector AClimbable::GetLowerEndLocation() const
 {
-	return GetActorLocation();
+	if(LowerEnd == FVector::ZeroVector)
+		CalculateLowerEndLocation();
+
+	return LowerEnd;
 }
 
 FVector AClimbable::GetUpperEndLocation() const
 {
-	return GetActorLocation();
+	if (UpperEnd == FVector::ZeroVector)
+		CalculateUpperEndLocation();
+
+	return UpperEnd;
+}
+
+void AClimbable::CalculateLowerEndLocation() const
+{
+	LowerEnd = GetActorLocation();
+}
+
+void AClimbable::CalculateUpperEndLocation() const
+{
+	UpperEnd = GetActorLocation();
 }
