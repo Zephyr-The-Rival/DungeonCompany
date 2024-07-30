@@ -251,7 +251,7 @@ public:
 	void Server_LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
 	void Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
 
-	FVector GetLookDirection() const;
+	inline FVector GetBaseAimDirection() const { return GetBaseAimRotation().Vector(); }
 
 protected:
 	UFUNCTION()
