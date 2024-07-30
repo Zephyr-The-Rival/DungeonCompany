@@ -41,22 +41,6 @@ void UPlayerHud::UpdateCrouchIcon_Implementation()
 	LogWarning(TEXT("UPlayerHud::UpdateCrouchIcon_Implementation has not been overidden"));
 }
 
-
-void UPlayerHud::ShowTextInteractPrompt_Implementation(const FString& NewText)
-{
-	LogWarning(TEXT("UPlayerHud::ShowTextPrompt_Implementation has not been overidden"));
-}
-
-void UPlayerHud::ShowBuyPrompt_Implementation(ABuyableItem* BuyableItem)
-{
-	LogWarning(TEXT("UPlayerHud::ShowBuyPrompt_Implementation has not been overidden"));
-}
-
-void UPlayerHud::UdateBuffs_Implementation()
-{
-	LogWarning(TEXT("UPlayerHud::UpdateDebuffs_Implementation has not been overidden"));
-}
-
 void UPlayerHud::ShowTextInteractPrompt_Implementation(const FString& NewText)
 {
 	LogWarning(TEXT("UPlayerHud::ShowTextPrompt_Implementation has not been overidden"));

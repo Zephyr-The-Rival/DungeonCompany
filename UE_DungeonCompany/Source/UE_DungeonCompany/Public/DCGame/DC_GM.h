@@ -34,10 +34,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ADC_PostMortemPawn> PostMortemPawnClass;
 
-private:
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class ADC_PostMortemPawn> PostMortemPawnClass;
-
 public:
 	void Respawn(AController* Controller);
 	void StartSpectating(AController* Controller);

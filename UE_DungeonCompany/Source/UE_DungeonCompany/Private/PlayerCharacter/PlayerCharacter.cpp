@@ -616,11 +616,6 @@ void APlayerCharacter::OnInputDeviceChanged(bool IsUsingGamepad)
 	LookFunction = IsUsingGamepad ? &UInputFunctionLibrary::LookGamepad : &UInputFunctionLibrary::LookMouse;
 }
 
-void APlayerCharacter::OnInputDeviceChanged(bool IsUsingGamepad)
-{
-	LookFunction = IsUsingGamepad ? &UInputFunctionLibrary::LookGamepad : &UInputFunctionLibrary::LookMouse;
-}
-
 void APlayerCharacter::AddStamina(float AddingStamina)
 {
 	if (AddingStamina < 0.f)

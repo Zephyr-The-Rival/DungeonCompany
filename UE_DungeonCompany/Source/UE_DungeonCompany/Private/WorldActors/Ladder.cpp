@@ -222,9 +222,3 @@ void ALadder::OnHovered(APlayerCharacter* PlayerCharacter)
 {
 	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Climb");
 }
-
-void ALadder::OnHovered(APlayerCharacter* PlayerCharacter)
-{
-	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Climb");
-}
-
