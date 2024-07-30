@@ -600,17 +600,6 @@ void APlayerCharacter::Server_LaunchCharacter_Implementation(FVector LaunchVeloc
 	LaunchCharacter(LaunchVelocity, bXYOverride, bZOverride);
 }
 
-FVector APlayerCharacter::GetLookDirection() const
-{
-	if(IsLocallyControlled())
-		return FirstPersonCamera->GetForwardVector();
-
-	FRotator cameraRotation = FirstPersonCamera->GetComponentRotation();
-	cameraRotation.Pitch = RemoteViewPitch;
-
-	return cameraRotation.Vector();
-}
-
 void APlayerCharacter::OnInputDeviceChanged(bool IsUsingGamepad)
 {
 	LookFunction = IsUsingGamepad ? &UInputFunctionLibrary::LookGamepad : &UInputFunctionLibrary::LookMouse;

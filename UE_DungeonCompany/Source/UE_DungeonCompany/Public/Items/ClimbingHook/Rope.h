@@ -108,4 +108,7 @@ public:
 protected:
 	virtual void CalculateLowerEndLocation() const override;
 
+public:
+	virtual void OnHovered(APlayerCharacter* PlayerCharacter) override;
+
 };
