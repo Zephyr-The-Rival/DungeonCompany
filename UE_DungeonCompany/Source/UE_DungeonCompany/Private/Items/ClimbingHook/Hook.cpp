@@ -90,7 +90,7 @@ void AHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 	
 	FTransform SpawnTransform;
 
-	FVector direction = User->GetLookDirection();
+	FVector direction = User->GetBaseAimDirection();
 
 	SpawnTransform.SetLocation(User->FirstPersonCamera->GetComponentLocation() + direction * 100.f);
 
@@ -172,7 +172,7 @@ FHitResult AHook::GetAttachHit(APlayerCharacter* User)
 		return hit;
 
 	FVector start = User->FirstPersonCamera->GetComponentLocation();
-	FVector direction = User->GetLookDirection();
+	FVector direction = User->GetBaseAimDirection();
 	FVector end = direction * MaxAttachDistance + start;
 
 	GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
