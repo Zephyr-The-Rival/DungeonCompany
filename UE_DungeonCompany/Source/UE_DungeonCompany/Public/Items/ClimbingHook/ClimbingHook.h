@@ -28,25 +28,23 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MinLadderHeight = 100.f;
 
+	UPROPERTY(EditAnywhere)
+	float RopeAutoFreezeTime = 7.f;
+
 public:
 	AClimbingHook();
 
 private:
 	ARope* SpawnedRope;
+	float RopeLifetime = 0.f;
 
 protected:
 	virtual void BeginPlay() override;
-
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	virtual void UpdateHookBehavior() override;
 
 public:
 	virtual void Tick(float DeltaTime) override;
-
-private:
-	TArray<ALadder*> CreatedLadders;
-
-protected:
-	void CreateLadders(const TArray<FVector>& EdgeLocations);
-	void DestroyLadders();
 
 };

@@ -43,7 +43,9 @@ private:
 
 protected:
 	UFUNCTION()
-	virtual void UpdateState();
+	void UpdateState();
+
+	virtual void UpdateHookBehavior();
 
 public:
 	inline float GetMaxAttachDistance() const { return MaxAttachDistance; }
@@ -58,10 +60,14 @@ protected:
 
 public:
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User) override;
-
 	virtual void TriggerSecondaryAction_Implementation(APlayerCharacter* User) override;
 
 	virtual void OnHoldingInHand_Implementation(bool LocallyControlled) override;
+
+protected:
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_ThrowHook(FVector Direction);
+	void Multicast_ThrowHook_Implementation(FVector Direction);
 
 protected:
 	UFUNCTION()

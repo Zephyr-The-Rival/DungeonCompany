@@ -128,10 +128,7 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 
 	Acceleration.Z = 0.f;
 	Acceleration = Acceleration.RotateAngleAxis(90.f, -UpdatedComponent->GetRightVector());
-
 	Acceleration = FVector::VectorPlaneProject(Acceleration, UpdatedComponent->GetRightVector());
-	//Acceleration.Y = 0.f;
-	//Acceleration = Acceleration.RotateAngleAxis(forwardVector.Rotation().Yaw, FVector::UpVector);
 
 	FVector climbVector = ClimbingObject->GetUpVectorAtDistance(ClimbedDistance);
 
@@ -155,19 +152,8 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 		//}
 	}
 
-	//DrawDebugLine(GetWorld(), location, location + climbVector * 200.f, FColor::Red, false, 5.f);
-
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, BoneName.ToString());
-	//FVector ladderLocation = ClimbingObject->GetActorLocation() + -UpdatedComponent->GetForwardVector() * ClimbingDistance;
-
-	FHitResult wallHit;
-	FHitResult ceilingHit;
-
 	FVector planeNormal = FVector::CrossProduct(climbVector, UpdatedComponent->GetRightVector());
 		
-	GetWorld()->LineTraceSingleByChannel(wallHit, oldLocation, oldLocation + UpdatedComponent->GetForwardVector() * 50, ECC_GameTraceChannel3);
-	GetWorld()->LineTraceSingleByChannel(ceilingHit, oldLocation, oldLocation + ClimbingObject->GetActorUpVector() * 50, ECC_GameTraceChannel3);
-
 	CalcVelocity(DeltaTime, 0.f, false, GetMaxBrakingDeceleration());
 	Velocity = FVector::VectorPlaneProject(Velocity, planeNormal);
 
@@ -181,32 +167,18 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	FHitResult hit;
 	SafeMoveUpdatedComponent(delta, UpdatedComponent->GetComponentQuat(), true, hit);
 
-	if (ceilingHit.bBlockingHit || hit.bBlockingHit)
+	ClimbedDistance += (GetActorLocation() - oldLocation).Length();
+
+	if (hit.bBlockingHit)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FVector::CrossProduct(UpdatedComponent->GetRightVector(), hit.Normal).ToString());
 		FVector avoidanceDelta = FVector::CrossProduct(UpdatedComponent->GetRightVector(), hit.Normal) * ClimbingAttractionForce * DeltaTime;
 		if(Acceleration.Z < 0)
 			avoidanceDelta *= -1;
 		SafeMoveUpdatedComponent(avoidanceDelta, UpdatedComponent->GetComponentQuat(), true, hit);
 
 	}
-	else if(wallHit.bBlockingHit)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Attracting to wall %s"), *wallHit.Normal.ToString());
-		//FVector climbingAttractionDelta = -wallHit.Normal * ClimbingAttractionForce * DeltaTime;
-		//SafeMoveUpdatedComponent(climbingAttractionDelta, UpdatedComponent->GetComponentQuat(), true, hit);
-	}
-	else
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("correction to ladder position"));
-		//FVector correctionDelta = (ladderLocation + ladderVector - GetActorLocation()) * 3 * DeltaTime;
-		//SafeMoveUpdatedComponent(correctionDelta, UpdatedComponent->GetComponentQuat(), true, hit);
-	}
+
 	Velocity = (UpdatedComponent->GetComponentLocation() - oldLocation) / DeltaTime;
-
-	FlushPersistentDebugLines(GetWorld());
-	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + climbVector * 1000.f, FColor::Red, true, 5.f);
-
 }
 
 float UDC_CMC::GetMaxSpeed() const
@@ -267,7 +239,6 @@ bool UDC_CMC::DoJump(bool bReplayingMoves)
 
 void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 {
-	//(bCanClimb || ClimbingObject->IsA<ARope>())
 	if (bWantsToClimb && IsValid(ClimbingObject) && !bWantsToCrouch && bCanClimb)
 	{
 		if (CustomMovementMode != CMOVE_Climb)
@@ -291,12 +262,8 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 			ClimbedDistance = ClimbingObject->GetDistanceAtLocation(UpdatedComponent->GetComponentLocation());
 			FVector forwardVector = FVector::CrossProduct(ClimbingObject->GetUpVectorAtDistance(ClimbedDistance), UpdatedComponent->GetRightVector());
 
-			FVector climbPosition = ClimbingObject->GetLocationAtDistance(ClimbedDistance) + (-forwardVector * ClimbingDistance);
+			FVector climbPosition = ClimbingObject->GetLocationAtDistance(ClimbedDistance) + (forwardVector * ClimbingDistance);
 			climbPosition.Z = startZ;
-
-			DrawDebugSphere(GetWorld(), climbPosition, 100.f, 12, FColor::Blue, false, 5.f);
-			//DrawDebugLine(GetWorld(), climbPosition, climbPosition + forwardVector * 1000.f, FColor::Blue, false, 5.f);
-			//DrawDebugLine(GetWorld(), climbPosition, climbPosition + UpdatedComponent->GetRightVector() * 1000.f, FColor::Red, false, 5.f);
 
 			FVector climbDelta = climbPosition - GetActorLocation();
 
@@ -343,10 +310,6 @@ void UDC_CMC::StartClimbing(AClimbable* ActorClimbingAt)
 		Multicast_SetClimbingObject(ActorClimbingAt);
 	else
 		Server_SetClimbingObject(ActorClimbingAt);
-
-	//FRotator newRotation = UKismetMathLibrary::MakeRotFromZX(FVector::UpVector, -ActorClimbingAt->GetActorForwardVector());	
-
-	//CharacterOwner->GetController()->SetControlRotation(newRotation);
 
 }
 

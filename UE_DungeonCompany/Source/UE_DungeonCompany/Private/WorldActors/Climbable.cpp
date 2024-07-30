@@ -52,7 +52,7 @@ void AClimbable::OnClimbVolumeBeginOverlap(UPrimitiveComponent* OverlappedCompon
 {
 	ACharacter* character = Cast<ACharacter>(OtherActor);
 
-	if (!character || !character->GetCharacterMovement<UDC_CMC>())
+	if (!character || !Cast<UDC_CMC>(character->GetCharacterMovement()))
 		return;
 	
 	if (!VolumesOverlappingCharacter.Contains(character))
@@ -68,7 +68,7 @@ void AClimbable::OnClimbVolumeEndOverlap(UPrimitiveComponent* OverlappedComponen
 {
 	ACharacter* character = Cast<ACharacter>(OtherActor);
 
-	if (!character || !character->GetCharacterMovement<UDC_CMC>() || !VolumesOverlappingCharacter.Contains(character))
+	if (!character || !Cast<UDC_CMC>(character->GetCharacterMovement()) || !VolumesOverlappingCharacter.Contains(character))
 		return;
 
 	VolumesOverlappingCharacter[character].Remove(OverlappedComponent);

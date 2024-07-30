@@ -251,6 +251,8 @@ public:
 	void Server_LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
 	void Server_LaunchCharacter_Implementation(FVector LaunchVelocity, bool bXYOverride, bool bZOverride);
 
+	FVector GetLookDirection() const;
+
 protected:
 	UFUNCTION()
 	void OnInputDeviceChanged(bool IsUsingGamepad);

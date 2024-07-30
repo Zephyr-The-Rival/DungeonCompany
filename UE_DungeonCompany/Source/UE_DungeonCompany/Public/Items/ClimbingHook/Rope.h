@@ -57,15 +57,28 @@ public:
 	virtual void Interact(APawn* InteractingPawn) override;
 	virtual void AuthorityInteract(APawn* InteractingPawn) override;
 
+private:
+	TArray<UShapeComponent*> InteractionVolumes;
+
+	TMap<ACharacter*, TArray<UPrimitiveComponent*>> IVolumesOverlappingCharacter;
+
+protected:
+	void RegisterInteractionVolume(UShapeComponent* InInteractionVolume);
+
 protected:
 	UFUNCTION()
 	void StoppedInteracting(APlayerCharacter* PlayerCharacter);
+
+	UFUNCTION()
+	void OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 public:
 	void GetRopeTransforms(USkinnedMeshComponent* InRopeMesh, TArray<FTransform>& OutTransforms);
 	void GetBoneLocations(TArray<FVector>& OutLocations);
 
-	void GetEdgeLocations(TArray<FVector>& OutLocations);
 	FVector GetWorldLocationAtDistance(float Distance);
 
 	/* This function only works when called from the Server.*/
@@ -81,14 +94,6 @@ private:
 
 	UPROPERTY(Transient)
 	float BoneLength;
-
-protected:
-	FName GetBoneNameNearestToZ(double Z) const;
-
-	int GetBoneIndexNearestToZLinear(double Z) const;
-	int GetBoneIndexNearestToZBinary(double Z) const;
-
-	FVector GetBoneUpVectorByName(FName BoneName) const;
 
 private:
 	class USplineComponent* SplineComponent;

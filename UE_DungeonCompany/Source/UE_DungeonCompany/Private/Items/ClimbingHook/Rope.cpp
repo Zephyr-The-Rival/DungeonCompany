@@ -16,8 +16,8 @@
 ARope::ARope()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = 0.1f;
 	bReplicates = true;
+	bInteractable = false;
 
 	RopeMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("RopeMesh"));
 	RootComponent = RopeMesh;
@@ -28,7 +28,6 @@ ARope::ARope()
 	FixedRopeMesh = CreateDefaultSubobject<UPoseableMeshComponent>(TEXT("FixedRopeMesh"));
 	FixedRopeMesh->SetupAttachment(RootComponent);
 
-
 }
 
 void ARope::BeginPlay()
@@ -38,15 +37,6 @@ void ARope::BeginPlay()
 	SetActorTickEnabled(HasAuthority());
 
 	GetWorld()->GetTimerManager().SetTimer(CheckOwnerHandle, this, &ARope::SetupActorAttachment, 0.05f, true, 0.f);
-
-	FTimerHandle timerhandle;
-	FTimerDelegate timerDelegate = FTimerDelegate::CreateLambda([this]() {
-
-		FreezeAndReplicate();
-
-		});
-
-	//GetWorld()->GetTimerManager().SetTimer(timerhandle, timerDelegate, 5.f, false);
 
 	RopeMesh->GetBoneNames(BoneNames);
 
@@ -77,13 +67,16 @@ void ARope::SetupActorAttachment()
 	PhysicsConstraintActor->GetConstraintComp()->ConstraintActor1 = this;
 	PhysicsConstraintActor->GetConstraintComp()->ConstraintActor2 = actorAttachedTo;
 
-	//PhysicsConstraintActor->GetConstraintComp()->SetLinearXLimit(LCM_Limited, 30.f);
-	//PhysicsConstraintActor->GetConstraintComp()->SetLinearYLimit(LCM_Limited, 30.f);
-	//PhysicsConstraintActor->GetConstraintComp()->SetLinearZLimit(LCM_Limited, 30.f);
+	PhysicsConstraintActor->GetConstraintComp()->ConstraintInstance.EnableParentDominates();
 
-	PhysicsConstraintActor->GetConstraintComp()->SetDisableCollision(true);
+	PhysicsConstraintActor->GetConstraintComp()->SetLinearXLimit(LCM_Limited, 10.f);
+	PhysicsConstraintActor->GetConstraintComp()->SetLinearYLimit(LCM_Limited, 10.f);
+	PhysicsConstraintActor->GetConstraintComp()->SetLinearZLimit(LCM_Limited, 10.f);
 
+	PhysicsConstraintActor->GetConstraintComp()->SetDisableCollision(false);
 	PhysicsConstraintActor->FinishSpawning(SpawnTransform);
+
+	PhysicsConstraintActor->AttachToActor(actorAttachedTo, FAttachmentTransformRules::KeepRelativeTransform);
 
 	RopeMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	RopeMesh->SetSimulatePhysics(true);
@@ -93,9 +86,10 @@ void ARope::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+
 	if (bStartedMoving)
 	{
-		SetActorTickEnabled(true);
+		SetActorTickEnabled(false);
 		return;
 	}
 
@@ -152,6 +146,14 @@ void ARope::AuthorityInteract(APawn* InteractingPawn)
 
 }
 
+void ARope::RegisterInteractionVolume(UShapeComponent* InInteractionVolume)
+{
+	InteractionVolumes.Add(InInteractionVolume);
+
+	InInteractionVolume->OnComponentBeginOverlap.AddDynamic(this, &ARope::OnInteractVolumeEntered);
+	InInteractionVolume->OnComponentEndOverlap.AddDynamic(this, &ARope::OnInteractVolumeLeft);
+}
+
 void ARope::StoppedInteracting(APlayerCharacter* PlayerCharacter)
 {
 	if(!IsValid(PlayerCharacter))
@@ -160,6 +162,36 @@ void ARope::StoppedInteracting(APlayerCharacter* PlayerCharacter)
 	bInteractable = true;
 
 	PlayerCharacter->GetCharacterMovement<UDC_CMC>()->OnStoppedClimbing.RemoveAll(this);
+}
+
+void ARope::OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
+	if (!character || !character->IsLocallyControlled())
+		return;
+
+	if (!IVolumesOverlappingCharacter.Contains(character))
+	{
+		IVolumesOverlappingCharacter.Add(character);
+		bInteractable = true;
+	}
+
+	IVolumesOverlappingCharacter[character].Add(OverlappedComponent);
+}
+
+void ARope::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
+	if (!character || !character->IsLocallyControlled() || !IVolumesOverlappingCharacter.Contains(character))
+		return;
+
+	IVolumesOverlappingCharacter[character].Remove(OverlappedComponent);
+
+	if (IVolumesOverlappingCharacter[character].Num() < 1)
+	{
+		bInteractable = false;
+		IVolumesOverlappingCharacter.Remove(character);
+	}
 }
 
 void ARope::GetRopeTransforms(USkinnedMeshComponent* InRopeMesh, TArray<FTransform>& OutTransforms)
@@ -186,39 +218,6 @@ void ARope::GetBoneLocations(TArray<FVector>& OutLocations)
 		int boneIndex = RopeMesh->GetBoneIndex(BoneNames[i]);
 		OutLocations.Add(RopeMesh->GetBoneTransform(boneIndex).GetLocation());
 	}
-}
-
-void ARope::GetEdgeLocations(TArray<FVector>& OutLocations)
-{
-	TArray<FTransform> ropeTransforms;
-	GetRopeTransforms(RopeMesh, ropeTransforms);
-
-	float halfSegmentLengths = 0.4f * (1000.f / 100.f);
-	
-	int transformsNum = ropeTransforms.Num();
-
-	if (transformsNum < 4)
-		return;
-	
-	bool bOnFloor = !FMath::IsNearlyEqual(ropeTransforms[1].GetLocation().Z, ropeTransforms[2].GetLocation().Z, halfSegmentLengths * 0.8)? false : FMath::IsNearlyEqual(ropeTransforms[1].GetLocation().Z, ropeTransforms[3].GetLocation().Z, halfSegmentLengths * 0.8);
-	
-	OutLocations.Add(ropeTransforms[1].GetLocation());
-
-	for (int i = 2; i < transformsNum - 1; ++i)
-	{
-		if (!bOnFloor && ropeTransforms[i].GetLocation().Z - ropeTransforms[i + 1].GetLocation().Z < halfSegmentLengths)
-		{
-			bOnFloor = true;
-			OutLocations.Add(ropeTransforms[i + 1].GetLocation());
-		}
-		else if (bOnFloor && ropeTransforms[i].GetLocation().Z - ropeTransforms[i + 1].GetLocation().Z > halfSegmentLengths)
-		{
-			bOnFloor = false;
-			OutLocations.Add(ropeTransforms[i + 1].GetLocation());
-		}
-	}
-
-	OutLocations.Add(ropeTransforms[transformsNum-1].GetLocation());
 }
 
 FVector ARope::GetWorldLocationAtDistance(float Distance)
@@ -261,6 +260,26 @@ void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransf
 
 	for (int i = 0; i < bonesNum && i < ropeTranNum; ++i)
 	{
+		FixedRopeMesh->SetBoneTransformByName(BoneNames[i], RopeTransforms[i], EBoneSpaces::WorldSpace);
+		
+		SplineComponent->AddSplineWorldPoint(RopeTransforms[i].GetLocation());
+	}
+	FRotator rotationOverride = SplineComponent->GetRotationAtSplinePoint(3, ESplineCoordinateSpace::World);
+	SplineComponent->SetRotationAtSplinePoint(0, rotationOverride, ESplineCoordinateSpace::World);
+	SplineComponent->SetRotationAtSplinePoint(1, rotationOverride, ESplineCoordinateSpace::World);
+	SplineComponent->SetRotationAtSplinePoint(2, rotationOverride, ESplineCoordinateSpace::World);
+
+
+	
+	for (int i = 0; i < bonesNum && i < ropeTranNum; ++i)
+	{
+		FVector direction = SplineComponent->GetDirectionAtSplinePoint(i, ESplineCoordinateSpace::World);
+		FVector location = SplineComponent->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::World);
+
+		DrawDebugLine(GetWorld(), location, location + direction * 50.f, FColor::Red, false, 5.f);
+		if(SplineComponent->GetDirectionAtSplinePoint(i, ESplineCoordinateSpace::World).Dot(-FVector::UpVector) < 0.5)
+			continue;
+
 		UBoxComponent* newBox = NewObject<UBoxComponent>(this);
 
 		FixedRopeMesh->SetBoneTransformByName(BoneNames[i], RopeTransforms[i], EBoneSpaces::WorldSpace);
@@ -273,17 +292,15 @@ void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransf
 		newBox->SetWorldLocation(RopeTransforms[i].GetLocation());
 
 		UBoxComponent* climbVolume = NewObject<UBoxComponent>(this);
-		climbVolume->InitBoxExtent(FVector(50, 50, 5));
+		climbVolume->InitBoxExtent(FVector(5, 25, 25));
 		climbVolume->RegisterComponent();
 		climbVolume->AttachToComponent(FixedRopeMesh, FAttachmentTransformRules::KeepRelativeTransform);
 		climbVolume->SetWorldLocation(RopeTransforms[i].GetLocation());
+		climbVolume->SetWorldRotation(SplineComponent->GetRotationAtSplinePoint(i, ESplineCoordinateSpace::World));
 
 		RegisterClimbVolume(climbVolume);
-
-		SplineComponent->AddSplineWorldPoint(RopeTransforms[i].GetLocation());
+		RegisterInteractionVolume(climbVolume);
 	}
-
-	SplineComponent->SetUpVectorAtSplinePoint(0, SplineComponent->GetUpVectorAtSplinePoint(1, ESplineCoordinateSpace::World), ESplineCoordinateSpace::World);
 
 	RopeMesh->SetSimulatePhysics(false);
 	RopeMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -296,121 +313,19 @@ void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransf
 
 }
 
-FName ARope::GetBoneNameNearestToZ(double Z) const
-{
-	CachedBoneIndex =	Z > GetUpperEndLocation().Z ? 1 : 
-						Z < GetLowerEndLocation().Z ? BoneNames.Num() - 1 : 
-						CachedBoneIndex < 0 ? GetBoneIndexNearestToZBinary(Z) :
-						GetBoneIndexNearestToZLinear(Z);
-
-	return BoneNames[CachedBoneIndex];
-}
-
-int ARope::GetBoneIndexNearestToZLinear(double Z) const
-{
-	FVector cachedBoneLocation = FixedRopeMesh->GetBoneLocationByName(BoneNames[CachedBoneIndex], EBoneSpaces::WorldSpace);
-
-	double lastDelta  = cachedBoneLocation.Z - Z;
-	if(lastDelta < 0)
-		lastDelta *= -1;
-
-	int updation = cachedBoneLocation.Z > Z? 1 : -1;
-
-	int boneNum = BoneNames.Num();
-
-	int i = CachedBoneIndex + updation;
-
-	for (; (updation == 1 && i < boneNum - 1) || (updation == -1 && i > 0); i += updation)
-	{
-		double currentZ = FixedRopeMesh->GetBoneLocationByName(BoneNames[i], EBoneSpaces::WorldSpace).Z;
-		double currentDelta = currentZ - Z;
-
-		if(currentDelta < 0)
-			currentDelta *= -1;
-
-		if(currentDelta > lastDelta)
-			return i-updation;
-
-		lastDelta = currentDelta;
-	}
-
-	return i;
-}
-
-int ARope::GetBoneIndexNearestToZBinary(double Z) const
-{
-	int bonesNamesNum = BoneNames.Num();
-
-	int bottom = 0;
-	int top = bonesNamesNum - 1;
-
-	int mid = top / 2;
-
-	int closestIndex = mid;
-	double closestZ = FixedRopeMesh->GetBoneLocationByName(BoneNames[mid], EBoneSpaces::WorldSpace).Z;
-
-	bool closestValueFound = false;
-
-	while (!closestValueFound)
-	{
-		closestValueFound = mid == closestIndex + 1 || mid == closestIndex - 1 || top - bottom < 2;
-
-		double currentZ = FixedRopeMesh->GetBoneLocationByName(BoneNames[mid], EBoneSpaces::WorldSpace).Z;
-
-		double currentDelta = currentZ - Z;
-		double closestDelta = closestZ - Z;
-
-		if (currentDelta < 0.f)
-			currentDelta *= -1;
-
-		if (closestDelta < 0.f)
-			closestDelta *= -1;
-
-		if (currentDelta < closestDelta)
-		{
-			closestIndex = mid;
-			closestZ = FixedRopeMesh->GetBoneLocationByName(BoneNames[mid], EBoneSpaces::WorldSpace).Z;
-		}
-
-		if (closestValueFound)
-			continue;
-
-		if (currentZ > Z)
-			bottom = mid + 1;
-		else
-			top = mid - 1;
-
-		mid = (bottom + top) / 2;
-	}
-
-	CachedBoneIndex = closestIndex;
-
-	return closestIndex;
-}
-
-FVector ARope::GetBoneUpVectorByName(FName BoneName) const
-{
-	FRotator boneRotation = FixedRopeMesh->GetBoneRotationByName(BoneName, EBoneSpaces::WorldSpace);
-	boneRotation.Pitch += 90.;
-
-	FVector testLocation = FixedRopeMesh->GetBoneLocationByName(BoneName, EBoneSpaces::WorldSpace);
-
-	return boneRotation.Vector();
-}
-
 float ARope::GetDistanceAtLocation(FVector ClimbingActorLocation) const
 {
-	return SplineComponent->GetDistanceAlongSplineAtLocation(ClimbingActorLocation, ESplineCoordinateSpace::World);
+	return SplineComponent->GetSplineLength() - SplineComponent->GetDistanceAlongSplineAtLocation(ClimbingActorLocation, ESplineCoordinateSpace::World);
 }
 
 FVector ARope::GetLocationAtDistance(float Distance) const
 {
-	return SplineComponent->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+	return SplineComponent->GetLocationAtDistanceAlongSpline(SplineComponent->GetSplineLength() - Distance, ESplineCoordinateSpace::World);
 }
 
 FVector ARope::GetUpVectorAtDistance(float Distance) const
 {
-	return SplineComponent->GetDirectionAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+	return -SplineComponent->GetDirectionAtDistanceAlongSpline(SplineComponent->GetSplineLength() - Distance, ESplineCoordinateSpace::World);
 }
 
 double ARope::GetClimbRotationYaw(AActor* ClimbingActor) const
@@ -420,11 +335,5 @@ double ARope::GetClimbRotationYaw(AActor* ClimbingActor) const
 
 void ARope::CalculateLowerEndLocation() const
 {
-	int boneNum = BoneNames.Num();
-	FName lastBoneLocation = BoneNames[boneNum - 1];
-
-	FVector boneLocation = FixedRopeMesh->GetBoneLocationByName(lastBoneLocation, EBoneSpaces::WorldSpace);
-	FVector boneUpVector = GetBoneUpVectorByName(lastBoneLocation);
-
-	LowerEnd = boneLocation - boneUpVector * 0.5f;
+	LowerEnd = SplineComponent->GetLocationAtDistanceAlongSpline(SplineComponent->GetSplineLength(), ESplineCoordinateSpace::World);
 }

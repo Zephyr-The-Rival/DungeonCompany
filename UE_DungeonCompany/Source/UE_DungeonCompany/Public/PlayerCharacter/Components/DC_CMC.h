@@ -88,9 +88,6 @@ private:
 	UPROPERTY(Transient)
 	class AClimbable* ClimbingObject;
 
-	UPROPERTY(Transient)
-	float ClimbedDistance;
-
 public:
 	UFUNCTION(Server, Unreliable)
 	void Server_SetClimbingObject(AClimbable* InClimbingObject);
@@ -106,9 +103,9 @@ public:
 
 private:
 	UPROPERTY(Transient)
-	float ClimbHeightProgress;
+	float ClimbedDistance;
 
-private:
+protected:
 	void PhysClimb(float DeltaTime, int32 Iterations);
 
 public:
