@@ -6,11 +6,13 @@
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "Entities/FunGuy.h"
 #include "Entities/QuasoSnake.h"
+#include "Entities/Spawners/SpurchinSpawner.h"
 #include "DCGame/DC_PostMortemPawn.h"
 
 #include "NavigationSystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "EngineUtils.h"
 
 template<class T>
 T* ADC_GM::RandomlySpawnAIEntity(UClass* Class) const
@@ -109,6 +111,33 @@ void ADC_GM::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SpawnSpurchins();
+}
+
+void ADC_GM::SpawnSpurchins()
+{
+	TArray<ASpurchinSpawner*> allSpurchinSpawner;
+
+	for (TActorIterator<ASpurchinSpawner> It(GetWorld()); It; ++It)
+	{
+		ASpurchinSpawner* currentSpawner = *It;
+
+		if (currentSpawner->IsSpawnForced())
+		{
+			currentSpawner->SpawnSpurchin();
+			continue;
+		}
+
+		allSpurchinSpawner.Add(currentSpawner);
+	}
+
+	for (int i = 0; i < SpurchinCount && 0 < allSpurchinSpawner.Num(); ++i)
+	{
+		int spurchinIndex = FMath::RandRange(0, allSpurchinSpawner.Num() - 1);
+
+		allSpurchinSpawner[spurchinIndex]->SpawnSpurchin();
+		allSpurchinSpawner.RemoveAt(spurchinIndex);
+	}
 }
 
 void ADC_GM::Respawn(AController* Controller)

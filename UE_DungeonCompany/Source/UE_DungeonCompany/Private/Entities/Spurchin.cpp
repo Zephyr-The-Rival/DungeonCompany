@@ -59,18 +59,3 @@ void ASpurchin::BeginPlay()
 
 	UpdatePerception();
 }
-
-void ASpurchin::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
-{
-	if (!Stimulus.WasSuccessfullySensed())
-	{
-		GetSenseConfig<UAISenseConfig_Sight>()->SightRadius = 0.f;
-		UpdatePerception();
-		Super::HandleSightSense(Actor, Stimulus, BlackboardComponent);
-	}
-}
-
-void ASpurchin::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
-{
-	Super::HandleHearingSense(Actor, Stimulus, BlackboardComponent);
-}

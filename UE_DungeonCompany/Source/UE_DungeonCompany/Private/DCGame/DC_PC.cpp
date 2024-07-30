@@ -144,7 +144,7 @@ void ADC_PC::ToggleOptions()
 
 	APlayerCharacter* playerCharacter = GetPawn<APlayerCharacter>();
 
-	playerCharacter->GetMyHud()->ToggleOptionsMenu(bOptionsMenuIsOn);
+	ToggleOptionsMenu(bOptionsMenuIsOn);
 	if(!playerCharacter)
 		return;
 	
@@ -197,5 +197,10 @@ void ADC_PC::SetPushToTalkActive(bool IsActive)
 void ADC_PC::Server_RequestRespawn_Implementation()
 {
 	GetWorld()->GetAuthGameMode<ADC_GM>()->Respawn(this);
+}
+
+void ADC_PC::ToggleOptionsMenu_Implementation(bool On)
+{
+	LogWarning(TEXT("OverrideMe"));
 }
 

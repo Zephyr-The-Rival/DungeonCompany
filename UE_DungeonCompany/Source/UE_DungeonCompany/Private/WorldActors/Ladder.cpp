@@ -9,6 +9,7 @@
 #include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "UI/PlayerHud/PlayerHud.h"
 #include "Kismet/KismetMathLibrary.h"
 
 void ALadder::CalculateUpperEndLocation() const
@@ -221,4 +222,3 @@ void ALadder::OnHovered(APlayerCharacter* PlayerCharacter)
 {
 	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Climb");
 }
-

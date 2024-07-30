@@ -34,8 +34,8 @@ void AWeapon::DealHits(FWeaponInfo WeaponInfo)
 	{
 
 		GetWorld()->LineTraceSingleByChannel(hitResult, TraceStarts[i], TraceEnds[i], ECC_GameTraceChannel4);
-
-		DrawDebugLine(GetWorld(), TraceStarts[i], TraceEnds[i], FColor::Green, false, 1.0f, 0, 1.0f);
+		
+		//DrawDebugLine(GetWorld(), TraceStarts[i], TraceEnds[i], FColor::Green, false, 1.0f, 0, 1.0f);
 		
 		if(!hitResult.bBlockingHit)
 			continue;
@@ -49,8 +49,12 @@ void AWeapon::DealHits(FWeaponInfo WeaponInfo)
 	
 	if(ADC_Entity* hitEntity= Cast<ADC_Entity>(HitActor))
 	{
-		hitEntity->TakeDamage(10);
-		hitEntity->SpawnHitEffect(Cast<USceneComponent>(hitResult.GetComponent()), hitResult.BoneName, hitResult.Location, TraceEnds[i] - TraceStarts[i]);	
+		if(hitEntity!=MyCharacterToAttachTo)
+		{
+			hitEntity->TakeDamage(10);
+			hitEntity->SpawnHitEffect(Cast<USceneComponent>(hitResult.GetComponent()), hitResult.BoneName, hitResult.Location, TraceEnds[i] - TraceStarts[i]);
+		}
+			
 	}
 
 	if (ABreakableProp* Prop = Cast<ABreakableProp>(HitActor))
