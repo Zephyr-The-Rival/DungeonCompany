@@ -20,7 +20,8 @@ public class UE_DungeonCompany : ModuleRules
 			"AIModule",
 			"GameplayTasks",
 			"NavigationSystem",
-			"Niagara"
+			"Niagara",
+			"CableComponent"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

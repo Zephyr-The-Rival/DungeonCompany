@@ -41,7 +41,6 @@ void UPlayerHud::UpdateCrouchIcon_Implementation()
 	LogWarning(TEXT("UPlayerHud::UpdateCrouchIcon_Implementation has not been overidden"));
 }
 
-
 void UPlayerHud::ShowTextInteractPrompt_Implementation(const FString& NewText)
 {
 	LogWarning(TEXT("UPlayerHud::ShowTextPrompt_Implementation has not been overidden"));
