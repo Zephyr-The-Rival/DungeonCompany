@@ -398,19 +398,19 @@ FVector ARope::GetBoneUpVectorByName(FName BoneName) const
 	return boneRotation.Vector();
 }
 
-FVector ARope::GetLocationAtZ(double Z) const
+float ARope::GetDistanceAtLocation(FVector ClimbingActorLocation) const
 {
-	FVector tempLocation = GetActorLocation();
-	tempLocation.Z = Z;
-	return SplineComponent->FindLocationClosestToWorldLocation(tempLocation, ESplineCoordinateSpace::World);
+	return SplineComponent->GetDistanceAlongSplineAtLocation(ClimbingActorLocation, ESplineCoordinateSpace::World);
 }
 
-FVector ARope::GetUpVectorAtZ(double Z) const
+FVector ARope::GetLocationAtDistance(float Distance) const
 {
-	FVector tempLocation = GetActorLocation();
-	tempLocation.Z = Z;
+	return SplineComponent->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+}
 
-	return SplineComponent->FindDirectionClosestToWorldLocation(tempLocation, ESplineCoordinateSpace::World);
+FVector ARope::GetUpVectorAtDistance(float Distance) const
+{
+	return SplineComponent->GetDirectionAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
 }
 
 double ARope::GetClimbRotationYaw(AActor* ClimbingActor) const

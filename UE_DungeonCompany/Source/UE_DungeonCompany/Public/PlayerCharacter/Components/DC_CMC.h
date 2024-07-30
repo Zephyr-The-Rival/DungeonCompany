@@ -88,6 +88,9 @@ private:
 	UPROPERTY(Transient)
 	class AClimbable* ClimbingObject;
 
+	UPROPERTY(Transient)
+	float ClimbedDistance;
+
 public:
 	UFUNCTION(Server, Unreliable)
 	void Server_SetClimbingObject(AClimbable* InClimbingObject);

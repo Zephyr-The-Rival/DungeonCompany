@@ -11,25 +11,44 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
-FVector ALadder::GetLocationAtZ(double Z) const
-{
-	FVector location = GetActorLocation();
-
-	float heightDelta = Z - location.Z;
-
-	if (heightDelta < 0.f || heightDelta > Height)
-		return FVector::ZeroVector;
-
-	FVector ladderVector = Height * GetActorUpVector();
-
-	ladderVector *= (Z / ladderVector.Z);
-
-	return location + ladderVector;
-}
-
 void ALadder::CalculateUpperEndLocation() const
 {
 	UpperEnd = GetActorLocation() + Height * GetActorUpVector();
+}
+
+float ALadder::GetDistanceAtLocation(FVector ClimbingActorLocation) const
+{
+	FVector location = GetActorLocation();
+
+	float heightDelta = ClimbingActorLocation.Z - location.Z;
+
+	if(heightDelta < 0.f)
+		return 0.f;
+	else if(heightDelta > Height)
+		return Height;
+
+	FVector ladderVector = Height * GetActorUpVector();
+
+	ladderVector *= (ClimbingActorLocation.Z / ladderVector.Z);
+
+	return ladderVector.Length();
+}
+
+FVector ALadder::GetLocationAtDistance(float Distance) const
+{
+	FVector location = GetActorLocation();
+
+
+	if(Distance < 0.f)
+		return GetLowerEndLocation();
+	else if(Distance > Height)
+		return GetUpperEndLocation();
+
+	FVector ladderVector = Height * GetActorUpVector();
+
+	ladderVector *= Distance;
+
+	return location + ladderVector;
 }
 
 void ALadder::SetHeight(float InHeight)

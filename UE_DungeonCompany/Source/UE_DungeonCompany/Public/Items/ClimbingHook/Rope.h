@@ -94,9 +94,11 @@ private:
 	class USplineComponent* SplineComponent;
 
 public:
-	virtual FVector GetLocationAtZ(double Z) const;
-	virtual FVector GetUpVectorAtZ(double Z) const;
-	virtual double GetClimbRotationYaw(AActor* ClimbingActor) const;
+	virtual float GetDistanceAtLocation(FVector ClimbingActorLocation) const override;
+	virtual FVector GetLocationAtDistance(float Distance) const override;
+
+	virtual FVector GetUpVectorAtDistance(float Distance) const override;
+	virtual double GetClimbRotationYaw(AActor* ClimbingActor) const override;
 
 protected:
 	virtual void CalculateLowerEndLocation() const override;

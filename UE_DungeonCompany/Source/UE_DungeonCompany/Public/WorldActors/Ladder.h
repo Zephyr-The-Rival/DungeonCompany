@@ -44,7 +44,8 @@ private:
 	FVector2D EasyInteractArea = FVector2D(5, 20);
 
 public:
-	virtual FVector GetLocationAtZ(double Z) const override;
+	virtual float GetDistanceAtLocation(FVector ClimbingActorLocation) const override;
+	virtual FVector GetLocationAtDistance(float Distance) const override;
 
 	/*This doesn't set the height in runtime. Set this in the constructor or before calling the construction script of the Ladder class.*/
 	void SetHeight(float InHeight); 

@@ -41,8 +41,9 @@ protected:
 	mutable FVector LowerEnd = FVector::ZeroVector;
 
 public:	//Climbable Interface
-	virtual FVector GetLocationAtZ(double Z) const;
-	virtual FVector GetUpVectorAtZ(double Z) const;
+	virtual float GetDistanceAtLocation(FVector ClimbingActorLocation) const;
+	virtual FVector GetLocationAtDistance(float Distance) const;
+	virtual FVector GetUpVectorAtDistance(float Distance) const;
 	virtual double GetClimbRotationYaw(AActor* ClimbingActor) const;
 
 	FVector GetLowerEndLocation() const;

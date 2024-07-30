@@ -80,12 +80,17 @@ void AClimbable::OnClimbVolumeEndOverlap(UPrimitiveComponent* OverlappedComponen
 	}
 }
 
-FVector AClimbable::GetLocationAtZ(double Z) const
+float AClimbable::GetDistanceAtLocation(FVector ClimbingActorLocation) const
+{
+	return 0.0f;
+}
+
+FVector AClimbable::GetLocationAtDistance(float Distance) const
 {
 	return FVector::ZeroVector;
 }
 
-FVector AClimbable::GetUpVectorAtZ(double Z) const
+FVector AClimbable::GetUpVectorAtDistance(float Distance) const
 {
 	return GetActorUpVector();
 }

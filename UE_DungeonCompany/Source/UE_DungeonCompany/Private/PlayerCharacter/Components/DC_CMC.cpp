@@ -124,8 +124,7 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	Iterations++;
 	const FVector oldLocation = UpdatedComponent->GetComponentLocation();
 
-	FVector climbLocation = ClimbingObject->GetLocationAtZ(oldLocation.Z);
-	climbLocation.Z = oldLocation.Z;
+	ClimbedDistance = ClimbingObject->GetDistanceAtLocation(oldLocation);
 
 	Acceleration.Z = 0.f;
 	Acceleration = Acceleration.RotateAngleAxis(90.f, -UpdatedComponent->GetRightVector());
@@ -134,7 +133,7 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	//Acceleration.Y = 0.f;
 	//Acceleration = Acceleration.RotateAngleAxis(forwardVector.Rotation().Yaw, FVector::UpVector);
 
-	FVector climbVector = ClimbingObject->GetUpVectorAtZ(oldLocation.Z);
+	FVector climbVector = ClimbingObject->GetUpVectorAtDistance(ClimbedDistance);
 
 	if (Acceleration.Z < 0)
 	{
@@ -155,8 +154,6 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 		//	return;
 		//}
 	}
-
-	FVector location = ClimbingObject->GetLocationAtZ(oldLocation.Z);
 
 	//DrawDebugLine(GetWorld(), location, location + climbVector * 200.f, FColor::Red, false, 5.f);
 
@@ -208,7 +205,7 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	Velocity = (UpdatedComponent->GetComponentLocation() - oldLocation) / DeltaTime;
 
 	FlushPersistentDebugLines(GetWorld());
-	DrawDebugLine(GetWorld(), GetActorLocation(), Acceleration * 1000.f, FColor::Red, true, 5.f);
+	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + climbVector * 1000.f, FColor::Red, true, 5.f);
 
 }
 
@@ -290,9 +287,11 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 			if (ClimbingObject->GetUpperEndLocation().Z < startZ)
 				startZ = upperEnd.Z;
 
-			FVector forwardVector = FVector::CrossProduct(ClimbingObject->GetUpVectorAtZ(startZ), UpdatedComponent->GetRightVector());
 
-			FVector climbPosition = ClimbingObject->GetLocationAtZ(startZ) + (-forwardVector * ClimbingDistance);
+			ClimbedDistance = ClimbingObject->GetDistanceAtLocation(UpdatedComponent->GetComponentLocation());
+			FVector forwardVector = FVector::CrossProduct(ClimbingObject->GetUpVectorAtDistance(ClimbedDistance), UpdatedComponent->GetRightVector());
+
+			FVector climbPosition = ClimbingObject->GetLocationAtDistance(ClimbedDistance) + (-forwardVector * ClimbingDistance);
 			climbPosition.Z = startZ;
 
 			DrawDebugSphere(GetWorld(), climbPosition, 100.f, 12, FColor::Blue, false, 5.f);
