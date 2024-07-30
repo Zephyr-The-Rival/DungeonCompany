@@ -932,6 +932,8 @@ void APlayerCharacter::SwitchHand()
 		return;
 	
 	bSwitchHandAllowed = false;
+	this->bPrimaryActionAllowed = false;
+	this->bSecondaryActionAllowed=false;
 
 	this->bSlotAIsInHand = !bSlotAIsInHand;
 
@@ -943,14 +945,16 @@ void APlayerCharacter::SwitchHand()
 	this->ResetInteractPrompt();
 	TakeOutItem();
 
-	this->MyPlayerHud->OnSwichingDone.AddDynamic(this, &APlayerCharacter::AllowSwitchHand);
+	this->MyPlayerHud->OnSwichingDone.AddDynamic(this, &APlayerCharacter::SwitchHandFinished);
 	this->MyPlayerHud->SwichHandDisplays(bSlotAIsInHand);
 	
 }
 
-void APlayerCharacter::AllowSwitchHand()
+void APlayerCharacter::SwitchHandFinished()
 {
 	bSwitchHandAllowed = true;
+	this->bPrimaryActionAllowed=true;
+	this->bSecondaryActionAllowed=true;
 	MyPlayerHud->OnSwichingDone.RemoveAll(this);
 }
 
