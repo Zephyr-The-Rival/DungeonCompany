@@ -68,6 +68,9 @@ protected:
 public:
 	virtual void Interact(APawn* InteractingPawn) override;
 
+private:	
+	bool bInInteractionVolume = false;
+
 protected:
 	UFUNCTION()
 	void OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

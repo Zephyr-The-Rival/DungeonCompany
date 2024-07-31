@@ -9,6 +9,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/BoxComponent.h"
+#include "WorldActors/Ladder.h"
 
 bool UDC_CMC::FSavedMove_PlayerCharacter::CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter, float MaxDelta) const
 {
@@ -258,9 +259,9 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 			if (ClimbingObject->GetUpperEndLocation().Z < startZ)
 				startZ = upperEnd.Z;
 
-
 			ClimbedDistance = ClimbingObject->GetDistanceAtLocation(UpdatedComponent->GetComponentLocation());
-			FVector forwardVector = FVector::CrossProduct(ClimbingObject->GetUpVectorAtDistance(ClimbedDistance), UpdatedComponent->GetRightVector());
+			FVector forwardVector = ClimbingObject->IsA<ALadder>() ? ClimbingObject->GetActorForwardVector() : 
+									FVector::CrossProduct(ClimbingObject->GetUpVectorAtDistance(ClimbedDistance), UpdatedComponent->GetRightVector());
 
 			FVector climbPosition = ClimbingObject->GetLocationAtDistance(ClimbedDistance) + (forwardVector * ClimbingDistance);
 			climbPosition.Z = startZ;
@@ -269,6 +270,12 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 
 			FHitResult moveHit;
 			SafeMoveUpdatedComponent(climbDelta, newRotation, true, moveHit);
+
+			if(!ClimbingObject->IsA<ALadder>())
+				return;
+
+			GetOwner()->SetActorLocation(climbPosition);
+
 		}
 	}
 	else if (bPrevClimbed)
@@ -306,7 +313,7 @@ void UDC_CMC::StartClimbing(AClimbable* ActorClimbingAt)
 	bWantsToClimb = true;
 	ClimbingObject = ActorClimbingAt;
 
-	if(CharacterOwner->HasAuthority())
+	if (CharacterOwner->HasAuthority())
 		Multicast_SetClimbingObject(ActorClimbingAt);
 	else
 		Server_SetClimbingObject(ActorClimbingAt);

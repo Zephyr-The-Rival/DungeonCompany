@@ -30,7 +30,7 @@ float ALadder::GetDistanceAtLocation(FVector ClimbingActorLocation) const
 
 	FVector ladderVector = Height * GetActorUpVector();
 
-	ladderVector *= (ClimbingActorLocation.Z / ladderVector.Z);
+	ladderVector *= (heightDelta / ladderVector.Z);
 
 	return ladderVector.Length();
 }
@@ -39,17 +39,12 @@ FVector ALadder::GetLocationAtDistance(float Distance) const
 {
 	FVector location = GetActorLocation();
 
-
 	if(Distance < 0.f)
 		return GetLowerEndLocation();
 	else if(Distance > Height)
 		return GetUpperEndLocation();
 
-	FVector ladderVector = Height * GetActorUpVector();
-
-	ladderVector *= Distance;
-
-	return location + ladderVector;
+	return location + GetActorUpVector() * Distance;
 }
 
 void ALadder::SetHeight(float InHeight)
@@ -184,6 +179,8 @@ void ALadder::OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, 
 	if(!character || !character->IsLocallyControlled())
 		return;
 
+	bInInteractionVolume = true;
+
 	bInteractable = true;
 
 }
@@ -194,13 +191,16 @@ void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AAc
 	if (!character || !character->IsLocallyControlled())
 		return;
 
+	bInInteractionVolume = false;
+
 	bInteractable = false;
 
 }
 
 void ALadder::StoppedInteracting(APlayerCharacter* PlayerCharacter)
 {
-	bInteractable = true;
+	if(bInInteractionVolume)
+		bInteractable = true;
 
 	if(!IsValid(LocalPlayerOnLadder))
 		return;
