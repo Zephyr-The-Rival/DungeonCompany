@@ -4,6 +4,7 @@
 #include "AI/Tasks/BTTask_StartMovement.h"
 #include "AI/DC_AIController.h"
 #include "Entities/AIEntity.h"
+#include "Entities/QuasoSnake.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -27,6 +28,11 @@ EBTNodeResult::Type UBTTask_StartMovement::ExecuteTask(UBehaviorTreeComponent& O
 
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool("MovementStarted", true);
 	aiEntity->GetCharacterMovement()->SetMovementMode(DefaultMovementMode);
+
+	if (AQuasoSnake* quaso = Cast<AQuasoSnake>(aiEntity))
+	{
+		quaso->SetIsLurking(false);
+	}
 
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 

@@ -38,11 +38,7 @@ void AQuasoSnake::BeginPlay()
 
 	GetCharacterMovement()->DisableMovement();
 
-	ADC_AIController* aiController = GetController<ADC_AIController>();
-	if (!aiController)
-		return;
-
-	aiController->SetLoseSightRadius(0.f);
+	SetIsLurking(true);
 
 }
 
@@ -51,17 +47,14 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 	if(!HasAuthority() || bInAttack)
 		return;
 
-	Super::AttackPlayer(TargetPlayer);
-	
 	bInAttack = true;
+	SetIsAttacking(true);
 
 	FTimerHandle handle;
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AQuasoSnake::LaunchAtActor, Cast<AActor>(TargetPlayer));
 	GetWorld()->GetTimerManager().SetTimer(handle, delegate, WindUpSeconds, false);
 
-	ADC_AIController* aiController = GetController<ADC_AIController>();
-	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", true);
+	SetInAttackOnBlackboard(true);
 
 	GetCharacterMovement()->Velocity = FVector(0, 0, 0);
 
@@ -138,6 +131,8 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	bLaunched = false;
 	AttackTime = 0.f;
 
+	SetIsAttacking(false);
+
 	ADC_AIController* aiController = GetController<ADC_AIController>();
 	if (!aiController)
 		return;
@@ -160,6 +155,8 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 
 	AttachToActor(character, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	PlayerAttachedTo = character;
+
+	SetIsAttachedToPlayer(true);
 
 	SetActorLocation(character->GetActorLocation() + FVector::UpVector * 100);
 
@@ -184,6 +181,22 @@ void AQuasoSnake::ReturnToVolume()
 	Destroy();
 }
 
+void AQuasoSnake::SetIsAttachedToPlayer(bool InIsAttached)
+{
+	if(InIsAttached == IsAttachedToPlayer())
+		return;
+
+	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_0);
+}
+
+void AQuasoSnake::SetIsLurking(bool InIsLurking)
+{
+	if (InIsLurking == IsLurking())
+		return;
+
+	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_1);
+}
+
 void AQuasoSnake::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
@@ -192,6 +205,7 @@ void AQuasoSnake::OnDeath_Implementation()
 		return;
 
 	ResetPlayerEffects();
+	SetIsAttachedToPlayer(false);
 
 }
 
@@ -205,16 +219,16 @@ void AQuasoSnake::ProgressStage()
 	switch (CurrentStage)
 	{
 		case 0:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffDisableMovement::StaticClass()));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->DisableMovementDebuff));
 			break;
 
 		case 1:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffBlockInputs::StaticClass()));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->BlockInputsDebuff));
 			break;
 
 		case 2:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffMuffledVoice::StaticClass()));
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(UDebuffImpairedVision::StaticClass()));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->MuffledVoiceDebuff));
+			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->ImpairedVisionDebuff));
 			break;
 
 		case 3:
@@ -253,10 +267,13 @@ void AQuasoSnake::DetachFromPlayer()
 
 	bInAttack = false;
 
+	SetIsAttachedToPlayer(false);
+
 	ADC_AIController* aiController = Cast<ADC_AIController>(GetController());
 	if (!aiController)
 		return;
 
 	aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", false);
 	aiController->GetBlackboardComponent()->ClearValue("TargetPlayer");
+
 }

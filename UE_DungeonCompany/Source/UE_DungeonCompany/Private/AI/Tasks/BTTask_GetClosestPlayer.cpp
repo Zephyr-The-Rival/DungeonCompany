@@ -10,7 +10,7 @@
 
 UBTTask_GetClosestPlayer::UBTTask_GetClosestPlayer()
 {
-	NodeName = "GetClosestPlayer";
+	NodeName = "AggroClosestPlayer";
 }
 
 EBTNodeResult::Type UBTTask_GetClosestPlayer::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -34,15 +34,15 @@ EBTNodeResult::Type UBTTask_GetClosestPlayer::ExecuteTask(UBehaviorTreeComponent
 
 		float distance = aiPawn->GetDistanceTo(currentPlayer);
 
-		if(distance > MaxDistance || distance > closestDistance)
+		if(currentPlayer->IsDead() || distance > MaxDistance || distance > closestDistance)
 			continue;
 
 		closestDistance = distance;	
 		closestPlayer = currentPlayer;
-		
 	}
 
-	OwnerComp.GetBlackboardComponent()->SetValueAsObject(GetSelectedBlackboardKey(), closestPlayer);
+	if(closestPlayer || bResetValueIfNoPlayerFound)
+		OwnerComp.GetBlackboardComponent()->SetValueAsObject(GetSelectedBlackboardKey(), closestPlayer);
 
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);	
 	return EBTNodeResult::Succeeded;
