@@ -143,13 +143,19 @@ void ALadder::CalculateLadderBoxExtents()
 {
 	float iVHalfHeight = Height / 2 + InteractionVolumeHeightBonus / 2;
 	
+	if(InteractionArea.X > ClimbArea.X)
+		InteractionArea.X = ClimbArea.X;
+
+	if (InteractionArea.Y > ClimbArea.Y)
+		InteractionArea.Y = ClimbArea.Y;
+
 	InteractVolume->SetBoxExtent(FVector(InteractionArea, iVHalfHeight));
 	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, iVHalfHeight));
+	
+	ClimbVolume->SetBoxExtent(FVector(ClimbArea, iVHalfHeight));
+	ClimbVolume->SetRelativeLocation(FVector(ClimbArea.X, 0, iVHalfHeight));
 
 	float halfHeight = Height / 2;
-
-	ClimbVolume->SetBoxExtent(FVector(ClimbArea, halfHeight));
-	ClimbVolume->SetRelativeLocation(FVector(0, 0, halfHeight));
 
 	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, halfHeight));
 	EasyInteractBox->SetRelativeLocation(FVector(0, 0, halfHeight));
