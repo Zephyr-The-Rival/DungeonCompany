@@ -36,7 +36,7 @@ void USessionSubsystem::OnCreateSessionComplete(FName SessionName, bool Succeede
 		return;
 
 	//GetWorld()->ServerTravel("/Game/_DungeonCompanyContent/Maps/TestMap?listen");
-	GetWorld()->ServerTravel("/Game/_DungeonCompanyContent/Maps/MichaTestMap3?listen");
+	GetWorld()->ServerTravel("/Game/_DungeonCompanyContent/Maps/MainDungeon?listen");
 
 }
 
