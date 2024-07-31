@@ -248,7 +248,7 @@ void ARope::FreezeAndReplicate()
 
 void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransform>& RopeTransforms)
 {
-	FixedRopeMesh->SetSkeletalMesh(RopeMesh->GetSkeletalMeshAsset(), false);
+	FixedRopeMesh->SetSkinnedAssetAndUpdate(RopeMesh->GetSkeletalMeshAsset(), false);
 
 	FixedRopeMesh->GetBoneNames(BoneNames);
 
