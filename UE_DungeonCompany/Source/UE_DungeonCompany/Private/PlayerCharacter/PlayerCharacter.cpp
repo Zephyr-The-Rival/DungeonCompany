@@ -50,7 +50,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
 
-	FirstPersonCamera->bUsePawnControlRotation = true;
+	FirstPersonCamera->bUsePawnControlRotation = false;
 	
 	DropTransform = CreateDefaultSubobject<USceneComponent>(TEXT("DropTransform"));
 	DropTransform->SetupAttachment(FirstPersonCamera);

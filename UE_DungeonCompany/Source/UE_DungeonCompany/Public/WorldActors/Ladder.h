@@ -32,7 +32,7 @@ private:
 	FVector2D InteractionArea = FVector2D(10, 20);
 
 	UPROPERTY(EditAnywhere, Category = Interaction)
-	float InteractionVolumeHeightBonus = 100.f;
+	float InteractionVolumeHeightBonus = 20.f;
 
 	UPROPERTY(EditAnywhere, Category = Interaction)
 	bool bIgnoreInteractionVolume = false;
@@ -67,6 +67,9 @@ protected:
 
 public:
 	virtual void Interact(APawn* InteractingPawn) override;
+
+private:	
+	bool bInInteractionVolume = false;
 
 protected:
 	UFUNCTION()

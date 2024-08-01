@@ -30,7 +30,7 @@ float ALadder::GetDistanceAtLocation(FVector ClimbingActorLocation) const
 
 	FVector ladderVector = Height * GetActorUpVector();
 
-	ladderVector *= (ClimbingActorLocation.Z / ladderVector.Z);
+	ladderVector *= (heightDelta / ladderVector.Z);
 
 	return ladderVector.Length();
 }
@@ -39,17 +39,12 @@ FVector ALadder::GetLocationAtDistance(float Distance) const
 {
 	FVector location = GetActorLocation();
 
-
 	if(Distance < 0.f)
 		return GetLowerEndLocation();
 	else if(Distance > Height)
 		return GetUpperEndLocation();
 
-	FVector ladderVector = Height * GetActorUpVector();
-
-	ladderVector *= Distance;
-
-	return location + ladderVector;
+	return location + GetActorUpVector() * Distance;
 }
 
 void ALadder::SetHeight(float InHeight)
@@ -143,13 +138,19 @@ void ALadder::CalculateLadderBoxExtents()
 {
 	float iVHalfHeight = Height / 2 + InteractionVolumeHeightBonus / 2;
 	
+	if(InteractionArea.X > ClimbArea.X)
+		InteractionArea.X = ClimbArea.X;
+
+	if (InteractionArea.Y > ClimbArea.Y)
+		InteractionArea.Y = ClimbArea.Y;
+
 	InteractVolume->SetBoxExtent(FVector(InteractionArea, iVHalfHeight));
 	InteractVolume->SetRelativeLocation(FVector(InteractionArea.X, 0, iVHalfHeight));
+	
+	ClimbVolume->SetBoxExtent(FVector(ClimbArea, iVHalfHeight));
+	ClimbVolume->SetRelativeLocation(FVector(ClimbArea.X, 0, iVHalfHeight));
 
 	float halfHeight = Height / 2;
-
-	ClimbVolume->SetBoxExtent(FVector(ClimbArea, halfHeight));
-	ClimbVolume->SetRelativeLocation(FVector(0, 0, halfHeight));
 
 	EasyInteractBox->SetBoxExtent(FVector(EasyInteractArea, halfHeight));
 	EasyInteractBox->SetRelativeLocation(FVector(0, 0, halfHeight));
@@ -178,6 +179,8 @@ void ALadder::OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, 
 	if(!character || !character->IsLocallyControlled())
 		return;
 
+	bInInteractionVolume = true;
+
 	bInteractable = true;
 
 }
@@ -188,13 +191,16 @@ void ALadder::OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AAc
 	if (!character || !character->IsLocallyControlled())
 		return;
 
+	bInInteractionVolume = false;
+
 	bInteractable = false;
 
 }
 
 void ALadder::StoppedInteracting(APlayerCharacter* PlayerCharacter)
 {
-	bInteractable = true;
+	if(bInInteractionVolume)
+		bInteractable = true;
 
 	if(!IsValid(LocalPlayerOnLadder))
 		return;
