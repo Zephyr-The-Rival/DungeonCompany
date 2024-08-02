@@ -21,8 +21,7 @@ public class UE_DungeonCompany : ModuleRules
 			"GameplayTasks",
 			"NavigationSystem",
 			"Niagara",
-			"CableComponent",
-			"PhysicsCore"
+			"CableComponent"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
