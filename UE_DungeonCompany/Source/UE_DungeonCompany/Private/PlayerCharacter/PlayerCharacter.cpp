@@ -31,6 +31,8 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
@@ -121,7 +123,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	
 	if(IsLocallyControlled())
 		LocalTick(DeltaTime);
-
 }
 
 void APlayerCharacter::LocalTick(float DeltaTime)
@@ -1293,4 +1294,45 @@ void APlayerCharacter::CreatePlayerHud()
 
 	this->MyPlayerHud = CreateWidget<UPlayerHud>(GetWorld(),PlayerHudClass);
 	this->MyPlayerHud->AddToViewport();	
+}
+
+UPhysicalMaterial* APlayerCharacter::GetFootMaterial() const
+{
+	FHitResult HitResult;
+	FVector Start = GetActorLocation();
+	FVector End = Start - FVector(0,0,StepsLineTraceLength);
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	Params.bReturnPhysicalMaterial = true;
+	
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
+	DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 1, 0, 1);
+	
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
+	{
+		if (UPhysicalMaterial* PhysMaterial = HitResult.PhysMaterial.Get())
+		{
+			//GEngine-> AddOnScreenDebugMessage(-1,1,FColor::Silver,PhysMaterial->GetName());
+			return PhysMaterial;
+		}
+	}
+	return nullptr;
+}
+
+void APlayerCharacter::PlayStepsFeedback()
+{
+	if (const UPhysicalMaterial* PhysicalMaterial = GetFootMaterial())
+	{
+		if (UNiagaraSystem** FoundVfx = SurfaceVFX.Find(PhysicalMaterial); FoundVfx && *FoundVfx)
+		{
+			const FVector Location = GetActorLocation();
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),*FoundVfx,Location);
+		}
+
+		if (USoundBase** FoundSfx = SurfaceSFX.Find(PhysicalMaterial); FoundSfx && *FoundSfx)
+		{
+			const FVector Location = GetActorLocation(); 
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), *FoundSfx, Location);
+		}
+	}
 }
