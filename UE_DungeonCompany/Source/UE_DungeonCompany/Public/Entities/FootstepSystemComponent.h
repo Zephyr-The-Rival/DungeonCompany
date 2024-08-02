@@ -25,8 +25,7 @@ protected:
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
-
-	//Material Surface Inspection
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	float StepsLineTraceLength = 100.0f;
 	
@@ -36,7 +35,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	TMap<UPhysicalMaterial*,USoundBase*> SurfaceSFX;
 
+	UFUNCTION(BlueprintCallable, Category = "Footstep")
+	void PlayStepsFeedback();
+	
 private:
 	UPhysicalMaterial* GetFootMaterial() const;
-	void PlayStepsFeedback();
+
+
 };

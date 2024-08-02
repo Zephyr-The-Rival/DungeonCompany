@@ -137,8 +137,4 @@ void AWorldItem::TriggerLocalSecondaryAction_Implementation(APlayerCharacter* Us
 	LogWarning(TEXT("World Item parent local secondary action was called"));
 }
 
-void AWorldItem::PlayPickUpSound()
-{
-	if(IsValid(this->PickUpSound))
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(),this->PickUpSound, this->GetRootComponent()->GetComponentLocation());
-}
+

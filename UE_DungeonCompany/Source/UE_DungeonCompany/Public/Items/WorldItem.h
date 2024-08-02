@@ -88,5 +88,6 @@ protected:
 	USoundBase* PickUpSound;
 
 public:
-	void PlayPickUpSound();
+	USoundBase* GetPickupSound() const {return this->PickUpSound;}
+	
 };
