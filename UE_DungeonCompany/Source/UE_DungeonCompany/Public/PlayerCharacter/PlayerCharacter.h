@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "InputFunctionLibrary.h"
 #include "Interactable.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 #include "PlayerCharacter.generated.h"
 
 class AWorldItem;
@@ -535,5 +536,16 @@ public:
 
 	UFUNCTION(BlueprintPure,BlueprintCallable)
 	UPlayerHud* GetMyHud() const {return MyPlayerHud;}
+
 	
+	//Material Surface Inspection
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+		TMap<UPhysicalMaterial*, UNiagaraSystem*> SurfaceVFX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	TMap<UPhysicalMaterial*,USoundBase*> SurfaceSFX;
+
+private:
+	UPhysicalMaterial* GetFootMaterial() const;
+	void PlayEffect();
 };
