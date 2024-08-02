@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "InputFunctionLibrary.h"
 #include "Interactable.h"
+#include "Entities/FootstepSystemComponent.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "PlayerCharacter.generated.h"
 
@@ -24,6 +25,7 @@ class ABuyableItem;
 class UPlayerHud;
 class AItemSocket;
 class AWeapon;
+class UFootstepSystemComponent;
 
 struct  FWeaponInfo;
 
@@ -537,18 +539,6 @@ public:
 	UFUNCTION(BlueprintPure,BlueprintCallable)
 	UPlayerHud* GetMyHud() const {return MyPlayerHud;}
 
-	
-	//Material Surface Inspection
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-		float StepsLineTraceLength = 100.0f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-		TMap<UPhysicalMaterial*, UNiagaraSystem*> SurfaceVFX;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TMap<UPhysicalMaterial*,USoundBase*> SurfaceSFX;
-
-private:
-	UPhysicalMaterial* GetFootMaterial() const;
-	void PlayStepsFeedback();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UFootstepSystemComponent* FootstepSystemComponent;
 };

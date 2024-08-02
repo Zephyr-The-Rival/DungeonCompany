@@ -86,7 +86,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina;
-
+	
+	FootstepSystemComponent = CreateDefaultSubobject<UFootstepSystemComponent>(TEXT("FootstepSystem"));
 }
 
 // Called when the game starts or when spawned
@@ -1296,43 +1297,3 @@ void APlayerCharacter::CreatePlayerHud()
 	this->MyPlayerHud->AddToViewport();	
 }
 
-UPhysicalMaterial* APlayerCharacter::GetFootMaterial() const
-{
-	FHitResult HitResult;
-	FVector Start = GetActorLocation();
-	FVector End = Start - FVector(0,0,StepsLineTraceLength);
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
-	Params.bReturnPhysicalMaterial = true;
-	
-	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
-	DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 1, 0, 1);
-	
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
-	{
-		if (UPhysicalMaterial* PhysMaterial = HitResult.PhysMaterial.Get())
-		{
-			//GEngine-> AddOnScreenDebugMessage(-1,1,FColor::Silver,PhysMaterial->GetName());
-			return PhysMaterial;
-		}
-	}
-	return nullptr;
-}
-
-void APlayerCharacter::PlayStepsFeedback()
-{
-	if (const UPhysicalMaterial* PhysicalMaterial = GetFootMaterial())
-	{
-		if (UNiagaraSystem** FoundVfx = SurfaceVFX.Find(PhysicalMaterial); FoundVfx && *FoundVfx)
-		{
-			const FVector Location = GetActorLocation();
-			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),*FoundVfx,Location);
-		}
-
-		if (USoundBase** FoundSfx = SurfaceSFX.Find(PhysicalMaterial); FoundSfx && *FoundSfx)
-		{
-			const FVector Location = GetActorLocation(); 
-			UGameplayStatics::PlaySoundAtLocation(GetWorld(), *FoundSfx, Location);
-		}
-	}
-}
