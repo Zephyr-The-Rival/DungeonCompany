@@ -541,4 +541,13 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UFootstepSystemComponent* FootstepSystemComponent;
+private:
+	UFUNCTION(Server, Unreliable)
+	void Server_PlayPickUpSound(TSubclassOf<AWorldItem> itemClass, FVector location);
+	void Server_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location);
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlayPickUpSound(TSubclassOf<AWorldItem> itemClass, FVector location);
+	void Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location);
+	
 };
