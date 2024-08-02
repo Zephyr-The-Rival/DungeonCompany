@@ -429,6 +429,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	{
 		DestroyWorldItem(WorldItem);
 		WorldItem->PlayPickUpSound();
+		Server_PlayPickUpSound(WorldItem->GetClass(), WorldItem->GetRootComponent()->GetComponentLocation());
 		this->AddMoneyToWallet(Cast<AWorldCurrency>(WorldItem)->Value);
 		return;
 	}
@@ -438,6 +439,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 		if(!this->bHasBackPack)
 		{
 			WorldItem->PlayPickUpSound();
+			Server_PlayPickUpSound(WorldItem->GetClass(), WorldItem->GetRootComponent()->GetComponentLocation());
 			PickUpBackpack(Cast<ABackPack>(WorldItem));
 		}
 			
@@ -450,6 +452,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	if (IsValid(freeSlot))
 	{
 		WorldItem->PlayPickUpSound();//rn only local but maybe that even stays that way
+		Server_PlayPickUpSound(WorldItem->GetClass(), WorldItem->GetRootComponent()->GetComponentLocation());//rn only local but maybe that even stays that way
 		freeSlot->MyItem = WorldItem->GetMyData();
 		DestroyWorldItem(WorldItem);
 		
@@ -1297,3 +1300,25 @@ void APlayerCharacter::CreatePlayerHud()
 	this->MyPlayerHud->AddToViewport();	
 }
 
+void APlayerCharacter::Server_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location)
+{
+	Multicast_PlayPickUpSound(itemClass,location);
+}
+
+void APlayerCharacter::Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location)
+{	
+	USoundBase* sound =  itemClass.GetDefaultObject()->GetPickupSound();
+	if(IsValid(sound))
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(),sound, location);
+
+	
+	FString text= "playing at: "+ this->GetRootComponent()->GetComponentLocation().ToString();
+
+	if(HasAuthority())
+		text="server: "+text;
+	else
+		text="client: "+text;
+		
+	LogWarning(*text);
+	
+}
