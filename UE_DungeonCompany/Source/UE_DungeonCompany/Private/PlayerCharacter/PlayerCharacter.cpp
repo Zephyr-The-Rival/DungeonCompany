@@ -31,6 +31,7 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
+#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -425,6 +426,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	if (Cast<AWorldCurrency>(WorldItem))
 	{
 		DestroyWorldItem(WorldItem);
+		WorldItem->PlayPickUpSound();
 		this->AddMoneyToWallet(Cast<AWorldCurrency>(WorldItem)->Value);
 		return;
 	}
@@ -432,7 +434,11 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	if (Cast<ABackPack>(WorldItem))
 	{
 		if(!this->bHasBackPack)
+		{
+			WorldItem->PlayPickUpSound();
 			PickUpBackpack(Cast<ABackPack>(WorldItem));
+		}
+			
 		
 		return;
 	}
@@ -441,8 +447,10 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	if (IsValid(freeSlot))
 	{
+		WorldItem->PlayPickUpSound();//rn only local but maybe that even stays that way
 		freeSlot->MyItem = WorldItem->GetMyData();
 		DestroyWorldItem(WorldItem);
+		
 
 		if (freeSlot == GetCurrentlyHeldInventorySlot())
 			TakeOutItem();

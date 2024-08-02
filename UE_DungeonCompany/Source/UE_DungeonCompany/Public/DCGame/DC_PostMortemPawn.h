@@ -13,6 +13,9 @@ class ADC_Entity;
 class UVOIPTalker;
 class UInputMappingContext;
 class UInputAction;
+class USpectatorHud;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpectatingSwitch, ADC_PostMortemPawn*, PostMortemPawn);
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_PostMortemPawn : public APawn
@@ -86,4 +89,15 @@ protected:
 	void SpectatePreviousPlayer();
 	void SpectateNextPlayer();
 
+
+public:
+	void CreateSpectatorHud();
+
+	USpectatorHud* MySpectatorHud;
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<USpectatorHud> SpectatorHudClass;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnSpectatingSwitch OnSpectatingSwitch;
 };

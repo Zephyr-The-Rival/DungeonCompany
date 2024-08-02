@@ -26,13 +26,13 @@ void AHook::UpdateHookBehavior()
 
 	case HookState::InWorldInactive:
 		HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-		HookMesh->SetCollisionProfileName(FName("BlockAll"));
+		HookMesh->SetCollisionProfileName(FName("WorldItem"));
 		HookMesh->SetSimulatePhysics(true);
 		break;
 
 	case HookState::InWorldActive:
 		HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-		HookMesh->SetCollisionProfileName(FName("BlockAll"));
+		HookMesh->SetCollisionProfileName(FName("WorldItem"));
 		HookMesh->SetSimulatePhysics(true);
 		break;
 

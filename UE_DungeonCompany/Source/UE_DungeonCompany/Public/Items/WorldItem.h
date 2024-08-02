@@ -9,7 +9,7 @@
 
 class UItemData;
 class APlayerCharacter;
-
+class USoundBase;
 UCLASS()
 class UE_DUNGEONCOMPANY_API AWorldItem : public AActor, public IInteractable
 {
@@ -82,4 +82,11 @@ public:	//keeping itemdata
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	FString SerializedStringData;	
 
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* PickUpSound;
+
+public:
+	void PlayPickUpSound();
 };
