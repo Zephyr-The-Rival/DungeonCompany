@@ -127,7 +127,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 void APlayerCharacter::LocalTick(float DeltaTime)
 {
-	PlayEffect();
 	this->InteractorLineTrace();
 	StaminaTick(DeltaTime);
 }
@@ -1301,10 +1300,14 @@ UPhysicalMaterial* APlayerCharacter::GetFootMaterial() const
 {
 	FHitResult HitResult;
 	FVector Start = GetActorLocation();
-	FVector End = Start - FVector(0,0,500);
+	FVector End = Start - FVector(0,0,StepsLineTraceLength);
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 	Params.bReturnPhysicalMaterial = true;
+	
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
+	DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 1, 0, 1);
+	
 	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
 	{
 		if (UPhysicalMaterial* PhysMaterial = HitResult.PhysMaterial.Get())
@@ -1316,7 +1319,7 @@ UPhysicalMaterial* APlayerCharacter::GetFootMaterial() const
 	return nullptr;
 }
 
-void APlayerCharacter::PlayEffect()
+void APlayerCharacter::PlayStepsFeedback()
 {
 	if (const UPhysicalMaterial* PhysicalMaterial = GetFootMaterial())
 	{

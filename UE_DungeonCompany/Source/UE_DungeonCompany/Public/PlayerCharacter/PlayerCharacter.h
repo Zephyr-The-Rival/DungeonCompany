@@ -540,6 +540,9 @@ public:
 	
 	//Material Surface Inspection
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+		float StepsLineTraceLength = 100.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 		TMap<UPhysicalMaterial*, UNiagaraSystem*> SurfaceVFX;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
@@ -547,5 +550,5 @@ public:
 
 private:
 	UPhysicalMaterial* GetFootMaterial() const;
-	void PlayEffect();
+	void PlayStepsFeedback();
 };
