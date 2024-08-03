@@ -432,11 +432,11 @@ public:
 
 private:
 	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
-	UFUNCTION(Server,Unreliable)
+	UFUNCTION(Server,Reliable)
 	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
 	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
 
-	UFUNCTION(Server,Unreliable)
+	UFUNCTION(Server,Reliable)
 	void Server_DropBackpack(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 	void Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 
@@ -554,5 +554,6 @@ protected:
 	
 	void RespawnAllPlayers();
 
+	void dropAllItems();
 	
 };
