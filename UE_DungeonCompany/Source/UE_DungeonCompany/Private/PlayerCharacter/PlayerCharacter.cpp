@@ -1144,7 +1144,7 @@ void APlayerCharacter::OnDeath_Implementation()
 
 	if (IsLocallyControlled())
 	{
-		this->GetMyHud()->RemoveFromParent();
+		this->MyPlayerHud->RemoveFromParent();
 		DeactivateCharacterInputMappings();
 		dropAllItems();
 		if(IsValid(CurrentlyHeldWorldItem))
@@ -1152,7 +1152,6 @@ void APlayerCharacter::OnDeath_Implementation()
 		
 	}
 	
-		
 	
 	if (!HasAuthority())
 		return;
