@@ -1146,12 +1146,18 @@ void APlayerCharacter::OnDeath_Implementation()
 	{
 		this->GetMyHud()->RemoveFromParent();
 		DeactivateCharacterInputMappings();
+		dropAllItems();
+		if(IsValid(CurrentlyHeldWorldItem))
+			DestroyWorldItem(CurrentlyHeldWorldItem);
+		
 	}
 	
 		
 	
 	if (!HasAuthority())
 		return;
+
+	
 
 	
 	//check if all players are dead
@@ -1221,6 +1227,7 @@ void APlayerCharacter::AttackStart()
 		StopSprint();
 	
 }
+
 
 void APlayerCharacter::Server_AttackStart_Implementation()
 {
@@ -1350,5 +1357,29 @@ void APlayerCharacter::RespawnAllPlayers()
 	for (TActorIterator<ADC_PC> It(GetWorld()); It; ++It)
 	{
 		It->Server_RequestRespawn();
+	}
+}
+
+void APlayerCharacter::dropAllItems()
+{
+	TArray<UInventorySlot*> AllSlots;
+	AllSlots = this->Inventory->GetSlots();
+	AllSlots.Append(this->Backpack->GetSlots());
+	AllSlots.Add(this->HandSlotA);
+	AllSlots.Add(this->HandSlotB);
+	
+
+	for(UInventorySlot* IS: AllSlots)
+	{
+		if(IsValid(IS->MyItem))
+		{
+			UItemData* data= IS->MyItem;
+			SpawnDroppedWorldItem(data->MyWorldItemClass, data->SerializeMyData(), false, FVector::Zero());	
+		}
+	}
+	if(bHasBackPack)
+	{
+		//backpack is spawning without items in it. Its items drop like the others
+		Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), TArray<FString>());
 	}
 }
