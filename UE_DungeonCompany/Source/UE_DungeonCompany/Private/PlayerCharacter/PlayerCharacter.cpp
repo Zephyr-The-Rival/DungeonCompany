@@ -22,6 +22,9 @@
 #include "Items/BuyableItem.h"
 #include "Items/Torch_Data.h"
 #include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
+#include "EngineUtils.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -1145,9 +1148,30 @@ void APlayerCharacter::OnDeath_Implementation()
 		DeactivateCharacterInputMappings();
 	}
 	
+		
+	
 	if (!HasAuthority())
 		return;
+
 	
+	//check if all players are dead
+	//assumes authority
+	bool bAllDead=true;
+	for (TActorIterator<APlayerCharacter> It(GetWorld()); It; ++It)
+	{
+		if(!It->IsDead())
+		{
+			bAllDead=false;
+			break;
+		}
+	}
+	if(bAllDead)
+	{
+		RespawnAllPlayers();
+		return;
+	}
+	
+		
 	GetWorld()->GetAuthGameMode<ADC_GM>()->StartSpectating(GetController());
 
 }
@@ -1318,4 +1342,13 @@ void APlayerCharacter::Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWor
 		
 	LogWarning(*text);
 	
+}
+
+void APlayerCharacter::RespawnAllPlayers()
+{
+	//assumes authority
+	for (TActorIterator<ADC_PC> It(GetWorld()); It; ++It)
+	{
+		It->Server_RequestRespawn();
+	}
 }
