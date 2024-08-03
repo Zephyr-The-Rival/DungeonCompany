@@ -549,5 +549,10 @@ private:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_PlayPickUpSound(TSubclassOf<AWorldItem> itemClass, FVector location);
 	void Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location);
+
+protected:
+	
+	void RespawnAllPlayers();
+
 	
 };
