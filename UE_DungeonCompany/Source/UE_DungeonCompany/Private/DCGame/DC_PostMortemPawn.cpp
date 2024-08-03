@@ -248,3 +248,10 @@ void ADC_PostMortemPawn::CreateSpectatorHud()
 	
 }
 
+void ADC_PostMortemPawn::Destroyed()
+{
+	Super::Destroyed();
+	if(IsValid(MySpectatorHud))
+		MySpectatorHud->RemoveFromParent();
+}
+
