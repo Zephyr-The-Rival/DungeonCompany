@@ -588,6 +588,5 @@ protected:
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SpawnSoundAtLocation(USoundBase* LocalSound, FVector Location);
-
 	
 };
