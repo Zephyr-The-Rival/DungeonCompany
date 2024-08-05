@@ -22,6 +22,9 @@
 #include "Items/BuyableItem.h"
 #include "Items/Torch_Data.h"
 #include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
+#include "EngineUtils.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -31,6 +34,9 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -83,7 +89,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina;
-
+	
+	FootstepSystemComponent = CreateDefaultSubobject<UFootstepSystemComponent>(TEXT("FootstepSystem"));
 }
 
 // Called when the game starts or when spawned
@@ -120,13 +127,12 @@ void APlayerCharacter::Tick(float DeltaTime)
 	
 	if(IsLocallyControlled())
 		LocalTick(DeltaTime);
-
 }
 
 void APlayerCharacter::LocalTick(float DeltaTime)
 {
 	this->InteractorLineTrace();
-	StaminaTick(DeltaTime);
+	StaminaTick(DeltaTime);		
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -425,6 +431,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	if (Cast<AWorldCurrency>(WorldItem))
 	{
 		DestroyWorldItem(WorldItem);
+		Server_PlayPickUpSound(WorldItem->GetClass(), WorldItem->GetRootComponent()->GetComponentLocation());
 		this->AddMoneyToWallet(Cast<AWorldCurrency>(WorldItem)->Value);
 		return;
 	}
@@ -432,7 +439,11 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	if (Cast<ABackPack>(WorldItem))
 	{
 		if(!this->bHasBackPack)
+		{
+			Server_PlayPickUpSound(WorldItem->GetClass(), WorldItem->GetRootComponent()->GetComponentLocation());
 			PickUpBackpack(Cast<ABackPack>(WorldItem));
+		}
+			
 		
 		return;
 	}
@@ -441,8 +452,10 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	if (IsValid(freeSlot))
 	{
+		Server_PlayPickUpSound(WorldItem->GetClass(), WorldItem->GetRootComponent()->GetComponentLocation());//rn only local but maybe that even stays that way
 		freeSlot->MyItem = WorldItem->GetMyData();
 		DestroyWorldItem(WorldItem);
+		
 
 		if (freeSlot == GetCurrentlyHeldInventorySlot())
 			TakeOutItem();
@@ -1131,13 +1144,39 @@ void APlayerCharacter::OnDeath_Implementation()
 
 	if (IsLocallyControlled())
 	{
-		this->GetMyHud()->RemoveFromParent();
+		this->MyPlayerHud->RemoveFromParent();
 		DeactivateCharacterInputMappings();
+		dropAllItems();
+		if(IsValid(CurrentlyHeldWorldItem))
+			DestroyWorldItem(CurrentlyHeldWorldItem);
+		
 	}
+	
 	
 	if (!HasAuthority())
 		return;
+
 	
+
+	
+	//check if all players are dead
+	//assumes authority
+	bool bAllDead=true;
+	for (TActorIterator<APlayerCharacter> It(GetWorld()); It; ++It)
+	{
+		if(!It->IsDead())
+		{
+			bAllDead=false;
+			break;
+		}
+	}
+	if(bAllDead)
+	{
+		RespawnAllPlayers();
+		return;
+	}
+	
+		
 	GetWorld()->GetAuthGameMode<ADC_GM>()->StartSpectating(GetController());
 
 }
@@ -1169,14 +1208,15 @@ void APlayerCharacter::StartAttacking()
 
 void APlayerCharacter::AttackStart()
 {
+	if(AttackBlend!=0)//so a new attack only stars when the old one is already over
+		return;
 	//different attack when sprinting?
 	//attack needs to cost stamina
+	LogWarning(TEXT("Attack Start"));
 	this->bPrimaryActionAllowed = false;
 	this->AttackBlend = 1;
 	this->bSwitchHandAllowed = false;
-	//this->bMoveAllowed = false;
-	//this->bLookAllowed = false;
-
+	
 	this->bSprintAllowed = false;
 
 	OverridenWalkingSpeed = WalkingSpeed;
@@ -1187,6 +1227,7 @@ void APlayerCharacter::AttackStart()
 		StopSprint();
 	
 }
+
 
 void APlayerCharacter::Server_AttackStart_Implementation()
 {
@@ -1242,6 +1283,7 @@ void APlayerCharacter::Multicast_EndAttack_Implementation()
 	//this->bMoveAllowed = true;
 	//this->bLookAllowed = true;
 	this->bPrimaryActionAllowed = true;
+	LogWarning(TEXT("Attack END"));
 	//allow sprint
 	this->bSprintAllowed = true;
 	WalkingSpeed = OverridenWalkingSpeed;
@@ -1285,4 +1327,60 @@ void APlayerCharacter::CreatePlayerHud()
 
 	this->MyPlayerHud = CreateWidget<UPlayerHud>(GetWorld(),PlayerHudClass);
 	this->MyPlayerHud->AddToViewport();	
+}
+
+void APlayerCharacter::Server_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location)
+{
+	Multicast_PlayPickUpSound(itemClass,location);
+}
+
+void APlayerCharacter::Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location)
+{	
+	USoundBase* sound =  itemClass.GetDefaultObject()->GetPickupSound();
+	if(IsValid(sound))
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(),sound, location);
+
+	
+	FString text= "playing at: "+ this->GetRootComponent()->GetComponentLocation().ToString();
+
+	if(HasAuthority())
+		text="server: "+text;
+	else
+		text="client: "+text;
+		
+	LogWarning(*text);
+	
+}
+
+void APlayerCharacter::RespawnAllPlayers()
+{
+	//assumes authority
+	for (TActorIterator<ADC_PC> It(GetWorld()); It; ++It)
+	{
+		It->Server_RequestRespawn();
+	}
+}
+
+void APlayerCharacter::dropAllItems()
+{
+	TArray<UInventorySlot*> AllSlots;
+	AllSlots = this->Inventory->GetSlots();
+	AllSlots.Append(this->Backpack->GetSlots());
+	AllSlots.Add(this->HandSlotA);
+	AllSlots.Add(this->HandSlotB);
+	
+
+	for(UInventorySlot* IS: AllSlots)
+	{
+		if(IsValid(IS->MyItem))
+		{
+			UItemData* data= IS->MyItem;
+			SpawnDroppedWorldItem(data->MyWorldItemClass, data->SerializeMyData(), false, FVector::Zero());	
+		}
+	}
+	if(bHasBackPack)
+	{
+		//backpack is spawning without items in it. Its items drop like the others
+		Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), TArray<FString>());
+	}
 }

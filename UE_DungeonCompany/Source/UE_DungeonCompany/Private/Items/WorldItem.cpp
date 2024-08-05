@@ -6,6 +6,7 @@
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "UI/PlayerHud/PlayerHud.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Inventory/InventorySlot.h"
 
@@ -16,6 +17,10 @@ AWorldItem::AWorldItem()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bAlwaysRelevant = true;
+
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> basicSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
+	this->PickUpSound = basicSound.Object;
 	
 }
 
@@ -131,3 +136,5 @@ void AWorldItem::TriggerLocalSecondaryAction_Implementation(APlayerCharacter* Us
 {
 	LogWarning(TEXT("World Item parent local secondary action was called"));
 }
+
+
