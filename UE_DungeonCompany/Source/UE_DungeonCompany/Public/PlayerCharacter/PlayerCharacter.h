@@ -432,11 +432,11 @@ public:
 
 private:
 	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
-	UFUNCTION(Server,Unreliable)
+	UFUNCTION(Server,Reliable)
 	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
 	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
 
-	UFUNCTION(Server,Unreliable)
+	UFUNCTION(Server,Reliable)
 	void Server_DropBackpack(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 	void Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 
@@ -549,5 +549,11 @@ private:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_PlayPickUpSound(TSubclassOf<AWorldItem> itemClass, FVector location);
 	void Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location);
+
+protected:
+	
+	void RespawnAllPlayers();
+
+	void dropAllItems();
 	
 };

@@ -22,6 +22,9 @@
 #include "Items/BuyableItem.h"
 #include "Items/Torch_Data.h"
 #include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
+#include "EngineUtils.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -1141,13 +1144,39 @@ void APlayerCharacter::OnDeath_Implementation()
 
 	if (IsLocallyControlled())
 	{
-		this->GetMyHud()->RemoveFromParent();
+		this->MyPlayerHud->RemoveFromParent();
 		DeactivateCharacterInputMappings();
+		dropAllItems();
+		if(IsValid(CurrentlyHeldWorldItem))
+			DestroyWorldItem(CurrentlyHeldWorldItem);
+		
 	}
+	
 	
 	if (!HasAuthority())
 		return;
+
 	
+
+	
+	//check if all players are dead
+	//assumes authority
+	bool bAllDead=true;
+	for (TActorIterator<APlayerCharacter> It(GetWorld()); It; ++It)
+	{
+		if(!It->IsDead())
+		{
+			bAllDead=false;
+			break;
+		}
+	}
+	if(bAllDead)
+	{
+		RespawnAllPlayers();
+		return;
+	}
+	
+		
 	GetWorld()->GetAuthGameMode<ADC_GM>()->StartSpectating(GetController());
 
 }
@@ -1197,6 +1226,7 @@ void APlayerCharacter::AttackStart()
 		StopSprint();
 	
 }
+
 
 void APlayerCharacter::Server_AttackStart_Implementation()
 {
@@ -1318,4 +1348,37 @@ void APlayerCharacter::Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWor
 		
 	LogWarning(*text);
 	
+}
+
+void APlayerCharacter::RespawnAllPlayers()
+{
+	//assumes authority
+	for (TActorIterator<ADC_PC> It(GetWorld()); It; ++It)
+	{
+		It->Server_RequestRespawn();
+	}
+}
+
+void APlayerCharacter::dropAllItems()
+{
+	TArray<UInventorySlot*> AllSlots;
+	AllSlots = this->Inventory->GetSlots();
+	AllSlots.Append(this->Backpack->GetSlots());
+	AllSlots.Add(this->HandSlotA);
+	AllSlots.Add(this->HandSlotB);
+	
+
+	for(UInventorySlot* IS: AllSlots)
+	{
+		if(IsValid(IS->MyItem))
+		{
+			UItemData* data= IS->MyItem;
+			SpawnDroppedWorldItem(data->MyWorldItemClass, data->SerializeMyData(), false, FVector::Zero());	
+		}
+	}
+	if(bHasBackPack)
+	{
+		//backpack is spawning without items in it. Its items drop like the others
+		Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), TArray<FString>());
+	}
 }

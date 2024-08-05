@@ -100,4 +100,8 @@ protected:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnSpectatingSwitch OnSpectatingSwitch;
+
+protected:
+
+	virtual void Destroyed() override;
 };
