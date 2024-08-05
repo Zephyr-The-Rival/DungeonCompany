@@ -133,24 +133,24 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 
 	FVector climbVector = ClimbingObject->GetUpVectorAtDistance(ClimbedDistance);
 
-	if (Acceleration.Z < 0)
+	if (Acceleration.Z < 0 && (ClimbingObject->GetLowerEndLocation() - oldLocation).Length() < 150.f)
 	{
-		//FHitResult hit;
-		//
-		//FVector start = oldLocation;
-		//FVector end = start - CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() - climbVector * ClimbingStopHeight;
-		//
-		//GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
-		//
-		//if (hit.bBlockingHit)
-		//{
-		//	bWantsToClimb = false;
-		//
-		//	SetMovementMode(MOVE_Falling);
-		//	StartNewPhysics(DeltaTime, Iterations);
-		//
-		//	return;
-		//}
+		FHitResult hit;
+		
+		FVector start = oldLocation;
+		FVector end = start - CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() - climbVector * ClimbingStopHeight;
+		
+		GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
+		
+		if (hit.bBlockingHit)
+		{
+			bWantsToClimb = false;
+		
+			SetMovementMode(MOVE_Falling);
+			StartNewPhysics(DeltaTime, Iterations);
+		
+			return;
+		}
 	}
 
 	FVector planeNormal = FVector::CrossProduct(climbVector, UpdatedComponent->GetRightVector());
@@ -248,6 +248,7 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 
 			bPrevClimbed = true;
 			CharacterOwner->bUseControllerRotationYaw = false;
+			//Cast<APlayerCharacter>(CharacterOwner)->FirstPersonCamera->bUsePawnControlRotation = true;
 
 			FRotator newRotation = UpdatedComponent->GetComponentRotation();
 			newRotation.Yaw = ClimbingObject->GetClimbRotationYaw(GetOwner());
@@ -282,6 +283,10 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 	{
 		bWantsToClimb = false;
 		bPrevClimbed = false;
+
+		APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(CharacterOwner); 
+		//playerCharacter->FirstPersonCamera->bUsePawnControlRotation = false;
+		//playerCharacter->FirstPersonCamera->SetWorldRotation(playerCharacter->GetFirstPersonMesh()->GetComponentRotation());
 
 		SetMovementMode(MOVE_Falling);
 

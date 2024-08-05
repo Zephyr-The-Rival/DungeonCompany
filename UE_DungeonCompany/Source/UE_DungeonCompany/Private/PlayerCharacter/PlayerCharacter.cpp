@@ -132,7 +132,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 void APlayerCharacter::LocalTick(float DeltaTime)
 {
 	this->InteractorLineTrace();
-	StaminaTick(DeltaTime);
+	StaminaTick(DeltaTime);		
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -1208,14 +1208,15 @@ void APlayerCharacter::StartAttacking()
 
 void APlayerCharacter::AttackStart()
 {
+	if(AttackBlend!=0)//so a new attack only stars when the old one is already over
+		return;
 	//different attack when sprinting?
 	//attack needs to cost stamina
+	LogWarning(TEXT("Attack Start"));
 	this->bPrimaryActionAllowed = false;
 	this->AttackBlend = 1;
 	this->bSwitchHandAllowed = false;
-	//this->bMoveAllowed = false;
-	//this->bLookAllowed = false;
-
+	
 	this->bSprintAllowed = false;
 
 	OverridenWalkingSpeed = WalkingSpeed;
@@ -1282,6 +1283,7 @@ void APlayerCharacter::Multicast_EndAttack_Implementation()
 	//this->bMoveAllowed = true;
 	//this->bLookAllowed = true;
 	this->bPrimaryActionAllowed = true;
+	LogWarning(TEXT("Attack END"));
 	//allow sprint
 	this->bSprintAllowed = true;
 	WalkingSpeed = OverridenWalkingSpeed;

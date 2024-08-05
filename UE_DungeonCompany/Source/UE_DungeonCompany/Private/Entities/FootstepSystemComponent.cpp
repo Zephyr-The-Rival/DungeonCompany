@@ -3,6 +3,7 @@
 
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "PlayerCharacter/PlayerCharacter.h"
 
 
 UFootstepSystemComponent::UFootstepSystemComponent()
@@ -59,6 +60,11 @@ void UFootstepSystemComponent::PlayStepsFeedback()
 		{
 			const FVector Location = GetOwner()->GetActorLocation(); 
 			UGameplayStatics::PlaySoundAtLocation(GetWorld(), *FoundSfx, Location);
+			
+			if(APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(GetOwner()))
+			{
+				playerCharacter->ReportNoise((*FoundSfx)->GetVolumeMultiplier());
+			}
 		}
 	}
 }
