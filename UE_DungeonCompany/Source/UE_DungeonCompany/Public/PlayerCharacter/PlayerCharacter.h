@@ -7,6 +7,8 @@
 #include "Camera/CameraComponent.h"
 #include "InputFunctionLibrary.h"
 #include "Interactable.h"
+#include "Entities/FootstepSystemComponent.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 #include "PlayerCharacter.generated.h"
 
 class AWorldItem;
@@ -23,6 +25,7 @@ class ABuyableItem;
 class UPlayerHud;
 class AItemSocket;
 class AWeapon;
+class UFootstepSystemComponent;
 
 struct  FWeaponInfo;
 
@@ -429,11 +432,11 @@ public:
 
 private:
 	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
-	UFUNCTION(Server,Unreliable)
+	UFUNCTION(Server,Reliable)
 	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
 	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector);
 
-	UFUNCTION(Server,Unreliable)
+	UFUNCTION(Server,Reliable)
 	void Server_DropBackpack(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 	void Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas);
 
@@ -535,5 +538,22 @@ public:
 
 	UFUNCTION(BlueprintPure,BlueprintCallable)
 	UPlayerHud* GetMyHud() const {return MyPlayerHud;}
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UFootstepSystemComponent* FootstepSystemComponent;
+private:
+	UFUNCTION(Server, Unreliable)
+	void Server_PlayPickUpSound(TSubclassOf<AWorldItem> itemClass, FVector location);
+	void Server_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location);
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlayPickUpSound(TSubclassOf<AWorldItem> itemClass, FVector location);
+	void Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location);
+
+protected:
+	
+	void RespawnAllPlayers();
+
+	void dropAllItems();
 	
 };

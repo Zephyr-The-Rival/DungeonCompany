@@ -12,6 +12,7 @@
 #include "Components/SphereComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SplineComponent.h"
+#include "UI/PlayerHud/PlayerHud.h"
 
 ARope::ARope()
 {
@@ -247,7 +248,7 @@ void ARope::FreezeAndReplicate()
 
 void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransform>& RopeTransforms)
 {
-	FixedRopeMesh->SetSkeletalMesh(RopeMesh->GetSkeletalMeshAsset(), false);
+	FixedRopeMesh->SetSkinnedAssetAndUpdate(RopeMesh->GetSkeletalMeshAsset(), false);
 
 	FixedRopeMesh->GetBoneNames(BoneNames);
 
@@ -336,4 +337,9 @@ double ARope::GetClimbRotationYaw(AActor* ClimbingActor) const
 void ARope::CalculateLowerEndLocation() const
 {
 	LowerEnd = SplineComponent->GetLocationAtDistanceAlongSpline(SplineComponent->GetSplineLength(), ESplineCoordinateSpace::World);
+}
+
+void ARope::OnHovered(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Climb");
 }
