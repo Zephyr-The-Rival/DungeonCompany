@@ -10,11 +10,15 @@
 #include "Net/UnrealNetwork.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 ADC_Entity::ADC_Entity()
 {
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> basicBloodeffect(TEXT("/Game/_DungeonCompanyContent/Assets/VFX/BaseElement/Blood/NS_Blood"));
 	this->bloodEffect= basicBloodeffect.Object;
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> basicTakeDamageSound(TEXT("/Game/_DungeonCompanyContent/Audio/TakeDamageSounds/PlayerHit.PlayerHit"));
+	this->TakeDamageSound=basicTakeDamageSound.Object;
 }
 
 ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
@@ -106,4 +110,12 @@ void ADC_Entity::RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuf
 	if (ExistingDeBuff)
 		ExistingDeBuff->Destroy();
 
+}
+
+void ADC_Entity::SpawnTakeDamageSound_Implementation()
+{
+	if (IsValid(this->TakeDamageSound))
+	{
+		UGameplayStatics::SpawnSoundAtLocation(this, TakeDamageSound, GetActorLocation());
+	}
 }
