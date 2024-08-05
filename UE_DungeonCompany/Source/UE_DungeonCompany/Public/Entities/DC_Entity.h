@@ -64,4 +64,12 @@ public:
 	UBuffDebuffBase* AddBuffOrDebuff(TSubclassOf<UBuffDebuffBase> BuffDebuffClass, float ActiveTime = 0.f);
 	void RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass);
 
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* TakeDamageSound;
+public:
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void SpawnTakeDamageSound();
 };
