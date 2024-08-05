@@ -57,7 +57,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonCamera->SetupAttachment(FirstPersonMesh,TEXT("HEAD"));
 
 	FirstPersonCamera->bUsePawnControlRotation = false;
-	
+
 	DropTransform = CreateDefaultSubobject<USceneComponent>(TEXT("DropTransform"));
 	DropTransform->SetupAttachment(FirstPersonCamera);
 	DropTransform->SetRelativeLocation(FVector(150, 0, -20));
@@ -75,7 +75,8 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
 
-	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
+	static ConstructorHelpers::FObjectFinder<USoundAttenuation> voiceSA(
+		TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	VoiceSA = voiceSA.Object;
 
 	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
@@ -89,7 +90,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina;
-	
+
 	FootstepSystemComponent = CreateDefaultSubobject<UFootstepSystemComponent>(TEXT("FootstepSystem"));
 }
 
@@ -99,18 +100,18 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	this->HP = this->MaxHP;
-	this->Stamina = this->MaxStamina;//doesnt seem to take the blueprint changes during construction
-	
+	this->Stamina = this->MaxStamina; //doesnt seem to take the blueprint changes during construction
+
 	this->HandSlotA = NewObject<UInventorySlot>();
 	this->HandSlotB = NewObject<UInventorySlot>();
 
 	VOIPTalker->Settings.AttenuationSettings = VoiceSA;
 	VOIPTalker->Settings.ComponentToAttachTo = FirstPersonCamera;
 
-	RestDelegate = FTimerDelegate::CreateLambda([this](){
-	bResting = true; 
+	RestDelegate = FTimerDelegate::CreateLambda([this]()
+	{
+		bResting = true;
 	});
-
 }
 
 // Called every frame
@@ -122,17 +123,17 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	CheckForFallDamage();
 
-	if(voiceLevel > 0.f)
+	if (voiceLevel > 0.f)
 		ReportNoise(voiceLevel);
-	
-	if(IsLocallyControlled())
+
+	if (IsLocallyControlled())
 		LocalTick(DeltaTime);
 }
 
 void APlayerCharacter::LocalTick(float DeltaTime)
 {
 	this->InteractorLineTrace();
-	StaminaTick(DeltaTime);		
+	StaminaTick(DeltaTime);
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -144,7 +145,7 @@ void APlayerCharacter::StaminaTick(float DeltaTime)
 		return;
 
 	if (GetCharacterMovement()->Velocity.Length() > WalkingSpeed)
-			SubstractStamina(SprintStaminaDrainPerSecond * DeltaTime);
+		SubstractStamina(SprintStaminaDrainPerSecond * DeltaTime);
 
 	if (Stamina < 0.f)
 		ToggleSprint();
@@ -174,7 +175,6 @@ void APlayerCharacter::Restart()
 
 	if (!MyPlayerHud)
 		CreatePlayerHud();
-
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -183,7 +183,6 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
 }
-
 
 
 UEnhancedInputLocalPlayerSubsystem* APlayerCharacter::GetInputLocalPlayer() const
@@ -205,7 +204,7 @@ void APlayerCharacter::ActivateCharacterInputMappings()
 {
 	auto inputLocalPlayer = GetInputLocalPlayer();
 
-	if(!inputLocalPlayer)
+	if (!inputLocalPlayer)
 		return;
 
 	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
@@ -253,7 +252,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 
-	if(!EIC)
+	if (!EIC)
 		return;
 
 	EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
@@ -269,30 +268,30 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
 
 	EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
-	EIC->BindAction(SwitchHandAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchHand);	
+	EIC->BindAction(SwitchHandAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchHand);
 
 	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryItemAction);
 
-	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryHoldItemAction);
+	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Started, this,
+	                &APlayerCharacter::TriggerPrimaryHoldItemAction);
 	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndPrimaryHoldItemAction);
-	
+
 	EIC->BindAction(ItemSecondaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerSecondaryItemAction);
-	
-	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
-	EIC->BindAction(ThrowItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::ThrowItemPressed);
+
+	EIC->BindAction(DropItemAction, ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
+	EIC->BindAction(ThrowItemAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ThrowItemPressed);
 
 	EIC->BindAction(ToggleInventoryInvAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
 	EIC->BindAction(NavigateInventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::NavigateInventory);
 	EIC->BindAction(EquipItemInvAction, ETriggerEvent::Started, this, &APlayerCharacter::EquipItem);
 	EIC->BindAction(DropItemInvAction, ETriggerEvent::Started, this, &APlayerCharacter::DropItemInvPressed);
-	
 }
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
 	if (!bMoveAllowed)
 		return;
-	
+
 	FVector2D localMoveVector = Value.Get<FVector2D>();
 
 	FVector worldMoveVector;
@@ -303,7 +302,6 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 		StopSprint();
 
 	AddMovementInput(worldMoveVector);
-	
 }
 
 void APlayerCharacter::NoMove()
@@ -329,7 +327,7 @@ void APlayerCharacter::NoLook()
 {
 	auto pc = Cast<ADC_PC>(Controller);
 
-	if(!pc)
+	if (!pc)
 		return;
 
 	pc->SetLastLookVectorLength(0.f);
@@ -349,13 +347,12 @@ void APlayerCharacter::InteractorLineTrace()
 		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
 		if (i && i->IsInteractable())
 		{
-			if (CurrentInteractable != i)//if a new intractable is being looked at
+			if (CurrentInteractable != i) //if a new intractable is being looked at
 			{
 				this->CurrentInteractable = i;
 				this->CurrentInteractable->OnHovered(this);
-				
-				MyPlayerHud->ShowCrosshair(nullptr);
 
+				MyPlayerHud->ShowCrosshair(nullptr);
 			}
 		}
 		else
@@ -366,10 +363,7 @@ void APlayerCharacter::InteractorLineTrace()
 				this->CurrentInteractable->OnUnHovered(this);
 				this->CurrentInteractable = NULL;
 			}
-
 		}
-		
-
 	}
 	else
 	{
@@ -379,7 +373,6 @@ void APlayerCharacter::InteractorLineTrace()
 			this->CurrentInteractable->OnUnHovered(this);
 			this->CurrentInteractable = NULL;
 		}
-
 	}
 }
 
@@ -399,7 +392,7 @@ void APlayerCharacter::Server_DestroyWorldItem_Implementation(AWorldItem* ItemTo
 
 void APlayerCharacter::Interact()
 {
-	if(!CurrentInteractable || !CurrentInteractable->IsInteractable())
+	if (!CurrentInteractable || !CurrentInteractable->IsInteractable())
 		return;
 
 	if (CurrentInteractable->IsInteractionRunningOnServer())
@@ -422,12 +415,11 @@ void APlayerCharacter::ResetInteractPrompt()
 
 void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
 {
-	if(!IsValid(Interactable))
+	if (!IsValid(Interactable))
 		return;
 
 	if (IInteractable* interactableInterface = Cast<IInteractable>(Interactable))
 		interactableInterface->AuthorityInteract(this);
-	
 }
 
 void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
@@ -442,13 +434,13 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	if (Cast<ABackPack>(WorldItem))
 	{
-		if(!this->bHasBackPack)
+		if (!this->bHasBackPack)
 		{
 			Server_PlayPickUpSound(WorldItem->GetClass(), WorldItem->GetRootComponent()->GetComponentLocation());
 			PickUpBackpack(Cast<ABackPack>(WorldItem));
 		}
-			
-		
+
+
 		return;
 	}
 
@@ -456,14 +448,15 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 	if (IsValid(freeSlot))
 	{
-		Server_PlayPickUpSound(WorldItem->GetClass(), WorldItem->GetRootComponent()->GetComponentLocation());//rn only local but maybe that even stays that way
+		Server_PlayPickUpSound(WorldItem->GetClass(), WorldItem->GetRootComponent()->GetComponentLocation());
+		//rn only local but maybe that even stays that way
 		freeSlot->MyItem = WorldItem->GetMyData();
 		DestroyWorldItem(WorldItem);
-		
+
 
 		if (freeSlot == GetCurrentlyHeldInventorySlot())
 			TakeOutItem();
-	}	
+	}
 }
 
 void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
@@ -493,16 +486,18 @@ void APlayerCharacter::Jump()
 	if (GetCharacterMovement()->MovementMode != MOVE_Walking)
 	{
 		Super::Jump();
-		Server_SpawnJumpSound();
+		if (!GetMovementComponent()->IsFalling())
+			Server_SpawnJumpSound();
 		return;
 	}
-	
-	if(Stamina <= 0.f)
+
+	if (Stamina <= 0.f)
 		return;
 
 	SubstractStamina(JumpStaminaDrain);
 	Super::Jump();
-	Server_SpawnJumpSound();
+	if (!GetMovementComponent()->IsFalling())
+		Server_SpawnJumpSound();
 }
 
 void APlayerCharacter::CrouchActionStarted()
@@ -515,7 +510,6 @@ void APlayerCharacter::CrouchActionStarted()
 	}
 
 	Crouch(true);
-
 }
 
 void APlayerCharacter::CrouchActionCompleted()
@@ -525,7 +519,6 @@ void APlayerCharacter::CrouchActionCompleted()
 		return;
 
 	UnCrouch(true);
-
 }
 
 void APlayerCharacter::ToggleCrouch()
@@ -547,7 +540,6 @@ void APlayerCharacter::SprintActionStarted()
 	}
 
 	StartSprint();
-		
 }
 
 void APlayerCharacter::SprintActionCompleted()
@@ -567,7 +559,6 @@ void APlayerCharacter::ToggleSprint()
 	}
 
 	StartSprint();
-	
 }
 
 void APlayerCharacter::StartSprint()
@@ -575,12 +566,12 @@ void APlayerCharacter::StartSprint()
 	if (!this->bSprintAllowed || bHasBackPack)
 		return;
 
-	if(Stamina <= 0.f)
+	if (Stamina <= 0.f)
 		return;
 
 	GetCharacterMovement<UDC_CMC>()->StartSprint();
 
-	if(!HasAuthority())
+	if (!HasAuthority())
 		Server_StartSprint();
 
 	Server_StartSprint_Implementation();
@@ -639,7 +630,6 @@ void APlayerCharacter::AddStamina(float AddingStamina)
 		Stamina = MaxStamina;
 		bResting = false;
 	}
-
 }
 
 void APlayerCharacter::SubstractStamina(float SubStamina)
@@ -660,15 +650,13 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 
 	Stamina = 0.f;
 
-	if(bSprinting)
+	if (bSprinting)
 		ToggleSprint();
-
 }
 
 bool APlayerCharacter::CanJumpInternal_Implementation() const
 {
 	return JumpIsAllowedInternal();
-
 }
 
 void APlayerCharacter::SetVoiceEffect(USoundEffectSourcePresetChain* SoundEffect)
@@ -680,19 +668,20 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
 
-	if(NewPlayerState)
+	if (NewPlayerState)
 		VOIPTalker->RegisterWithPlayerState(NewPlayerState);
-
 }
 
 
 void APlayerCharacter::AddMoneyToWallet_Implementation(int32 Amount)
 {
-	ASharedStatsManager* wallet= Cast<ASharedStatsManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
+	ASharedStatsManager* wallet = Cast<ASharedStatsManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
 	wallet->Money += Amount;
 }
 
-void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, const  TArray<FString>& SerializedItemDatas)
+void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items,
+                                                          const TArray<FString>& SerializedItemDatas)
 {
 	FTransform SpawnTransform = this->DropTransform->GetComponentTransform();
 	ABackPack* a = GetWorld()->SpawnActorDeferred<ABackPack>(BackpackActor, SpawnTransform);
@@ -711,9 +700,8 @@ void APlayerCharacter::Cough()
 	if (HasAuthority())
 		ReportNoise(1.f);
 
-	if(CoughSound)
+	if (CoughSound)
 		UGameplayStatics::SpawnSoundAtLocation(this, CoughSound, GetActorLocation());
-
 }
 
 void APlayerCharacter::ToggleInventory()
@@ -729,12 +717,11 @@ void APlayerCharacter::ToggleInventory()
 	if (!inputLocalPlayer)
 		return;
 
-	if(bInventoryIsOn)
+	if (bInventoryIsOn)
 		inputLocalPlayer->AddMappingContext(InventoryInputMapping, 1);
 	else
 		inputLocalPlayer->RemoveMappingContext(InventoryInputMapping);
 }
-
 
 
 UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
@@ -746,7 +733,6 @@ UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
 }
 
 
-
 void APlayerCharacter::ClearCurrentlyHeldInventorySlot_Implementation()
 {
 	GetCurrentlyHeldInventorySlot()->MyItem = nullptr;
@@ -754,7 +740,7 @@ void APlayerCharacter::ClearCurrentlyHeldInventorySlot_Implementation()
 
 UInventorySlot* APlayerCharacter::FindFreeSlot()
 {
-	if (bSlotAIsInHand)// a is in hand check a and then b
+	if (bSlotAIsInHand) // a is in hand check a and then b
 	{
 		if (!IsValid(this->HandSlotA->MyItem))
 		{
@@ -764,7 +750,6 @@ UInventorySlot* APlayerCharacter::FindFreeSlot()
 		{
 			return HandSlotB;
 		}
-
 	}
 	else //check b and then a
 	{
@@ -778,14 +763,14 @@ UInventorySlot* APlayerCharacter::FindFreeSlot()
 		}
 	}
 
-	for (UInventorySlot* S : Inventory->GetSlots())//checking for free inventory slot
+	for (UInventorySlot* S : Inventory->GetSlots()) //checking for free inventory slot
 	{
 		if (!IsValid(S->MyItem))
 			return S;
 	}
 
-	if(bHasBackPack)//checking for free backpack slots if the player has a backpack
-	{ 
+	if (bHasBackPack) //checking for free backpack slots if the player has a backpack
+	{
 		for (UInventorySlot* S : Backpack->GetSlots())
 		{
 			if (!IsValid(S->MyItem))
@@ -798,41 +783,43 @@ UInventorySlot* APlayerCharacter::FindFreeSlot()
 
 void APlayerCharacter::TakeOutItem()
 {
-	if (IsValid(CurrentlyHeldWorldItem))//destroying old item
+	if (IsValid(CurrentlyHeldWorldItem)) //destroying old item
 	{
 		DestroyWorldItem(CurrentlyHeldWorldItem);
 	}
 
-	UClass* newFirstPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->FirstPersonAnimationBlueprintClass : NoItemFirstPersonAnimationBlueprintClass;
-	UClass* newThirdPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)? GetCurrentlyHeldInventorySlot()->MyItem->ThirdPersonAnimationBlueprintClass : NoItemThirdPersonAnimationBlueprintClass;
+	UClass* newFirstPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)
+		                                  ? GetCurrentlyHeldInventorySlot()->MyItem->FirstPersonAnimationBlueprintClass
+		                                  : NoItemFirstPersonAnimationBlueprintClass;
+	UClass* newThirdPersonAnimClass = IsValid(GetCurrentlyHeldInventorySlot()->MyItem)
+		                                  ? GetCurrentlyHeldInventorySlot()->MyItem->ThirdPersonAnimationBlueprintClass
+		                                  : NoItemThirdPersonAnimationBlueprintClass;
 
-	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem))// if its an item or just a hand
-		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass, GetCurrentlyHeldInventorySlot()->MyItem->SerializeMyData());
-	
-	FirstPersonMesh->AnimClass = NULL;//so the animation blueprint restarts
+	if (IsValid(GetCurrentlyHeldInventorySlot()->MyItem)) // if its an item or just a hand
+		SpawnItemInHand(GetCurrentlyHeldInventorySlot()->MyItem->MyWorldItemClass,
+		                GetCurrentlyHeldInventorySlot()->MyItem->SerializeMyData());
+
+	FirstPersonMesh->AnimClass = NULL; //so the animation blueprint restarts
 	FirstPersonMesh->SetAnimClass(newFirstPersonAnimClass);
-	
 
-	if(HasAuthority())
+
+	if (HasAuthority())
 		Multicast_SetTPMeshAnimClass(newThirdPersonAnimClass);
 	else
 		Server_SetTPMeshAnimClass(newThirdPersonAnimClass);
-
 }
 
 void APlayerCharacter::Server_SetTPMeshAnimClass_Implementation(UClass* NewClass)
 {
 	Multicast_SetTPMeshAnimClass(NewClass);
-
 }
 
 void APlayerCharacter::Multicast_SetTPMeshAnimClass_Implementation(UClass* NewClass)
 {
-	if(IsLocallyControlled())
+	if (IsLocallyControlled())
 		return;
 
 	GetMesh()->SetAnimClass(NewClass);
-
 }
 
 void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
@@ -843,16 +830,17 @@ void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, cons
 		Server_SpawnItemInHand(ItemToSpawn, SerializedData);
 }
 
-void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData)
+void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn,
+                                                             const FString& SerializedData)
 {
 	//if is in first person or not will have to make a difference
 
 	FTransform SpawnTransform;
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
-	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this; //this property is replicated and the item will attach on begin play
+	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this;
+	//this property is replicated and the item will attach on begin play
 	CurrentlyHeldWorldItem->SerializedStringData = SerializedData;
 	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
-
 }
 
 
@@ -861,7 +849,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 	if (SlotToEmpty.bIsBackpackSlot)
 	{
 		this->bHasBackPack = false;
-		if(this->bInventoryIsOn)
+		if (this->bInventoryIsOn)
 			this->MyPlayerHud->RefreshInventory();
 
 		TArray<TSubclassOf<UItemData>> ItemClasses;
@@ -870,8 +858,8 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		ItemClasses.SetNum(this->Backpack->NumInventorySlots);
 		ItemDatas.SetNum(this->Backpack->NumInventorySlots);
 
-		for(int i=0; i< this->Backpack->NumInventorySlots; i++)
-		{ 
+		for (int i = 0; i < this->Backpack->NumInventorySlots; i++)
+		{
 			if (IsValid(this->Backpack->GetItemAtIndex(i)))
 			{
 				ItemClasses[i] = this->Backpack->GetItemAtIndex(i)->GetClass();
@@ -883,11 +871,12 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		Server_DropBackpack(ItemClasses, ItemDatas);
 		return;
 	}
-	
+
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
-		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(), bThrow, FirstPersonCamera->GetForwardVector());
-		
+		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(),
+		                      bThrow, FirstPersonCamera->GetForwardVector());
+
 		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
 	}
 }
@@ -901,7 +890,6 @@ void APlayerCharacter::RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty)
 
 	if (GetCurrentlyHeldInventorySlot() == SlotToEmpty)
 		TakeOutItem();
-
 }
 
 void APlayerCharacter::SwitchHand()
@@ -916,10 +904,10 @@ void APlayerCharacter::SwitchHand()
 
 	if (!bSwitchHandAllowed || bInventoryIsOn)
 		return;
-	
+
 	bSwitchHandAllowed = false;
 	this->bPrimaryActionAllowed = false;
-	this->bSecondaryActionAllowed=false;
+	this->bSecondaryActionAllowed = false;
 
 	this->bSlotAIsInHand = !bSlotAIsInHand;
 
@@ -933,14 +921,13 @@ void APlayerCharacter::SwitchHand()
 
 	this->MyPlayerHud->OnSwichingDone.AddDynamic(this, &APlayerCharacter::SwitchHandFinished);
 	this->MyPlayerHud->SwichHandDisplays(bSlotAIsInHand);
-	
 }
 
 void APlayerCharacter::SwitchHandFinished()
 {
 	bSwitchHandAllowed = true;
-	this->bPrimaryActionAllowed=true;
-	this->bSecondaryActionAllowed=true;
+	this->bPrimaryActionAllowed = true;
+	this->bSecondaryActionAllowed = true;
 	MyPlayerHud->OnSwichingDone.RemoveAll(this);
 }
 
@@ -955,29 +942,28 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 		slot = HandSlotA;
 	else
 		slot = HandSlotB;
-	
+
 	//switch
 	UItemData* tmp = MyPlayerHud->GetHighlightedSlot().Slot->MyItem;
 	MyPlayerHud->GetHighlightedSlot().Slot->MyItem = slot->MyItem;
 	slot->MyItem = tmp;
 
 
-	if (GetCurrentlyHeldInventorySlot()==slot)//if equipping to slot in hand
+	if (GetCurrentlyHeldInventorySlot() == slot) //if equipping to slot in hand
 	{
 		TakeOutItem();
 	}
-
 }
 
 void APlayerCharacter::DropItemPressed()
 {
-	if(AttackBlend)
+	if (AttackBlend)
 		return;
 
 	FSlotData SD;
 	SD.Slot = GetCurrentlyHeldInventorySlot();
 	SD.bIsBackpackSlot = false;
-	DropItem(SD,false);
+	DropItem(SD, false);
 }
 
 void APlayerCharacter::ThrowItemPressed()
@@ -993,7 +979,7 @@ void APlayerCharacter::ThrowItemPressed()
 
 void APlayerCharacter::TriggerPrimaryItemAction()
 {
-	if(bInventoryIsOn || !bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
+	if (bInventoryIsOn || !bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
 
 	CurrentlyHeldWorldItem->TriggerLocalPrimaryAction(this);
@@ -1010,7 +996,7 @@ void APlayerCharacter::TriggerPrimaryItemAction()
 
 void APlayerCharacter::TriggerPrimaryHoldItemAction()
 {
-	if(bInventoryIsOn || !bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
+	if (bInventoryIsOn || !bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
 
 	CurrentlyHeldWorldItem->TriggerLocalPrimaryActionHold(this);
@@ -1026,7 +1012,7 @@ void APlayerCharacter::TriggerPrimaryHoldItemAction()
 
 void APlayerCharacter::EndPrimaryHoldItemAction()
 {
-	if(bInventoryIsOn || !bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
+	if (bInventoryIsOn || !bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
 		return;
 
 	CurrentlyHeldWorldItem->EndLocalPrimaryActionHold(this);
@@ -1039,7 +1025,6 @@ void APlayerCharacter::EndPrimaryHoldItemAction()
 
 	Server_EndPrimaryItemActionHold();
 }
-
 
 
 bool APlayerCharacter::HasFreeSpace()
@@ -1071,7 +1056,8 @@ void APlayerCharacter::TriggerSecondaryItemAction()
 	Server_TriggerSecondaryItemAction();
 }
 
-void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData, bool bThrow, FVector CameraVector)
+void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData,
+                                             bool bThrow, FVector CameraVector)
 {
 	if (!HasAuthority())
 		Server_SpawnDroppedWorldItem(ItemToSpawn, SerializedData, bThrow, CameraVector);
@@ -1079,11 +1065,12 @@ void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn
 		Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SerializedData, bThrow, CameraVector);
 }
 
-void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData,bool bThrow ,FVector CameraVector)
+void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn,
+                                                                   const FString& SerializedData, bool bThrow,
+                                                                   FVector CameraVector)
 {
+	FTransform SpawnTransform = this->DropTransform->GetComponentTransform();
 
-	FTransform SpawnTransform= this->DropTransform->GetComponentTransform();
-	
 	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	i->SerializedStringData = SerializedData;
 	i->FinishSpawning(SpawnTransform);
@@ -1095,7 +1082,6 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 			u->AddImpulse(CameraVector * this->throwStrengh * u->GetMass());
 		}
 	}
-	
 }
 
 void APlayerCharacter::CheckForFallDamage()
@@ -1103,14 +1089,15 @@ void APlayerCharacter::CheckForFallDamage()
 	// i am using Velocity.z instead of movementComponent::IsFalling() because it already counts as falling when the player is in the air while jumping. 
 	// that results in the jump height not being included in the fall height calculation
 
-	if (GetMovementComponent()->Velocity.Z==0 && BWasFallingInLastFrame)//frame of impact
+	if (GetMovementComponent()->Velocity.Z == 0 && BWasFallingInLastFrame) //frame of impact
 	{
-		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z+20;//+20 artificially because the capsule curvature lets the player stand lower
-			
+		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z + 20;
+		//+20 artificially because the capsule curvature lets the player stand lower
+
 		float damage = this->FallDamageCalculation(deltaZ);
-		if(damage>0)
+		if (damage > 0)
 			TakeDamage(damage);
-		
+
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
 		//	"\nEnd height:\t"+FString::SanitizeFloat(RootComponent->GetComponentLocation().Z)
@@ -1135,23 +1122,23 @@ float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 
 	float factor = 100 / (max - free);
 
-	return (deltaHeight- free) * factor;
+	return (deltaHeight - free) * factor;
 }
 
 void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 {
 	FVector2D input = Value.Get<FVector2D>();
-	
 
-	if(!MyPlayerHud)
+
+	if (!MyPlayerHud)
 		return;
-	
+
 
 	if (input.Y != 0)
 	{
-		MyPlayerHud->MoveHighlight(input.Y > 0? EDirections::Up : EDirections::Down);
+		MyPlayerHud->MoveHighlight(input.Y > 0 ? EDirections::Up : EDirections::Down);
 	}
-	
+
 	if (input.X != 0)
 	{
 		MyPlayerHud->MoveHighlight(input.X > 0 ? EDirections::Right : EDirections::Left);
@@ -1172,7 +1159,7 @@ void APlayerCharacter::DropItemInvPressed()
 	if (!pc)
 		return;
 
-	DropItem(this->MyPlayerHud->GetHighlightedSlot(),false);
+	DropItem(this->MyPlayerHud->GetHighlightedSlot(), false);
 }
 
 
@@ -1196,38 +1183,34 @@ void APlayerCharacter::OnDeath_Implementation()
 		this->MyPlayerHud->RemoveFromParent();
 		DeactivateCharacterInputMappings();
 		dropAllItems();
-		if(IsValid(CurrentlyHeldWorldItem))
+		if (IsValid(CurrentlyHeldWorldItem))
 			DestroyWorldItem(CurrentlyHeldWorldItem);
-		
 	}
-	
-	
+
+
 	if (!HasAuthority())
 		return;
 
-	
 
-	
 	//check if all players are dead
 	//assumes authority
-	bool bAllDead=true;
+	bool bAllDead = true;
 	for (TActorIterator<APlayerCharacter> It(GetWorld()); It; ++It)
 	{
-		if(!It->IsDead())
+		if (!It->IsDead())
 		{
-			bAllDead=false;
+			bAllDead = false;
 			break;
 		}
 	}
-	if(bAllDead)
+	if (bAllDead)
 	{
 		RespawnAllPlayers();
 		return;
 	}
-	
-		
-	GetWorld()->GetAuthGameMode<ADC_GM>()->StartSpectating(GetController());
 
+
+	GetWorld()->GetAuthGameMode<ADC_GM>()->StartSpectating(GetController());
 }
 
 
@@ -1265,7 +1248,7 @@ void APlayerCharacter::StartAttacking()
 
 void APlayerCharacter::AttackStart()
 {
-	if(AttackBlend!=0)//so a new attack only stars when the old one is already over
+	if (AttackBlend != 0) //so a new attack only stars when the old one is already over
 		return;
 	//different attack when sprinting?
 	//attack needs to cost stamina
@@ -1273,16 +1256,15 @@ void APlayerCharacter::AttackStart()
 	this->bPrimaryActionAllowed = false;
 	this->AttackBlend = 1;
 	this->bSwitchHandAllowed = false;
-	
+
 	this->bSprintAllowed = false;
 
 	OverridenWalkingSpeed = WalkingSpeed;
 	WalkingSpeed = 100;
 	GetCharacterMovement()->MaxWalkSpeed = 100;
 
-	if(IsLocallyControlled())
+	if (IsLocallyControlled())
 		StopSprint();
-	
 }
 
 
@@ -1293,11 +1275,10 @@ void APlayerCharacter::Server_AttackStart_Implementation()
 
 void APlayerCharacter::Multicast_AttackStart_Implementation()
 {
-	if(IsLocallyControlled())
+	if (IsLocallyControlled())
 		return;
 
 	AttackStart();
-
 }
 
 void APlayerCharacter::Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn)
@@ -1308,7 +1289,7 @@ void APlayerCharacter::Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn)
 void APlayerCharacter::AttackLanded()
 {
 	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
-	FWeaponInfo info= weapon->GetWeaponInfo();
+	FWeaponInfo info = weapon->GetWeaponInfo();
 	Server_DealHits(info);
 }
 
@@ -1321,9 +1302,9 @@ void APlayerCharacter::Server_DealHits_Implementation(FWeaponInfo WeaponInfo)
 
 void APlayerCharacter::OnAttackOver()
 {
-	if(HasAuthority())
+	if (HasAuthority())
 		Multicast_EndAttack();
-	else if(IsLocallyControlled())
+	else if (IsLocallyControlled())
 		Server_EndAttack();
 }
 
@@ -1346,26 +1327,26 @@ void APlayerCharacter::Multicast_EndAttack_Implementation()
 	WalkingSpeed = OverridenWalkingSpeed;
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 }
+
 void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 {
-
 	if (ItemToBuy->MyItemDataClass == BackpackClass)
 	{
 		if (!this->bHasBackPack)
 		{
 			AddMoneyToWallet(-ItemToBuy->GetPrice());
-			this->bHasBackPack = true;			
+			this->bHasBackPack = true;
 		}
 		return;
 	}
-		
+
 	AddMoneyToWallet(-ItemToBuy->GetPrice());
 	UInventorySlot* freeSlot = FindFreeSlot();
 
 	if (IsValid(freeSlot))
 	{
 		freeSlot->MyItem = NewObject<UItemData>(GetTransientPackage(), ItemToBuy->MyItemDataClass);
-		
+
 		if (freeSlot == GetCurrentlyHeldInventorySlot())
 			TakeOutItem();
 	}
@@ -1379,34 +1360,33 @@ void APlayerCharacter::PlaceItemOnSocket_Implementation(AItemSocket* Socket)
 
 void APlayerCharacter::CreatePlayerHud()
 {
-	if(!IsLocallyControlled())
+	if (!IsLocallyControlled())
 		return;
 
-	this->MyPlayerHud = CreateWidget<UPlayerHud>(GetWorld(),PlayerHudClass);
-	this->MyPlayerHud->AddToViewport();	
+	this->MyPlayerHud = CreateWidget<UPlayerHud>(GetWorld(), PlayerHudClass);
+	this->MyPlayerHud->AddToViewport();
 }
 
 void APlayerCharacter::Server_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location)
 {
-	Multicast_PlayPickUpSound(itemClass,location);
+	Multicast_PlayPickUpSound(itemClass, location);
 }
 
 void APlayerCharacter::Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWorldItem> itemClass, FVector location)
-{	
-	USoundBase* sound =  itemClass.GetDefaultObject()->GetPickupSound();
-	if(IsValid(sound))
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(),sound, location);
+{
+	USoundBase* sound = itemClass.GetDefaultObject()->GetPickupSound();
+	if (IsValid(sound))
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound, location);
 
-	
-	FString text= "playing at: "+ this->GetRootComponent()->GetComponentLocation().ToString();
 
-	if(HasAuthority())
-		text="server: "+text;
+	FString text = "playing at: " + this->GetRootComponent()->GetComponentLocation().ToString();
+
+	if (HasAuthority())
+		text = "server: " + text;
 	else
-		text="client: "+text;
-		
+		text = "client: " + text;
+
 	LogWarning(*text);
-	
 }
 
 void APlayerCharacter::RespawnAllPlayers()
@@ -1425,17 +1405,17 @@ void APlayerCharacter::dropAllItems()
 	AllSlots.Append(this->Backpack->GetSlots());
 	AllSlots.Add(this->HandSlotA);
 	AllSlots.Add(this->HandSlotB);
-	
 
-	for(UInventorySlot* IS: AllSlots)
+
+	for (UInventorySlot* IS : AllSlots)
 	{
-		if(IsValid(IS->MyItem))
+		if (IsValid(IS->MyItem))
 		{
-			UItemData* data= IS->MyItem;
-			SpawnDroppedWorldItem(data->MyWorldItemClass, data->SerializeMyData(), false, FVector::Zero());	
+			UItemData* data = IS->MyItem;
+			SpawnDroppedWorldItem(data->MyWorldItemClass, data->SerializeMyData(), false, FVector::Zero());
 		}
 	}
-	if(bHasBackPack)
+	if (bHasBackPack)
 	{
 		//backpack is spawning without items in it. Its items drop like the others
 		Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), TArray<FString>());
@@ -1450,6 +1430,6 @@ void APlayerCharacter::Server_SpawnJumpSound_Implementation()
 
 void APlayerCharacter::Multicast_SpawnJumpSound_Implementation()
 {
-	if(this->JumpSound)
-		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), JumpSound, this->GetActorLocation()+ FVector(0,0,-50));
+	if (this->JumpSound)
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), JumpSound, this->GetActorLocation() + FVector(0, 0, -50));
 }
