@@ -13,7 +13,8 @@
 
 ADC_Entity::ADC_Entity()
 {
-
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> basicBloodeffect(TEXT("/Game/_DungeonCompanyContent/Assets/VFX/BaseElement/Blood/NS_Blood"));
+	this->bloodEffect= basicBloodeffect.Object;
 }
 
 ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
