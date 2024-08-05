@@ -571,5 +571,16 @@ protected:
 	void RespawnAllPlayers();
 
 	void dropAllItems();
+
+protected:
+UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* JumpSound;
+	
+	UFUNCTION(Server, Unreliable)
+	void Server_SpawnJumpSound();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_SpawnJumpSound();
+
 	
 };

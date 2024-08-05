@@ -493,6 +493,7 @@ void APlayerCharacter::Jump()
 	if (GetCharacterMovement()->MovementMode != MOVE_Walking)
 	{
 		Super::Jump();
+		Server_SpawnJumpSound();
 		return;
 	}
 	
@@ -501,6 +502,7 @@ void APlayerCharacter::Jump()
 
 	SubstractStamina(JumpStaminaDrain);
 	Super::Jump();
+	Server_SpawnJumpSound();
 }
 
 void APlayerCharacter::CrouchActionStarted()
@@ -1438,4 +1440,16 @@ void APlayerCharacter::dropAllItems()
 		//backpack is spawning without items in it. Its items drop like the others
 		Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), TArray<FString>());
 	}
+}
+
+
+void APlayerCharacter::Server_SpawnJumpSound_Implementation()
+{
+	Multicast_SpawnJumpSound();
+}
+
+void APlayerCharacter::Multicast_SpawnJumpSound_Implementation()
+{
+	if(this->JumpSound)
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), JumpSound, this->GetActorLocation()+ FVector(0,0,-50));
 }
