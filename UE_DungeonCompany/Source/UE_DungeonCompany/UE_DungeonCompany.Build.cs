@@ -22,7 +22,9 @@ public class UE_DungeonCompany : ModuleRules
 			"NavigationSystem",
 			"Niagara",
 			"CableComponent",
-			"PhysicsCore"
+			"PhysicsCore",
+			"SlateCore",
+			"Slate"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
