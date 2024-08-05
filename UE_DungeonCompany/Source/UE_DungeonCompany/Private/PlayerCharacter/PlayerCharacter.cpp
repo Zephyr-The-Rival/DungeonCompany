@@ -36,6 +36,7 @@
 #include "InputActionValue.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "ShaderPrintParameters.h"
 #include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
@@ -487,7 +488,7 @@ void APlayerCharacter::Jump()
 	{
 		Super::Jump();
 		if (!GetMovementComponent()->IsFalling())
-			Server_SpawnJumpSound();
+			Server_SpawnSoundAtLocation(this->JumpSound, GetActorLocation());
 		return;
 	}
 
@@ -497,7 +498,7 @@ void APlayerCharacter::Jump()
 	SubstractStamina(JumpStaminaDrain);
 	Super::Jump();
 	if (!GetMovementComponent()->IsFalling())
-		Server_SpawnJumpSound();
+		Server_SpawnSoundAtLocation(this->JumpSound, GetActorLocation());
 }
 
 void APlayerCharacter::CrouchActionStarted()
@@ -1096,7 +1097,14 @@ void APlayerCharacter::CheckForFallDamage()
 
 		float damage = this->FallDamageCalculation(deltaZ);
 		if (damage > 0)
+		{
 			TakeDamage(damage);
+			//spawn fall damage sound
+		}			
+		else
+		{
+			Server_SpawnSoundAtLocation(LandingSound, this->GetActorLocation());
+		}
 
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
@@ -1423,13 +1431,13 @@ void APlayerCharacter::dropAllItems()
 }
 
 
-void APlayerCharacter::Server_SpawnJumpSound_Implementation()
+void APlayerCharacter::Server_SpawnSoundAtLocation_Implementation(USoundBase* LocalSound,  FVector Location)
 {
-	Multicast_SpawnJumpSound();
+	Multicast_SpawnSoundAtLocation(LocalSound, Location);
 }
 
-void APlayerCharacter::Multicast_SpawnJumpSound_Implementation()
+void APlayerCharacter::Multicast_SpawnSoundAtLocation_Implementation(USoundBase* LocalSound, FVector Location)
 {
-	if (this->JumpSound)
-		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), JumpSound, this->GetActorLocation() + FVector(0, 0, -50));
+	if (IsValid(LocalSound))
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), LocalSound, Location);
 }
