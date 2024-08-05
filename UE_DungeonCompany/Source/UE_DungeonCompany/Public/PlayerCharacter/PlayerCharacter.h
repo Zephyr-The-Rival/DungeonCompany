@@ -571,5 +571,23 @@ protected:
 	void RespawnAllPlayers();
 
 	void dropAllItems();
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
+	USoundBase* JumpSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
+	USoundBase* LandingSound;
+	
+protected:
+	//Basic spawn sound functions (seem to work as long as the reference is in the same object)
+	UFUNCTION(Server, Unreliable)
+	void Server_SpawnSoundAtLocation(USoundBase* LocalSound, FVector Location);
+	void Server_SpawnSoundAtLocation_Implementation(USoundBase* LocalJumpSound, FVector Location);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_SpawnSoundAtLocation(USoundBase* LocalSound, FVector Location);
+
 	
 };
