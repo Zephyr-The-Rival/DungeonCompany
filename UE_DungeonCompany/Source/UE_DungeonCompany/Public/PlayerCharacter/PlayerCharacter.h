@@ -98,6 +98,9 @@ protected:
 	UInputAction* ItemPrimaryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* ItemPrimaryHoldAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ItemSecondaryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
@@ -409,6 +412,19 @@ protected:
 	UFUNCTION(Server, Unreliable)
 	void Server_TriggerPrimaryItemAction();
 
+
+	//hold action
+	void TriggerPrimaryHoldItemAction();
+	void EndPrimaryHoldItemAction();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_TriggerPrimaryItemActionHold();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_EndPrimaryItemActionHold();
+
+
+	//secondary item 
 	void TriggerSecondaryItemAction();
 
 	UFUNCTION(Server, Unreliable)

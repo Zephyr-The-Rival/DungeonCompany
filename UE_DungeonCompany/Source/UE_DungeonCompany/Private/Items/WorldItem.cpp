@@ -127,6 +127,27 @@ void AWorldItem::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User
 	LogWarning(TEXT("World Item parent local primary action was called"));
 }
 
+void AWorldItem::TriggerPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent primary action hold was called"));
+}
+
+void AWorldItem::EndPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent primary action END hold was called"));
+}
+
+void AWorldItem::TriggerLocalPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent local primary action hold was called"));
+}
+
+void AWorldItem::EndLocalPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent local primary action END hold was called"));
+}
+
+
 void AWorldItem::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 {
 	LogWarning(TEXT("World Item parent secondary action was called"));

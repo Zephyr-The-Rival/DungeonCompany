@@ -272,6 +272,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(SwitchHandAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchHand);	
 
 	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryItemAction);
+
+	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryHoldItemAction);
+	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndPrimaryHoldItemAction);
+	
 	EIC->BindAction(ItemSecondaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerSecondaryItemAction);
 	
 	EIC->BindAction(DropItemAction,	ETriggerEvent::Triggered, this, &APlayerCharacter::DropItemPressed);
@@ -1001,9 +1005,52 @@ void APlayerCharacter::TriggerPrimaryItemAction()
 	Server_TriggerPrimaryItemAction();
 }
 
+
+void APlayerCharacter::TriggerPrimaryHoldItemAction()
+{
+	if(bInventoryIsOn || !bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
+		return;
+
+	CurrentlyHeldWorldItem->TriggerLocalPrimaryActionHold(this);
+
+	if (HasAuthority())
+	{
+		Server_TriggerPrimaryItemActionHold_Implementation();
+		return;
+	}
+
+	Server_TriggerPrimaryItemActionHold();
+}
+
+void APlayerCharacter::EndPrimaryHoldItemAction()
+{
+	if(bInventoryIsOn || !bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
+		return;
+
+	CurrentlyHeldWorldItem->EndLocalPrimaryActionHold(this);
+
+	if (HasAuthority())
+	{
+		Server_EndPrimaryItemActionHold_Implementation();
+		return;
+	}
+
+	Server_EndPrimaryItemActionHold();
+}
+
+
+
 bool APlayerCharacter::HasFreeSpace()
 {
 	return IsValid(this->FindFreeSlot());
+}
+
+void APlayerCharacter::Server_EndPrimaryItemActionHold_Implementation()
+{
+	if (!bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
+		return;
+
+	CurrentlyHeldWorldItem->EndPrimaryActionHold(this);
 }
 
 void APlayerCharacter::TriggerSecondaryItemAction()
@@ -1188,6 +1235,14 @@ void APlayerCharacter::Server_TriggerPrimaryItemAction_Implementation()
 		return;
 
 	CurrentlyHeldWorldItem->TriggerPrimaryAction(this);
+}
+
+void APlayerCharacter::Server_TriggerPrimaryItemActionHold_Implementation()
+{
+	if (!bPrimaryActionAllowed || !IsValid(CurrentlyHeldWorldItem))
+		return;
+
+	CurrentlyHeldWorldItem->TriggerPrimaryActionHold(this);
 }
 
 void APlayerCharacter::Server_TriggerSecondaryItemAction_Implementation()

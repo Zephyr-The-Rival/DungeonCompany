@@ -70,6 +70,26 @@ public://item actions
 	void TriggerLocalPrimaryAction(APlayerCharacter* User);
 	virtual void TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User);
 
+	//hold server
+	UFUNCTION(BlueprintNativeEvent)
+	void TriggerPrimaryActionHold(APlayerCharacter* User);
+	virtual void TriggerPrimaryActionHold_Implementation(APlayerCharacter* User);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void EndPrimaryActionHold(APlayerCharacter* User);
+	virtual void EndPrimaryActionHold_Implementation(APlayerCharacter* User);
+
+	//hold local
+
+	UFUNCTION(BlueprintNativeEvent)
+	void TriggerLocalPrimaryActionHold(APlayerCharacter* User);
+	virtual void TriggerLocalPrimaryActionHold_Implementation(APlayerCharacter* User);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void EndLocalPrimaryActionHold(APlayerCharacter* User);
+	virtual void EndLocalPrimaryActionHold_Implementation(APlayerCharacter* User);
+	
+//secondary
 	UFUNCTION(BlueprintNativeEvent)
 	void TriggerSecondaryAction(APlayerCharacter* User);
 	virtual void TriggerSecondaryAction_Implementation(APlayerCharacter* User);
