@@ -493,11 +493,11 @@ public://fighting
 	void OnAttackOver();
 
 private:
-	UFUNCTION(Server, Unreliable)
+	UFUNCTION(Server, Reliable)
 	void Server_EndAttack();
 	void Server_EndAttack_Implementation();
 
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_EndAttack();
 	void Multicast_EndAttack_Implementation();
 
