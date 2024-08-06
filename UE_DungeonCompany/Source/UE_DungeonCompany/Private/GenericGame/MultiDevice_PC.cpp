@@ -28,7 +28,7 @@ UEnhancedInputLocalPlayerSubsystem* AMultiDevice_PC::GetInputLocalPlayer() const
 	return localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 }
 
-void AMultiDevice_PC::UpdateMapping(FName MappingName, FKey NewKey)
+void AMultiDevice_PC::UpdateMapping(FName MappingName, FKey NewKey) const
 {
 	auto inputLocalPLayer = GetInputLocalPlayer();
 
@@ -49,7 +49,7 @@ void AMultiDevice_PC::UpdateMapping(FName MappingName, FKey NewKey)
 	userSettings->SaveSettings();
 
 	ActionKeyCache.Empty();
-
+	OnKeyMappingChanged.Broadcast();
 }
 
 FKey AMultiDevice_PC::GetCurrentKeyForMapping(FName MappingName) const
@@ -67,6 +67,7 @@ FKey AMultiDevice_PC::GetCurrentKeyForMapping(FName MappingName) const
 
 	if(!userSettings || !userSettings->GetCurrentKeyProfile() || !userSettings->GetCurrentKeyProfile()->FindKeyMapping(keyArgs))
 		return FKey();
+	
 	return userSettings->GetCurrentKeyProfile()->FindKeyMapping(keyArgs)->GetCurrentKey();
 
 }

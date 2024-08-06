@@ -25,8 +25,7 @@ void UBindingOptions::NativeConstruct()
 	for(int i = 0; i < mappingsNum; ++i)
 	{
 		CreateBindingsForMappingContext(allMappings[i]);
-	}
-	
+	}	
 }
 
 void UBindingOptions::CreateBindingsForMappingContext(UInputMappingContext* BindingMappingContext)
@@ -49,7 +48,7 @@ void UBindingOptions::CreateBindingsForMappingContext(UInputMappingContext* Bind
 		item->SetMappableKey(keyMapping);
 		item->SetMappingContext(BindingMappingContext);
 
-		item->SetAllowGamepadKeys(bBindGamepad);
+		item->SetIsBindingGamepad(bBindGamepad);
 
 		FString category = keyMapping.GetPlayerMappableKeySettings()->DisplayCategory.ToString();
 

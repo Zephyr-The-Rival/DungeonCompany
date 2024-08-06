@@ -7,6 +7,7 @@
 #include "InputMappingContext.h"
 #include "Components/InputKeySelector.h"
 #include "PlayerMappableKeySettings.h"
+#include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Framework/Application/NavigationConfig.h"
 
@@ -20,15 +21,22 @@ void UBindingOptionsItem::SetMappingContext(UInputMappingContext* InMappingConte
 	MappingContext = InMappingContext;
 }
 
-void UBindingOptionsItem::SetAllowGamepadKeys(bool bGamepadKeysAllowed)
+void UBindingOptionsItem::SetIsBindingGamepad(bool InIsBindingGamepad)
 {
-	KeySelector->SetAllowGamepadKeys(bGamepadKeysAllowed);
+	bIsBindingGamepad = InIsBindingGamepad;
+	KeySelector->SetAllowGamepadKeys(InIsBindingGamepad);
 }
 
 void UBindingOptionsItem::ResetMapping()
 {
 	bIsSelectingNewKey = true;
 	KeySelector->SetSelectedKey(MappableKey.Key);
+}
+
+void UBindingOptionsItem::ClearMapping()
+{
+	bIsSelectingNewKey = true;
+	KeySelector->SetSelectedKey(EKeys::Invalid);
 }
 
 void UBindingOptionsItem::NativeConstruct()
@@ -46,20 +54,20 @@ void UBindingOptionsItem::NativeConstruct()
 	KeyText->SetText(MappableKey.GetPlayerMappableKeySettings()->DisplayName);
 	KeySelector->SetSelectedKey(owner->GetCurrentKeyForMapping(MappableKey.GetPlayerMappableKeySettings()->Name));
 
-	
+	ResetButton->OnPressed.AddDynamic(this, &UBindingOptionsItem::ResetMapping);
+	UnbindButton->OnPressed.AddDynamic(this, &UBindingOptionsItem::ClearMapping);
 }
 
 void UBindingOptionsItem::OnKeySelected(FInputChord SelectedKey)
 {
-	FKey tempOldKey = KeySelector->GetSelectedKey().Key;
 	FKey newKey = SelectedKey.Key;
 	
 	if(!bIsSelectingNewKey)
 		return;
-	
-	if(newKey.IsGamepadKey() != tempOldKey.IsGamepadKey())
+
+	if(newKey.IsGamepadKey() != bIsBindingGamepad && newKey != EKeys::Invalid)
 	{
-		KeySelector->SetSelectedKey(tempOldKey);
+		KeySelector->SetSelectedKey(OldKey);
 		return;
 	}
 
@@ -71,9 +79,15 @@ void UBindingOptionsItem::OnKeySelected(FInputChord SelectedKey)
 		newKey = EKeys::Gamepad_Left2D;
 	else if(keyName.Contains("RightStick"))
 		newKey = EKeys::Gamepad_Right2D;
-	
-	OldKey = tempOldKey;
 
+	if(OldKey == newKey && OldKey != EKeys::Invalid)
+	{
+		bIsSelectingNewKey = false;
+		return;
+	}
+
+	OldKey = newKey;
+	
 	AMultiDevice_PC* owner = GetOwningPlayer<AMultiDevice_PC>();
 
 	if(!owner)
@@ -87,8 +101,6 @@ void UBindingOptionsItem::OnIsSelectingKeyChanged()
 	TSharedRef<FNavigationConfig> navConfig = FSlateApplication::Get().GetNavigationConfig();
 	if(bIsSelectingNewKey)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("setting to false"));
-
 		navConfig->bAnalogNavigation = true;
 		navConfig->bKeyNavigation = true;
 		navConfig->bTabNavigation = true;

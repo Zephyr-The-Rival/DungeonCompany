@@ -37,12 +37,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	inline bool IsUsingGamepad() const { return bUsingGamepad; }
 
+public:
 	UDELEGATE()
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInputDeviceChanged, bool, IsUsingGamepad);
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnInputDeviceChanged OnInputDeviceChanged;
-
+	
+public:
 	virtual void SetupInputComponent() override;
 
 protected:
@@ -50,10 +52,17 @@ protected:
 
 private:
 	mutable TMap<int64, FKey> ActionKeyCache;
+
+public:
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnKeyMappingChanged);
+	
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnKeyMappingChanged OnKeyMappingChanged;
 	
 public:
 	UEnhancedInputLocalPlayerSubsystem* GetInputLocalPlayer() const;
-	void UpdateMapping(FName MappingName, FKey NewKey);
+	void UpdateMapping(FName MappingName, FKey NewKey) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FKey GetCurrentKeyForMapping(FName MappingName) const;

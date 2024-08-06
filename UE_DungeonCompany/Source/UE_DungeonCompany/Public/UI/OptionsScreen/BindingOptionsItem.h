@@ -14,7 +14,7 @@
 class UInputMappingContext;
 class UTextBlock;
 class UInputKeySelector;
-class UPlayerMappableKeySettings;
+class UButton;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API UBindingOptionsItem : public UUserWidget
@@ -31,14 +31,25 @@ private:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UInputKeySelector* KeySelector;
 
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UButton* ResetButton;
+	
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	UButton* UnbindButton;
+
+private:
+	bool bIsBindingGamepad = false;
+
 public:
 	void SetMappableKey(const FEnhancedActionKeyMapping& InMappableKey);
 	void SetMappingContext(UInputMappingContext* InMappingContext);
 
-	void SetAllowGamepadKeys(bool bGamepadKeysAllowed);
+	void SetIsBindingGamepad(bool InIsBindingGamepad);
 
 	UFUNCTION(BlueprintCallable)
 	void ResetMapping();
+	UFUNCTION(BlueprintCallable)
+	void ClearMapping();
 	
 protected:
 	virtual void NativeConstruct() override;
@@ -53,9 +64,5 @@ protected:
 
 	UFUNCTION()
 	void OnIsSelectingKeyChanged();
-	
-
-	
-	
 	
 };
