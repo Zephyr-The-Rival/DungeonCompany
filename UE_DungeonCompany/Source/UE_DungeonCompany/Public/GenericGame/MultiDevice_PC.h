@@ -9,6 +9,10 @@
 /**
  * 
  */
+
+class UInputMappingContext;
+class UEnhancedInputLocalPlayerSubsystem;
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API AMultiDevice_PC : public APlayerController
 {
@@ -16,6 +20,16 @@ class UE_DUNGEONCOMPANY_API AMultiDevice_PC : public APlayerController
 
 private:
 	bool bUsingGamepad = false;
+	TArray<UInputMappingContext*> AllMappings;
+
+public:
+	inline const TArray<UInputMappingContext*>& GetAllMappingContexts() const { return AllMappings; }
+
+public:
+	AMultiDevice_PC();
+
+protected:
+	virtual void BeginPlay() override;
 	
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -33,6 +47,9 @@ protected:
 	void OnAnyKeyPressed(const FKey& Key);
 	
 public:
+	UEnhancedInputLocalPlayerSubsystem* GetInputLocalPlayer() const;
 	void UpdateMapping(FName MappingName, FKey NewKey);
+
+	FKey GetCurrentKeyForMapping(FName MappingName) const;
 	
 };

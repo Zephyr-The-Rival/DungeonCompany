@@ -34,9 +34,18 @@ private:
 public:
 	void SetMappableKey(const FEnhancedActionKeyMapping& InMappableKey);
 	void SetMappingContext(UInputMappingContext* InMappingContext);
+
+	void SetAllowGamepadKeys(bool bGamepadKeysAllowed);
+
+	UFUNCTION(BlueprintCallable)
+	void ResetMapping();
 	
 protected:
 	virtual void NativeConstruct() override;
+
+private:
+	bool bIsSelectingNewKey = false;
+	FKey OldKey;
 
 protected:
 	UFUNCTION()
