@@ -38,6 +38,12 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintPure)
 	FWeaponInfo GetWeaponInfo();
 
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Debugging")
+	bool bDrawDebugLinesOnAttack=false;
+	
+public:
 	
     void DealHits(FWeaponInfo WeaponInfo);
     
@@ -49,5 +55,5 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Balancing")
 	float Damage=10;
-
+	
 };
