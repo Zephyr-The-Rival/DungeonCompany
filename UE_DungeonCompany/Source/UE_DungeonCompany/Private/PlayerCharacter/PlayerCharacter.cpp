@@ -483,7 +483,7 @@ void APlayerCharacter::Jump()
 		return;
 	}
 
-	if (Stamina <= 0.f)
+	if (Stamina <= 0.f || GetCharacterMovement()->IsCrouching())
 		return;
 
 	SubstractStamina(JumpStaminaDrain);
