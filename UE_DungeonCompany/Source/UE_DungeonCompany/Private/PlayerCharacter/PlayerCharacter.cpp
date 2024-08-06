@@ -265,9 +265,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryItemAction);
 
-	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Started, this,
-	                &APlayerCharacter::TriggerPrimaryHoldItemAction);
-	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndPrimaryHoldItemAction);
+	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryHoldItemAction);
+	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndPrimaryHoldItemAction);
 
 	EIC->BindAction(ItemSecondaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerSecondaryItemAction);
 
