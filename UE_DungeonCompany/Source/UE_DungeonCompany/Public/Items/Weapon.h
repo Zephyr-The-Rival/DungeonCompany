@@ -56,4 +56,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Balancing")
 	float Damage=10;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Balancing")
+	float StaminaCost=3;
+
+public:
+	float GetStaminaCost() const {return this->StaminaCost;};
 };

@@ -1256,7 +1256,7 @@ void APlayerCharacter::StartAttacking()
 
 void APlayerCharacter::AttackStart()
 {
-	if (AttackBlend != 0) //so a new attack only stars when the old one is already over
+	if (AttackBlend != 0  || this->Stamina <=0) //so a new attack only stars when the old one is already over
 		return;
 	//different attack when sprinting?
 	//attack needs to cost stamina
@@ -1272,7 +1272,11 @@ void APlayerCharacter::AttackStart()
 	GetCharacterMovement()->MaxWalkSpeed = 100;
 
 	if (IsLocallyControlled())
+	{
 		StopSprint();
+		SubstractStamina(Cast<AWeapon>(CurrentlyHeldWorldItem)->GetStaminaCost());
+	}
+		
 }
 
 
