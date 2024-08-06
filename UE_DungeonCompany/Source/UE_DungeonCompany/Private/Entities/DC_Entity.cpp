@@ -84,32 +84,37 @@ UBuffDebuffBase* ADC_Entity::AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> 
 	if (!HasAuthority())
 		return nullptr;
 
-	UBuffDebuffBase* ExistingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
-
-	if (ExistingDeBuff)
+	UBuffDebuffBase* existingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
+	
+	if (existingDeBuff && !existingDeBuff->IsStackable())
 	{
-		ExistingDeBuff->Timegate(ActiveTime);
-		return ExistingDeBuff;
+		existingDeBuff->Timegate(ActiveTime);
+		existingDeBuff->IncrementAppliedCount();
+		
+		return existingDeBuff;
 	}
 
-	UBuffDebuffBase* DeBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
+	UBuffDebuffBase* deBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
 
-	DeBuff->RegisterComponent();
-	DeBuff->Timegate(ActiveTime);
+	deBuff->RegisterComponent();
+	deBuff->Timegate(ActiveTime);
 
-	return DeBuff;
+	return deBuff;
 }
 
 void ADC_Entity::RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass)
 {
 	if (!HasAuthority())
 		return;
+	
+	if (UBuffDebuffBase* existingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass)))
+		existingDeBuff->Destroy();
 
-	UBuffDebuffBase* ExistingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
+}
 
-	if (ExistingDeBuff)
-		ExistingDeBuff->Destroy();
-
+bool ADC_Entity::HasBuffOrDebuffApplied(TSubclassOf<UBuffDebuffBase> BuffDebuffClass) const
+{
+	return !!GetComponentByClass(BuffDebuffClass);
 }
 
 void ADC_Entity::SpawnTakeDamageSound_Implementation()
