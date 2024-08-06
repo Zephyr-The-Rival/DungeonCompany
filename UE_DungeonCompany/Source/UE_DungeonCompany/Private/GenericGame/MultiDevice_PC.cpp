@@ -105,8 +105,6 @@ FKey AMultiDevice_PC::GetCurrentKeyForAction(UInputAction* InputAction) const
 
 	FKey result = GetCurrentKeyForMapping(foundMapping.GetMappingName());
 	ActionKeyCache.Add(key, result);
-
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("cached"));
 	
 	return GetCurrentKeyForMapping(foundMapping.GetMappingName());
 }

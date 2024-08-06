@@ -107,8 +107,6 @@ void UBindingOptionsItem::OnIsSelectingKeyChanged()
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("setting to true"));
-
 		bIsSelectingNewKey = true;
 		navConfig->bAnalogNavigation = false;
 		navConfig->bKeyNavigation = false;
