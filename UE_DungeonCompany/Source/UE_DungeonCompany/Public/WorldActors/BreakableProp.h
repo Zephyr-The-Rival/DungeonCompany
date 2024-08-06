@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "BreakableProp.generated.h"
 
+class AWeapon;
 UCLASS(Blueprintable)
 class UE_DUNGEONCOMPANY_API ABreakableProp : public AActor
 {
@@ -25,6 +26,6 @@ public:
 
 public:
 	UFUNCTION(BlueprintNativeEvent)
-	void Hit(FVector ImpulseDirection);
-	void Hit_Implementation(FVector ImpulseDirection);
+	void Hit(FVector ImpulseDirection, TSubclassOf<AWeapon> WeaponClass);
+	void Hit_Implementation(FVector ImpulseDirection, TSubclassOf<AWeapon> WeaponClass);
 };

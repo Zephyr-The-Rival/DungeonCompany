@@ -11,6 +11,7 @@
 #include "Perception/AISenseConfig_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AIPerceptionComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AAIEntity::AAIEntity()
 {
@@ -77,6 +78,12 @@ void AAIEntity::BeginPlay()
 
 void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 {
+	if (TargetPlayer->IsDead())
+	{
+		SetTargetPlayer(nullptr);
+		return;
+	}
+
 	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
 
@@ -123,6 +130,15 @@ void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
 
 	if (aiController)
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
+}
+
+void AAIEntity::SetTargetPlayer(APlayerCharacter* TargetPlayer)
+{
+	ADC_AIController* aiController = GetController<ADC_AIController>();
+
+	if (aiController)
+		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", TargetPlayer);
+
 }
 
 bool AAIEntity::IsVisibleToPlayers() const
@@ -200,4 +216,33 @@ void AAIEntity::OnDeath_Implementation()
 	Super::OnDeath_Implementation();
 
 	Destroy();
+}
+
+void AAIEntity::SetIsAttacking(bool InAttacking)
+{
+	if(InAttacking == IsAttacking())
+		return;
+
+	ToggleAnimationBitFlag(FLAG_Attacking);
+}
+
+void AAIEntity::SetAnimationBitFlag(EAnimationFlags InBit)
+{
+	AnimationFlags |= InBit;
+}
+
+void AAIEntity::ClearAnimatinoBitFlag(EAnimationFlags InBit)
+{
+	AnimationFlags &= ~InBit;
+}
+
+void AAIEntity::ToggleAnimationBitFlag(EAnimationFlags InBit)
+{
+	AnimationFlags ^= InBit;
+}
+
+void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AAIEntity, AnimationFlags);
 }

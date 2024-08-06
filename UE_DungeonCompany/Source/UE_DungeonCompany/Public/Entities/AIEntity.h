@@ -48,13 +48,13 @@ protected:
 	float AttackDamage = 20.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
-	float AttackRange = 100.f;
+	float AttackRange = 250.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
 	float AttackRadius = 30.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
-	float AttackDelay = 1.f;
+	float AttackDelay = 0.5f;
 
 private:
 	FTimerHandle ExecuteAttackHandle;
@@ -64,7 +64,10 @@ public:
 
 protected:
 	virtual void ExecuteAttack(FVector Direction);
+
+public:
 	void SetInAttackOnBlackboard(bool InAttack);
+	void SetTargetPlayer(APlayerCharacter* TargetPlayer);
 
 public:
 	bool IsVisibleToPlayers() const;
@@ -93,5 +96,32 @@ protected:
 
 public:
 	virtual void OnDeath_Implementation() override;
+
+public:
+	enum EAnimationFlags
+	{
+		FLAG_Attacking = 0x01,	
+		FLAG_Custom_0 = 0x02,	
+		FLAG_Custom_1 = 0x04,
+		FLAG_Custom_2 = 0x08,
+		FLAG_Custom_3 = 0x10,
+		FLAG_Custom_4 = 0x20,
+		FLAG_Custom_5 = 0x40,
+		FLAG_Custom_6 = 0x80,
+	};
+
+	inline bool IsAttacking() const { return (AnimationFlags & FLAG_Attacking) != 0; }
+	void SetIsAttacking(bool InAttacking);
+
+protected:
+	UPROPERTY(Replicated)
+	uint8 AnimationFlags = 0;
+
+	void SetAnimationBitFlag(EAnimationFlags InBit);
+	void ClearAnimatinoBitFlag(EAnimationFlags InBit);
+	void ToggleAnimationBitFlag(EAnimationFlags InBit);
+
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 };

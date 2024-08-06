@@ -6,6 +6,7 @@
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "UI/PlayerHud/PlayerHud.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Inventory/InventorySlot.h"
 
@@ -16,6 +17,10 @@ AWorldItem::AWorldItem()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bAlwaysRelevant = true;
+
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> basicSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
+	this->PickUpSound = basicSound.Object;
 	
 }
 
@@ -83,7 +88,7 @@ void AWorldItem::AttachToPlayer()
 
 	if (MyCharacterToAttachTo->IsLocallyControlled())
 	{
-		this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+		this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_R_001");
 	}		
 	else
 	{	
@@ -122,6 +127,27 @@ void AWorldItem::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User
 	LogWarning(TEXT("World Item parent local primary action was called"));
 }
 
+void AWorldItem::TriggerPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent primary action hold was called"));
+}
+
+void AWorldItem::EndPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent primary action END hold was called"));
+}
+
+void AWorldItem::TriggerLocalPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent local primary action hold was called"));
+}
+
+void AWorldItem::EndLocalPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent local primary action END hold was called"));
+}
+
+
 void AWorldItem::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 {
 	LogWarning(TEXT("World Item parent secondary action was called"));
@@ -131,3 +157,5 @@ void AWorldItem::TriggerLocalSecondaryAction_Implementation(APlayerCharacter* Us
 {
 	LogWarning(TEXT("World Item parent local secondary action was called"));
 }
+
+

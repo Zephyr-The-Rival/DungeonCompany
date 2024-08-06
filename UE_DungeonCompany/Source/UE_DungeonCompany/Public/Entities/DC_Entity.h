@@ -31,11 +31,14 @@ public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetMaxHealth() const { return MaxHP; }
 
+	UFUNCTION(BlueprintPure, BlueprintCallable)
 	inline bool IsDead() const { return HP <= 0.f; }
 
 	using Super::TakeDamage;
 	virtual void TakeDamage(float Damage);
+	UFUNCTION(NetMulticast, Unreliable)
 	void SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
+	void SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -61,4 +64,12 @@ public:
 	UBuffDebuffBase* AddBuffOrDebuff(TSubclassOf<UBuffDebuffBase> BuffDebuffClass, float ActiveTime = 0.f);
 	void RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass);
 
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* TakeDamageSound;
+public:
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void SpawnTakeDamageSound();
 };

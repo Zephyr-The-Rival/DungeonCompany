@@ -36,7 +36,7 @@ void UBTService_AggroClosestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, 
 
 		float distance = aiPawn->GetDistanceTo(currentPlayer);
 
-		if (distance > MaxDistance || distance > closestDistance)
+		if (currentPlayer->IsDead() || distance > MaxDistance || distance > closestDistance)
 			continue;
 
 		closestDistance = distance;

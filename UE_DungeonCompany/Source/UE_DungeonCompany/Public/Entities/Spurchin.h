@@ -42,11 +42,5 @@ protected:
 
 public:
 	virtual void OnTargetingPlayer_Implementation(APlayerCharacter* Target) override;
-
-
-
-protected:
-	virtual void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
-	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
 	
 };
