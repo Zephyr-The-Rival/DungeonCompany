@@ -45,4 +45,9 @@ public:
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User) override;
 	virtual void TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User) override;
 
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Balancing")
+	float Damage=10;
+
 };

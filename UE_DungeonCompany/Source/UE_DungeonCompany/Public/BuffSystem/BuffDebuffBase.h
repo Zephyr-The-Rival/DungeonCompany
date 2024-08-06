@@ -54,4 +54,11 @@ public:
 	//player hud stuff
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTexture2D* HudIcon;
+
+private:
+	bool bIsActive;
+	
+public:
+	UFUNCTION(BlueprintCallable)
+	bool GetIsActive() const { return this->bIsActive;}
 };
