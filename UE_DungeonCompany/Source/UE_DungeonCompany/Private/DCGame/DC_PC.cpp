@@ -9,7 +9,6 @@
 #include "DCGame/DC_PostMortemPawn.h"
 #include "DCGame/DC_GM.h"
 
-#include "Net/VoiceConfig.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
@@ -112,29 +111,6 @@ void ADC_PC::SetupInputComponent()
 
 	EIC->BindAction(PushToTalkAction, ETriggerEvent::Started, this, &ADC_PC::PushToTalkStarted);
 	EIC->BindAction(PushToTalkAction, ETriggerEvent::Completed, this, &ADC_PC::PushToTalkCompleted);
-
-	FInputKeyBinding keysIKB(FInputChord(EKeys::AnyKey, false, false, false, false), EInputEvent::IE_Pressed);
-
-	keysIKB.bConsumeInput = true;
-	keysIKB.bExecuteWhenPaused = false;
-
-	keysIKB.KeyDelegate.GetDelegateWithKeyForManualSet().BindLambda([this](const FKey& Key) {
-		OnAnyKeyPressed(Key);
-	});
-
-	InputComponent->KeyBindings.Add(keysIKB);
-
-	FInputKeyBinding mouseIKB(FInputChord(EKeys::Mouse2D, false, false, false, false), EInputEvent::IE_Pressed);
-
-	mouseIKB.bConsumeInput = true;
-	mouseIKB.bExecuteWhenPaused = false;
-
-	mouseIKB.KeyDelegate.GetDelegateWithKeyForManualSet().BindLambda([this](const FKey& Key) {
-		OnAnyKeyPressed(Key);
-	});
-
-	InputComponent->KeyBindings.Add(mouseIKB);
-
 }
 
 void ADC_PC::ToggleOptions()
@@ -169,17 +145,6 @@ void ADC_PC::PushToTalkCompleted()
 		return;
 
 	ToggleSpeaking(false);
-
-}
-
-void ADC_PC::OnAnyKeyPressed(const FKey& Key)
-{
-	if(bUsingGamepad == Key.IsGamepadKey())
-		return;
-
-	bUsingGamepad = Key.IsGamepadKey();
-
-	OnInputDeviceChanged.Broadcast(bUsingGamepad);
 
 }
 
