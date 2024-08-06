@@ -56,10 +56,15 @@ void UBindingOptionsItem::OnKeySelected(FInputChord SelectedKey)
 	
 	if(!bIsSelectingNewKey)
 		return;
-
+	
 	if(newKey.IsGamepadKey() != tempOldKey.IsGamepadKey())
+	{
 		KeySelector->SetSelectedKey(tempOldKey);
+		return;
+	}
 
+	bIsSelectingNewKey = false;
+	
 	FString keyName = newKey.GetFName().ToString();
 	
 	if(keyName.Contains("LeftStick") )
@@ -79,15 +84,22 @@ void UBindingOptionsItem::OnKeySelected(FInputChord SelectedKey)
 
 void UBindingOptionsItem::OnIsSelectingKeyChanged()
 {
+	TSharedRef<FNavigationConfig> navConfig = FSlateApplication::Get().GetNavigationConfig();
 	if(bIsSelectingNewKey)
 	{
-		bIsSelectingNewKey = false;
-		FSlateApplication::Get().GetNavigationConfig()->bAnalogNavigation = true;
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("setting to false"));
+
+		navConfig->bAnalogNavigation = true;
+		navConfig->bKeyNavigation = true;
+		navConfig->bTabNavigation = true;
 	}
 	else
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("setting to true"));
+
 		bIsSelectingNewKey = true;
-		FSlateApplication::Get().GetNavigationConfig()->bAnalogNavigation = false;
+		navConfig->bAnalogNavigation = false;
+		navConfig->bKeyNavigation = false;
+		navConfig->bTabNavigation = false;
 	}
-	bIsSelectingNewKey = true;
 }

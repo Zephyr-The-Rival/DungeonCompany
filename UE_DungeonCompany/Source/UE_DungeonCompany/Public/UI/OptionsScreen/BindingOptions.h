@@ -25,10 +25,19 @@ private:
 	bool bBindGamepad = false;
 
 	UPROPERTY(meta = (BindWidget))
-	UVerticalBox* GeneralContainer;
+	UVerticalBox* CharacterGeneralContainer;
 
 	UPROPERTY(meta = (BindWidget))
-	UVerticalBox* MovementContainer;
+	UVerticalBox* CharacterMovementContainer;
+	
+	UPROPERTY(meta = (BindWidget))
+	UVerticalBox* InventoryContainer;
+	
+	UPROPERTY(meta = (BindWidget))
+	UVerticalBox* SpectatorContainer;
+	
+	UPROPERTY(meta = (BindWidget))
+	UVerticalBox* GlobalContainer;
 
 protected:
 	virtual void NativeConstruct() override;

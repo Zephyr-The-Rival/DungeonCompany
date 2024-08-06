@@ -53,12 +53,32 @@ void UBindingOptions::CreateBindingsForMappingContext(UInputMappingContext* Bind
 
 		FString category = keyMapping.GetPlayerMappableKeySettings()->DisplayCategory.ToString();
 
-		if(category.Contains("Movement"))
-			MovementContainer->AddChild(item);
-		else
-			GeneralContainer->AddChild(item);
-		
 		BindingOptionsItems.Add(item);
+
+		FString mappingContextName = BindingMappingContext->GetFName().ToString();
+		if(mappingContextName.Contains("Controller"))
+		{
+			GlobalContainer->AddChild(item);
+			continue;
+		}
+
+		if(mappingContextName.Contains("Inventory") || category.Contains("Inventory"))
+		{
+			InventoryContainer->AddChild(item);
+			continue;
+		}
+
+		if(mappingContextName.Contains("PostMortem"))
+		{
+			SpectatorContainer->AddChild(item);
+			continue;
+		}
+		
+		if(category.Contains("Movement"))
+			CharacterMovementContainer->AddChild(item);
+		else
+			CharacterGeneralContainer->AddChild(item);
+		
 	}
 }
 

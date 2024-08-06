@@ -6,6 +6,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
 #include "InputMappingContext.h"
+#include "PlayerMappableKeySettings.h"
 
 void AMultiDevice_PC::OnAnyKeyPressed(const FKey& Key)
 {
@@ -47,6 +48,8 @@ void AMultiDevice_PC::UpdateMapping(FName MappingName, FKey NewKey)
 	userSettings->ApplySettings();
 	userSettings->SaveSettings();
 
+	ActionKeyCache.Empty();
+
 }
 
 FKey AMultiDevice_PC::GetCurrentKeyForMapping(FName MappingName) const
@@ -60,24 +63,66 @@ FKey AMultiDevice_PC::GetCurrentKeyForMapping(FName MappingName) const
                                                         
 	FMapPlayerKeyArgs keyArgs;                              
 	keyArgs.Slot = EPlayerMappableKeySlot::First;           
-	keyArgs.MappingName = MappingName;                      
+	keyArgs.MappingName = MappingName;
+
+	if(!userSettings || !userSettings->GetCurrentKeyProfile() || !userSettings->GetCurrentKeyProfile()->FindKeyMapping(keyArgs))
+		return FKey();
 	return userSettings->GetCurrentKeyProfile()->FindKeyMapping(keyArgs)->GetCurrentKey();
 
+}
+
+FKey AMultiDevice_PC::GetCurrentKeyForAction(UInputAction* InputAction) const
+{
+	int64 key = bUsingGamepad? -(int64)InputAction : (int64)InputAction;
+	
+	if(ActionKeyCache.Contains(key))
+		return ActionKeyCache[key];
+	
+	int contextsNum = AllMappingContexts.Num();
+
+	FEnhancedActionKeyMapping foundMapping;
+	bool bFoundMapping = false;
+
+	for(int i = 0; i < contextsNum && !bFoundMapping; ++i)
+	{
+		auto allMappings = AllMappingContexts[i]->GetMappings();
+
+		int mappingsNum = allMappings.Num();
+
+		for(int j = 0; j < mappingsNum && !bFoundMapping; ++j)
+		{
+			if(allMappings[j].Action == InputAction && allMappings[j].Key.IsGamepadKey() == bUsingGamepad)
+			{
+				foundMapping = allMappings[j];
+				bFoundMapping = true;
+			}
+		}
+	}
+
+	if(!bFoundMapping)
+		return FKey();
+
+	FKey result = GetCurrentKeyForMapping(foundMapping.GetMappingName());
+	ActionKeyCache.Add(key, result);
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("cached"));
+	
+	return GetCurrentKeyForMapping(foundMapping.GetMappingName());
 }
 
 AMultiDevice_PC::AMultiDevice_PC()
 {
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> CharacterIMC(TEXT("/Game/_DungeonCompanyContent/Input/CharacterIMC"));
-	AllMappings.Add(CharacterIMC.Object);
+	AllMappingContexts.Add(CharacterIMC.Object);
 
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> ControllerIMC(TEXT("/Game/_DungeonCompanyContent/Input/ControllerIMC"));
-	AllMappings.Add(ControllerIMC.Object);
+	AllMappingContexts.Add(ControllerIMC.Object);
 
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> InventoryIMC(TEXT("/Game/_DungeonCompanyContent/Input/InventoryIMC"));
-	AllMappings.Add(InventoryIMC.Object);
+	AllMappingContexts.Add(InventoryIMC.Object);
 
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> PostMortemIMC(TEXT("/Game/_DungeonCompanyContent/Input/PostMortemIMC"));
-	AllMappings.Add(PostMortemIMC.Object);
+	AllMappingContexts.Add(PostMortemIMC.Object);
 }
 
 void AMultiDevice_PC::BeginPlay()
@@ -90,11 +135,11 @@ void AMultiDevice_PC::BeginPlay()
 		return;
 
 	auto userSettings = inputLocalPlayer->GetUserSettings();
-	int mappingsNum = AllMappings.Num();
+	int mappingsNum = AllMappingContexts.Num();
 
 	for(int i = 0; i < mappingsNum; ++i)
 	{
-		userSettings->RegisterInputMappingContext(AllMappings[i]);
+		userSettings->RegisterInputMappingContext(AllMappingContexts[i]);
 	}
 }
 

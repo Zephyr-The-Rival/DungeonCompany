@@ -10,6 +10,7 @@
  * 
  */
 
+class UInputAction;
 class UInputMappingContext;
 class UEnhancedInputLocalPlayerSubsystem;
 
@@ -20,10 +21,11 @@ class UE_DUNGEONCOMPANY_API AMultiDevice_PC : public APlayerController
 
 private:
 	bool bUsingGamepad = false;
-	TArray<UInputMappingContext*> AllMappings;
+	
+	TArray<UInputMappingContext*> AllMappingContexts;
 
 public:
-	inline const TArray<UInputMappingContext*>& GetAllMappingContexts() const { return AllMappings; }
+	inline const TArray<UInputMappingContext*>& GetAllMappingContexts() const { return AllMappingContexts; }
 
 public:
 	AMultiDevice_PC();
@@ -45,11 +47,17 @@ public:
 
 protected:
 	void OnAnyKeyPressed(const FKey& Key);
+
+private:
+	mutable TMap<int64, FKey> ActionKeyCache;
 	
 public:
 	UEnhancedInputLocalPlayerSubsystem* GetInputLocalPlayer() const;
 	void UpdateMapping(FName MappingName, FKey NewKey);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FKey GetCurrentKeyForMapping(FName MappingName) const;
-	
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FKey GetCurrentKeyForAction(UInputAction* InputAction) const;
 };

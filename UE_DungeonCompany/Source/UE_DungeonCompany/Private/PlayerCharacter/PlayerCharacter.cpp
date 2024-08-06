@@ -11,7 +11,6 @@
 #include "Inventory/Inventory.h"
 #include "Inventory/InventorySlot.h"
 #include "Items/Weapon.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Entities/DC_Entity.h"
@@ -34,15 +33,9 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
-#include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
-#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
-#include "Interfaces/VoiceInterface.h"
-#include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "DCGame/DC_PostMortemPawn.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -110,14 +103,13 @@ void APlayerCharacter::BeginPlay()
 	RestDelegate = FTimerDelegate::CreateLambda([this](){
 	bResting = true; 
 	});
-
 }
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 	float voiceLevel = VOIPTalker->GetVoiceLevel();
 
 	CheckForFallDamage();
@@ -171,7 +163,7 @@ void APlayerCharacter::Restart()
 		return;
 
 	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
-
+	
 	if (!MyPlayerHud)
 		CreatePlayerHud();
 
