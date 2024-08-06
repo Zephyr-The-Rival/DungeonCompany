@@ -692,7 +692,7 @@ void APlayerCharacter::ReportNoise(float Loudness)
 void APlayerCharacter::Cough()
 {
 	if (HasAuthority())
-		ReportNoise(1.f);
+		ReportNoise(2.f);
 
 	if (CoughSound)
 		UGameplayStatics::SpawnSoundAtLocation(this, CoughSound, GetActorLocation());

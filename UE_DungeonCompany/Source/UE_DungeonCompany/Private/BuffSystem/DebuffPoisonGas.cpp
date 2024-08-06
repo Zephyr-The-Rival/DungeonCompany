@@ -12,13 +12,13 @@ void UDebuffPoisonGas::Apply()
 	if(!playerCharacter)
 		return;
 
-	GetWorld()->GetTimerManager().SetTimer(CoughHandle, playerCharacter, &APlayerCharacter::Cough, CoughInterval, true);
+	GetWorld()->GetTimerManager().SetTimer(CoughHandle, playerCharacter, &APlayerCharacter::Cough, CoughInterval, true, 0.f);
 
 }
 
 void UDebuffPoisonGas::AuthorityApply()
 {
-	float DamagePerTick = DamageIntervalSeconds / DamagePerSecond;
+	float DamagePerTick = DamageIntervalSeconds * DamagePerSecond;
 
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(GetOuterEntity(), &ADC_Entity::TakeDamage, DamagePerTick);
 	
@@ -31,11 +31,9 @@ void UDebuffPoisonGas::Remove()
 	Super::Remove();
 
 	GetWorld()->GetTimerManager().ClearTimer(CoughHandle);
-
 }
 
 void UDebuffPoisonGas::AuthorityRemove()
 {
 	GetWorld()->GetTimerManager().ClearTimer(DamageHandle);
-
 }

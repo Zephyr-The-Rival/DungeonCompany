@@ -93,19 +93,11 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 private:
-	TMap<APlayerCharacter*, FTimerHandle> PlayerTimerHandles;
+	static TMap<APlayerCharacter*, FTimerHandle> PlayerTimerHandles;
+	static TMap<APlayerCharacter*, uint16> PlayerCloudOverlapCount;
 
 	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
 	float SafeTime = 5.f;
-
-	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
-	float DamageInterval = 2.f;
-
-	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
-	float Damage = 2.5f;
-
-	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
-	float DamageCoughLoudness = 2.f;
 
 	float CloudSizeMultiplierPerUpdate;
 
@@ -116,11 +108,9 @@ protected:
 	UFUNCTION()
 	void OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter);
-	void OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter);
+	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const;
 
 protected:
-		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
-	TSubclassOf<UDebuffPoisonGas> PosionGasDebuff;
+	TSubclassOf<UDebuffPoisonGas> PoisonGasDebuffClass;
 };
