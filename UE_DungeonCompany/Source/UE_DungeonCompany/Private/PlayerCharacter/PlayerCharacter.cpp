@@ -676,9 +676,11 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 
 void APlayerCharacter::AddMoneyToWallet_Implementation(int32 Amount)
 {
+	
 	ASharedStatsManager* wallet = Cast<ASharedStatsManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
 	wallet->Money += Amount;
+	wallet->OnMoneyChanged.Broadcast();
 }
 
 void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items,
@@ -869,6 +871,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 			}
 		}
 
+		OnDropItem.Broadcast();
 		Server_DropBackpack(ItemClasses, ItemDatas);
 		return;
 	}
@@ -879,6 +882,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		                      bThrow, FirstPersonCamera->GetForwardVector());
 
 		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
+		OnDropItem.Broadcast();
 	}
 }
 
