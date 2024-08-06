@@ -29,6 +29,7 @@ class UFootstepSystemComponent;
 
 struct  FWeaponInfo;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemDrop);
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -376,9 +377,13 @@ protected:
 
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnItemDrop OnDropItem;
+
 
 public:
-
+	
 	void RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty);
 
 protected:
@@ -533,7 +538,6 @@ public://cheat Stuff:
 public://buyingItems
 	void BuyItem(ABuyableItem* ItemToBuy);
 
-protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Backpack")
 	TSubclassOf<UItemData> BackpackClass;
 
