@@ -51,7 +51,7 @@ void AWeapon::DealHits(FWeaponInfo WeaponInfo)
 	{
 		if(hitEntity!=MyCharacterToAttachTo)
 		{
-			hitEntity->TakeDamage(10);
+			hitEntity->TakeDamage(this->Damage);
 			hitEntity->SpawnHitEffect(Cast<USceneComponent>(hitResult.GetComponent()), hitResult.BoneName, hitResult.Location, TraceEnds[i] - TraceStarts[i]);
 			hitEntity->SpawnTakeDamageSound();
 		}
