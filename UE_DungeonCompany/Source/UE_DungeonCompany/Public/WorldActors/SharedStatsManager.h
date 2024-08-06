@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "GameFramework/Actor.h"
 #include "SharedStatsManager.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoneyChanged);
 UCLASS()
 class UE_DUNGEONCOMPANY_API ASharedStatsManager : public AActor
 {
@@ -22,9 +24,18 @@ protected:
 
 public:
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(ReplicatedUsing=OnMoneyReplicated, EditAnywhere, BlueprintReadWrite)
 	int32 Money=0;
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION()
+	void OnMoneyReplicated();
+
+public:
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnMoneyChanged OnMoneyChanged;
+	
 };

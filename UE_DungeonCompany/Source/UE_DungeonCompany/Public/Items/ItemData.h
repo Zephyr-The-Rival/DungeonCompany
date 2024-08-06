@@ -42,7 +42,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> ThirdPersonAnimationBlueprintClass;
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure)
 	FString SerializeMyData();
 	virtual FString SerializeMyData_Implementation();
 
