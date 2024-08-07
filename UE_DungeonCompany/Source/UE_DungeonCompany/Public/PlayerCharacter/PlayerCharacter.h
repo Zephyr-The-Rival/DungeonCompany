@@ -601,5 +601,8 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
 	USoundBase* InventoryEquipSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+	USoundBase* DropItemSound;
 	
 };

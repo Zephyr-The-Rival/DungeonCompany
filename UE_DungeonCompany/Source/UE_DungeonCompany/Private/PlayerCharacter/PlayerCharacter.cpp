@@ -865,12 +865,15 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		}
 
 		OnDropItem.Broadcast();
+		Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
 		Server_DropBackpack(ItemClasses, ItemDatas);
 		return;
 	}
 
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
+		Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
+		
 		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(),
 		                      bThrow, FirstPersonCamera->GetForwardVector());
 
