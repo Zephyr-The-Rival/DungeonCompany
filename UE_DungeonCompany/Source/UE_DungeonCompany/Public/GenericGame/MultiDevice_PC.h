@@ -51,7 +51,7 @@ protected:
 	void OnAnyKeyPressed(const FKey& Key);
 
 private:
-	mutable TMap<int64, FKey> ActionKeyCache;
+	mutable TMap<UInputAction*, TTuple<FKey,FKey>> ActionKeyCache;
 
 public:
 	UDELEGATE()
@@ -67,6 +67,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FKey GetCurrentKeyForMapping(FName MappingName) const;
 
+	TTuple<FKey, FKey> GetCurrentKeysForAction(UInputAction* InputAction) const;
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FKey GetCurrentKeyForAction(UInputAction* InputAction) const;
+	TArray<FKey> GetCurrentKeysArrayForAction(UInputAction* InputAction) const;
 };
