@@ -33,6 +33,7 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
+#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -944,6 +945,8 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 	UItemData* tmp = MyPlayerHud->GetHighlightedSlot().Slot->MyItem;
 	MyPlayerHud->GetHighlightedSlot().Slot->MyItem = slot->MyItem;
 	slot->MyItem = tmp;
+
+	UGameplayStatics::PlaySound2D(GetWorld(), InventoryEquipSound);
 
 
 	if (GetCurrentlyHeldInventorySlot() == slot) //if equipping to slot in hand
