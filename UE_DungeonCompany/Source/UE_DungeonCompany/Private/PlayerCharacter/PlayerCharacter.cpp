@@ -454,7 +454,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 {
 	this->bHasBackPack = true;
-
+	AddBuffOrDebuff(NoSprintDebuff);
 	if (bSprinting)
 		StopSprint();
 
@@ -555,7 +555,7 @@ void APlayerCharacter::ToggleSprint()
 
 void APlayerCharacter::StartSprint()
 {
-	if (!this->bSprintAllowed || bHasBackPack)
+	if (!this->bSprintAllowed || bHasNoSprintDebuff)
 		return;
 
 	if (Stamina <= 0.f)
@@ -843,6 +843,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 	if (SlotToEmpty.bIsBackpackSlot)
 	{
 		this->bHasBackPack = false;
+		RemoveBuffOrDebuff(NoSprintDebuff);
 		if (this->bInventoryIsOn)
 			this->MyPlayerHud->RefreshInventory();
 
