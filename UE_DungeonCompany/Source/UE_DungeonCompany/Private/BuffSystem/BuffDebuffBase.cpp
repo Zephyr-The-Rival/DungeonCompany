@@ -16,6 +16,11 @@ UBuffDebuffBase::UBuffDebuffBase()
 }
 
 
+void UBuffDebuffBase::IncrementAppliedCount()
+{
+	++AppliedCount;
+}
+
 void UBuffDebuffBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -53,7 +58,7 @@ void UBuffDebuffBase::LocalApply()
 	this->bIsActive=true;
 	
 	if (APlayerCharacter* player = Cast<APlayerCharacter>(OuterEntity))
-		player->GetMyHud()->UdateBuffs();
+		player->GetMyHud()->UpdateBuffs();
 }
 
 void UBuffDebuffBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -85,11 +90,16 @@ void UBuffDebuffBase::LocalRemove()
 {
 	this->bIsActive=false;
 	if (APlayerCharacter* player = Cast<APlayerCharacter>(OuterEntity))
-		player->GetMyHud()->UdateBuffs();
+		player->GetMyHud()->UpdateBuffs();
 }
 
 void UBuffDebuffBase::Destroy()
 {
+	--AppliedCount;
+	
+	if(AppliedCount)
+		return;
+		
 	GetWorld()->GetTimerManager().ClearTimer(ActiveTimerHandle);
 
 	Super::DestroyComponent(false);

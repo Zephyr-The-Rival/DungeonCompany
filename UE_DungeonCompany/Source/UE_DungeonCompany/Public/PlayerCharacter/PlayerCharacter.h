@@ -99,9 +99,6 @@ protected:
 	UInputAction* ItemPrimaryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* ItemPrimaryHoldAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ItemSecondaryAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")

@@ -11,7 +11,6 @@
 #include "Inventory/Inventory.h"
 #include "Inventory/InventorySlot.h"
 #include "Items/Weapon.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Entities/DC_Entity.h"
@@ -34,16 +33,9 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
-#include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
-#include "ShaderPrintParameters.h"
-#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
-#include "Interfaces/VoiceInterface.h"
-#include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "DCGame/DC_PostMortemPawn.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -119,7 +111,7 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 	float voiceLevel = VOIPTalker->GetVoiceLevel();
 
 	CheckForFallDamage();
@@ -173,7 +165,7 @@ void APlayerCharacter::Restart()
 		return;
 
 	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
-
+	
 	if (!MyPlayerHud)
 		CreatePlayerHud();
 }
@@ -273,9 +265,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryItemAction);
 
-	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Started, this,
-	                &APlayerCharacter::TriggerPrimaryHoldItemAction);
-	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndPrimaryHoldItemAction);
+	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryHoldItemAction);
+	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndPrimaryHoldItemAction);
 
 	EIC->BindAction(ItemSecondaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerSecondaryItemAction);
 
@@ -492,7 +483,7 @@ void APlayerCharacter::Jump()
 		return;
 	}
 
-	if (Stamina <= 0.f)
+	if (Stamina <= 0.f || GetCharacterMovement()->IsCrouching())
 		return;
 
 	SubstractStamina(JumpStaminaDrain);
@@ -701,7 +692,7 @@ void APlayerCharacter::ReportNoise(float Loudness)
 void APlayerCharacter::Cough()
 {
 	if (HasAuthority())
-		ReportNoise(1.f);
+		ReportNoise(2.f);
 
 	if (CoughSound)
 		UGameplayStatics::SpawnSoundAtLocation(this, CoughSound, GetActorLocation());
