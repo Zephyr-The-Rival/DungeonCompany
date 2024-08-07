@@ -9,7 +9,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Inventory/InventorySlot.h"
 
-#include "AI/Perception/DC_AIPerceptionStimuliSourceComp.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
 
 void AWorldItem::SetWasDroppedByPlayer(bool InDroppedByPlayer)
@@ -28,7 +28,7 @@ AWorldItem::AWorldItem()
 	static ConstructorHelpers::FObjectFinder<USoundBase> basicSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
 	this->PickUpSound = basicSound.Object;
 	
-	StimulusSource = CreateDefaultSubobject<UDC_AIPerceptionStimuliSourceComp>(TEXT("Stimulus"));
+	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 	StimulusSource->RegisterForSense(UAISense_Sight::StaticClass());
 	StimulusSource->RegisterWithPerceptionSystem();
 	
