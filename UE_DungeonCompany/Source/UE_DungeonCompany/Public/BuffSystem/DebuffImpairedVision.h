@@ -23,6 +23,8 @@ protected:
 
 protected:
 
+	int materialIndex;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FWeightedBlendable PostProcessMaterial;
 
