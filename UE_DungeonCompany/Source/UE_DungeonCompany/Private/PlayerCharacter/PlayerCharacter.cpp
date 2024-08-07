@@ -1097,16 +1097,16 @@ void APlayerCharacter::CheckForFallDamage()
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z + 20;
 		//+20 artificially because the capsule curvature lets the player stand lower
 
+		Server_SpawnSoundAtLocation(LandingSound, this->GetActorLocation());
 		float damage = this->FallDamageCalculation(deltaZ);
 		if (damage > 0)
 		{
+			if(damage>= this->HP)
+				Server_SpawnSoundAtLocation(FallingToDeathSound, this->GetActorLocation());
+			
 			TakeDamage(damage);
-			//spawn fall damage sound
+
 		}			
-		else
-		{
-			Server_SpawnSoundAtLocation(LandingSound, this->GetActorLocation());
-		}
 
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
