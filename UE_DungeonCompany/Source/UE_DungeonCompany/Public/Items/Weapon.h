@@ -38,6 +38,12 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintPure)
 	FWeaponInfo GetWeaponInfo();
 
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Debugging")
+	bool bDrawDebugLinesOnAttack=false;
+	
+public:
 	
     void DealHits(FWeaponInfo WeaponInfo);
     
@@ -45,4 +51,14 @@ public:
 	virtual void TriggerPrimaryAction_Implementation(APlayerCharacter* User) override;
 	virtual void TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User) override;
 
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Balancing")
+	float Damage=10;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category= "Balancing")
+	float StaminaCost=3;
+
+public:
+	float GetStaminaCost() const {return this->StaminaCost;};
 };

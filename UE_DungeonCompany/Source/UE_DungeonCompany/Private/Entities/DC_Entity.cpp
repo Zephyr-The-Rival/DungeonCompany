@@ -10,10 +10,15 @@
 #include "Net/UnrealNetwork.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 ADC_Entity::ADC_Entity()
 {
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> basicBloodeffect(TEXT("/Game/_DungeonCompanyContent/Assets/VFX/BaseElement/Blood/NS_Blood"));
+	this->bloodEffect= basicBloodeffect.Object;
 
+	static ConstructorHelpers::FObjectFinder<USoundBase> basicTakeDamageSound(TEXT("/Game/_DungeonCompanyContent/Audio/TakeDamageSounds/PlayerHit.PlayerHit"));
+	this->TakeDamageSound=basicTakeDamageSound.Object;
 }
 
 ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
@@ -23,7 +28,7 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 	
 }
 
-void ADC_Entity::SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
+void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
 {
 	if (IsValid(this->bloodEffect))
 	{
@@ -79,30 +84,43 @@ UBuffDebuffBase* ADC_Entity::AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> 
 	if (!HasAuthority())
 		return nullptr;
 
-	UBuffDebuffBase* ExistingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
-
-	if (ExistingDeBuff)
+	UBuffDebuffBase* existingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
+	
+	if (existingDeBuff && !existingDeBuff->IsStackable())
 	{
-		ExistingDeBuff->Timegate(ActiveTime);
-		return ExistingDeBuff;
+		existingDeBuff->Timegate(ActiveTime);
+		existingDeBuff->IncrementAppliedCount();
+		
+		return existingDeBuff;
 	}
 
-	UBuffDebuffBase* DeBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
+	UBuffDebuffBase* deBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
 
-	DeBuff->RegisterComponent();
-	DeBuff->Timegate(ActiveTime);
+	deBuff->RegisterComponent();
+	deBuff->Timegate(ActiveTime);
 
-	return DeBuff;
+	return deBuff;
 }
 
 void ADC_Entity::RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass)
 {
 	if (!HasAuthority())
 		return;
+	
+	if (UBuffDebuffBase* existingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass)))
+		existingDeBuff->Destroy();
 
-	UBuffDebuffBase* ExistingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
+}
 
-	if (ExistingDeBuff)
-		ExistingDeBuff->Destroy();
+bool ADC_Entity::HasBuffOrDebuffApplied(TSubclassOf<UBuffDebuffBase> BuffDebuffClass) const
+{
+	return !!GetComponentByClass(BuffDebuffClass);
+}
 
+void ADC_Entity::SpawnTakeDamageSound_Implementation()
+{
+	if (IsValid(this->TakeDamageSound))
+	{
+		UGameplayStatics::SpawnSoundAtLocation(this, TakeDamageSound, GetActorLocation());
+	}
 }

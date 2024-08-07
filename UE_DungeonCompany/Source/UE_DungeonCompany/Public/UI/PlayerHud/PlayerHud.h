@@ -89,10 +89,7 @@ public:
 	void UpdateCrouchIcon();
 	void UpdateCrouchIcon_Implementation();
 
-
-	UFUNCTION(BlueprintNativeEvent)
-	void ToggleOptionsMenu(bool On);
-	void ToggleOptionsMenu_Implementation(bool On);
+	
 
 	UFUNCTION(BlueprintNativeEvent)
 	void ShowTextInteractPrompt(const FString& NewText);
@@ -103,8 +100,8 @@ public:
 	void ShowBuyPrompt_Implementation(ABuyableItem* BuyableItem);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void UdateBuffs();
-	void UdateBuffs_Implementation();
+	void UpdateBuffs();
+	void UpdateBuffs_Implementation();
 
 
 };

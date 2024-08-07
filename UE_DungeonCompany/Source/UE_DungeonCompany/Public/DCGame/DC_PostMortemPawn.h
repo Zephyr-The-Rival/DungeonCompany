@@ -13,6 +13,9 @@ class ADC_Entity;
 class UVOIPTalker;
 class UInputMappingContext;
 class UInputAction;
+class USpectatorHud;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpectatingSwitch, ADC_PostMortemPawn*, PostMortemPawn);
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_PostMortemPawn : public APawn
@@ -36,6 +39,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION()
 	void OnPlayerDied(ADC_Entity* DeadPlayer);
@@ -46,12 +50,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void PossessedBy(AController* NewController) override;
-
-protected:
-	UFUNCTION(Client, Reliable)
-	void Client_PossessedBy(AController* NewController);
-	void Client_PossessedBy_Implementation(AController* NewController);
+	virtual void Restart() override;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
@@ -90,4 +89,19 @@ protected:
 	void SpectatePreviousPlayer();
 	void SpectateNextPlayer();
 
+
+public:
+	void CreateSpectatorHud();
+
+	USpectatorHud* MySpectatorHud;
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<USpectatorHud> SpectatorHudClass;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnSpectatingSwitch OnSpectatingSwitch;
+
+protected:
+
+	virtual void Destroyed() override;
 };
