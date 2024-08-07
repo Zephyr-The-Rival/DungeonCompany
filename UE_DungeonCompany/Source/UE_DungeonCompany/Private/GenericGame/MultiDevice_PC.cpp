@@ -71,58 +71,71 @@ FKey AMultiDevice_PC::GetCurrentKeyForMapping(FName MappingName) const
 	return userSettings->GetCurrentKeyProfile()->FindKeyMapping(keyArgs)->GetCurrentKey();
 }
 
-TTuple<FKey, FKey> AMultiDevice_PC::GetCurrentKeysForAction(UInputAction* InputAction) const
+const TTuple<TArray<FCustomMapping>, TArray<FCustomMapping>>& AMultiDevice_PC::GetCurrentKeysForAction(UInputAction* InputAction) const
 {
 	if(ActionKeyCache.Contains(InputAction))
 		return ActionKeyCache[InputAction];
 	
 	int contextsNum = AllMappingContexts.Num();
 
-	FEnhancedActionKeyMapping foundMKMapping;
-	FEnhancedActionKeyMapping foundControllerMapping;
-	bool bFoundMKMapping = false;
-	bool bFoundControllerMapping = false;
+	TArray<FEnhancedActionKeyMapping> foundMKMapping;
+	TArray<FEnhancedActionKeyMapping> foundControllerMapping;
 
-	for(int i = 0; (i < contextsNum) && (!bFoundMKMapping || !bFoundControllerMapping); ++i)
+	for(int i = 0; i < contextsNum; ++i)
 	{
 		auto allMappings = AllMappingContexts[i]->GetMappings();
 
 		int mappingsNum = allMappings.Num();
 
-		for(int j = 0; (j < mappingsNum) && (!bFoundMKMapping || !bFoundControllerMapping); ++j)
+		for(int j = 0; j < mappingsNum; ++j)
 		{
 			auto currentMapping = allMappings[j];
-			
 			if(currentMapping.Action != InputAction)
 				continue;
 
 			FKey currentKey = currentMapping.Key;
 
-			if(currentKey.IsGamepadKey() && !bFoundControllerMapping)
+			if(currentKey.IsGamepadKey())
 			{
-				foundControllerMapping = currentMapping;
-				bFoundControllerMapping = true;
-			} else if(!currentKey.IsGamepadKey() && !bFoundMKMapping)
+				foundControllerMapping.Add(currentMapping);
+			} else if(!currentKey.IsGamepadKey())
 			{
-				foundMKMapping = currentMapping;
-				bFoundMKMapping = true;
+				foundMKMapping.Add(currentMapping);
 			}
 		}
 	}
 	
-	TTuple<FKey, FKey> result = { GetCurrentKeyForMapping(foundMKMapping.GetMappingName()), GetCurrentKeyForMapping(foundControllerMapping.GetMappingName()) };
+	ActionKeyCache.Add(InputAction);
+
+	int mkNum = foundMKMapping.Num();
 	
-	ActionKeyCache.Add(InputAction, result);
+	for(int i = 0; i < mkNum; ++i)
+	{
+		auto currentMapping = foundMKMapping[i];
+		
+		ActionKeyCache[InputAction].Get<0>().Add({GetCurrentKeyForMapping(currentMapping.GetMappingName()), currentMapping.Modifiers});
+	}
+
+	int controllerNum = foundControllerMapping.Num();
+
+	for(int i = 0; i < controllerNum; ++i)
+	{
+		auto currentMapping = foundControllerMapping[i];
+
+		ActionKeyCache[InputAction].Get<1>().Add({GetCurrentKeyForMapping(currentMapping.GetMappingName()), currentMapping.Modifiers});
+	}
 	
-	return result;
+	return ActionKeyCache[InputAction];
 }
 
-TArray<FKey> AMultiDevice_PC::GetCurrentKeysArrayForAction(UInputAction* InputAction) const
+const TArray<FCustomMapping>& AMultiDevice_PC::GetKeyboardKeysForAction(UInputAction* InputAction) const
 {
-	auto keys = GetCurrentKeysForAction(InputAction);
-	
-	return {keys.Get<0>(), keys.Get<1>()};
+	return GetCurrentKeysForAction(InputAction).Get<0>();
 }
+
+const TArray<FCustomMapping>& AMultiDevice_PC::GetGamepadKeysForAction(UInputAction* InputAction) const
+{
+	return GetCurrentKeysForAction(InputAction).Get<1>();}
 
 AMultiDevice_PC::AMultiDevice_PC()
 {
