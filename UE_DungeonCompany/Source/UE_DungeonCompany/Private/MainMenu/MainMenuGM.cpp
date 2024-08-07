@@ -2,7 +2,13 @@
 
 
 #include "MainMenu/MainMenuGM.h"
+#include "GenericGame/MultiDevice_PC.h"
 #include "Subsystems/SessionSubsystem.h"
+
+AMainMenuGM::AMainMenuGM()
+{
+	PlayerControllerClass = AMultiDevice_PC::StaticClass();
+}
 
 void AMainMenuGM::BeginPlay()
 {

@@ -11,7 +11,6 @@
 #include "Inventory/Inventory.h"
 #include "Inventory/InventorySlot.h"
 #include "Items/Weapon.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Entities/DC_Entity.h"
@@ -34,16 +33,9 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
-#include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
-#include "ShaderPrintParameters.h"
-#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
-#include "Interfaces/VoiceInterface.h"
-#include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "DCGame/DC_PostMortemPawn.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -119,7 +111,7 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 	float voiceLevel = VOIPTalker->GetVoiceLevel();
 
 	CheckForFallDamage();
@@ -173,7 +165,7 @@ void APlayerCharacter::Restart()
 		return;
 
 	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
-
+	
 	if (!MyPlayerHud)
 		CreatePlayerHud();
 }
@@ -273,9 +265,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryItemAction);
 
-	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Started, this,
-	                &APlayerCharacter::TriggerPrimaryHoldItemAction);
-	EIC->BindAction(ItemPrimaryHoldAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndPrimaryHoldItemAction);
+	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerPrimaryHoldItemAction);
+	EIC->BindAction(ItemPrimaryAction, ETriggerEvent::Completed, this, &APlayerCharacter::EndPrimaryHoldItemAction);
 
 	EIC->BindAction(ItemSecondaryAction, ETriggerEvent::Started, this, &APlayerCharacter::TriggerSecondaryItemAction);
 
@@ -463,7 +454,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 {
 	this->bHasBackPack = true;
-
+	AddBuffOrDebuff(NoSprintDebuff);
 	if (bSprinting)
 		StopSprint();
 
@@ -492,7 +483,7 @@ void APlayerCharacter::Jump()
 		return;
 	}
 
-	if (Stamina <= 0.f)
+	if (Stamina <= 0.f || GetCharacterMovement()->IsCrouching())
 		return;
 
 	SubstractStamina(JumpStaminaDrain);
@@ -564,7 +555,7 @@ void APlayerCharacter::ToggleSprint()
 
 void APlayerCharacter::StartSprint()
 {
-	if (!this->bSprintAllowed || bHasBackPack)
+	if (!this->bSprintAllowed || bHasNoSprintDebuff)
 		return;
 
 	if (Stamina <= 0.f)
@@ -676,9 +667,11 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 
 void APlayerCharacter::AddMoneyToWallet_Implementation(int32 Amount)
 {
+	
 	ASharedStatsManager* wallet = Cast<ASharedStatsManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
 	wallet->Money += Amount;
+	wallet->OnMoneyChanged.Broadcast();
 }
 
 void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items,
@@ -699,7 +692,7 @@ void APlayerCharacter::ReportNoise(float Loudness)
 void APlayerCharacter::Cough()
 {
 	if (HasAuthority())
-		ReportNoise(1.f);
+		ReportNoise(2.f);
 
 	if (CoughSound)
 		UGameplayStatics::SpawnSoundAtLocation(this, CoughSound, GetActorLocation());
@@ -850,6 +843,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 	if (SlotToEmpty.bIsBackpackSlot)
 	{
 		this->bHasBackPack = false;
+		RemoveBuffOrDebuff(NoSprintDebuff);
 		if (this->bInventoryIsOn)
 			this->MyPlayerHud->RefreshInventory();
 
@@ -869,6 +863,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 			}
 		}
 
+		OnDropItem.Broadcast();
 		Server_DropBackpack(ItemClasses, ItemDatas);
 		return;
 	}
@@ -879,6 +874,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		                      bThrow, FirstPersonCamera->GetForwardVector());
 
 		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
+		OnDropItem.Broadcast();
 	}
 }
 
@@ -1256,7 +1252,7 @@ void APlayerCharacter::StartAttacking()
 
 void APlayerCharacter::AttackStart()
 {
-	if (AttackBlend != 0) //so a new attack only stars when the old one is already over
+	if (AttackBlend != 0  || this->Stamina <=0) //so a new attack only stars when the old one is already over
 		return;
 	//different attack when sprinting?
 	//attack needs to cost stamina
@@ -1272,7 +1268,11 @@ void APlayerCharacter::AttackStart()
 	GetCharacterMovement()->MaxWalkSpeed = 100;
 
 	if (IsLocallyControlled())
+	{
 		StopSprint();
+		SubstractStamina(Cast<AWeapon>(CurrentlyHeldWorldItem)->GetStaminaCost());
+	}
+		
 }
 
 

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "GenericGame/MultiDevice_PC.h"
 #include "DC_PC.generated.h"
 
 /**
@@ -23,7 +23,7 @@ enum class EPawnType : uint8 {
 };
 
 UCLASS()
-class UE_DUNGEONCOMPANY_API ADC_PC : public APlayerController
+class UE_DUNGEONCOMPANY_API ADC_PC : public AMultiDevice_PC
 {
 	GENERATED_BODY()
 
@@ -80,18 +80,6 @@ private:
 	UPROPERTY(EditAnywhere,BlueprintGetter=IsPushToTalkActive, BlueprintSetter=SetPushToTalkActive, Category = "Microphone")
 	bool bPushToTalkActive = false;
 
-	bool bUsingGamepad = false;
-
-public:
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	inline bool IsUsingGamepad() const { return bUsingGamepad; }
-
-	UDELEGATE()
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInputDeviceChanged, bool, IsUsingGamepad);
-
-	UPROPERTY(BlueprintAssignable, Category = "Events")
-	FOnInputDeviceChanged OnInputDeviceChanged;
-
 public:
 	virtual void SetupInputComponent() override;
 
@@ -103,8 +91,6 @@ protected:
 	
 	void PushToTalkStarted();
 	void PushToTalkCompleted();
-
-	void OnAnyKeyPressed(const FKey& Key);
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)

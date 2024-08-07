@@ -62,7 +62,9 @@ public:
 
 public:
 	UBuffDebuffBase* AddBuffOrDebuff(TSubclassOf<UBuffDebuffBase> BuffDebuffClass, float ActiveTime = 0.f);
-	void RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass);
+	void RemoveBuffOrDebuff(TSubclassOf<UBuffDebuffBase> BuffDebuffClass);
+
+	bool HasBuffOrDebuffApplied(TSubclassOf<UBuffDebuffBase> BuffDebuffClass) const;
 
 protected:
 

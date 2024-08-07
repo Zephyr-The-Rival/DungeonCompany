@@ -4,6 +4,7 @@
 #include "Entities/FunGuy.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "AI/DC_AIController.h"
+#include "BuffSystem/DebuffPoisonGas.h"
 
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -11,7 +12,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Perception/AISense_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraComponent.h"
 
 AFunGuy::AFunGuy()
@@ -31,6 +31,7 @@ AFunGuy::AFunGuy()
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	GetCharacterMovement()->MaxFlySpeed = 50.f;
 
+	PoisonGasDebuffClass = UDebuffPoisonGas::StaticClass();
 }
 
 void AFunGuy::OnConstruction(const FTransform& Transform)
@@ -165,47 +166,43 @@ void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 {
 	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
 
-	if (!character || PlayerTimerHandles.Contains(character))
+	if (!character)
 		return;
 
-	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &AFunGuy::OnSafeTimerElapsed, character);
+	if(PlayerTimerHandles.Contains(character) && PlayerCloudOverlapCount.Contains(character))
+	{
+		++PlayerCloudOverlapCount[character];
+		return;
+	}
 
 	PlayerTimerHandles.Add(character);
-
+	PlayerCloudOverlapCount.Add(character, 1);
+	
+	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &AFunGuy::OnSafeTimerElapsed, character);
 	GetWorld()->GetTimerManager().SetTimer(PlayerTimerHandles[character], timerDelegate, SafeTime, false);
-
-
 }
 
 void AFunGuy::OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
 
-	if (!character || !PlayerTimerHandles.Contains(character))
+	if (!character || !PlayerTimerHandles.Contains(character) || !PlayerCloudOverlapCount.Contains(character))
 		return;
 
-	GetWorld()->GetTimerManager().ClearTimer(PlayerTimerHandles[character]);
-	PlayerTimerHandles.Remove(character);
-}
-
-void AFunGuy::OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter)
-{
-	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &AFunGuy::OnDamageTimerElapsed, PlayerCharacter);
-
-	GetWorld()->GetTimerManager().SetTimer(PlayerTimerHandles[PlayerCharacter], timerDelegate, DamageInterval, true, 0.f);
-
-}
-
-void AFunGuy::OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter)
-{
-	if (!IsValid(PlayerCharacter))
+	--PlayerCloudOverlapCount[character];
+	
+	if(!PlayerCloudOverlapCount[character])
 	{
-		GetWorld()->GetTimerManager().ClearTimer(PlayerTimerHandles[PlayerCharacter]);
-		PlayerTimerHandles.Remove(PlayerCharacter);
-		return;
+		character->RemoveBuffOrDebuff(PoisonGasDebuffClass);
+		GetWorld()->GetTimerManager().ClearTimer(PlayerTimerHandles[character]);
+		PlayerTimerHandles.Remove(character);
 	}
-
-	PlayerCharacter->TakeDamage(Damage);
-	UAISense_Hearing::ReportNoiseEvent(GetWorld(), PlayerCharacter->GetActorLocation(), 2.f, PlayerCharacter);
-
 }
+
+void AFunGuy::OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const
+{
+	PlayerCharacter->AddBuffOrDebuff(PoisonGasDebuffClass);
+}
+
+TMap<APlayerCharacter*, FTimerHandle> AFunGuy::PlayerTimerHandles;
+TMap<APlayerCharacter*, uint16> AFunGuy::PlayerCloudOverlapCount;

@@ -14,6 +14,9 @@ class UE_DUNGEONCOMPANY_API AMainMenuGM : public AGameModeBase
 {
 	GENERATED_BODY()
 
+public:
+	AMainMenuGM();
+
 protected:
 	virtual void BeginPlay() override;
 	
