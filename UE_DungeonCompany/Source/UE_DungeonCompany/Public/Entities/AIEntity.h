@@ -118,7 +118,7 @@ protected:
 	uint8 AnimationFlags = 0;
 
 	void SetAnimationBitFlag(EAnimationFlags InBit);
-	void ClearAnimatinoBitFlag(EAnimationFlags InBit);
+	void ClearAnimationBitFlag(EAnimationFlags InBit);
 	void ToggleAnimationBitFlag(EAnimationFlags InBit);
 
 public:

@@ -681,6 +681,7 @@ void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclass
 	ABackPack* a = GetWorld()->SpawnActorDeferred<ABackPack>(BackpackActor, SpawnTransform);
 	a->Items = Items;
 	a->ItemDatas = SerializedItemDatas;
+	a->SetWasDroppedByPlayer(true);
 	a->FinishSpawning(SpawnTransform);
 }
 
@@ -1070,6 +1071,7 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 
 	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	i->SerializedStringData = SerializedData;
+	i->SetWasDroppedByPlayer(true);
 	i->FinishSpawning(SpawnTransform);
 
 	if (bThrow)
@@ -1186,7 +1188,7 @@ void APlayerCharacter::OnDeath_Implementation()
 	{
 		this->MyPlayerHud->RemoveFromParent();
 		DeactivateCharacterInputMappings();
-		dropAllItems();
+		DropAllItems();
 		if (IsValid(CurrentlyHeldWorldItem))
 			DestroyWorldItem(CurrentlyHeldWorldItem);
 	}
@@ -1406,7 +1408,7 @@ void APlayerCharacter::RespawnAllPlayers()
 	}
 }
 
-void APlayerCharacter::dropAllItems()
+void APlayerCharacter::DropAllItems()
 {
 	TArray<UInventorySlot*> AllSlots;
 	AllSlots = this->Inventory->GetSlots();

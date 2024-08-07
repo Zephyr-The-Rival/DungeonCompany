@@ -231,7 +231,7 @@ void AAIEntity::SetAnimationBitFlag(EAnimationFlags InBit)
 	AnimationFlags |= InBit;
 }
 
-void AAIEntity::ClearAnimatinoBitFlag(EAnimationFlags InBit)
+void AAIEntity::ClearAnimationBitFlag(EAnimationFlags InBit)
 {
 	AnimationFlags &= ~InBit;
 }

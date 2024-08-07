@@ -571,7 +571,7 @@ protected:
 	
 	void RespawnAllPlayers();
 
-	void dropAllItems();
+	void DropAllItems();
 
 protected:
 

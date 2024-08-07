@@ -9,11 +9,22 @@
 
 class UItemData;
 class APlayerCharacter;
+
 class USoundBase;
+class UAIPerceptionStimuliSourceComponent;
 UCLASS()
 class UE_DUNGEONCOMPANY_API AWorldItem : public AActor, public IInteractable
 {
 	GENERATED_BODY()
+
+private:
+	UAIPerceptionStimuliSourceComponent* StimulusSource;
+
+	bool bDroppedByPlayer = false;
+
+public:
+	void SetWasDroppedByPlayer(bool InDroppedByPlayer);
+	inline bool WasDroppedByPlayer() const { return bDroppedByPlayer; }
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
