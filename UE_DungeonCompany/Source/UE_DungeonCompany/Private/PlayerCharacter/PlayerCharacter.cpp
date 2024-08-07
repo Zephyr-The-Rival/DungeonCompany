@@ -872,7 +872,10 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
-		Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
+		if(bThrow)
+			Server_SpawnSoundAtLocation(ThrowSound, this->DropTransform->GetComponentLocation());
+		else
+			Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
 		
 		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(),
 		                      bThrow, FirstPersonCamera->GetForwardVector());

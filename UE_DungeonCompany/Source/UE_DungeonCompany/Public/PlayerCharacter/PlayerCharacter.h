@@ -607,5 +607,8 @@ protected:
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
 	USoundBase* FallingToDeathSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+	USoundBase* ThrowSound;
 	
 };
