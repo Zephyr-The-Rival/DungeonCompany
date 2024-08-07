@@ -483,7 +483,7 @@ void APlayerCharacter::Jump()
 		return;
 	}
 
-	if (Stamina <= 0.f)
+	if (Stamina <= 0.f || GetCharacterMovement()->IsCrouching())
 		return;
 
 	SubstractStamina(JumpStaminaDrain);
@@ -692,7 +692,7 @@ void APlayerCharacter::ReportNoise(float Loudness)
 void APlayerCharacter::Cough()
 {
 	if (HasAuthority())
-		ReportNoise(1.f);
+		ReportNoise(2.f);
 
 	if (CoughSound)
 		UGameplayStatics::SpawnSoundAtLocation(this, CoughSound, GetActorLocation());
