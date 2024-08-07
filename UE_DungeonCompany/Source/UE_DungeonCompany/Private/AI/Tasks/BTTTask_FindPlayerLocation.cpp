@@ -8,13 +8,13 @@
 #include "NavigationSystem.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-UBTTTask_FindPlayerLocation::UBTTTask_FindPlayerLocation(FObjectInitializer const& ObjectInitializer)
+UBTTask_FindPlayerLocation::UBTTask_FindPlayerLocation(FObjectInitializer const& ObjectInitializer)
 	:Super(ObjectInitializer)
 {
 	NodeName = "Find Player Location";
 }
 
-EBTNodeResult::Type UBTTTask_FindPlayerLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_FindPlayerLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	ACharacter* character = Cast<ACharacter>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("TargetPlayer"));
 

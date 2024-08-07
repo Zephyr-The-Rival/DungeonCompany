@@ -23,6 +23,11 @@ private:
 private:
 	TArray<AWorldItem*> WorldItemsInSight;
 
+	AWorldItem* StolenItem;
+
+public:
+	void StealItem(AWorldItem* StealingItem);
+
 protected:
 	virtual void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
 	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);

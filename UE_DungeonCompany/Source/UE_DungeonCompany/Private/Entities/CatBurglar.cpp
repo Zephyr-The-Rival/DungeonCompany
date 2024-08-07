@@ -3,8 +3,15 @@
 
 #include "Entities/CatBurglar.h"
 
+#include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Items/WorldItem.h"
+
+void ACatBurglar::StealItem(AWorldItem* StealingItem)
+{	
+	StealingItem->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+	StolenItem = StealingItem;	
+}
 
 void ACatBurglar::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
 {
