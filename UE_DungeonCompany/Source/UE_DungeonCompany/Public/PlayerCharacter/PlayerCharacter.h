@@ -29,6 +29,7 @@ class UFootstepSystemComponent;
 
 struct  FWeaponInfo;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemDrop);
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
@@ -96,9 +97,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ItemPrimaryAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input | Action")
-	UInputAction* ItemPrimaryHoldAction;
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* ItemSecondaryAction;
@@ -376,9 +374,13 @@ protected:
 
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnItemDrop OnDropItem;
+
 
 public:
-
+	
 	void RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty);
 
 protected:
@@ -533,7 +535,6 @@ public://cheat Stuff:
 public://buyingItems
 	void BuyItem(ABuyableItem* ItemToBuy);
 
-protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Backpack")
 	TSubclassOf<UItemData> BackpackClass;
 
@@ -588,5 +589,26 @@ protected:
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SpawnSoundAtLocation(USoundBase* LocalSound, FVector Location);
+
+
+public:
+	bool bHasNoSprintDebuff=false;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UBuffDebuffBase> NoSprintDebuff;
+
+protected:
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+	USoundBase* InventoryEquipSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+	USoundBase* DropItemSound;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+	USoundBase* FallingToDeathSound;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+	USoundBase* ThrowSound;
 	
 };

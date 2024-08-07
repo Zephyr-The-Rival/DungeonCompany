@@ -51,7 +51,7 @@ void UPlayerHud::ShowBuyPrompt_Implementation(ABuyableItem* BuyableItem)
 	LogWarning(TEXT("UPlayerHud::ShowBuyPrompt_Implementation has not been overidden"));
 }
 
-void UPlayerHud::UdateBuffs_Implementation()
+void UPlayerHud::UpdateBuffs_Implementation()
 {
 	LogWarning(TEXT("UPlayerHud::UpdateDebuffs_Implementation has not been overidden"));
 }
