@@ -589,5 +589,12 @@ protected:
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SpawnSoundAtLocation(USoundBase* LocalSound, FVector Location);
-	
+
+
+public:
+	bool bHasNoSprintDebuff=false;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UBuffDebuffBase> NoSprintDebuff;
 };
