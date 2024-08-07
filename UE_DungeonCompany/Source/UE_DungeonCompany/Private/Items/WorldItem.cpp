@@ -9,7 +9,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Inventory/InventorySlot.h"
 
-#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "AI/Perception/DC_AIPerceptionStimuliSourceComp.h"
 #include "Perception/AISense_Sight.h"
 
 void AWorldItem::SetWasDroppedByPlayer(bool InDroppedByPlayer)
@@ -28,8 +28,8 @@ AWorldItem::AWorldItem()
 	static ConstructorHelpers::FObjectFinder<USoundBase> basicSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
 	this->PickUpSound = basicSound.Object;
 	
-	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
-	StimulusSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
+	StimulusSource = CreateDefaultSubobject<UDC_AIPerceptionStimuliSourceComp>(TEXT("Stimulus"));
+	StimulusSource->RegisterForSense(UAISense_Sight::StaticClass());
 	StimulusSource->RegisterWithPerceptionSystem();
 	
 }
@@ -37,7 +37,6 @@ AWorldItem::AWorldItem()
 // Called when the game starts or when spawned
 void AWorldItem::BeginPlay()
 {
-
 	if (IsValid(MyCharacterToAttachTo))
 	{
 		AttachToPlayer();
@@ -71,7 +70,6 @@ void AWorldItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 void AWorldItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AWorldItem::OnHoldingInHand_Implementation(bool locallyControlled)
