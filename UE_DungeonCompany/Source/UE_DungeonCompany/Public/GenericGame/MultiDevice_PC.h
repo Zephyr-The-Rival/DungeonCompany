@@ -17,7 +17,9 @@ struct FCustomMapping
 {
 	GENERATED_USTRUCT_BODY()
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FKey MappedKey;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<UInputModifier*> Modifiers;
 };
 
