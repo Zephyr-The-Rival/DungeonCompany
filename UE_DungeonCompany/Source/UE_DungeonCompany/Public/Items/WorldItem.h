@@ -56,6 +56,10 @@ public://attached to hand
 	void AttachToPlayer();
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bAttachesToRightHand=true;
+	
+protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	
