@@ -33,6 +33,7 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
+#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -864,12 +865,18 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		}
 
 		OnDropItem.Broadcast();
+		Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
 		Server_DropBackpack(ItemClasses, ItemDatas);
 		return;
 	}
 
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
+		if(bThrow)
+			Server_SpawnSoundAtLocation(ThrowSound, this->DropTransform->GetComponentLocation());
+		else
+			Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
+		
 		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(),
 		                      bThrow, FirstPersonCamera->GetForwardVector());
 
@@ -944,6 +951,8 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 	UItemData* tmp = MyPlayerHud->GetHighlightedSlot().Slot->MyItem;
 	MyPlayerHud->GetHighlightedSlot().Slot->MyItem = slot->MyItem;
 	slot->MyItem = tmp;
+
+	UGameplayStatics::PlaySound2D(GetWorld(), InventoryEquipSound);
 
 
 	if (GetCurrentlyHeldInventorySlot() == slot) //if equipping to slot in hand
@@ -1091,16 +1100,16 @@ void APlayerCharacter::CheckForFallDamage()
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z + 20;
 		//+20 artificially because the capsule curvature lets the player stand lower
 
+		Server_SpawnSoundAtLocation(LandingSound, this->GetActorLocation());
 		float damage = this->FallDamageCalculation(deltaZ);
 		if (damage > 0)
 		{
+			if(damage>= this->HP)
+				Server_SpawnSoundAtLocation(FallingToDeathSound, this->GetActorLocation());
+			
 			TakeDamage(damage);
-			//spawn fall damage sound
+
 		}			
-		else
-		{
-			Server_SpawnSoundAtLocation(LandingSound, this->GetActorLocation());
-		}
 
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
