@@ -879,6 +879,51 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 	}
 }
 
+void APlayerCharacter::DropRandomItem()
+{
+	if(IsLocallyControlled())
+	{
+		Client_DropRandomItem_Implementation();
+		return;	
+	}
+		
+	if(HasAuthority())
+		Client_DropRandomItem();
+	
+}
+
+void APlayerCharacter::Client_DropRandomItem_Implementation()
+{
+	auto invSlots = Inventory->GetSlots();
+
+	int invSlotsNum = invSlots.Num();
+
+	int droppingSlotIndex = FMath::RandRange(0, invSlotsNum-1);
+	
+	invSlots.Add(HandSlotA);
+	invSlots.Add(HandSlotB);
+
+	invSlotsNum += 2;
+
+	for(int i = 0; i < invSlotsNum && !invSlots[droppingSlotIndex]->MyItem; ++i)
+	{
+		++droppingSlotIndex;
+		if(droppingSlotIndex < invSlotsNum )
+			continue;
+
+		droppingSlotIndex = 0;
+	}
+
+	if(!invSlots[droppingSlotIndex])
+		return;
+
+	FSlotData dropSlotData;
+	dropSlotData.Slot = invSlots[droppingSlotIndex];
+	dropSlotData.bIsBackpackSlot = false;
+	
+	DropItem(dropSlotData, false);
+}
+
 void APlayerCharacter::RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty)
 {
 	if (!IsValid(SlotToEmpty->MyItem))

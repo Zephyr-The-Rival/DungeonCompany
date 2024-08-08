@@ -375,12 +375,17 @@ protected:
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
 public:
+	void DropRandomItem();
+
+	UFUNCTION(Client, Unreliable)
+	void Client_DropRandomItem();
+	void Client_DropRandomItem_Implementation();
+	
+public:
 	UPROPERTY(BlueprintAssignable)
 	FOnItemDrop OnDropItem;
 
-
 public:
-	
 	void RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty);
 
 protected:

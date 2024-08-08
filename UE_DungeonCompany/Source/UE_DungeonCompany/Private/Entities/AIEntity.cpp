@@ -5,6 +5,8 @@
 #include "AI/DC_AIController.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "DC_Statics.h"
+#include "KismetTraceUtils.h"
+#include "BehaviorTree/BehaviorTree.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -76,6 +78,18 @@ void AAIEntity::BeginPlay()
 	aiController->OnTargetingPlayer.AddDynamic(this, &AAIEntity::OnTargetingPlayer);
 }
 
+void AAIEntity::RunBehaviorTree(UBehaviorTree* InBehaviorTree) const
+{
+	AAIController* aiController = GetController<AAIController>();
+
+	if(!aiController)
+		return;
+	
+	UBlackboardComponent* b;
+	aiController->UseBlackboard(InBehaviorTree->BlackboardAsset, b);
+	aiController->RunBehaviorTree(InBehaviorTree);
+}
+
 void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 {
 	if (TargetPlayer->IsDead())
@@ -108,7 +122,8 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 	params.AddIgnoredActor(this);
 
 	GetWorld()->SweepMultiByChannel(hits, start, end, FQuat(), ECC_Pawn, shape, params);
-
+	DrawDebugSphereTraceSingle(GetWorld(), start, end, AttackRadius, EDrawDebugTrace::ForDuration, false, FHitResult(), FColor::Blue, FLinearColor::Red, 0.5f);
+	DrawDebugLine(GetWorld(), start, end, FColor::Blue);
 	int hitsNum = hits.Num();
 
 	for (int i = 0; i < hitsNum; ++i)
@@ -118,10 +133,16 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 		if(!playerCharacter)
 			continue;
 
-		playerCharacter->TakeDamage(AttackDamage);
+		OnPlayerAttackHit(playerCharacter);
 	}
 
 	SetInAttackOnBlackboard(false);
+}
+
+void AAIEntity::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->TakeDamage(AttackDamage);
+
 }
 
 void AAIEntity::SetInAttackOnBlackboard(bool InAttack)

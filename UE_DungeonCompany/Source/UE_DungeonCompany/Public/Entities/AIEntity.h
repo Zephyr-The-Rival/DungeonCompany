@@ -26,7 +26,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "AI")
-	UBehaviorTree* BehaviorTree;
+	UBehaviorTree* DefaultBehaviorTree;
 
 protected:
 	UPROPERTY(EditAnywhere, Instanced, Category = "AI|Perception")
@@ -39,10 +39,11 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	inline UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
+	inline UBehaviorTree* GetDefaultBehaviorTree() const { return DefaultBehaviorTree; }
 	inline const TArray<UAISenseConfig*>& GetSenseConfigs() const { return SenseConfigs; }
 	inline TSubclassOf<UAISense> GetDominantSense() const { return DominantSense; }
 
+	void RunBehaviorTree(UBehaviorTree* InBehaviorTree) const;
 protected:
 	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
 	float AttackDamage = 20.f;
@@ -64,6 +65,7 @@ public:
 
 protected:
 	virtual void ExecuteAttack(FVector Direction);
+	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter);
 
 public:
 	void SetInAttackOnBlackboard(bool InAttack);

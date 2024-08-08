@@ -6,11 +6,41 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Items/WorldItem.h"
+#include "PlayerCharacter/PlayerCharacter.h"
+
+ACatBurglar::ACatBurglar()
+{
+	BehaviorTreesForStates.Add((ECatBurglarBehaviorState)0);
+	BehaviorTreesForStates.Add((ECatBurglarBehaviorState)1);
+	BehaviorTreesForStates.Add((ECatBurglarBehaviorState)2);
+	BehaviorTreesForStates.Add((ECatBurglarBehaviorState)3);
+	BehaviorTreesForStates.Add((ECatBurglarBehaviorState)4);
+}
 
 void ACatBurglar::StealItem(AWorldItem* StealingItem)
-{	
-	StealingItem->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
-	StolenItem = StealingItem;	
+{
+	StolenItem = StealingItem->GetMyData();
+	StealingItem->Destroy();
+	
+	UpdateBehavior(ECatBurglarBehaviorState::Retrieving);
+}
+
+void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
+{
+	CurrentBehaviorState = NewBehaviorState;
+
+	if(!BehaviorTreesForStates.Contains(NewBehaviorState))
+		return;
+
+	RunBehaviorTree(BehaviorTreesForStates[NewBehaviorState]);
+}
+
+void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
+{
+	Super::OnPlayerAttackHit(PlayerCharacter);
+
+	PlayerCharacter->DropRandomItem();
+	
 }
 
 void ACatBurglar::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
