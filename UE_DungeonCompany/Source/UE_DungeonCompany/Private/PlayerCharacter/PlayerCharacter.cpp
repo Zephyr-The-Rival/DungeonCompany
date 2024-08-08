@@ -34,6 +34,7 @@
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
 #include "AssetTypeActions/AssetDefinition_SoundBase.h"
+#include "BuffSystem/DebuffExaustion.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -106,6 +107,8 @@ void APlayerCharacter::BeginPlay()
 	{
 		bResting = true;
 	});
+
+	StartExaustionTimer();
 }
 
 // Called every frame
@@ -616,6 +619,13 @@ void APlayerCharacter::AddStamina(float AddingStamina)
 		return;
 	}
 
+	if(this->bIsExausted)
+	{
+		float Factor= Cast<UDebuffExaustion>(ExaustionDebuff.GetDefaultObject())->GetStaminaRecoveryFactor();
+		AddingStamina= AddingStamina * Factor;
+	}
+		
+			
 	Stamina += AddingStamina;
 
 	if (Stamina > MaxStamina)
@@ -1443,6 +1453,22 @@ void APlayerCharacter::dropAllItems()
 void APlayerCharacter::Server_SpawnSoundAtLocation_Implementation(USoundBase* LocalSound,  FVector Location)
 {
 	Multicast_SpawnSoundAtLocation(LocalSound, Location);
+}
+
+void APlayerCharacter::StartExaustionTimer()
+{
+	float Time= Cast<UDebuffExaustion>(ExaustionDebuff.GetDefaultObject())->GetTimeUntulExaustion();
+	GetWorld()->GetTimerManager().SetTimer(ExaustionTimer, this, &APlayerCharacter::ApplyExaustion,Time , false);
+}
+
+void APlayerCharacter::ApplyExaustion()
+{
+	this->AddBuffOrDebuff(ExaustionDebuff);
+	Yawn();	
+}
+
+void APlayerCharacter::Yawn_Implementation()
+{
 }
 
 void APlayerCharacter::Multicast_SpawnSoundAtLocation_Implementation(USoundBase* LocalSound, FVector Location)
