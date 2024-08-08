@@ -2,6 +2,7 @@
 
 
 #include "AI/Tasks/BTTask_ChasePlayer.h"
+#include "PlayerCharacter/PlayerCharacter.h"
 
 #include "AI/DC_AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -19,7 +20,7 @@ EBTNodeResult::Type UBTTask_ChasePlayer::ExecuteTask(UBehaviorTreeComponent& Own
 	if (!aiController)
 		return EBTNodeResult::Failed;
 
-	AActor* targetPlayer = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(GetSelectedBlackboardKey()));
+	APlayerCharacter* targetPlayer = Cast<APlayerCharacter>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(GetSelectedBlackboardKey()));
 
 	if(!targetPlayer)
 		return EBTNodeResult::Failed;
@@ -27,7 +28,15 @@ EBTNodeResult::Type UBTTask_ChasePlayer::ExecuteTask(UBehaviorTreeComponent& Own
 	FVector targetLocation = targetPlayer->GetActorLocation();
 
 	OwnerComp.GetBlackboardComponent()->SetValueAsVector("TargetLocation", targetLocation);
-	UAIBlueprintHelperLibrary::SimpleMoveToLocation(aiController, targetLocation);
+
+	if (targetPlayer->IsDead())
+	{
+		OwnerComp.GetBlackboardComponent()->ClearValue("TargetPlayer");
+
+		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+		return EBTNodeResult::Succeeded;
+	}
+	UAIBlueprintHelperLibrary::SimpleMoveToActor(aiController, targetPlayer);
 
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 

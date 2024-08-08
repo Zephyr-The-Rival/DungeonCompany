@@ -19,7 +19,12 @@ public class UE_DungeonCompany : ModuleRules
 			"EnhancedInput",
 			"AIModule",
 			"GameplayTasks",
-			"NavigationSystem"
+			"NavigationSystem",
+			"Niagara",
+			"CableComponent",
+			"PhysicsCore",
+			"SlateCore",
+			"Slate"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

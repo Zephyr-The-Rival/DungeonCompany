@@ -9,8 +9,11 @@
 /**
  * 
  */
+class UStaticMeshComponent;
 class USphereComponent;
 class APlayerCharacter;
+class UNiagaraComponent;
+class UDebuffPoisonGas;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity
@@ -19,10 +22,13 @@ class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity
 
 private:
 	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* CloudMesh;
+
+	UPROPERTY(EditAnywhere)
 	USphereComponent* CloudSphere;
 
 	UPROPERTY(EditAnywhere)
-	UStaticMeshComponent* TempMesh;
+	UNiagaraComponent* CloudNiagara;
 
 private:
 	UPROPERTY(EditAnywhere, Replicated)
@@ -40,6 +46,9 @@ private:
 	float LiftoffHeight = 150.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
+	float SporeProduceAge = 190.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
 	float StartCloudRadius = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Cloud")
@@ -52,7 +61,7 @@ private:
 	float AgingMultiplier = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing")
-	float PulseFrequency = 2.f;
+	float PulseFrequency = 0.5f;
 
 public:
 	AFunGuy();
@@ -62,11 +71,21 @@ private:
 
 	FTimerHandle UpdateTimerHandle;
 
-	bool bLifted = false;
+	float LastNiagaraScaleUpdate = 0.f;
 
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
+
+protected: 
+	void CalculateCloudStart();
+	void UpdateCloud();
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Balancing")
+	float WobblingScale = 0.2f;
+
+	bool bLifted = false;
 
 public:
 	virtual void Tick(float DeltaSeconds) override;
@@ -74,19 +93,11 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 private:
-	TMap<APlayerCharacter*, FTimerHandle> PlayerTimerHandles;
+	static TMap<APlayerCharacter*, FTimerHandle> PlayerTimerHandles;
+	static TMap<APlayerCharacter*, uint16> PlayerCloudOverlapCount;
 
 	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
 	float SafeTime = 5.f;
-
-	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
-	float DamageInterval = 2.f;
-
-	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
-	float Damage = 2.5f;
-
-	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
-	float DamageCoughLoudness = 2.f;
 
 	float CloudSizeMultiplierPerUpdate;
 
@@ -97,7 +108,9 @@ protected:
 	UFUNCTION()
 	void OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter);
-	void OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter);
+	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const;
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
+	TSubclassOf<UDebuffPoisonGas> PoisonGasDebuffClass;
 };
