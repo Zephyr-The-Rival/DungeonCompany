@@ -175,6 +175,22 @@ public:
 	void ResetInteractPrompt();
 
 protected:
+
+	void InteractPressed();
+	void StartHoldInteract();
+	void StopHoldInteract();
+
+	void CheckHoldInteract();
+	bool bIsHoldingInteract=false;
+	float InteractHoldingSecondCounter=0;
+
+public:
+
+	UFUNCTION(Blueprintable,BlueprintPure)
+	float GetInteractHoldingSecondsCounter() const {return this->InteractHoldingSecondCounter;}
+	
+protected:
+	
 	UFUNCTION(Server, Unreliable)
 	void Server_Interact(UObject* Interactable);
 	void Server_Interact_Implementation(UObject* Interactable);

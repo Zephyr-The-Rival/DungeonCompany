@@ -103,5 +103,13 @@ public:
 	void UpdateBuffs();
 	void UpdateBuffs_Implementation();
 
+	UFUNCTION(BlueprintNativeEvent)
+	void ShowInteractProgressBar(float MaxTime);
+	void ShowInteractProgressBar_Implementation(float MaxTime);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void HideInteractProgressBar();
+	void HideInteractProgressBar_Implementation();
+
 
 };
