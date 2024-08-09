@@ -585,7 +585,7 @@ private:
 
 protected:
 	
-	void RespawnAllPlayers();
+
 
 	void dropAllItems();
 
