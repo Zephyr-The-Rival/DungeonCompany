@@ -39,6 +39,7 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "DCGame/DC_PostMortemPawn.h"
+#include "WorldActors/ResetManager.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -1273,9 +1274,12 @@ void APlayerCharacter::OnDeath_Implementation()
 			break;
 		}
 	}
+	
 	if (bAllDead)
 	{
-		RespawnAllPlayers();
+		if(AResetManager* ResetManager = Cast<AResetManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AResetManager::StaticClass())))
+			ResetManager->Server_ResetDungeon();
+		
 		return;
 	}
 
@@ -1463,14 +1467,6 @@ void APlayerCharacter::Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWor
 	LogWarning(*text);
 }
 
-void APlayerCharacter::RespawnAllPlayers()
-{
-	//assumes authority
-	for (TActorIterator<ADC_PC> It(GetWorld()); It; ++It)
-	{
-		It->Server_RequestRespawn();
-	}
-}
 
 void APlayerCharacter::dropAllItems()
 {

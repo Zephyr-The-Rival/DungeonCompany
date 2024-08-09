@@ -30,9 +30,9 @@ USTRUCT(BlueprintType)
 struct FSlotData
 {
 	GENERATED_BODY()
-	UPROPERTY(BlueprintReadWrite)
-	bool bIsBackpackSlot;
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsBackpackSlot=false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UInventorySlot* Slot;
 };
 
