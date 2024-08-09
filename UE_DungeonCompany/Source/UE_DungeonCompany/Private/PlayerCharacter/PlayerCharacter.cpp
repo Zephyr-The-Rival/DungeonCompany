@@ -389,6 +389,7 @@ void APlayerCharacter::DestroyWorldItem(AWorldItem* ItemToDestroy)
 
 void APlayerCharacter::Server_DestroyWorldItem_Implementation(AWorldItem* ItemToDestroy)
 {
+	ItemToDestroy->OnPickedUp.Broadcast(); //a bit shitty that its here but it should work
 	ItemToDestroy->Destroy();
 }
 
