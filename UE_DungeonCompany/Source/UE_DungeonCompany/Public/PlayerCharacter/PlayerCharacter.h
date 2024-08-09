@@ -175,6 +175,22 @@ public:
 	void ResetInteractPrompt();
 
 protected:
+
+	void InteractPressed();
+	void StartHoldInteract();
+	void StopHoldInteract();
+
+	void CheckHoldInteract();
+	bool bIsHoldingInteract=false;
+	float InteractHoldingSecondCounter=0;
+
+public:
+
+	UFUNCTION(Blueprintable,BlueprintPure)
+	float GetInteractHoldingSecondsCounter() const {return this->InteractHoldingSecondCounter;}
+	
+protected:
+	
 	UFUNCTION(Server, Unreliable)
 	void Server_Interact(UObject* Interactable);
 	void Server_Interact_Implementation(UObject* Interactable);
@@ -569,7 +585,7 @@ private:
 
 protected:
 	
-	void RespawnAllPlayers();
+
 
 	void dropAllItems();
 
@@ -594,9 +610,23 @@ protected:
 public:
 	bool bHasNoSprintDebuff=false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bIsExausted=false;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UBuffDebuffBase> NoSprintDebuff;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UBuffDebuffBase> ExaustionDebuff;
+
+	void StartExaustionTimer();
+	FTimerHandle ExaustionTimer;
+	void ApplyExaustion();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Yawn();
+	void Yawn_Implementation();
 
 protected:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
@@ -610,5 +640,8 @@ protected:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
 	USoundBase* ThrowSound;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+	USoundBase* YawnSound;
 	
 };
