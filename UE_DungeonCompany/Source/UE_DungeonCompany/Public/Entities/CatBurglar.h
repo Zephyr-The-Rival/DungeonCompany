@@ -27,11 +27,14 @@ class UE_DUNGEONCOMPANY_API ACatBurglar : public AAIEntity
 {
 	GENERATED_BODY()
 private:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	float ItemDetectionRadius = 500.f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	TMap<ECatBurglarBehaviorState, UBehaviorTree*> BehaviorTreesForStates;
+
+	UPROPERTY(EditDefaultsOnly)
+	float StartFleeingHPUpper = 30.f;
 
 private:
 	ECatBurglarBehaviorState IdleBehaviorState;
@@ -51,6 +54,9 @@ public:
 
 protected:
 	void UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState);
+
+protected:
+	virtual void OnTookDamage() override;
 
 protected:
 	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter) override;

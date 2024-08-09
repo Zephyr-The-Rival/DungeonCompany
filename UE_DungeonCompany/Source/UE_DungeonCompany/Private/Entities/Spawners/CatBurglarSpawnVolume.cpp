@@ -113,7 +113,7 @@ void ACatBurglarSpawnVolume::OnCatBurglarDeath(ADC_Entity* DeadBurglar)
 	if (!catBurglar)
 		return;
 
-	SpawnedCatBurglars.Remove(catBurglar);
+	SpawnedCatBurglars.Remove(catBurglar);	
 	OnCatBurglarCountChanged();
 }
 

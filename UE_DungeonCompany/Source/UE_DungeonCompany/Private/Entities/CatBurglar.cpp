@@ -45,6 +45,14 @@ void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 	RunBehaviorTree(BehaviorTreesForStates[NewBehaviorState]);
 }
 
+void ACatBurglar::OnTookDamage()
+{
+	Super::OnTookDamage();
+
+	if (HP < StartFleeingHPUpper && CurrentBehaviorState != ECatBurglarBehaviorState::Fleeing)
+		UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
+}
+
 void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
 {
 	Super::OnPlayerAttackHit(PlayerCharacter);
