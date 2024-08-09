@@ -53,9 +53,10 @@ public:
 	virtual void OnDeath_Implementation();
 
 	UDELEGATE()
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerDeath, ADC_Entity*, DeadPlayer);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEntityDeath, ADC_Entity*, DeadPlayer);
 
-	FOnPlayerDeath OnPlayerDeath;
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnEntityDeath OnEntityDeath;
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;

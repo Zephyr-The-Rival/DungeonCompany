@@ -67,7 +67,7 @@ void ADC_Entity::OnDeath_Implementation()
 	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName());
 
 	HP = 0.f;
-	OnPlayerDeath.Broadcast(this);
+	OnEntityDeath.Broadcast(this);
 
 }
 

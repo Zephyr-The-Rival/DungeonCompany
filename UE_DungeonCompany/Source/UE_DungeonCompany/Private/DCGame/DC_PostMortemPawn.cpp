@@ -116,7 +116,7 @@ void ADC_PostMortemPawn::Restart()
 		
 
 		PlayerCharacters.Add(currentPlayer);
-		currentPlayer->OnPlayerDeath.AddDynamic(this, &ADC_PostMortemPawn::OnPlayerDied);
+		currentPlayer->OnEntityDeath.AddDynamic(this, &ADC_PostMortemPawn::OnPlayerDied);
 	}
 
 	if(!MySpectatorHud)

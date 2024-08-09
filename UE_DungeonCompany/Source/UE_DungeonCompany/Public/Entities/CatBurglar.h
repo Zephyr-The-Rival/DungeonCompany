@@ -32,12 +32,16 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TMap<ECatBurglarBehaviorState, UBehaviorTree*> BehaviorTreesForStates;
-	
+
 private:
+	ECatBurglarBehaviorState IdleBehaviorState;
 	ECatBurglarBehaviorState CurrentBehaviorState;
 	
 	TArray<AWorldItem*> WorldItemsInSight;
 	UItemData* StolenItem;
+
+public:
+	void SetIdleBehaviorState(ECatBurglarBehaviorState NewIdleState);
 
 public:
 	ACatBurglar();
