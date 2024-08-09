@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class UE_DUNGEONCOMPANY_API UDC_GI : public UGameInstance
 {
 	GENERATED_BODY()
