@@ -17,7 +17,7 @@ AWorldItem::AWorldItem()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bAlwaysRelevant = true;
-
+	bAttachesToRightHand=true;
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> basicSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
 	this->PickUpSound = basicSound.Object;
@@ -105,13 +105,12 @@ void AWorldItem::AttachToPlayer()
 
 void AWorldItem::Interact(APawn* InteractingPawn)
 {
-	LogWarning(*(this->GetName()+" is beeing interacted with"));
 
 	APlayerCharacter* character = Cast<APlayerCharacter>(InteractingPawn);
 
 	if(!character)
 		return;
-
+	
 	character->PickUpItem(this);
 }
 
