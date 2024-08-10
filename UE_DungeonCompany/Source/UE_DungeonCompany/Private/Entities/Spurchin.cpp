@@ -3,6 +3,7 @@
 
 #include "Entities/Spurchin.h"
 
+#include "DC_Statics.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -30,14 +31,19 @@ bool ASpurchin::IsInHallway()
 	return estimatedWidth < MaxHallwayWidth;
 }
 
-void ASpurchin::Tick(float DeltaSeconds)
+void ASpurchin::CheckSpace()
 {
-	Super::Tick(DeltaSeconds);
-	
+	LogWarning(TEXT("Spurchin is checking space"));
 	if(IsInHallway())
 		GetCharacterMovement()->MaxWalkSpeed = HallwaySpeed;
 	else
 		GetCharacterMovement()->MaxWalkSpeed = OpenSpaceSpeed;
+
+}
+
+void ASpurchin::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
 
 }
 

@@ -40,6 +40,8 @@ public:
 protected:
 	bool IsInHallway();
 
+	UFUNCTION(BlueprintCallable)
+	void CheckSpace();
 public:
 	virtual void OnTargetingPlayer_Implementation(APlayerCharacter* Target) override;
 	
