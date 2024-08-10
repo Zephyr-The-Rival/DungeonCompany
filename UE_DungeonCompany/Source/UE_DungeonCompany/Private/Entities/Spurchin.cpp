@@ -8,8 +8,9 @@
 
 ASpurchin::ASpurchin()
 {
-	SetActorTickInterval(0.5f);
-}
+	
+}	
+
 
 bool ASpurchin::IsInHallway()
 {
@@ -31,6 +32,8 @@ bool ASpurchin::IsInHallway()
 
 void ASpurchin::Tick(float DeltaSeconds)
 {
+	Super::Tick(DeltaSeconds);
+	
 	if(IsInHallway())
 		GetCharacterMovement()->MaxWalkSpeed = HallwaySpeed;
 	else
@@ -51,6 +54,9 @@ void ASpurchin::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 void ASpurchin::BeginPlay()
 {
 	Super::BeginPlay();
+
+	SetActorTickEnabled(true);
+	
 	if(!HasAuthority())
 		return;
 
@@ -58,4 +64,6 @@ void ASpurchin::BeginPlay()
 	GetSenseConfig<UAISenseConfig_Sight>()->SightRadius = 0.f;
 
 	UpdatePerception();
+
+	
 }
