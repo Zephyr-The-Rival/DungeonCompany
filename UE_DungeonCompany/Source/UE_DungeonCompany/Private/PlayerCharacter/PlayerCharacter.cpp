@@ -735,10 +735,9 @@ void APlayerCharacter::AddMoneyToWallet_Implementation(int32 Amount)
 	wallet->OnMoneyChanged.Broadcast();
 }
 
-void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items,
+void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, FTransform SpawnTransform,
                                                           const TArray<FString>& SerializedItemDatas)
 {
-	FTransform SpawnTransform = this->DropTransform->GetComponentTransform();
 	ABackPack* a = GetWorld()->SpawnActorDeferred<ABackPack>(BackpackActor, SpawnTransform);
 	a->Items = Items;
 	a->ItemDatas = SerializedItemDatas;
@@ -925,7 +924,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 
 		OnDropItem.Broadcast();
 		Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
-		Server_DropBackpack(ItemClasses, ItemDatas);
+		Server_DropBackpack(ItemClasses, this->DropTransform->GetComponentTransform(), ItemDatas);
 		return;
 	}
 
@@ -936,7 +935,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		else
 			Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
 		
-		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, SlotToEmpty.Slot->MyItem->SerializeMyData(),
+		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, this->DropTransform->GetComponentTransform(), SlotToEmpty.Slot->MyItem->SerializeMyData(),
 		                      bThrow, FirstPersonCamera->GetForwardVector());
 
 		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
@@ -1121,21 +1120,18 @@ void APlayerCharacter::TriggerSecondaryItemAction()
 	Server_TriggerSecondaryItemAction();
 }
 
-void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, const FString& SerializedData,
-                                             bool bThrow, FVector CameraVector)
+void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData, bool bThrow, FVector CameraVector)
 {
 	if (!HasAuthority())
-		Server_SpawnDroppedWorldItem(ItemToSpawn, SerializedData, bThrow, CameraVector);
+		Server_SpawnDroppedWorldItem(ItemToSpawn, SpawnTransform, SerializedData, bThrow, CameraVector);
 	else
-		Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SerializedData, bThrow, CameraVector);
+		Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SpawnTransform, SerializedData, bThrow, CameraVector);
 }
 
-void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn,
+void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
                                                                    const FString& SerializedData, bool bThrow,
                                                                    FVector CameraVector)
 {
-	FTransform SpawnTransform = this->DropTransform->GetComponentTransform();
-
 	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	i->SerializedStringData = SerializedData;
 	i->FinishSpawning(SpawnTransform);
@@ -1362,7 +1358,7 @@ void APlayerCharacter::Multicast_AttackStart_Implementation()
 
 void APlayerCharacter::Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn)
 {
-	Server_SpawnDroppedWorldItem(ItemToSpawn, FString(), false, FVector(0, 0, 0));
+	Server_SpawnDroppedWorldItem(ItemToSpawn,DropTransform->GetComponentTransform(), FString(), false, FVector(0, 0, 0));
 }
 
 void APlayerCharacter::AttackLanded()
@@ -1460,13 +1456,13 @@ void APlayerCharacter::dropAllItems()
 		if (IsValid(IS->MyItem))
 		{
 			UItemData* data = IS->MyItem;
-			SpawnDroppedWorldItem(data->MyWorldItemClass, data->SerializeMyData(), false, FVector::Zero());
+			SpawnDroppedWorldItem(data->MyWorldItemClass, DropTransform->GetComponentTransform(), data->SerializeMyData(), false, FVector::Zero());
 		}
 	}
 	if (bHasBackPack)
 	{
 		//backpack is spawning without items in it. Its items drop like the others
-		Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), TArray<FString>());
+		Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), DropTransform->GetComponentTransform(), TArray<FString>());
 	}
 }
 
