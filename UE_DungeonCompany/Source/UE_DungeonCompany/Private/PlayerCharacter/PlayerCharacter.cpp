@@ -39,6 +39,7 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "DCGame/DC_PostMortemPawn.h"
+#include "Items/WorldCurrency_Data.h"
 #include "WorldActors/ResetManager.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -473,7 +474,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	{
 		DestroyWorldItem(WorldItem);
 		Server_PlayPickUpSound(WorldItem->GetClass(), WorldItem->GetRootComponent()->GetComponentLocation());
-		this->AddMoneyToWallet(Cast<AWorldCurrency>(WorldItem)->Value);
+		this->AddMoneyToWallet(Cast<UWorldCurrency_Data>(Cast<AWorldCurrency>(WorldItem)->GetMyData())->PickUpValue);
 		return;
 	}
 
