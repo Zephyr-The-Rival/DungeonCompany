@@ -1,6 +1,7 @@
 ﻿
 #include "Entities/FootstepSystemComponent.h"
 
+#include "DC_Statics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
@@ -61,31 +62,33 @@ void UFootstepSystemComponent::PlayStepsFeedback(FName SocketName)
 		return;
 	
 
-	FFootstepFeedback* Feedback;
+
+
+	USoundBase* SoundToPlay;
+	UNiagaraSystem* VfxToPlay;
+	UPhysicalMaterial* PhysicalMaterial = result.PhysMaterial.Get();
 	
-	if(UPhysicalMaterial* PhysicalMaterial = result.PhysMaterial.Get())
-	{
-		 Feedback = FeedbackMap.Find(PhysicalMaterial);
+ 	if(FeedbackMap.Contains(PhysicalMaterial))
+ 	{
+ 		 SoundToPlay = FeedbackMap.Find(PhysicalMaterial)->Sound;
+ 		 VfxToPlay = FeedbackMap.Find(PhysicalMaterial)->VFX;
 	}
 	else
 	{
-		Feedback = new FFootstepFeedback();
-		Feedback->Sound = this->DefaultFeedback.Sound;
-		Feedback->VFX = this->DefaultFeedback.VFX;
+		 SoundToPlay = DefaultFeedback.Sound;
+		 VfxToPlay = DefaultFeedback.VFX;
 	}
+	
 
-	if(IsValid(Feedback->VFX))
-	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), Feedback->VFX, result.Location);	
-	}
 
-	if(IsValid(Feedback->Sound))
-	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Feedback->Sound, result.Location);
-	}
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),VfxToPlay , result.Location);	
+	
+
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), SoundToPlay, result.Location);
+	
 	
 	 if (APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(GetOwner()))
 	 {
-		 playerCharacter->ReportNoise((Feedback->Sound)->GetVolumeMultiplier());
+		 playerCharacter->ReportNoise((SoundToPlay)->GetVolumeMultiplier());
 	 }
 }
