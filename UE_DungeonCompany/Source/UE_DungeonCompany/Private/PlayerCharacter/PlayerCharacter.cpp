@@ -507,8 +507,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 void APlayerCharacter::PickUpBackpack(ABackPack* BackpackToPickUp)
 {
-	this->bHasBackPack = true;
-	AddBuffOrDebuff(NoSprintDebuff);
+	SetHasBackPack(true);
 	if (bSprinting)
 		StopSprint();
 
@@ -792,6 +791,25 @@ void APlayerCharacter::ClearCurrentlyHeldInventorySlot_Implementation()
 	GetCurrentlyHeldInventorySlot()->MyItem = nullptr;
 }
 
+TArray<UInventorySlot*> APlayerCharacter::GetAllSlots()
+{
+	if(!IsLocallyControlled())
+	{
+		return TArray<UInventorySlot*>();
+	}
+	
+	TArray<UInventorySlot*> AllSlots;
+	AllSlots = this->Inventory->GetSlots();
+
+	if(this->bHasBackPack)
+		AllSlots.Append(this->Backpack->GetSlots());
+
+	AllSlots.Add(this->HandSlotA);
+	AllSlots.Add(this->HandSlotB);
+
+	return AllSlots;
+}
+
 UInventorySlot* APlayerCharacter::FindFreeSlot()
 {
 	if (bSlotAIsInHand) // a is in hand check a and then b
@@ -901,8 +919,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 {
 	if (SlotToEmpty.bIsBackpackSlot)
 	{
-		this->bHasBackPack = false;
-		RemoveBuffOrDebuff(NoSprintDebuff);
+		SetHasBackPack(false);
 		if (this->bInventoryIsOn)
 			this->MyPlayerHud->RefreshInventory();
 
@@ -1118,6 +1135,16 @@ void APlayerCharacter::TriggerSecondaryItemAction()
 	}
 
 	Server_TriggerSecondaryItemAction();
+}
+
+void APlayerCharacter::SetHasBackPack(bool bNewHasBackpack)
+{
+	this->bHasBackPack=bNewHasBackpack;
+	
+	if(bNewHasBackpack)
+		this->AddBuffOrDebuff(NoSprintDebuff);
+	else
+		this->RemoveBuffOrDebuff(NoSprintDebuff);
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData, bool bThrow, FVector CameraVector)
@@ -1410,7 +1437,7 @@ void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 		if (!this->bHasBackPack)
 		{
 			AddMoneyToWallet(-ItemToBuy->GetPrice());
-			this->bHasBackPack = true;
+			SetHasBackPack(true);
 		}
 		return;
 	}
@@ -1444,12 +1471,7 @@ void APlayerCharacter::CreatePlayerHud()
 
 void APlayerCharacter::dropAllItems()
 {
-	TArray<UInventorySlot*> AllSlots;
-	AllSlots = this->Inventory->GetSlots();
-	AllSlots.Append(this->Backpack->GetSlots());
-	AllSlots.Add(this->HandSlotA);
-	AllSlots.Add(this->HandSlotB);
-
+	TArray<UInventorySlot*> AllSlots= GetAllSlots();
 
 	for (UInventorySlot* IS : AllSlots)
 	{

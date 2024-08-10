@@ -361,6 +361,9 @@ public:
 	void ClearCurrentlyHeldInventorySlot();
 	void ClearCurrentlyHeldInventorySlot_Implementation();
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	TArray<UInventorySlot*> GetAllSlots();
+
 private:
 	UInventorySlot* FindFreeSlot();
 
@@ -368,6 +371,7 @@ private:
 	AWorldItem* CurrentlyHeldWorldItem;
 
 protected:
+	UFUNCTION(BlueprintCallable)
 	void TakeOutItem();
 
 	UFUNCTION(Server, Unreliable)
@@ -448,9 +452,15 @@ protected:
 	UFUNCTION(Server, Unreliable)
 	void Server_TriggerSecondaryItemAction();
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+private:
 	bool bHasBackPack = false;
+
+public:
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool GetHasBackPack() const {return this->bHasBackPack;}
+
+	UFUNCTION(BlueprintCallable)
+	void SetHasBackPack(bool bNewHasBackpack);
 
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	UInventory* GetInventory() const { return Inventory; }
