@@ -27,11 +27,18 @@ void UFootstepSystemComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	//PlayStepsFeedback(); //for test
 		
 	}
-UPhysicalMaterial* UFootstepSystemComponent::GetFootMaterial() const
+FHitResult UFootstepSystemComponent::GetFootHitResult(FName SocketName) const
 {
 	FHitResult HitResult;
 	FVector Start = GetOwner()->GetActorLocation();
 	FVector End = Start - FVector(0,0,StepsLineTraceLength);
+
+	if(APlayerCharacter* player = Cast<APlayerCharacter>(GetOwner()))
+	{
+		Start= player->GetMesh()->GetSocketLocation(SocketName);
+		End= Start - FVector(0,0,15);
+	}
+	 
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(GetOwner());
 	Params.bReturnPhysicalMaterial = true;
@@ -39,32 +46,46 @@ UPhysicalMaterial* UFootstepSystemComponent::GetFootMaterial() const
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
 	DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 1, 0, 1);
 
-	if (bHit && HitResult.PhysMaterial.IsValid())
-	{
-		return HitResult.PhysMaterial.Get();
-	}
-	return nullptr;
+	if (bHit)
+		return HitResult;
+	else
+		return FHitResult();
 }
 
-void UFootstepSystemComponent::PlayStepsFeedback()
+void UFootstepSystemComponent::PlayStepsFeedback(FName SocketName)
 {
-	if (const UPhysicalMaterial* PhysicalMaterial = GetFootMaterial())
-	{
-		if (UNiagaraSystem** FoundVfx = SurfaceVFX.Find(PhysicalMaterial); FoundVfx && *FoundVfx)
-		{
-			const FVector Location = GetOwner()->GetActorLocation();
-			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),*FoundVfx,Location);
-		}
+	
+	 FHitResult result= GetFootHitResult(SocketName);
 
-		if (USoundBase** FoundSfx = SurfaceSFX.Find(PhysicalMaterial); FoundSfx && *FoundSfx)
-		{
-			const FVector Location = GetOwner()->GetActorLocation(); 
-			UGameplayStatics::PlaySoundAtLocation(GetWorld(), *FoundSfx, Location);
-			
-			if(APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(GetOwner()))
-			{
-				playerCharacter->ReportNoise((*FoundSfx)->GetVolumeMultiplier());
-			}
-		}
+	if(!result.bBlockingHit)
+		return;
+	
+
+	FFootstepFeedback* Feedback;
+	
+	if(UPhysicalMaterial* PhysicalMaterial = result.PhysMaterial.Get())
+	{
+		 Feedback = FeedbackMap.Find(PhysicalMaterial);
 	}
+	else
+	{
+		Feedback = new FFootstepFeedback();
+		Feedback->Sound = this->DefaultFeedback.Sound;
+		Feedback->VFX = this->DefaultFeedback.VFX;
+	}
+
+	if(IsValid(Feedback->VFX))
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), Feedback->VFX, result.Location);	
+	}
+
+	if(IsValid(Feedback->Sound))
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Feedback->Sound, result.Location);
+	}
+	
+	 if (APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(GetOwner()))
+	 {
+		 playerCharacter->ReportNoise((Feedback->Sound)->GetVolumeMultiplier());
+	 }
 }

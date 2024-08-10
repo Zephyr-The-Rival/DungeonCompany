@@ -39,6 +39,7 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "DCGame/DC_PostMortemPawn.h"
+#include "WorldActors/ResetManager.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UDC_CMC>(ACharacter::CharacterMovementComponentName))
@@ -131,6 +132,7 @@ void APlayerCharacter::LocalTick(float DeltaTime)
 {
 	this->InteractorLineTrace();
 	StaminaTick(DeltaTime);
+	CheckHoldInteract();
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)
@@ -262,7 +264,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(SprintAction, ETriggerEvent::Started, this, &APlayerCharacter::SprintActionStarted);
 	EIC->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::SprintActionCompleted);
 
-	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
+	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::InteractPressed);
+
+	EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::StartHoldInteract);
+	EIC->BindAction(InteractAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopHoldInteract);
 
 	EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
 	EIC->BindAction(SwitchHandAction, ETriggerEvent::Started, this, &APlayerCharacter::SwitchHand);
@@ -368,6 +373,7 @@ void APlayerCharacter::InteractorLineTrace()
 			this->MyPlayerHud->HideCrosshair();
 			this->CurrentInteractable->OnUnHovered(this);
 			this->CurrentInteractable = NULL;
+			StopHoldInteract();
 		}
 	}
 }
@@ -407,6 +413,48 @@ void APlayerCharacter::Interact()
 void APlayerCharacter::ResetInteractPrompt()
 {
 	this->CurrentInteractable = nullptr;
+}
+
+void APlayerCharacter::InteractPressed()
+{
+	if(CurrentInteractable!=NULL && !CurrentInteractable-> GetNeedsHolding())
+		Interact();
+}
+
+void APlayerCharacter::StartHoldInteract()
+{
+	if(CurrentInteractable==NULL || !CurrentInteractable-> GetNeedsHolding())
+		return;
+	
+	this->bIsHoldingInteract=true;
+	MyPlayerHud->ShowInteractProgressBar(CurrentInteractable->GetHoldInteractTime());
+}
+
+void APlayerCharacter::StopHoldInteract()
+{
+	if(!this->bIsHoldingInteract)
+		return;
+		
+	this->bIsHoldingInteract=false;
+	InteractHoldingSecondCounter=0;
+	MyPlayerHud->HideInteractProgressBar();
+}
+
+void APlayerCharacter::CheckHoldInteract()
+{
+	if(CurrentInteractable==NULL)
+		return;
+	
+	if(bIsHoldingInteract)
+	{
+		InteractHoldingSecondCounter+=GetWorld()->GetDeltaSeconds();
+		if(CurrentInteractable->GetHoldInteractTime()<=InteractHoldingSecondCounter)
+		{
+			Interact();
+			StopHoldInteract();
+		}
+			
+	}
 }
 
 void APlayerCharacter::Server_Interact_Implementation(UObject* Interactable)
@@ -1226,9 +1274,12 @@ void APlayerCharacter::OnDeath_Implementation()
 			break;
 		}
 	}
+	
 	if (bAllDead)
 	{
-		RespawnAllPlayers();
+		if(AResetManager* ResetManager = Cast<AResetManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AResetManager::StaticClass())))
+			ResetManager->Server_ResetDungeon();
+		
 		return;
 	}
 
@@ -1416,14 +1467,6 @@ void APlayerCharacter::Multicast_PlayPickUpSound_Implementation(TSubclassOf<AWor
 	LogWarning(*text);
 }
 
-void APlayerCharacter::RespawnAllPlayers()
-{
-	//assumes authority
-	for (TActorIterator<ADC_PC> It(GetWorld()); It; ++It)
-	{
-		It->Server_RequestRespawn();
-	}
-}
 
 void APlayerCharacter::dropAllItems()
 {
