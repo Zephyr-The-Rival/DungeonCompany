@@ -887,14 +887,13 @@ void APlayerCharacter::SpawnItemInHand(TSubclassOf<AWorldItem> ItemToSpawn, cons
 void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldItem> ItemToSpawn,
                                                              const FString& SerializedData)
 {
-	//if is in first person or not will have to make a difference
-
 	FTransform SpawnTransform;
 	CurrentlyHeldWorldItem = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	CurrentlyHeldWorldItem->MyCharacterToAttachTo = this;
 	//this property is replicated and the item will attach on begin play
 	CurrentlyHeldWorldItem->SerializedStringData = SerializedData;
 	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
+	CurrentlyHeldWorldItem->bIsHeldByPlayer=true;
 }
 
 
