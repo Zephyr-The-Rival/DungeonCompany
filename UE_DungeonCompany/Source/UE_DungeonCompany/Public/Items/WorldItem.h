@@ -117,6 +117,14 @@ protected:
 public:
 	USoundBase* GetPickupSound() const {return this->PickUpSound;}
 
+public://save game stuff
+
 	UPROPERTY(BlueprintAssignable)
 	FOnPickedUp OnPickedUp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCameFromItemSpawner=false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsHeldByPlayer=false;
 };
