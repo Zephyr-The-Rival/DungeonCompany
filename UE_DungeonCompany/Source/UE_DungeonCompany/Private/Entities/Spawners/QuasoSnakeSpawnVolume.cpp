@@ -11,12 +11,14 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
-AQuasoSnakeSpawnVolume::AQuasoSnakeSpawnVolume()
+AQuasoSnakeSpawnVolume::AQuasoSnakeSpawnVolume(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	static ConstructorHelpers::FClassFinder<AQuasoSnake> BPClass(TEXT("/Game/_DungeonCompanyContent/Code/Entities/BP_QuasoSnake"));
 	QuasoSnakeClass = BPClass.Class;
 
 	PrimaryActorTick.bCanEverTick = true;
+
 }
 
 void AQuasoSnakeSpawnVolume::BeginPlay()
@@ -30,6 +32,7 @@ void AQuasoSnakeSpawnVolume::BeginPlay()
 		return;
 	} 
 	
+	GetBrushComponent()->SetCollisionProfileName("Trigger");
 	SetActorTickEnabled(true);
 
 	DespawnDelegate = FTimerDelegate::CreateLambda([this]() 
@@ -165,7 +168,9 @@ void AQuasoSnakeSpawnVolume::SpawnCloseToPlayer(ACharacter* Character)
 
 		GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
 
-		DrawDebugLine(GetWorld(), start, end, FColor::Blue, false, 10.f);
+#if WITH_EDITOR
+		DrawDebugLine(GetWorld(), start, end, FColor::Blue, false, 3.f);
+#endif
 
 		double hitDistance = (hit.Location - start).Length();
 
@@ -187,7 +192,7 @@ void AQuasoSnakeSpawnVolume::SpawnCloseToPlayer(ACharacter* Character)
 	if (failedHit)
 		return;
 
-	SpawnedQuasoSnake = GetWorld()->SpawnActor<AQuasoSnake>(QuasoSnakeClass, hit.Location + hit.Normal * 50, hit.Normal.Rotation());
+	SpawnedQuasoSnake = GetWorld()->SpawnActor<AQuasoSnake>(QuasoSnakeClass, hit.Location + hit.Normal * SpawnDistance, hit.Normal.Rotation());
 
 	if (!SpawnedQuasoSnake)
 		return;

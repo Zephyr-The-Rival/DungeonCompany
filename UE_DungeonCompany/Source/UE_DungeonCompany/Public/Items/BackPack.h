@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -17,9 +17,9 @@ class UE_DUNGEONCOMPANY_API ABackPack : public AWorldItem
 	
 
 public:
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	TArray<TSubclassOf<UItemData>> Items;
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	TArray<FString> ItemDatas;
 
 protected:

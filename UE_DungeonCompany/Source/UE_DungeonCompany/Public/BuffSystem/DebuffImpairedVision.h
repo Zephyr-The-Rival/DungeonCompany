@@ -6,20 +6,29 @@
 #include "BuffSystem/BuffDebuffBase.h"
 #include "DebuffImpairedVision.generated.h"
 
+class UCameraComponent;
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class UE_DUNGEONCOMPANY_API UDebuffImpairedVision : public UBuffDebuffBase
 {
 	GENERATED_BODY()
 
-private:
-	UMaterialInstance* ImpairedVisionMaterial;
 
 protected:
 	virtual void LocalApply() override;
 
 	virtual void LocalRemove() override;
+
+protected:
+
+	int materialIndex;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FWeightedBlendable PostProcessMaterial;
+
+	UFUNCTION(BlueprintNativeEvent)
+	void SmoothApply(UCameraComponent* Camera);
+	void SmoothApply_Implementation(UCameraComponent* Camera);
 };

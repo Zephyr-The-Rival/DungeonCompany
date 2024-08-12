@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class UE_DUNGEONCOMPANY_API UDebuffPoisonGas : public UBuffDebuffBase
 {
 	GENERATED_BODY()
@@ -24,7 +24,7 @@ private:
 	float DamageIntervalSeconds = 0.2f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Damage")
-	float DamagePerSecond = 2.f;
+	float DamagePerSecond = 2.5f;
 
 	FTimerHandle DamageHandle;
 

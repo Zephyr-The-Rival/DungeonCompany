@@ -30,9 +30,9 @@ USTRUCT(BlueprintType)
 struct FSlotData
 {
 	GENERATED_BODY()
-	UPROPERTY(BlueprintReadWrite)
-	bool bIsBackpackSlot;
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsBackpackSlot=false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UInventorySlot* Slot;
 };
 
@@ -47,8 +47,7 @@ class UE_DUNGEONCOMPANY_API UPlayerHud : public UUserWidget
 	
 public:
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	APlayerCharacter* MyCharacter;
+
 
 	UFUNCTION(BlueprintNativeEvent)
 	void ShowCrosshair(UTexture2D* newTexture);
@@ -90,10 +89,7 @@ public:
 	void UpdateCrouchIcon();
 	void UpdateCrouchIcon_Implementation();
 
-
-	UFUNCTION(BlueprintNativeEvent)
-	void ToggleOptionsMenu(bool On);
-	void ToggleOptionsMenu_Implementation(bool On);
+	
 
 	UFUNCTION(BlueprintNativeEvent)
 	void ShowTextInteractPrompt(const FString& NewText);
@@ -102,4 +98,18 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void ShowBuyPrompt(ABuyableItem* BuyableItem);
 	void ShowBuyPrompt_Implementation(ABuyableItem* BuyableItem);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void UpdateBuffs();
+	void UpdateBuffs_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ShowInteractProgressBar(float MaxTime);
+	void ShowInteractProgressBar_Implementation(float MaxTime);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void HideInteractProgressBar();
+	void HideInteractProgressBar_Implementation();
+
+
 };
