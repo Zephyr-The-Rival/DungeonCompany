@@ -242,6 +242,12 @@ protected:
 
 	void ToggleCrouch();
 
+	void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+	void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Sounds")
+	USoundBase* CrouchSound;
+
 	void SprintActionStarted();
 	void SprintActionCompleted();
 

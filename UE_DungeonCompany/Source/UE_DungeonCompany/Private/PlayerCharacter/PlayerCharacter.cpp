@@ -572,8 +572,28 @@ void APlayerCharacter::ToggleCrouch()
 		UnCrouch(true);
 	else
 		Crouch(true);
+	
+}
 
-	this->MyPlayerHud->UpdateCrouchIcon();
+void APlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+
+	if(IsLocallyControlled())
+		this->MyPlayerHud->UpdateCrouchIcon();
+	
+	Server_SpawnSoundAtLocation(this->CrouchSound, GetActorLocation());
+	
+}
+
+void APlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+
+	if(IsLocallyControlled())
+		this->MyPlayerHud->UpdateCrouchIcon();
+	
+	Server_SpawnSoundAtLocation(this->CrouchSound, GetActorLocation());
 }
 
 void APlayerCharacter::SprintActionStarted()
