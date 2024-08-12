@@ -10,6 +10,9 @@
 class UItemData;
 class APlayerCharacter;
 class USoundBase;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPickedUp);
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API AWorldItem : public AActor, public IInteractable
 {
@@ -57,7 +60,7 @@ public://attached to hand
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bAttachesToRightHand=true;
+	bool bAttachesToRightHand;
 	
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -113,5 +116,15 @@ protected:
 
 public:
 	USoundBase* GetPickupSound() const {return this->PickUpSound;}
-	
+
+public://save game stuff
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPickedUp OnPickedUp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCameFromItemSpawner=false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsHeldByPlayer=false;
 };
