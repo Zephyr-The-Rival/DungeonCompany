@@ -123,5 +123,14 @@ protected:
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sound")
+	USoundBase* DeathSound;
+
+private:
+	UFUNCTION(NetMulticast, Unreliable)
+	void PlayDeathSound();
+	void PlayDeathSound_Implementation();
 };
