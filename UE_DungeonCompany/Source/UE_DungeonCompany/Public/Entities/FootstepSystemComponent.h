@@ -8,6 +8,16 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "FootstepSystemComponent.generated.h"
 
+USTRUCT(Blueprintable)
+struct FFootstepFeedback
+{
+	GENERATED_BODY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* Sound=nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UNiagaraSystem* VFX=nullptr;
+	
+};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class UE_DUNGEONCOMPANY_API UFootstepSystemComponent : public UActorComponent
@@ -22,7 +32,7 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:
+protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 	
@@ -30,16 +40,21 @@ public:
 	float StepsLineTraceLength = 100.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TMap<UPhysicalMaterial*, UNiagaraSystem*> SurfaceVFX;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TMap<UPhysicalMaterial*,USoundBase*> SurfaceSFX;
-
+	TMap<UPhysicalMaterial*, FFootstepFeedback> FeedbackMap;
+	
+public:
+	
 	UFUNCTION(BlueprintCallable, Category = "Footstep")
-	void PlayStepsFeedback();
+	void PlayStepsFeedback(FName SocketName);
 	
 private:
-	UPhysicalMaterial* GetFootMaterial() const;
+	FHitResult GetFootHitResult(FName SocketName) const;
+
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FFootstepFeedback DefaultFeedback;
 
 
 };

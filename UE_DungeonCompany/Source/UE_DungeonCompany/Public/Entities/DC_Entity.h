@@ -68,7 +68,7 @@ public:
 
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
 	USoundBase* TakeDamageSound;
 public:
 	
