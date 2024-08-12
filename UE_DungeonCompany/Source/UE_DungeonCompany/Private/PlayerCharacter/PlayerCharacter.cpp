@@ -1510,6 +1510,16 @@ void APlayerCharacter::Yawn_Implementation()
 {
 }
 
+void APlayerCharacter::TakeDamage(float Damage)
+{
+	Super::TakeDamage(Damage);
+	ShowHudDamageIndicator();
+}
+
+void APlayerCharacter::ShowHudDamageIndicator_Implementation()
+{
+}
+
 void APlayerCharacter::Multicast_SpawnSoundAtLocation_Implementation(USoundBase* LocalSound, FVector Location)
 {
 	if (IsValid(LocalSound))

@@ -645,5 +645,14 @@ protected:
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
 	USoundBase* YawnSound;
+
+public:
+	
+	void TakeDamage(float Damage) override;
+
+protected:
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void ShowHudDamageIndicator();
 	
 };

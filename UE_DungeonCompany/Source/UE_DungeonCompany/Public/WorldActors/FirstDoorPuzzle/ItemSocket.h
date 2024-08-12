@@ -59,4 +59,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString PromptNotUseable = "Can't Interact";
 
+
+
 };
