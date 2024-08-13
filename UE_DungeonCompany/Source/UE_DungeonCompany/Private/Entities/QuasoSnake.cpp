@@ -4,6 +4,7 @@
 #include "Entities/QuasoSnake.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "AI/DC_AIController.h"
+#include "Animation/AnimSingleNodeInstance.h"
 #include "BuffSystem/DebuffDisableMovement.h"
 #include "BuffSystem/DebuffBlockInputs.h"
 #include "BuffSystem/DebuffMuffledVoice.h"
@@ -14,7 +15,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SplineComponent.h"
 #include "Components/SphereComponent.h"
-#include "Kismet/KismetMathLibrary.h" 
+#include "Kismet/KismetMathLibrary.h"
 
 AQuasoSnake::AQuasoSnake()
 {
@@ -28,9 +29,6 @@ AQuasoSnake::AQuasoSnake()
 
 	BottomCaveMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BottomCaveMesh"));
 	BottomCaveMesh->SetupAttachment(GetMesh(), FName("BottomCaveSocket"));
-
-	FirstPersonAttachTemplate = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonTempalte"));
-	FirstPersonAttachTemplate->SetupAttachment(RootComponent);
 }
 
 void AQuasoSnake::BeginPlay()
@@ -39,7 +37,7 @@ void AQuasoSnake::BeginPlay()
 
 	AttackSpline->Duration = 0.75f;
 
-	if(!HasAuthority())
+	if (!HasAuthority())
 		return;
 
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AQuasoSnake::OnHit);
@@ -48,19 +46,19 @@ void AQuasoSnake::BeginPlay()
 	GetCharacterMovement()->DisableMovement();
 
 	SetIsLurking(true);
-
 }
 
 void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 {
-	if(!HasAuthority() || bInAttack)
+	if (!HasAuthority() || bInAttack)
 		return;
 
 	bInAttack = true;
 	SetIsAttacking(true);
 
 	FTimerHandle handle;
-	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AQuasoSnake::LaunchAtActor, Cast<AActor>(TargetPlayer));
+	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AQuasoSnake::LaunchAtActor,
+	                                                        Cast<AActor>(TargetPlayer));
 	GetWorld()->GetTimerManager().SetTimer(handle, delegate, WindUpSeconds, false);
 
 	SetInAttackOnBlackboard(true);
@@ -69,19 +67,19 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 
 	GetCharacterMovement()->SetMovementMode(MOVE_None);
 
-	FRotator attackRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), TargetPlayer->GetActorLocation());
+	FRotator attackRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),
+	                                                                 TargetPlayer->GetActorLocation());
 	GetController()->SetControlRotation(attackRotation);
 
 	CalculateLaunchSplineToActor(TargetPlayer);
-
 }
 
 void AQuasoSnake::LaunchAtActor(AActor* Actor)
 {
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 
-	FTimerDelegate delegate = FTimerDelegate::CreateLambda([this]() {
-
+	FTimerDelegate delegate = FTimerDelegate::CreateLambda([this]()
+	{
 		AttackTime += LaunchUpdateInterval;
 
 		if (AttackTime > AttackSpline->Duration)
@@ -89,7 +87,7 @@ void AQuasoSnake::LaunchAtActor(AActor* Actor)
 			GetWorld()->GetTimerManager().ClearTimer(LaunchHandle);
 			return;
 		}
-		
+
 		FVector splineLocation = AttackSpline->GetLocationAtTime(AttackTime, ESplineCoordinateSpace::World);
 
 		FVector direction = splineLocation - GetActorLocation();
@@ -97,7 +95,7 @@ void AQuasoSnake::LaunchAtActor(AActor* Actor)
 		direction.Normalize();
 
 		FVector velocity = direction * 50 * distance;
-		
+
 		GetCharacterMovement()->Velocity = velocity;
 
 		AddMovementInput(velocity);
@@ -107,7 +105,6 @@ void AQuasoSnake::LaunchAtActor(AActor* Actor)
 
 	Jump();
 	GetWorld()->GetTimerManager().SetTimer(LaunchHandle, delegate, LaunchUpdateInterval, true);
-
 }
 
 void AQuasoSnake::CalculateLaunchSplineToActor(AActor* Actor)
@@ -119,7 +116,7 @@ void AQuasoSnake::CalculateLaunchSplineToActor(AActor* Actor)
 
 	FVector midwayPoint = (start + target) * 0.5;
 	midwayPoint += FVector::UpVector * 0.15f * jumpVector.Length();
-	if(jumpVector.Z > 0.f)
+	if (jumpVector.Z > 0.f)
 		jumpVector.Z = -jumpVector.Z;
 
 	FVector end = target + jumpVector;
@@ -127,14 +124,15 @@ void AQuasoSnake::CalculateLaunchSplineToActor(AActor* Actor)
 	FVector secMidwayPoint = (target + end) * 0.5;
 	secMidwayPoint += FVector::UpVector * 0.15f * jumpVector.Length();
 
-	TArray<FVector> points = { start, midwayPoint, target, secMidwayPoint, end};
+	TArray<FVector> points = {start, midwayPoint, target, secMidwayPoint, end};
 
 	AttackSpline->SetSplinePoints(points, ESplineCoordinateSpace::World, true);
 }
 
-void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+                        FVector NormalImpulse, const FHitResult& Hit)
 {
-	if(!bLaunched)
+	if (!bLaunched)
 		return;
 
 	bLaunched = false;
@@ -158,38 +156,47 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", false);
 		return;
 	}
-	
+
 	GetCharacterMovement()->DisableMovement();
 	Multicast_OnAttachedToPlayer(character);
-	
-	AttachToActor(character, FAttachmentTransformRules::KeepRelativeTransform);
-	//AttachToComponent(character->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform);
-	
-	SetIsAttachedToPlayer(true);	
 
-	GetWorld()->GetTimerManager().SetTimer(StageProgressHandle, this, &AQuasoSnake::ProgressStage, DeathSeconds/3, true, 0.f);
+	AttachToComponent(character->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+	                  TEXT("QuasoSocket"));
+	PlayerAttachedTo = character;
 
+	SetIsAttachedToPlayer(true);
+
+	GetWorld()->GetTimerManager().SetTimer(StageProgressHandle, this, &AQuasoSnake::ProgressStage, DeathSeconds / 3,
+	                                       true, 0.f);
 }
 
 void AQuasoSnake::Multicast_OnAttachedToPlayer_Implementation(APlayerCharacter* AttachedPlayer)
 {
 	GetCapsuleComponent()->SetCollisionProfileName("OverlapAll", true);
 
-	if(!IsValid(AttachedPlayer) || !AttachedPlayer->IsLocallyControlled())
+	if (!IsValid(AttachedPlayer) || !AttachedPlayer->IsLocallyControlled())
 		return;
 
 	GetMesh()->SetVisibility(false);
-
-	FirstPersonAttach = NewObject<USkeletalMeshComponent>(this, TEXT("FirstPersonAttachmesh"), RF_NoFlags, FirstPersonAttachTemplate);
+	FirstPersonAttach = NewObject<USkeletalMeshComponent>(AttachedPlayer);
+	FirstPersonAttach->SetSkeletalMesh(GetMesh()->GetSkeletalMeshAsset());	
+	FirstPersonAttach->SetupAttachment(AttachedPlayer->GetFirstPersonMesh(), TEXT("QuasoSocket"));
+	
 	FirstPersonAttach->RegisterComponent();
-
-	FirstPersonAttach->AttachToComponent(AttachedPlayer->GetFirstPersonMesh().Get(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("QuasoSocket"));
-	FirstPersonAttach->SetVisibility(true);
+	FirstPersonAttach->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	FirstPersonAttach->SetAnimation(FirstPersonChoke);
+	FirstPersonAttach->SetWorldScale3D(FVector(1, 1, 1));
+	FirstPersonAttach->SetRelativeRotation(FRotator(0, 90, 0));
 }
 
 void AQuasoSnake::Multicast_OnDetachedFromPlayer_Implementation()
 {
 	GetCapsuleComponent()->SetCollisionProfileName("Pawn", true);
+
+	if (!IsValid(FirstPersonAttach))
+		return;
+
+	FirstPersonAttach->DestroyComponent();
 }
 
 void AQuasoSnake::ReturnToVolume()
@@ -201,7 +208,7 @@ void AQuasoSnake::ReturnToVolume()
 
 void AQuasoSnake::SetIsAttachedToPlayer(bool InIsAttached)
 {
-	if(InIsAttached == IsAttachedToPlayer())
+	if (InIsAttached == IsAttachedToPlayer())
 		return;
 
 	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_0);
@@ -219,57 +226,56 @@ void AQuasoSnake::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
 
-	if(!HasAuthority())
+	if (!HasAuthority())
 		return;
 
 	ResetPlayerEffects();
 	SetIsAttachedToPlayer(false);
-
 }
 
 void AQuasoSnake::ProgressStage()
 {
-	if(!IsValid(PlayerAttachedTo))
+	if (!IsValid(PlayerAttachedTo))
 		return;
 
 	++CurrentStage;
 
 	switch (CurrentStage)
 	{
-		case 0:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->DisableMovementDebuff));
-			break;
+	case 0:
+		AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->DisableMovementDebuff));
+		break;
 
-		case 1:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->BlockInputsDebuff));
-			break;
+	case 1:
+		AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->BlockInputsDebuff));
+		break;
 
-		case 2:
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->MuffledVoiceDebuff));
-			AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->ImpairedVisionDebuff));
-			break;
+	case 2:
+		AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->MuffledVoiceDebuff));
+		AppliedDebuffs.Add(PlayerAttachedTo->AddBuffOrDebuff(this->ImpairedVisionDebuff));
+		break;
 
-		case 3:
-			PlayerAttachedTo->TakeDamage(100000.f);
-			DetachFromPlayer();
-			CurrentStage = -1;
-			break;
+	case 3:
+		PlayerAttachedTo->TakeDamage(100000.f);
+		DetachFromPlayer();
+		CurrentStage = -1;
+		break;
 
-		default:
-			break;
+	default:
+		break;
 	}
 }
 
 void AQuasoSnake::ResetPlayerEffects()
 {
-	if(!IsValid(PlayerAttachedTo))
+	if (!IsValid(PlayerAttachedTo))
 		return;
 
 	int debuffsNum = AppliedDebuffs.Num();
 
 	for (int i = 0; i < debuffsNum; ++i)
 	{
-		if(!IsValid(AppliedDebuffs[i]))
+		if (!IsValid(AppliedDebuffs[i]))
 			continue;
 
 		AppliedDebuffs[i]->Destroy();
@@ -293,5 +299,4 @@ void AQuasoSnake::DetachFromPlayer()
 
 	aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", false);
 	aiController->GetBlackboardComponent()->ClearValue("TargetPlayer");
-
 }

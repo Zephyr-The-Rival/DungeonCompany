@@ -34,7 +34,7 @@ private:
 	UStaticMeshComponent* BottomCaveMesh;
 	
 	UPROPERTY(EditAnywhere)
-	USkeletalMeshComponent* FirstPersonAttachTemplate;
+	UAnimationAsset* FirstPersonChoke;
 	
 	UPROPERTY(EditAnywhere, Category="Balancing")
 	float DeathSeconds = 30.f;
