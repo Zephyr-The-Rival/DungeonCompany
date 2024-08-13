@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "GenericGame/MultiDevice_PC.h"
 #include "DC_PC.generated.h"
 
 /**
@@ -15,27 +15,57 @@
  class UInputMappingContext;
  class UInputAction;
 
+UENUM(BlueprintType)
+enum class EPawnType : uint8 {
+     None = 0 UMETA(DisplayName = "None"),
+     Gameplay = 1  UMETA(DisplayName = "Gameplay"),
+     Spectator = 2     UMETA(DisplayName = "Spectator"),
+};
+
 UCLASS()
-class UE_DUNGEONCOMPANY_API ADC_PC : public APlayerController
+class UE_DUNGEONCOMPANY_API ADC_PC : public AMultiDevice_PC
 {
 	GENERATED_BODY()
 
-private:
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<UPlayerHud> PlayerHudClass;
-
-	UPROPERTY(BlueprintGetter = GetMyPlayerHud)
-	UPlayerHud* MyPlayerHud;
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EPawnType PawnType;
 
 public:
 	ADC_PC();
 
-	UFUNCTION(BlueprintCallable)
-	UPlayerHud* GetMyPlayerHud() const { return MyPlayerHud; }
-
-
 protected:
 	virtual void BeginPlay() override;
+
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnUnPossess() override;
+
+public:
+	void SetPawnType(EPawnType NewPawnType);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent)
+	void OnPawnTypeChanged(EPawnType NewPawnType);
+	virtual void OnPawnTypeChanged_Implementation(EPawnType NewPawnType);
+
+public:
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPawnTypeChanged, EPawnType, NewPawnType);
+
+	FOnPawnTypeChanged EventOnPawnTypeChanged;
+
+private:
+	UPROPERTY(EditAnywhere, Category="Balancing/Controls")
+	float GamepadAccelerationSpeed = 7.f;
+
+	float LastLookVectorLength = 0.f;
+
+public:
+	inline float GetGamePadAccelerationSpeed() const { return GamepadAccelerationSpeed; }
+	void SetGamePadAccelerationSpeed(float InSpeed);
+
+	inline float GetLastLookVectorLength() const { return LastLookVectorLength; }
+	void SetLastLookVectorLength(float InLength);
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
@@ -50,18 +80,6 @@ private:
 	UPROPERTY(EditAnywhere,BlueprintGetter=IsPushToTalkActive, BlueprintSetter=SetPushToTalkActive, Category = "Microphone")
 	bool bPushToTalkActive = false;
 
-	bool bUsingGamepad = false;
-
-public:
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	inline bool IsUsingGamepad() const { return bUsingGamepad; }
-
-	UDELEGATE()
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInputDeviceChanged, bool, IsUsingGamepad);
-
-	UPROPERTY(BlueprintAssignable, Category = "Events")
-	FOnInputDeviceChanged OnInputDeviceChanged;
-
 public:
 	virtual void SetupInputComponent() override;
 
@@ -74,8 +92,6 @@ protected:
 	void PushToTalkStarted();
 	void PushToTalkCompleted();
 
-	void OnAnyKeyPressed(const FKey& Key);
-
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	bool IsPushToTalkActive() const;
@@ -83,4 +99,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetPushToTalkActive(bool IsActive);
 
+public:
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_RequestRespawn();
+	void Server_RequestRespawn_Implementation();
+
+
+protected:
+	UFUNCTION(BlueprintNativeEvent)
+	void ToggleOptionsMenu(bool On);
+	void ToggleOptionsMenu_Implementation(bool On);
 };

@@ -18,12 +18,23 @@ public:
 
 private:
 	ADC_Entity* OuterEntity;
-
+	
 public:
 	inline ADC_Entity* GetOuterEntity() const { return OuterEntity; }
 	
 	template<class T>
 	T* GetOuterEntity() const { return Cast<T>(OuterEntity); }
+	
+private:
+	uint16 AppliedCount = 1;
+
+protected:
+	UPROPERTY(EditAnywhere)
+	bool bStackable = false;
+
+public:
+	void IncrementAppliedCount();
+	inline bool IsStackable() const { return bStackable; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -49,5 +60,16 @@ private:
 
 public:
 	void Timegate(float TimeSeconds);
-		
+	
+
+	//player hud stuff
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* HudIcon;
+
+private:
+	bool bIsActive;
+	
+public:
+	UFUNCTION(BlueprintCallable)
+	bool GetIsActive() const { return this->bIsActive;}
 };

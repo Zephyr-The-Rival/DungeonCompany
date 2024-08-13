@@ -20,14 +20,23 @@ private:
 	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<AAIEntity>> AIClasses;
 
+	UPROPERTY(EditAnywhere)
+	int SpurchinCount = 10.f;
+
 public:
 	ADC_GM();
 
 protected:
 	virtual void BeginPlay() override;
+	void SpawnSpurchins();
+
+private:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ADC_PostMortemPawn> PostMortemPawnClass;
 
 public:
 	void Respawn(AController* Controller);
+	void StartSpectating(AController* Controller);
 
 	/* If you want to Spawn the AI randomly on the map then leave the NearActor param on null.
 	In this case the Radius parameter can be ignored */

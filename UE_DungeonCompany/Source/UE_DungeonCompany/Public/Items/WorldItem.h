@@ -9,6 +9,9 @@
 
 class UItemData;
 class APlayerCharacter;
+class USoundBase;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPickedUp);
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AWorldItem : public AActor, public IInteractable
@@ -37,10 +40,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnHoldingInHand(bool locallyControlled);
-
-	virtual void OnHoldingInHand_Implementation(bool locallyControlled);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OnHoldingInHand(bool LocallyControlled);
+	virtual void OnHoldingInHand_Implementation(bool LocallyControlled);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -57,6 +59,10 @@ public://attached to hand
 	void AttachToPlayer();
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bAttachesToRightHand;
+	
+protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	
@@ -71,6 +77,26 @@ public://item actions
 	void TriggerLocalPrimaryAction(APlayerCharacter* User);
 	virtual void TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User);
 
+	//hold server
+	UFUNCTION(BlueprintNativeEvent)
+	void TriggerPrimaryActionHold(APlayerCharacter* User);
+	virtual void TriggerPrimaryActionHold_Implementation(APlayerCharacter* User);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void EndPrimaryActionHold(APlayerCharacter* User);
+	virtual void EndPrimaryActionHold_Implementation(APlayerCharacter* User);
+
+	//hold local
+
+	UFUNCTION(BlueprintNativeEvent)
+	void TriggerLocalPrimaryActionHold(APlayerCharacter* User);
+	virtual void TriggerLocalPrimaryActionHold_Implementation(APlayerCharacter* User);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void EndLocalPrimaryActionHold(APlayerCharacter* User);
+	virtual void EndLocalPrimaryActionHold_Implementation(APlayerCharacter* User);
+	
+//secondary
 	UFUNCTION(BlueprintNativeEvent)
 	void TriggerSecondaryAction(APlayerCharacter* User);
 	virtual void TriggerSecondaryAction_Implementation(APlayerCharacter* User);
@@ -83,4 +109,22 @@ public:	//keeping itemdata
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	FString SerializedStringData;	
 
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* PickUpSound;
+
+public:
+	USoundBase* GetPickupSound() const {return this->PickUpSound;}
+
+public://save game stuff
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPickedUp OnPickedUp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCameFromItemSpawner=false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsHeldByPlayer=false;
 };

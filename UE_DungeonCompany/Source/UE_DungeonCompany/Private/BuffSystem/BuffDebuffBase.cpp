@@ -3,6 +3,9 @@
 
 #include "BuffSystem/BuffDebuffBase.h"
 #include "Entities/DC_Entity.h"
+#include "PlayerCharacter/PlayerCharacter.h"
+#include "UI/PlayerHud/PlayerHud.h"
+#include "UObject/GarbageCollectionSchema.h"
 
 UBuffDebuffBase::UBuffDebuffBase()
 {
@@ -12,6 +15,11 @@ UBuffDebuffBase::UBuffDebuffBase()
 
 }
 
+
+void UBuffDebuffBase::IncrementAppliedCount()
+{
+	++AppliedCount;
+}
 
 void UBuffDebuffBase::BeginPlay()
 {
@@ -35,7 +43,7 @@ void UBuffDebuffBase::Apply()
 		LocalApply();
 
 	if (OuterEntity->HasAuthority())
-		AuthorityRemove();
+		AuthorityApply();
 
 }
 
@@ -47,7 +55,10 @@ void UBuffDebuffBase::AuthorityApply()
 
 void UBuffDebuffBase::LocalApply()
 {
-
+	this->bIsActive=true;
+	
+	if (APlayerCharacter* player = Cast<APlayerCharacter>(OuterEntity))
+		player->GetMyHud()->UpdateBuffs();
 }
 
 void UBuffDebuffBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -72,16 +83,23 @@ void UBuffDebuffBase::Remove()
 
 void UBuffDebuffBase::AuthorityRemove()
 {
-
+	
 }
 
 void UBuffDebuffBase::LocalRemove()
 {
-
+	this->bIsActive=false;
+	if (APlayerCharacter* player = Cast<APlayerCharacter>(OuterEntity))
+		player->GetMyHud()->UpdateBuffs();
 }
 
 void UBuffDebuffBase::Destroy()
 {
+	--AppliedCount;
+	
+	if(AppliedCount)
+		return;
+		
 	GetWorld()->GetTimerManager().ClearTimer(ActiveTimerHandle);
 
 	Super::DestroyComponent(false);
