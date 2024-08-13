@@ -228,7 +228,7 @@ void AQuasoSnake::OnDeath_Implementation()
 		return;
 
 	ResetPlayerEffects();
-	SetIsAttachedToPlayer(false);
+	DetachFromPlayer();
 }
 
 void AQuasoSnake::ProgressStage()
@@ -282,6 +282,9 @@ void AQuasoSnake::ResetPlayerEffects()
 
 void AQuasoSnake::DetachFromPlayer()
 {
+	if(!IsAttachedToPlayer())
+		return;
+	
 	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	Multicast_OnDetachedFromPlayer();
 
