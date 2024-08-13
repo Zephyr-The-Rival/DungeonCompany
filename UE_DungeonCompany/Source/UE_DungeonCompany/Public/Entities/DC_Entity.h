@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "DC_Entity.generated.h"
 
+class UBuffDebuffBase;
+class UNiagaraSystem;
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_Entity : public ACharacter
 {
@@ -15,7 +17,7 @@ protected:
 	UPROPERTY(EditAnywhere,	BlueprintGetter = GetMaxHealth, Category = "Balancing|Health")
 	float MaxHP = 100.f;
 
-	UPROPERTY(EditAnywhere, Replicated, BlueprintGetter = GetHealth)
+	UPROPERTY(EditAnywhere, ReplicatedUsing = CheckIfDead, BlueprintGetter = GetHealth)
 	float HP = 100.f;
 
 public:
@@ -29,13 +31,59 @@ public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetMaxHealth() const { return MaxHP; }
 
+	UFUNCTION(BlueprintPure, BlueprintCallable)
+	inline bool IsDead() const { return HP <= 0.f; }
+
 	using Super::TakeDamage;
 	virtual void TakeDamage(float Damage);
+	UFUNCTION(NetMulticast, Unreliable)
+	void SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
+	void SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
 
-	UFUNCTION(BlueprintNativeEvent)
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UNiagaraSystem* bloodEffect;
+
+	UFUNCTION()
+	void CheckIfDead();
+
+public:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void OnDeath();
 	virtual void OnDeath_Implementation();
 
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerDeath, ADC_Entity*, DeadPlayer);
+
+	FOnPlayerDeath OnPlayerDeath;
+
+public:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
+public:
+	UBuffDebuffBase* AddBuffOrDebuff(TSubclassOf<UBuffDebuffBase> BuffDebuffClass, float ActiveTime = 0.f);
+	void RemoveBuffOrDebuff(TSubclassOf<UBuffDebuffBase> BuffDebuffClass);
+
+	bool HasBuffOrDebuffApplied(TSubclassOf<UBuffDebuffBase> BuffDebuffClass) const;
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
+	USoundBase* TakeDamageSound;
+public:
+	
+	UFUNCTION(NetMulticast, Unreliable)
+	void SpawnTakeDamageSound();
+
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sound")
+	USoundBase* DeathSound;
+
+	
+private:
+	UFUNCTION(NetMulticast, Unreliable)
+	void PlayDeathSound();
+	void PlayDeathSound_Implementation();
 };

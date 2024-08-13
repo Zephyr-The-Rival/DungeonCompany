@@ -59,4 +59,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString PromptOnWrongItemHovered = "Can't Interact";
 
+
+
 };
