@@ -185,8 +185,6 @@ void AQuasoSnake::Multicast_OnAttachedToPlayer_Implementation(APlayerCharacter* 
 	FirstPersonAttach->RegisterComponent();
 	FirstPersonAttach->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	FirstPersonAttach->SetAnimation(FirstPersonChoke);
-	FirstPersonAttach->SetWorldScale3D(FVector(1, 1, 1));
-	FirstPersonAttach->SetRelativeRotation(FRotator(0, 90, 0));
 }
 
 void AQuasoSnake::Multicast_OnDetachedFromPlayer_Implementation()
