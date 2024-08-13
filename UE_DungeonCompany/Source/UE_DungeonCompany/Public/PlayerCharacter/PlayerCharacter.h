@@ -242,6 +242,12 @@ protected:
 
 	void ToggleCrouch();
 
+	void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+	void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Sounds")
+	USoundBase* CrouchSound;
+
 	void SprintActionStarted();
 	void SprintActionCompleted();
 
@@ -352,6 +358,8 @@ protected:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bSlotAIsInHand = true;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -585,10 +593,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UFootstepSystemComponent* FootstepSystemComponent;
 
-protected:
+public:
 	
 
-
+	UFUNCTION(BlueprintCallable)
 	void dropAllItems();
 
 protected:
@@ -645,5 +653,20 @@ protected:
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
 	USoundBase* YawnSound;
+
+public:
+	
+	void TakeDamage(float Damage) override;
+
+protected:
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void ShowHudDamageIndicator();
+
+public:
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void LeftBehind();
+	void LeftBehind_Implementation();
 	
 };

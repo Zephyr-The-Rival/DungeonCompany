@@ -81,3 +81,5 @@ void AItemSocket::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AItemSocket, bPlayerCanPlaceItem);
 }
+
+
