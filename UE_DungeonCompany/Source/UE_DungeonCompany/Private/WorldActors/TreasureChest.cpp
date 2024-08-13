@@ -9,6 +9,8 @@
 ATreasureChest::ATreasureChest()
 {
 	this->bInteractOnServer=true;
+	this->bNeedsHolding=true;
+	this->HoldInteractTime=5;
 }
 
 void ATreasureChest::OnHovered(APlayerCharacter* PlayerCharacter)
@@ -16,7 +18,7 @@ void ATreasureChest::OnHovered(APlayerCharacter* PlayerCharacter)
 	if(!bUsed)
 	{
 		IInteractable::OnHovered(PlayerCharacter);
-		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Open");
+		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Hold to Open");
 	}
 	
 }

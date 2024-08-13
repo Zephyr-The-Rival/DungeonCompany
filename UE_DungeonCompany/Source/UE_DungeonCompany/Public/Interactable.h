@@ -25,7 +25,10 @@ class UE_DUNGEONCOMPANY_API IInteractable
 protected:
 	bool bInteractable = true;
 	bool bInteractOnServer = false;
-
+	
+	bool bNeedsHolding=false;
+	float HoldInteractTime=1;
+	
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	virtual void Interact(APawn* InteractingPawn) {};
@@ -36,4 +39,7 @@ public:
 
 	virtual void OnHovered(APlayerCharacter* PlayerCharacter) {};
 	virtual void OnUnHovered(APlayerCharacter* PlayerCharacter) {};
+	
+	float GetHoldInteractTime() const{return this->HoldInteractTime;}
+	bool GetNeedsHolding() const{return this->bNeedsHolding;}
 };
