@@ -593,10 +593,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UFootstepSystemComponent* FootstepSystemComponent;
 
-protected:
+public:
 	
 
-
+	UFUNCTION(BlueprintCallable)
 	void dropAllItems();
 
 protected:
