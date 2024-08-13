@@ -1536,6 +1536,11 @@ void APlayerCharacter::TakeDamage(float Damage)
 	ShowHudDamageIndicator();
 }
 
+
+void APlayerCharacter::LeftBehind_Implementation()
+{
+}
+
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
 {
 }
