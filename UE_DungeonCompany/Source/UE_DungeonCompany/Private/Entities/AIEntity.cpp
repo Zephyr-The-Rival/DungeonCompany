@@ -249,10 +249,4 @@ void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(AAIEntity, AnimationFlags);
 }
 
-void AAIEntity::PlayDeathSound_Implementation()
-{
-	if(DeathSound)
-		UGameplayStatics::SpawnSoundAttached( DeathSound, GetMesh());
-	else
-		LogWarning(TEXT("Death sound not valid"));
-}
+
