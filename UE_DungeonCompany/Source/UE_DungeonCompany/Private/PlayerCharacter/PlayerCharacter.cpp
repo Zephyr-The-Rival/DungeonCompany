@@ -33,7 +33,6 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
-#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "BuffSystem/DebuffExaustion.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
