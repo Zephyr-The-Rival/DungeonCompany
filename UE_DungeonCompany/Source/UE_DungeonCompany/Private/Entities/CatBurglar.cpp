@@ -49,8 +49,14 @@ void ACatBurglar::OnTookDamage()
 {
 	Super::OnTookDamage();
 
+	if(bHealthBelowFleeingUpper)
+		return;
+
 	if (HP < StartFleeingHPUpper && CurrentBehaviorState != ECatBurglarBehaviorState::Fleeing)
+	{
+		bHealthBelowFleeingUpper = true;
 		UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
+	}
 }
 
 void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)

@@ -599,10 +599,8 @@ public:
 	UFootstepSystemComponent* FootstepSystemComponent;
 
 public:
-	
-
 	UFUNCTION(BlueprintCallable)
-	void dropAllItems();
+	void DropAllItems();
 
 protected:
 

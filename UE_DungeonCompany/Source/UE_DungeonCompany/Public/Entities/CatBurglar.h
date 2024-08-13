@@ -55,6 +55,9 @@ public:
 protected:
 	void UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState);
 
+private:
+	bool bHealthBelowFleeingUpper = false;
+
 protected:
 	virtual void OnTookDamage() override;
 

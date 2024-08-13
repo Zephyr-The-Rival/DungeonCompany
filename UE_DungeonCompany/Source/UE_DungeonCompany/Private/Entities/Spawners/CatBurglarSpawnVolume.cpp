@@ -32,6 +32,9 @@ void ACatBurglarSpawnVolume::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	if(SpawnedCatBurglars.Num() >= MaxCatBurglar)
+		return;
+
 	int playersNum = PlayerCharactersInVolume.Num();
 
 	APlayerCharacter* playerClosestToSpawnPoint = nullptr;
@@ -61,6 +64,8 @@ void ACatBurglarSpawnVolume::Tick(float DeltaSeconds)
 void ACatBurglarSpawnVolume::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("överläp"));
 
 	APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(OtherActor);
 

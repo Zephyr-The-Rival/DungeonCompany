@@ -24,6 +24,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MinSpawnDistance = 1500.f;
 
+	UPROPERTY(EditAnywhere)
+	uint8 MaxCatBurglar = 5;
+
 	TSubclassOf<ACatBurglar> CatBurglarClass;
 	
 private:

@@ -18,9 +18,10 @@ UBTService_IsInRange::UBTService_IsInRange()
 
 void UBTService_IsInRange::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
-	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);\
-	
-	AActor* checkingActor = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(CheckingActor.SelectedKeyName));
+	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
+
+	AActor* checkingActor = Cast<AActor>(
+		OwnerComp.GetBlackboardComponent()->GetValueAsObject(CheckingActor.SelectedKeyName));
 
 	if (!checkingActor)
 		WriteResult(false);
@@ -36,9 +37,8 @@ void UBTService_IsInRange::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* No
 
 	FVector targetLocation = checkingActor->GetActorLocation();
 
-	if(bIgnoreZValue)
+	if (bIgnoreZValue)
 		targetLocation.Z = aiPawn->GetActorLocation().Z;
 
 	WriteResult((targetLocation - aiPawn->GetActorLocation()).Length() <= AttackRange);
 }
- 
