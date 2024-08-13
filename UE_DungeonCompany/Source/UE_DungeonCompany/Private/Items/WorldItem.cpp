@@ -24,7 +24,8 @@ AWorldItem::AWorldItem()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bAlwaysRelevant = true;
-	
+	bAttachesToRightHand=true;
+
 	static ConstructorHelpers::FObjectFinder<USoundBase> basicSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
 	this->PickUpSound = basicSound.Object;
 	
@@ -93,7 +94,10 @@ void AWorldItem::AttachToPlayer()
 
 	if (MyCharacterToAttachTo->IsLocallyControlled())
 	{
-		this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_R_001");
+		if(bAttachesToRightHand)
+			this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_R_001");
+		else
+			this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_L_001");
 	}		
 	else
 	{	
@@ -107,13 +111,12 @@ void AWorldItem::AttachToPlayer()
 
 void AWorldItem::Interact(APawn* InteractingPawn)
 {
-	LogWarning(*(this->GetName()+" is beeing interacted with"));
 
 	APlayerCharacter* character = Cast<APlayerCharacter>(InteractingPawn);
 
 	if(!character)
 		return;
-
+	
 	character->PickUpItem(this);
 }
 

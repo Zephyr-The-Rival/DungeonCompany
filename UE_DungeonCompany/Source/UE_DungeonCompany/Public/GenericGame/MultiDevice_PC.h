@@ -10,6 +10,19 @@
  * 
  */
 
+class UInputModifier;
+
+USTRUCT(BlueprintType)
+struct FCustomMapping
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FKey MappedKey;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<UInputModifier*> Modifiers;
+};
+
 class UInputAction;
 class UInputMappingContext;
 class UEnhancedInputLocalPlayerSubsystem;
@@ -50,9 +63,6 @@ public:
 protected:
 	void OnAnyKeyPressed(const FKey& Key);
 
-private:
-	mutable TMap<int64, FKey> ActionKeyCache;
-
 public:
 	UDELEGATE()
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnKeyMappingChanged);
@@ -67,6 +77,15 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FKey GetCurrentKeyForMapping(FName MappingName) const;
 
+private:
+	mutable TMap<UInputAction*, TTuple<TArray<FCustomMapping>, TArray<FCustomMapping>>> ActionKeyCache;
+	
+public:
+	const TTuple<TArray<FCustomMapping>, TArray<FCustomMapping>>& GetCurrentKeysForAction(UInputAction* InputAction) const;
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FKey GetCurrentKeyForAction(UInputAction* InputAction) const;
+	const TArray<FCustomMapping>& GetKeyboardKeysForAction(UInputAction* InputAction) const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	const TArray<FCustomMapping>& GetGamepadKeysForAction(UInputAction* InputAction) const;
 };

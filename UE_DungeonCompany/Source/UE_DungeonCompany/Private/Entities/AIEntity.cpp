@@ -12,6 +12,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISenseConfig_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -232,13 +233,6 @@ void AAIEntity::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UB
 	BlackboardComponent->SetValueAsBool("NewTarget", true);
 }
 
-void AAIEntity::OnDeath_Implementation()
-{
-	Super::OnDeath_Implementation();
-
-	Destroy();
-}
-
 void AAIEntity::SetIsAttacking(bool InAttacking)
 {
 	if(InAttacking == IsAttacking())
@@ -267,3 +261,5 @@ void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AAIEntity, AnimationFlags);
 }
+
+

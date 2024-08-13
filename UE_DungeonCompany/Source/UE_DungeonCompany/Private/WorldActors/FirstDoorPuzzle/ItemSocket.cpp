@@ -41,14 +41,12 @@ void AItemSocket::OnHovered(APlayerCharacter* PlayerCharacter)
 		return;
 	}
 
-	if (IsValid(PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem) 
-		&& this->bUseable 
-		&& PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem->IsA(ItemToSacrifice))
+	if (IsValid(PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem) && this->bPlayerCanPlaceItem && PlayerCharacter->GetCurrentlyHeldInventorySlot()->MyItem->IsA(this->ItemToSacrifice))
 	{
 		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt(this->PromptOnCorrectItemHovered);
 		return;
 	}
-		PlayerCharacter->GetMyHud()->ShowTextInteractPrompt(this->PromptOnWrongItemHovered);
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt(this->PromptNotUseable);
 }
 
 
@@ -56,7 +54,7 @@ void AItemSocket::OnHovered(APlayerCharacter* PlayerCharacter)
 
 void AItemSocket::Interact(APawn* InteractingPawn)
 {
-	if (!IsValid(this->ItemToSacrifice) || !this->bUseable)
+	if (!IsValid(this->ItemToSacrifice) || !this->bPlayerCanPlaceItem)
 		return;
 
 	if (APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(InteractingPawn))
@@ -67,7 +65,7 @@ void AItemSocket::Interact(APawn* InteractingPawn)
 			playerCharacter->PlaceItemOnSocket(this);
 			playerCharacter->ResetInteractPrompt();
 			if (this->bOneTimeUse)
-				this->bUseable = false;
+				this->bPlayerCanPlaceItem = false;
 			
 		}
 	}		
@@ -81,5 +79,7 @@ void AItemSocket::OnItemPlaced_Implementation()
 void AItemSocket::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AItemSocket, bUseable);
+	DOREPLIFETIME(AItemSocket, bPlayerCanPlaceItem);
 }
+
+

@@ -56,4 +56,12 @@ void UPlayerHud::UpdateBuffs_Implementation()
 	LogWarning(TEXT("UPlayerHud::UpdateDebuffs_Implementation has not been overidden"));
 }
 
+void UPlayerHud::ShowInteractProgressBar_Implementation(float MaxTime)
+{
+}
+
+void UPlayerHud::HideInteractProgressBar_Implementation()
+{
+}
+
 

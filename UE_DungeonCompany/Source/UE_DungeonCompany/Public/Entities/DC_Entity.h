@@ -73,10 +73,22 @@ public:
 
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
 	USoundBase* TakeDamageSound;
 public:
 	
 	UFUNCTION(NetMulticast, Unreliable)
 	void SpawnTakeDamageSound();
+
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sound")
+	USoundBase* DeathSound;
+
+	
+private:
+	UFUNCTION(NetMulticast, Unreliable)
+	void PlayDeathSound();
+	void PlayDeathSound_Implementation();
 };
