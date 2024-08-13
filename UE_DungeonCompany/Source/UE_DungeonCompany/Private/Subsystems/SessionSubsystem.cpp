@@ -111,7 +111,7 @@ void USessionSubsystem::CreateServer(FString ServerName, FString HostName)
 
 	sessionSettings.bAllowJoinInProgress = true;
 	sessionSettings.bIsDedicated = false;
-	sessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	sessionSettings.bIsLANMatch = false;
 	sessionSettings.bShouldAdvertise = true;
 	sessionSettings.bUsesPresence = true;
 	sessionSettings.NumPublicConnections = 4;
@@ -128,7 +128,7 @@ void USessionSubsystem::FindServers()
 	UE_LOG(LogTemp, Warning, TEXT("Searching for Sessions..."));
 	SessionSearch = MakeShareable(new FOnlineSessionSearch());
 
-	SessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	SessionSearch->bIsLanQuery = false;
 	SessionSearch->MaxSearchResults = 10000;//big number because of other steam users with the same appId
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 	
@@ -159,3 +159,4 @@ void USessionSubsystem::DestroyCurrentSession()
 	SessionInterface->DestroySession(NAME_GameSession);
 
 }
+

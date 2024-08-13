@@ -66,4 +66,5 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DestroyCurrentSession();
 	
+	
 };
