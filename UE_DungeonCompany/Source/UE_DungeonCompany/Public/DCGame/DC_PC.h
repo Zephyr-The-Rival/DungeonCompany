@@ -87,6 +87,7 @@ private:
 	bool bOptionsMenuIsOn = false;
 
 protected:
+	UFUNCTION(BlueprintCallable)
 	void ToggleOptions();
 	
 	void PushToTalkStarted();

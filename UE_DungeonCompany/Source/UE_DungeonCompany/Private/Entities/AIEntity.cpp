@@ -212,14 +212,6 @@ void AAIEntity::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UB
 	BlackboardComponent->SetValueAsBool("NewTarget", true);
 }
 
-void AAIEntity::OnDeath_Implementation()
-{
-	Super::OnDeath_Implementation();
-	
-
-	Destroy();
-}
-
 void AAIEntity::SetIsAttacking(bool InAttacking)
 {
 	if(InAttacking == IsAttacking())
