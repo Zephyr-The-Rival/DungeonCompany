@@ -22,6 +22,15 @@ AQuasoSnake::AQuasoSnake()
 
 	EyeCollision = CreateDefaultSubobject<USphereComponent>("EyeCollision");
 	EyeCollision->SetupAttachment(RootComponent);
+
+	TopCaveMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TopCaveMesh"));
+	TopCaveMesh->SetupAttachment(GetMesh(), FName("TopCaveSocket"));
+
+	BottomCaveMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BottomCaveMesh"));
+	BottomCaveMesh->SetupAttachment(GetMesh(), FName("BottomCaveSocket"));
+
+	FirstPersonAttachTemplate = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonTempalte"));
+	FirstPersonAttachTemplate->SetupAttachment(RootComponent);
 }
 
 void AQuasoSnake::BeginPlay()
@@ -151,22 +160,31 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	}
 	
 	GetCharacterMovement()->DisableMovement();
-	Multicast_OnAttachedToPlayer();
-
-	AttachToActor(character, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	PlayerAttachedTo = character;
-
-	SetIsAttachedToPlayer(true);
-
-	SetActorLocation(character->GetActorLocation() + FVector::UpVector * 100);
+	Multicast_OnAttachedToPlayer(character);
+	
+	AttachToActor(character, FAttachmentTransformRules::KeepRelativeTransform);
+	//AttachToComponent(character->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform);
+	
+	SetIsAttachedToPlayer(true);	
 
 	GetWorld()->GetTimerManager().SetTimer(StageProgressHandle, this, &AQuasoSnake::ProgressStage, DeathSeconds/3, true, 0.f);
 
 }
 
-void AQuasoSnake::Multicast_OnAttachedToPlayer_Implementation()
+void AQuasoSnake::Multicast_OnAttachedToPlayer_Implementation(APlayerCharacter* AttachedPlayer)
 {
 	GetCapsuleComponent()->SetCollisionProfileName("OverlapAll", true);
+
+	if(!IsValid(AttachedPlayer) || !AttachedPlayer->IsLocallyControlled())
+		return;
+
+	GetMesh()->SetVisibility(false);
+
+	FirstPersonAttach = NewObject<USkeletalMeshComponent>(this, TEXT("FirstPersonAttachmesh"), RF_NoFlags, FirstPersonAttachTemplate);
+	FirstPersonAttach->RegisterComponent();
+
+	FirstPersonAttach->AttachToComponent(AttachedPlayer->GetFirstPersonMesh().Get(), FAttachmentTransformRules::KeepRelativeTransform, TEXT("QuasoSocket"));
+	FirstPersonAttach->SetVisibility(true);
 }
 
 void AQuasoSnake::Multicast_OnDetachedFromPlayer_Implementation()
