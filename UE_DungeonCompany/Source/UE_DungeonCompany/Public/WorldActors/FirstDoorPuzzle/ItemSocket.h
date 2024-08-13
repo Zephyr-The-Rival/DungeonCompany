@@ -45,7 +45,7 @@ public:
 	void OnItemPlaced_Implementation();
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
-	bool bUseable=true;
+	bool bPlayerCanPlaceItem=true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bOneTimeUse;
@@ -57,6 +57,8 @@ protected:
 	FString PromptOnCorrectItemHovered = "Place Item";
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString PromptOnWrongItemHovered = "Can't Interact";
+	FString PromptNotUseable = "Can't Interact";
+
+
 
 };

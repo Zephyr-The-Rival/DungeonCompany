@@ -42,7 +42,7 @@ void ABuyableItem::Interact(APawn* InteractingPawn)
 	if (wallet->Money < this->Price)
 		return;
 
-	if(PC->HasFreeSpace()|| MyItemDataClass== PC->BackpackClass&& !PC->bHasBackPack)
+	if(PC->HasFreeSpace()|| MyItemDataClass== PC->BackpackClass&& !PC->GetHasBackPack())
 		PC->BuyItem(this);
 	
 
