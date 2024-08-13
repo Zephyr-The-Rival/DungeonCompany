@@ -662,5 +662,11 @@ protected:
 	
 	UFUNCTION(BlueprintNativeEvent)
 	void ShowHudDamageIndicator();
+
+public:
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void LeftBehind();
+	void LeftBehind_Implementation();
 	
 };
