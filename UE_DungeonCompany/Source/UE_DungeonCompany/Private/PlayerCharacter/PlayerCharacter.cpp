@@ -110,6 +110,7 @@ void APlayerCharacter::BeginPlay()
 	});
 
 	StartExaustionTimer();
+	
 }
 
 // Called every frame
@@ -181,6 +182,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
+	DOREPLIFETIME(APlayerCharacter, HeldItems);
 }
 
 
@@ -497,7 +499,7 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 		//rn only local but maybe that even stays that way
 		freeSlot->MyItem = WorldItem->GetMyData();
 		DestroyWorldItem(WorldItem);
-
+		UpdateHeldItems();
 
 		if (freeSlot == GetCurrentlyHeldInventorySlot())
 			TakeOutItem();
@@ -957,7 +959,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 				this->Backpack->RemoveItem(i);
 			}
 		}
-
+		
 		OnDropItem.Broadcast();
 		Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
 		Server_DropBackpack(ItemClasses, this->DropTransform->GetComponentTransform(), ItemDatas);
@@ -976,6 +978,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 
 		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
 		OnDropItem.Broadcast();
+		UpdateHeldItems();
 	}
 }
 
@@ -1490,21 +1493,32 @@ void APlayerCharacter::CreatePlayerHud()
 
 void APlayerCharacter::dropAllItems()
 {
-	TArray<UInventorySlot*> AllSlots= GetAllSlots();
-
-	for (UInventorySlot* IS : AllSlots)
+	if(IsLocallyControlled())
 	{
-		if (IsValid(IS->MyItem))
+		TArray<UInventorySlot*> AllSlots= GetAllSlots();
+
+		for (UInventorySlot* IS : AllSlots)
 		{
-			UItemData* data = IS->MyItem;
-			SpawnDroppedWorldItem(data->MyWorldItemClass, DropTransform->GetComponentTransform(), data->SerializeMyData(), false, FVector::Zero());
+			if (IsValid(IS->MyItem))
+			{
+				UItemData* data = IS->MyItem;
+				SpawnDroppedWorldItem(data->MyWorldItemClass, DropTransform->GetComponentTransform(), data->SerializeMyData(), false, FVector::Zero());
+			}
+		}
+		if (bHasBackPack)
+		{
+			//backpack is spawning without items in it. Its items drop like the others
+			Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), DropTransform->GetComponentTransform(), TArray<FString>());
 		}
 	}
-	if (bHasBackPack)
+	else
 	{
-		//backpack is spawning without items in it. Its items drop like the others
-		Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), DropTransform->GetComponentTransform(), TArray<FString>());
+		for(FHeldItem HeldItem : this->HeldItems)
+		{
+			SpawnDroppedWorldItem(HeldItem.ItemDataClass.GetDefaultObject()->MyWorldItemClass, DropTransform->GetComponentTransform(), HeldItem.ItemData, false, FVector::Zero());
+		}
 	}
+	
 }
 
 
@@ -1538,6 +1552,19 @@ void APlayerCharacter::TakeDamage(float Damage)
 
 void APlayerCharacter::LeftBehind_Implementation()
 {
+}
+
+void APlayerCharacter::UpdateHeldItems()
+{
+	TArray<FHeldItem> TemporaryArray;
+	for(UInventorySlot*  s: GetAllSlots())
+	{
+		FHeldItem TemporaryHeldItem = FHeldItem();
+		TemporaryHeldItem.ItemDataClass= s->MyItem->GetClass();
+		TemporaryHeldItem.ItemData=s->MyItem->SerializeMyData();
+		TemporaryArray.Add(TemporaryHeldItem);
+	}
+	this->HeldItems=TemporaryArray;
 }
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()

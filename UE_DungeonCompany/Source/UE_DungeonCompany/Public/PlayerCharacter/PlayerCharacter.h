@@ -29,6 +29,14 @@ class UFootstepSystemComponent;
 
 struct  FWeaponInfo;
 
+USTRUCT()
+struct FHeldItem
+{
+	GENERATED_BODY()
+	TSubclassOf<UItemData> ItemDataClass;
+	FString ItemData;
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemDrop);
 
 UCLASS()
@@ -668,5 +676,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void LeftBehind();
 	void LeftBehind_Implementation();
+
+public:
+	//exists so the server can drop clients items when they disconnect
+	UPROPERTY(Replicated)
+	TArray<FHeldItem> HeldItems;
+
+private:
 	
+	void UpdateHeldItems();
 };
