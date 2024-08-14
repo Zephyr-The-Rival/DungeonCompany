@@ -386,7 +386,8 @@ private:
 
 	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
-
+public:
+	AWorldItem* GetCurrentlyHeldWorldItem() const {return this->CurrentlyHeldWorldItem;}
 protected:
 	UFUNCTION(BlueprintCallable)
 	void TakeOutItem();
@@ -687,6 +688,7 @@ private:
 	
 	TArray<FHeldItem> GetHeldItems();
 
+	UFUNCTION(BlueprintCallable)
 	void UpdateHeldItems();
 
 	UFUNCTION(Server, Reliable)

@@ -11,6 +11,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Items/WorldItem.h"
 
 ADC_PC::ADC_PC()
 {
@@ -175,7 +176,9 @@ void ADC_PC::PawnLeavingGame()
 	if(APlayerCharacter* player = Cast<APlayerCharacter>(this->GetPawn()))
 	{
 		player->dropAllItems();
+		player->GetCurrentlyHeldWorldItem()->Destroy();
 	}
+	
 	Super::PawnLeavingGame();
 }
 
