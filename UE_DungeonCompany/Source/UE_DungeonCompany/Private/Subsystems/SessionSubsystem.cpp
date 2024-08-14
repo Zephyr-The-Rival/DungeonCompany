@@ -8,6 +8,11 @@
 #include "Blueprint/UserWidget.h"
 #include "Online/OnlineSessionNames.h"
 
+USessionSubsystem::USessionSubsystem()
+{
+	this->LoadingScreen = ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("/Game/_DungeonCompanyContent/Code/UI/JoiningScreen")).Class;
+}
+
 void USessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -104,8 +109,8 @@ void USessionSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionC
 void USessionSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult)
 {
 	
-	TSubclassOf<UUserWidget> LoadingScreen=  ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("/Game/_DungeonCompanyContent/Code/UI/JoiningScreen")).Class;
-	CreateWidget<UUserWidget>(GetWorld(),LoadingScreen)->AddToViewport(1);
+	if(IsValid(LoadingScreen))
+		CreateWidget<UUserWidget>(GetWorld(),LoadingScreen)->AddToViewport(1);
 	
 	SessionInterface->JoinSession(0, NAME_GameSession, InviteResult);
 

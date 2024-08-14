@@ -36,6 +36,8 @@ class UE_DUNGEONCOMPANY_API USessionSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
+public:
+	USessionSubsystem();
 private:
 	UPROPERTY(BlueprintAssignable)
 	FServerDel SearchComplete;
@@ -65,6 +67,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DestroyCurrentSession();
-	
+
+private:
+	TSubclassOf<UUserWidget> LoadingScreen;
 	
 };
