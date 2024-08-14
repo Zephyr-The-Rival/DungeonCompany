@@ -127,6 +127,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	if (IsLocallyControlled())
 		LocalTick(DeltaTime);
+	
 }
 
 void APlayerCharacter::LocalTick(float DeltaTime)
@@ -182,7 +183,6 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
-	DOREPLIFETIME(APlayerCharacter, HeldItems);
 }
 
 
@@ -1556,7 +1556,7 @@ void APlayerCharacter::LeftBehind_Implementation()
 {
 }
 
-void APlayerCharacter::UpdateHeldItems()
+TArray<FHeldItem> APlayerCharacter::GetHeldItems()
 {
 	TArray<FHeldItem> TemporaryArray;
 	for(UInventorySlot*  s: GetAllSlots())
@@ -1565,13 +1565,27 @@ void APlayerCharacter::UpdateHeldItems()
 			continue;
 		
 		FHeldItem TemporaryHeldItem;
-		
 		TemporaryHeldItem.ItemDataClass= s->MyItem->GetClass();
 		TemporaryHeldItem.ItemData=s->MyItem->SerializeMyData();
 		TemporaryArray.Add(TemporaryHeldItem);
 	}
-	this->HeldItems=TemporaryArray;
+	return TemporaryArray;
 }
+
+void APlayerCharacter::UpdateHeldItems()
+{
+	if(HasAuthority())
+		Server_UpdateHeldItems_Implementation(GetHeldItems());
+	else
+		Server_UpdateHeldItems(GetHeldItems());
+		
+}
+
+void APlayerCharacter::Server_UpdateHeldItems_Implementation(const TArray<FHeldItem>& newHeldItems)
+{
+	this->HeldItems=newHeldItems;
+}
+
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
 {

@@ -33,6 +33,7 @@ USTRUCT()
 struct FHeldItem
 {
 	GENERATED_BODY()
+	UPROPERTY()
 	TSubclassOf<UItemData> ItemDataClass;
 	FString ItemData;
 };
@@ -679,10 +680,16 @@ public:
 
 public:
 	//exists so the server can drop clients items when they disconnect
-	UPROPERTY(Replicated)
 	TArray<FHeldItem> HeldItems;
 
 private:
+
 	
+	TArray<FHeldItem> GetHeldItems();
+
 	void UpdateHeldItems();
+
+	UFUNCTION(Server, Reliable)
+	void Server_UpdateHeldItems(const TArray<FHeldItem>& newHeldItems);
+	void Server_UpdateHeldItems_Implementation(const TArray<FHeldItem>& newHeldItems);
 };
