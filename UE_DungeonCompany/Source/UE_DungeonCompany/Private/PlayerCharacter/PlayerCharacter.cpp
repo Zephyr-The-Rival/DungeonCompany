@@ -1574,15 +1574,35 @@ TArray<FHeldItem> APlayerCharacter::GetHeldItems()
 
 void APlayerCharacter::UpdateHeldItems()
 {
+	TArray<FHeldItem> heldItems = GetHeldItems();
+	
+	TArray<TSubclassOf<UItemData>> ItemDataClasses;
+	TArray<FString> SerializedItemDatas;
+
+	for(FHeldItem tmp : heldItems)
+	{
+		ItemDataClasses.Add(tmp.ItemDataClass);
+		SerializedItemDatas.Add(tmp.ItemData);
+	}
+	
 	if(HasAuthority())
-		Server_UpdateHeldItems_Implementation(GetHeldItems());
+		Server_UpdateHeldItems_Implementation(ItemDataClasses, SerializedItemDatas);
 	else
-		Server_UpdateHeldItems(GetHeldItems());
+		Server_UpdateHeldItems(ItemDataClasses, SerializedItemDatas);
 		
 }
 
-void APlayerCharacter::Server_UpdateHeldItems_Implementation(const TArray<FHeldItem>& newHeldItems)
+void APlayerCharacter::Server_UpdateHeldItems_Implementation(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas)
 {
+	TArray<FHeldItem> newHeldItems;
+
+	for(int i=0; i< ItemDataClasses.Num(); i++)
+	{
+		FHeldItem tmpHeldItem;
+		tmpHeldItem.ItemDataClass = ItemDataClasses[i];
+		tmpHeldItem.ItemData = SerializedItemDatas[i];
+		newHeldItems.Add(tmpHeldItem);
+	}
 	this->HeldItems=newHeldItems;
 }
 
