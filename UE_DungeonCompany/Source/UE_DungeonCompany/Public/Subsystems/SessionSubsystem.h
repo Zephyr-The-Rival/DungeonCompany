@@ -55,7 +55,7 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void CreateServer(FString ServerName, FString HostName);
+	void CreateServer(FString ServerName, FString HostName, bool bIsPrivate);
 
 	UFUNCTION(BlueprintCallable)
 	void FindServers();

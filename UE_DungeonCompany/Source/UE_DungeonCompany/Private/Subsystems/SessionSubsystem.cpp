@@ -104,7 +104,7 @@ void USessionSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, c
 }
 
 
-void USessionSubsystem::CreateServer(FString ServerName, FString HostName)
+void USessionSubsystem::CreateServer(FString ServerName, FString HostName, bool bIsPrivate)
 {
 	UE_LOG(LogTemp, Warning, TEXT("CreatingServer..."));
 	FOnlineSessionSettings sessionSettings;
@@ -112,7 +112,8 @@ void USessionSubsystem::CreateServer(FString ServerName, FString HostName)
 	sessionSettings.bAllowJoinInProgress = true;
 	sessionSettings.bIsDedicated = false;
 	sessionSettings.bIsLANMatch = false;
-	sessionSettings.bShouldAdvertise = true;
+	sessionSettings.bShouldAdvertise = !bIsPrivate;
+	sessionSettings.bAllowInvites=true;
 	sessionSettings.bUsesPresence = true;
 	sessionSettings.NumPublicConnections = 4;
 	sessionSettings.bUseLobbiesIfAvailable = true;
