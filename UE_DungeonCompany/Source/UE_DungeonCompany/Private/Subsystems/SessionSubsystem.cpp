@@ -112,10 +112,22 @@ void USessionSubsystem::CreateServer(FString ServerName, FString HostName, bool 
 	sessionSettings.bAllowJoinInProgress = true;
 	sessionSettings.bIsDedicated = false;
 	sessionSettings.bIsLANMatch = false;
-	sessionSettings.bShouldAdvertise = !bIsPrivate;
+	sessionSettings.bShouldAdvertise = true;
 	sessionSettings.bAllowInvites=true;
+	sessionSettings.bAllowJoinViaPresence=true;
 	sessionSettings.bUsesPresence = true;
-	sessionSettings.NumPublicConnections = 4;
+
+	if(bIsPrivate)
+	{
+		sessionSettings.NumPublicConnections = 0;
+		sessionSettings.NumPrivateConnections =4;
+	}
+	else
+	{
+		sessionSettings.NumPublicConnections = 4;
+		sessionSettings.NumPrivateConnections =0;
+	}
+	
 	sessionSettings.bUseLobbiesIfAvailable = true;
 	sessionSettings.Set(FName("SERVER_NAME_KEY"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	sessionSettings.Set(FName("SERVER_HOSTNAME_KEY"), HostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
