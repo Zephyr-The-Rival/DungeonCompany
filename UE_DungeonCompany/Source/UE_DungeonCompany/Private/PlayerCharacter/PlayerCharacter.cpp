@@ -503,6 +503,12 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 
 		if (freeSlot == GetCurrentlyHeldInventorySlot())
 			TakeOutItem();
+
+		if(UTorch_Data* torch= Cast<UTorch_Data>(freeSlot->MyItem))
+		{
+			if( freeSlot!=GetCurrentlyHeldInventorySlot())
+				torch->bOn=false;
+		}
 	}
 }
 
@@ -938,7 +944,7 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 
 void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 {
-	if (SlotToEmpty.bIsBackpackSlot)
+	if (SlotToEmpty.bIsBackpackSlot)//
 	{
 		SetHasBackPack(false);
 		if (this->bInventoryIsOn)
@@ -968,6 +974,10 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
+		// if (UTorch_Data* torch = Cast<UTorch_Data>(SlotToEmpty.Slot->MyItem))
+		// 	if (SlotToEmpty.Slot != GetCurrentlyHeldInventorySlot())
+		// 		torch->bOn = false;
+		
 		if(bThrow)
 			Server_SpawnSoundAtLocation(ThrowSound, this->DropTransform->GetComponentLocation());
 		else
@@ -1037,6 +1047,9 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 	if (MyPlayerHud->GetHighlightedSlot().bIsBackpackSlot)
 		return;
 
+	if(UTorch_Data* torch = Cast<UTorch_Data>(MyPlayerHud->GetHighlightedSlot().Slot->MyItem))//taken out torch is turned off
+		torch->bOn=false;
+		
 	UInventorySlot* slot;
 
 	if (BToA)
@@ -1044,6 +1057,12 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 	else
 		slot = HandSlotB;
 
+	if(UTorch_Data* torch = Cast<UTorch_Data>(slot->MyItem))//storedTorch is turned off
+		torch->bOn=false;
+
+	if(UTorch_Data* torch = Cast<UTorch_Data>(MyPlayerHud->GetHighlightedSlot().Slot->MyItem))
+		torch->bOn=false;
+	
 	//switch
 	UItemData* tmp = MyPlayerHud->GetHighlightedSlot().Slot->MyItem;
 	MyPlayerHud->GetHighlightedSlot().Slot->MyItem = slot->MyItem;
@@ -1051,6 +1070,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 	UGameplayStatics::PlaySound2D(GetWorld(), InventoryEquipSound);
 
+	
 
 	if (GetCurrentlyHeldInventorySlot() == slot) //if equipping to slot in hand
 	{
