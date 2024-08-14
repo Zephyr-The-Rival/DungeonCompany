@@ -1559,7 +1559,11 @@ void APlayerCharacter::UpdateHeldItems()
 	TArray<FHeldItem> TemporaryArray;
 	for(UInventorySlot*  s: GetAllSlots())
 	{
-		FHeldItem TemporaryHeldItem = FHeldItem();
+		if(!IsValid(s->MyItem))
+			continue;
+		
+		FHeldItem TemporaryHeldItem;
+		
 		TemporaryHeldItem.ItemDataClass= s->MyItem->GetClass();
 		TemporaryHeldItem.ItemData=s->MyItem->SerializeMyData();
 		TemporaryArray.Add(TemporaryHeldItem);
