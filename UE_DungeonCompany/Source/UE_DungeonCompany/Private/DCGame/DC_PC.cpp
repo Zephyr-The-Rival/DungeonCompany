@@ -169,3 +169,12 @@ void ADC_PC::ToggleOptionsMenu_Implementation(bool On)
 	LogWarning(TEXT("OverrideMe"));
 }
 
+void ADC_PC::PawnLeavingGame()
+{
+	if(APlayerCharacter* player = Cast<APlayerCharacter>(this->GetPawn()))
+	{
+		player->dropAllItems();
+	}
+	Super::PawnLeavingGame();
+}
+
