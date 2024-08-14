@@ -53,6 +53,9 @@ void USessionSubsystem::OnFindSessionComplete(bool Succeeded)
 	{
 		if(!SR.IsValid())
 			continue;
+
+		if(SR.Session.SessionSettings.NumPublicConnections==0)
+			continue;
 		
 		FServerInfo info;
 		FString serverName = "Empty server same";
