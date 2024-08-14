@@ -174,7 +174,6 @@ void ADC_PC::PawnLeavingGame()
 	LogWarning(TEXT("PawnLefGameWasCalled"));
 	if(APlayerCharacter* player = Cast<APlayerCharacter>(this->GetPawn()))
 	{
-		LogWarning(TEXT("player is droppping all items"));
 		player->dropAllItems();
 	}
 	Super::PawnLeavingGame();
