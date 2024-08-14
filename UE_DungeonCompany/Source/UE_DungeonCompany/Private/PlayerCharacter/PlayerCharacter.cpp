@@ -1535,6 +1535,9 @@ void APlayerCharacter::dropAllItems()
 	{
 		FString text= "player not locally controlled and is droppping all Helditems: " + this->HeldItems.Num();
 		LogWarning(*text);
+		if(HeldItems.IsEmpty())
+			return;
+		
 		for(FHeldItem HeldItem : this->HeldItems)
 		{
 			SpawnDroppedWorldItem(HeldItem.ItemDataClass.GetDefaultObject()->MyWorldItemClass, DropTransform->GetComponentTransform(), HeldItem.ItemData, false, FVector::Zero());
