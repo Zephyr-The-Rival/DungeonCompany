@@ -127,7 +127,13 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	if (IsLocallyControlled())
 		LocalTick(DeltaTime);
-	
+
+	if(HasAuthority())
+	{
+		FString Text="Held Items entries: "+ FString::FromInt(HeldItems.Num());
+		LogWarning(*Text);
+	}
+		
 }
 
 void APlayerCharacter::LocalTick(float DeltaTime)
@@ -1533,8 +1539,10 @@ void APlayerCharacter::dropAllItems()
 	}
 	else
 	{
-		if(HeldItems.IsEmpty())
+		LogWarning(TEXT("Server Droppin AllItems: Checking if held items is valid"));
+		if(HeldItems.IsValidIndex(0))
 			return;
+		LogWarning(TEXT("Server Droppin AllItems: HeldItems has valid entries"));
 		
 		FString text= "player not locally controlled and is droppping all Helditems: " + this->HeldItems.Num();
 		LogWarning(*text);

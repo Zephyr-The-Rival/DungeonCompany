@@ -172,7 +172,6 @@ void ADC_PC::ToggleOptionsMenu_Implementation(bool On)
 
 void ADC_PC::PawnLeavingGame()
 {
-	LogWarning(TEXT("PawnLefGameWasCalled"));
 	if(APlayerCharacter* player = Cast<APlayerCharacter>(this->GetPawn()))
 	{
 		player->dropAllItems();
