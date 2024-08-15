@@ -1539,12 +1539,18 @@ void APlayerCharacter::dropAllItems()
 	}
 	else
 	{
-		
-		LogWarning(TEXT("Checking if HeldItes.IsEmpty()"));
-		
-		if(&HeldItems== nullptr)
+		LogWarning(TEXT("Checking if &HeldItes==nullptr"));
+
+		if (&HeldItems == nullptr)
 			return;
 
+		LogWarning(TEXT("HeldItes is apparently valid"));
+
+		LogWarning(TEXT("Cheking for is empty"));
+
+		if (HeldItems.IsEmpty())
+			return;
+		
 		LogWarning(TEXT("HeldItes is apparently not empty"));
 		
 		for(FHeldItem HeldItem : this->HeldItems)
@@ -1627,16 +1633,16 @@ void APlayerCharacter::UpdateHeldItems()
 
 void APlayerCharacter::Server_UpdateHeldItems_Implementation(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas)
 {
-	TArray<FHeldItem> newHeldItems;
+	TArray<FHeldItem> newHeldItems = TArray<FHeldItem>();
 
-	for(int i=0; i< ItemDataClasses.Num(); i++)
+	for (int i = 0; i < ItemDataClasses.Num(); i++)
 	{
 		FHeldItem tmpHeldItem;
 		tmpHeldItem.ItemDataClass = ItemDataClasses[i];
 		tmpHeldItem.ItemData = SerializedItemDatas[i];
 		newHeldItems.Add(tmpHeldItem);
 	}
-	this->HeldItems=newHeldItems;
+	this->HeldItems = newHeldItems;
 }
 
 
