@@ -3,6 +3,7 @@
 
 #include "Subsystems/SessionSubsystem.h"
 
+#include "DC_Statics.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include "Blueprint/UserWidget.h"
@@ -182,7 +183,16 @@ void USessionSubsystem::DestroyCurrentSession()
 	if(!SessionInterface->GetNamedSession(NAME_GameSession))
 		return;
 
+	SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &USessionSubsystem::OnSessionLeft);
 	SessionInterface->DestroySession(NAME_GameSession);
 
+}
+
+void USessionSubsystem::OnSessionLeft(FName SessionName, bool bWasSuccessful)
+{
+	if(!bWasSuccessful)
+		return;
+	
+	GetWorld()->GetFirstPlayerController()->ClientTravel("/Game/_DungeonCompanyContent/Maps/MainMenu",TRAVEL_Absolute);
 }
 

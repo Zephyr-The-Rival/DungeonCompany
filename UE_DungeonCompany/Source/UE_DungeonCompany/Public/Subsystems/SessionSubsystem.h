@@ -55,6 +55,8 @@ protected:
 	virtual void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	virtual void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
 
+
+
 public:
 	UFUNCTION(BlueprintCallable)
 	void CreateServer(FString ServerName, FString HostName, bool bIsPrivate);
@@ -68,7 +70,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DestroyCurrentSession();
 
+
 private:
 	TSubclassOf<UUserWidget> LoadingScreen;
+
+private:
+
+	void OnSessionLeft( FName SessionName, bool bWasSuccessful);
 	
 };
