@@ -1519,8 +1519,6 @@ void APlayerCharacter::CreatePlayerHud()
 
 void APlayerCharacter::dropAllItems()
 {
-
-	
 	if(IsLocallyControlled())
 	{
 		TArray<UInventorySlot*> AllSlots= GetAllSlots();
@@ -1546,7 +1544,7 @@ void APlayerCharacter::dropAllItems()
 		
 		LogWarning(TEXT("Has authority = true \nChecking if HeldItes.IsEmpty()"));
 		
-		if(HeldItems.IsEmpty())
+		if(FString::FromInt(HeldItems.Num())=="0")
 			return;
 
 		LogWarning(TEXT("HeldItes is apparently not empty"));
