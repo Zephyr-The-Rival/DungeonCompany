@@ -1539,10 +1539,8 @@ void APlayerCharacter::dropAllItems()
 	}
 	else
 	{
-		if(!HasAuthority())
-			return;
 		
-		LogWarning(TEXT("Has authority = true \nChecking if HeldItes.IsEmpty()"));
+		LogWarning(TEXT("Checking if HeldItes.IsEmpty()"));
 		
 		if(&HeldItems== nullptr)
 			return;

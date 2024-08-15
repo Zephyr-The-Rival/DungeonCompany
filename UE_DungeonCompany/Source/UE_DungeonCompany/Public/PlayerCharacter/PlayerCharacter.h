@@ -680,6 +680,7 @@ public:
 
 public:
 	//exists so the server can drop clients items when they disconnect
+	UPROPERTY()
 	TArray<FHeldItem> HeldItems;
 
 
