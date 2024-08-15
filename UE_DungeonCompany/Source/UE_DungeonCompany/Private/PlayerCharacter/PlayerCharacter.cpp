@@ -1544,14 +1544,14 @@ void APlayerCharacter::dropAllItems()
 		
 		LogWarning(TEXT("Has authority = true \nChecking if HeldItes.IsEmpty()"));
 		
-		if(FString::FromInt(HeldItems.Num())=="0")
+		if(&HeldItems== nullptr)
 			return;
 
 		LogWarning(TEXT("HeldItes is apparently not empty"));
 		
 		for(FHeldItem HeldItem : this->HeldItems)
 		{
-			LogWarning("TryingToSpawnDroppedItem...")
+			LogWarning("TryingToSpawnDroppedItem...");
 			SpawnDroppedWorldItem(HeldItem.ItemDataClass.GetDefaultObject()->MyWorldItemClass, DropTransform->GetComponentTransform(), HeldItem.ItemData, false, FVector::Zero());
 		}
 	}
