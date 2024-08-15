@@ -5,7 +5,13 @@
 
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
+#include "Blueprint/UserWidget.h"
 #include "Online/OnlineSessionNames.h"
+
+USessionSubsystem::USessionSubsystem()
+{
+	this->LoadingScreen = ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("/Game/_DungeonCompanyContent/Code/UI/JoiningScreen")).Class;
+}
 
 void USessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -53,6 +59,9 @@ void USessionSubsystem::OnFindSessionComplete(bool Succeeded)
 	{
 		if(!SR.IsValid())
 			continue;
+
+		if(SR.Session.SessionSettings.NumPublicConnections==0)
+			continue;
 		
 		FServerInfo info;
 		FString serverName = "Empty server same";
@@ -99,22 +108,39 @@ void USessionSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionC
 
 void USessionSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult)
 {
+	
+	if(IsValid(LoadingScreen))
+		CreateWidget<UUserWidget>(GetWorld(),LoadingScreen)->AddToViewport(1);
+	
 	SessionInterface->JoinSession(0, NAME_GameSession, InviteResult);
 
 }
 
 
-void USessionSubsystem::CreateServer(FString ServerName, FString HostName)
+void USessionSubsystem::CreateServer(FString ServerName, FString HostName, bool bIsPrivate)
 {
 	UE_LOG(LogTemp, Warning, TEXT("CreatingServer..."));
 	FOnlineSessionSettings sessionSettings;
 
 	sessionSettings.bAllowJoinInProgress = true;
 	sessionSettings.bIsDedicated = false;
-	sessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	sessionSettings.bIsLANMatch = false;
 	sessionSettings.bShouldAdvertise = true;
+	sessionSettings.bAllowInvites=true;
+	sessionSettings.bAllowJoinViaPresence=true;
 	sessionSettings.bUsesPresence = true;
-	sessionSettings.NumPublicConnections = 4;
+
+	if(bIsPrivate)
+	{
+		sessionSettings.NumPublicConnections = 0;
+		sessionSettings.NumPrivateConnections =4;
+	}
+	else
+	{
+		sessionSettings.NumPublicConnections = 4;
+		sessionSettings.NumPrivateConnections =0;
+	}
+	
 	sessionSettings.bUseLobbiesIfAvailable = true;
 	sessionSettings.Set(FName("SERVER_NAME_KEY"), ServerName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	sessionSettings.Set(FName("SERVER_HOSTNAME_KEY"), HostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
@@ -128,7 +154,7 @@ void USessionSubsystem::FindServers()
 	UE_LOG(LogTemp, Warning, TEXT("Searching for Sessions..."));
 	SessionSearch = MakeShareable(new FOnlineSessionSearch());
 
-	SessionSearch->bIsLanQuery = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL");
+	SessionSearch->bIsLanQuery = false;
 	SessionSearch->MaxSearchResults = 10000;//big number because of other steam users with the same appId
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 	
@@ -159,3 +185,4 @@ void USessionSubsystem::DestroyCurrentSession()
 	SessionInterface->DestroySession(NAME_GameSession);
 
 }
+
