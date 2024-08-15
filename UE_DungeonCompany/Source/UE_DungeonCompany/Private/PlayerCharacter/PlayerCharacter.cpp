@@ -1596,6 +1596,7 @@ TArray<FHeldItem> APlayerCharacter::GetHeldItems()
 	{
 		FHeldItem backpack;
 		backpack.ItemDataClass=BackpackClass;
+		backpack.ItemData=" ";
 		TemporaryArray.Add(backpack);
 	}
 	return TemporaryArray;
