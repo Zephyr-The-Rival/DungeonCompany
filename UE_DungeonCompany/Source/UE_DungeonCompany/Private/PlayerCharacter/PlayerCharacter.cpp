@@ -110,6 +110,8 @@ void APlayerCharacter::BeginPlay()
 	});
 
 	StartExaustionTimer();
+
+
 	
 }
 
@@ -127,12 +129,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	if (IsLocallyControlled())
 		LocalTick(DeltaTime);
-
-	if(HasAuthority())
-	{
-		FString Text="Held Items entries: "+ FString::FromInt(HeldItems.Num());
-		LogWarning(*Text);
-	}
+	
 		
 }
 
@@ -1539,22 +1536,12 @@ void APlayerCharacter::dropAllItems()
 	}
 	else
 	{
-		LogWarning(TEXT("Checking if &HeldItes==nullptr"));
-
-		if (&HeldItems == nullptr)
+		if(HeldItems.IsEmpty())
 			return;
-
-		LogWarning(TEXT("HeldItes is apparently valid"));
-
-		LogWarning(TEXT("Cheking for is empty"));
-
-		if (HeldItems.IsEmpty())
-			return;
-		
-		LogWarning(TEXT("HeldItes is apparently not empty"));
 		
 		for(FHeldItem HeldItem : this->HeldItems)
 		{
+			
 			LogWarning("TryingToSpawnDroppedItem...");
 			SpawnDroppedWorldItem(HeldItem.ItemDataClass.GetDefaultObject()->MyWorldItemClass, DropTransform->GetComponentTransform(), HeldItem.ItemData, false, FVector::Zero());
 		}
@@ -1642,7 +1629,8 @@ void APlayerCharacter::Server_UpdateHeldItems_Implementation(const TArray<TSubcl
 		tmpHeldItem.ItemData = SerializedItemDatas[i];
 		newHeldItems.Add(tmpHeldItem);
 	}
-	this->HeldItems = newHeldItems;
+
+	this->HeldItems = newHeldItems;	
 }
 
 
