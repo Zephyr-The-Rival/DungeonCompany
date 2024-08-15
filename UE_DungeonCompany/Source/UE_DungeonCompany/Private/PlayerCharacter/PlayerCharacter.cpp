@@ -1536,9 +1536,6 @@ void APlayerCharacter::dropAllItems()
 	}
 	else
 	{
-		if(HeldItems.IsEmpty())
-			return;
-		
 		for(FHeldItem HeldItem : this->HeldItems)
 		{
 			
@@ -1594,6 +1591,12 @@ TArray<FHeldItem> APlayerCharacter::GetHeldItems()
 		TemporaryHeldItem.ItemDataClass= s->MyItem->GetClass();
 		TemporaryHeldItem.ItemData=s->MyItem->SerializeMyData();
 		TemporaryArray.Add(TemporaryHeldItem);
+	}
+	if(bHasBackPack)
+	{
+		FHeldItem backpack;
+		backpack.ItemDataClass=BackpackClass;
+		TemporaryArray.Add(backpack);
 	}
 	return TemporaryArray;
 }
