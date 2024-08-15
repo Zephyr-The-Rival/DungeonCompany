@@ -1539,13 +1539,8 @@ void APlayerCharacter::dropAllItems()
 	}
 	else
 	{
-		LogWarning(TEXT("Server Droppin AllItems: Checking if held items is valid"));
-		if(HeldItems.IsValidIndex(0))
+		if(!IsValid(HeldItems[0].ItemDataClass))
 			return;
-		LogWarning(TEXT("Server Droppin AllItems: HeldItems has valid entries"));
-		
-		FString text= "player not locally controlled and is droppping all Helditems: " + this->HeldItems.Num();
-		LogWarning(*text);
 		
 		for(FHeldItem HeldItem : this->HeldItems)
 		{
