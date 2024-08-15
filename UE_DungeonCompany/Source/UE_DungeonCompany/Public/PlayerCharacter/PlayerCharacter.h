@@ -680,7 +680,7 @@ public:
 
 public:
 	//exists so the server can drop clients items when they disconnect
-	TArray<FHeldItem> HeldItems;
+	TArray<FHeldItem> HeldItems = TArray<FHeldItem>();
 
 
 protected:
