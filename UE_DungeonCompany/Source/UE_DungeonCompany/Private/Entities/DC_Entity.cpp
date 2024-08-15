@@ -68,7 +68,7 @@ void ADC_Entity::OnDeath_Implementation()
 
 	HP = 0.f;
 	OnPlayerDeath.Broadcast(this);
-
+	PlayDeathSound();
 }
 
 void ADC_Entity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -115,6 +115,15 @@ void ADC_Entity::RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuf
 bool ADC_Entity::HasBuffOrDebuffApplied(TSubclassOf<UBuffDebuffBase> BuffDebuffClass) const
 {
 	return !!GetComponentByClass(BuffDebuffClass);
+}
+
+void ADC_Entity::PlayDeathSound_Implementation()
+{
+	if (DeathSound)
+		UGameplayStatics::SpawnSoundAttached(DeathSound, GetMesh());
+	else
+		LogWarning(TEXT("Death sound not valid"));
+	
 }
 
 void ADC_Entity::SpawnTakeDamageSound_Implementation()

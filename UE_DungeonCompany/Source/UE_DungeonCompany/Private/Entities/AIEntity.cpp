@@ -212,14 +212,6 @@ void AAIEntity::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UB
 	BlackboardComponent->SetValueAsBool("NewTarget", true);
 }
 
-void AAIEntity::OnDeath_Implementation()
-{
-	Super::OnDeath_Implementation();
-	
-
-	Destroy();
-}
-
 void AAIEntity::SetIsAttacking(bool InAttacking)
 {
 	if(InAttacking == IsAttacking())
@@ -249,10 +241,4 @@ void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	DOREPLIFETIME(AAIEntity, AnimationFlags);
 }
 
-void AAIEntity::PlayDeathSound_Implementation()
-{
-	if(DeathSound)
-		UGameplayStatics::SpawnSoundAttached( DeathSound, GetMesh());
-	else
-		LogWarning(TEXT("Death sound not valid"));
-}
+

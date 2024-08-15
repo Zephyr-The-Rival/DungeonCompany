@@ -36,6 +36,8 @@ class UE_DUNGEONCOMPANY_API USessionSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
+public:
+	USessionSubsystem();
 private:
 	UPROPERTY(BlueprintAssignable)
 	FServerDel SearchComplete;
@@ -53,9 +55,11 @@ protected:
 	virtual void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	virtual void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
 
+
+
 public:
 	UFUNCTION(BlueprintCallable)
-	void CreateServer(FString ServerName, FString HostName);
+	void CreateServer(FString ServerName, FString HostName, bool bIsPrivate);
 
 	UFUNCTION(BlueprintCallable)
 	void FindServers();
@@ -65,5 +69,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DestroyCurrentSession();
+
+
+private:
+	TSubclassOf<UUserWidget> LoadingScreen;
+
+private:
+
+	void OnSessionLeft( FName SessionName, bool bWasSuccessful);
 	
 };

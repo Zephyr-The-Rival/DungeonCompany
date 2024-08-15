@@ -29,6 +29,14 @@ class UFootstepSystemComponent;
 
 struct  FWeaponInfo;
 
+USTRUCT()
+struct FHeldItem
+{
+	GENERATED_BODY()
+	TSubclassOf<UItemData> ItemDataClass;
+	FString ItemData;
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemDrop);
 
 UCLASS()
@@ -377,7 +385,8 @@ private:
 
 	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
-
+public:
+	AWorldItem* GetCurrentlyHeldWorldItem() const {return this->CurrentlyHeldWorldItem;}
 protected:
 	UFUNCTION(BlueprintCallable)
 	void TakeOutItem();
@@ -593,10 +602,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UFootstepSystemComponent* FootstepSystemComponent;
 
-protected:
+public:
 	
 
-
+	UFUNCTION(BlueprintCallable)
 	void dropAllItems();
 
 protected:
@@ -668,5 +677,22 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void LeftBehind();
 	void LeftBehind_Implementation();
+
+public:
+	//exists so the server can drop clients items when they disconnect
+	UPROPERTY()
+	TArray<FHeldItem> HeldItems;
+
+
+protected:
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateHeldItems();
 	
+private:
+	TArray<FHeldItem> GetHeldItems();
+	
+	UFUNCTION(Server, Reliable)
+	void Server_UpdateHeldItems(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas);
+	void Server_UpdateHeldItems_Implementation(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas);
 };

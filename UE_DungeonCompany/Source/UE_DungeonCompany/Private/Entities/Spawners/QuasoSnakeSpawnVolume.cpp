@@ -10,6 +10,7 @@
 #include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "PlayerCharacter/PlayerCharacter.h"
 
 AQuasoSnakeSpawnVolume::AQuasoSnakeSpawnVolume(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -120,7 +121,7 @@ void AQuasoSnakeSpawnVolume::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
-	ACharacter* character = Cast<ACharacter>(OtherActor);
+	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
 	
 	if(!character || PlayerSpawningCloseTo)
 		return;
@@ -141,12 +142,12 @@ void AQuasoSnakeSpawnVolume::NotifyActorEndOverlap(AActor* OtherActor)
 
 	TArray<AActor*> overlappingCharacters;
 
-	GetOverlappingActors(overlappingCharacters, ACharacter::StaticClass());
+	GetOverlappingActors(overlappingCharacters, APlayerCharacter::StaticClass());
 
 	if(overlappingCharacters.IsEmpty())
 		return;
 
-	PlayerSpawningCloseTo = Cast<ACharacter>(overlappingCharacters[0]);
+	PlayerSpawningCloseTo = Cast<APlayerCharacter>(overlappingCharacters[0]);
 
 }
 
