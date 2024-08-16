@@ -45,7 +45,7 @@ FHitResult UFootstepSystemComponent::GetFootHitResult(FName SocketName) const
 	Params.bReturnPhysicalMaterial = true;
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
-	DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 1, 0, 1);
+	// DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 1, 0, 1);
 
 	if (bHit)
 		return HitResult;
