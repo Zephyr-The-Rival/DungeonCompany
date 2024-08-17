@@ -4,17 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/Tasks/BTTask_BlackboardBase.h"
-#include "BTTask_CatBurglar_StealItem.generated.h"
+#include "BTTask_CatBurglar_ResetToIdle.generated.h"
 
 /**
  * 
  */
+
+
 UCLASS()
-class UE_DUNGEONCOMPANY_API UBTTask_CatBurglar_StealItem : public UBTTask_BlackboardBase
+class UE_DUNGEONCOMPANY_API UBTTask_CatBurglar_ResetToIdle : public UBTTask_BlackboardBase
 {
 	GENERATED_BODY()
 
 public:
-	UBTTask_CatBurglar_StealItem();
+	UBTTask_CatBurglar_ResetToIdle();
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

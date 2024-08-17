@@ -11,12 +11,13 @@
  */
 
 UENUM()
-enum class ECatBurglarBehaviorState : uint8 {
+enum class ECatBurglarBehaviorState : uint8
+{
 	Stalking = 0 UMETA(DisplayName = "Stalking"),
 	Prowling = 1 UMETA(DisplayName = "Prowling"),
 	Harassing = 2 UMETA(DisplayName = "Harassing"),
 	Fleeing = 3 UMETA(DisplayName = "Fleeing"),
-	Retrieving= 4 UMETA(DisplayName = "Retrieving")
+	Retrieving = 4 UMETA(DisplayName = "Retrieving")
 };
 
 class AWorldItem;
@@ -26,6 +27,7 @@ UCLASS()
 class UE_DUNGEONCOMPANY_API ACatBurglar : public AAIEntity
 {
 	GENERATED_BODY()
+
 private:
 	UPROPERTY(EditDefaultsOnly)
 	float ItemDetectionRadius = 500.f;
@@ -39,12 +41,16 @@ private:
 private:
 	ECatBurglarBehaviorState IdleBehaviorState;
 	ECatBurglarBehaviorState CurrentBehaviorState;
-	
+
 	TArray<AWorldItem*> WorldItemsInSight;
 	UItemData* StolenItem;
 
 public:
+	inline const ECatBurglarBehaviorState& GetCurrentBehaviorState() 
+
+public:
 	void SetIdleBehaviorState(ECatBurglarBehaviorState NewIdleState);
+	void ResetToIdleBehavior();
 
 public:
 	ACatBurglar();
@@ -65,7 +71,8 @@ protected:
 	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter) override;
 
 protected:
-	virtual void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent) override;
-	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent) override;
-	
+	virtual void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus,
+	                              UBlackboardComponent* BlackboardComponent) override;
+	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus,
+	                                UBlackboardComponent* BlackboardComponent) override;
 };

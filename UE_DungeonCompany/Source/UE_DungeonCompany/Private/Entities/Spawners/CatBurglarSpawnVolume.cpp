@@ -26,6 +26,9 @@ void ACatBurglarSpawnVolume::BeginPlay()
 		GetBrushComponent()->SetCollisionProfileName("NoCollision");
 		SetActorTickEnabled(false);
 	}
+	
+	GetBrushComponent()->SetCollisionProfileName("Trigger");
+	SetActorTickEnabled(true);
 }
 
 void ACatBurglarSpawnVolume::Tick(float DeltaSeconds)
@@ -64,15 +67,14 @@ void ACatBurglarSpawnVolume::Tick(float DeltaSeconds)
 void ACatBurglarSpawnVolume::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
-
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("överläp"));
-
+	
 	APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(OtherActor);
 
 	if (!playerCharacter)
 		return;
 
 	PlayerCharactersInVolume.Add(playerCharacter);
+	bBurglarsCanBeDespawned = false;
 }
 
 void ACatBurglarSpawnVolume::NotifyActorEndOverlap(AActor* OtherActor)
@@ -85,6 +87,28 @@ void ACatBurglarSpawnVolume::NotifyActorEndOverlap(AActor* OtherActor)
 		return;
 
 	PlayerCharactersInVolume.Remove(playerCharacter);
+
+	if(PlayerCharactersInVolume.Num() < 1)
+		bBurglarsCanBeDespawned = true;
+}
+
+void ACatBurglarSpawnVolume::DespawnIdleBurglars()
+{
+	int catBurglarsNum = SpawnedCatBurglars.Num();
+
+	for(int i = 0; i < catBurglarsNum; ++i)
+	{
+		DespawnBurglarIfOnIdle(SpawnedCatBurglars[i]);
+	}
+}
+
+void ACatBurglarSpawnVolume::DespawnBurglarIfOnIdle(ACatBurglar* InCatBurglar)
+{
+	if(InCatBurglar->GetCurrentBehaviorState() > ECatBurglarBehaviorState::Harassing)
+		return;
+
+	for(TIterator<APlayerCharacter> It(GetWorld(), ))
+	
 }
 
 ACatBurglar* ACatBurglarSpawnVolume::SpawnCatBurglarWithPlayerAsTarget(APlayerCharacter* TargetPlayer)

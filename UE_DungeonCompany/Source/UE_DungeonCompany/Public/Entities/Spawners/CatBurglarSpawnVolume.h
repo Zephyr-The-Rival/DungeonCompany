@@ -16,7 +16,7 @@ UCLASS()
 class UE_DUNGEONCOMPANY_API ACatBurglarSpawnVolume : public ATriggerVolume
 {
 	GENERATED_UCLASS_BODY()
-	
+
 private:
 	UPROPERTY(EditInstanceOnly, meta = (MakeEditWidget = true))
 	FVector SpawnLocation;
@@ -28,24 +28,32 @@ private:
 	uint8 MaxCatBurglar = 5;
 
 	TSubclassOf<ACatBurglar> CatBurglarClass;
-	
+
 private:
 	TArray<APlayerCharacter*> PlayerCharactersInVolume;
 	TArray<ACatBurglar*> SpawnedCatBurglars;
+
+	FTimerHandle DespawnBurglarHandle;
+
+	bool bBurglarsCanBeDespawned = false;
 
 protected:
 	virtual void BeginPlay() override;
 
 public:
 	virtual void Tick(float DeltaSeconds) override;
-	
+
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
 
+protected:
+	void DespawnIdleBurglars();
+	void DespawnBurglarIfOnIdle(ACatBurglar* InCatBurglar);
+
 private:
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditAnywhere)
 	float AllowSpawnDelay = 60.f;
-	
+
 	FTimerHandle AllowSpawnHandle;
 
 public:
@@ -57,5 +65,4 @@ protected:
 	void OnCatBurglarDeath(ADC_Entity* DeadBurglar);
 
 	void OnCatBurglarCountChanged();
-	
 };

@@ -16,13 +16,19 @@ class UE_DUNGEONCOMPANY_API UBTService_IsInRange : public UBTService_BlackboardB
 
 private:
 	UPROPERTY(EditAnywhere)
-	float AttackRange = 100.f;
+	float Range = 100.f;
 
 	UPROPERTY(EditAnywhere)
 	bool bIgnoreZValue = false;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, meta = (EditCondition="!bCheckAgainstActorClass"))
 	FBlackboardKeySelector CheckingActor;
+
+	UPROPERTY(EditAnywhere, meta = (EditCondition="bCheckAgainstActorClass"))
+	TSubclassOf<AActor> ActorClass;
+
+	UPROPERTY(EditAnywhere)
+	bool bCheckAgainstActorClass = false;
 
 	UPROPERTY(EditAnywhere)
 	FBlackboardKeySelector WriteResultTo;
@@ -30,5 +36,6 @@ private:
 public:
 	UBTService_IsInRange();
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
-	
+
+	bool IsInRangeOfActorType(const AActor* InActor) const;
 };

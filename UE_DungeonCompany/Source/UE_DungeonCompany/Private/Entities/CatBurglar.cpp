@@ -3,7 +3,6 @@
 
 #include "Entities/CatBurglar.h"
 
-#include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Items/WorldItem.h"
 #include "PlayerCharacter/PlayerCharacter.h"
@@ -18,7 +17,14 @@ void ACatBurglar::SetIdleBehaviorState(ECatBurglarBehaviorState NewIdleState)
 	UpdateBehavior(IdleBehaviorState);
 }
 
+void ACatBurglar::ResetToIdleBehavior()
+{
+	UpdateBehavior(IdleBehaviorState);
+}
+
 ACatBurglar::ACatBurglar()
+	: IdleBehaviorState(ECatBurglarBehaviorState::Stalking), CurrentBehaviorState(ECatBurglarBehaviorState::Stalking),
+	  StolenItem(nullptr)
 {
 	BehaviorTreesForStates.Add((ECatBurglarBehaviorState)0);
 	BehaviorTreesForStates.Add((ECatBurglarBehaviorState)1);
@@ -49,7 +55,7 @@ void ACatBurglar::OnTookDamage()
 {
 	Super::OnTookDamage();
 
-	if(bHealthBelowFleeingUpper)
+	if (bHealthBelowFleeingUpper)
 		return;
 
 	if (HP < StartFleeingHPUpper && CurrentBehaviorState != ECatBurglarBehaviorState::Fleeing)
@@ -63,7 +69,11 @@ void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
 {
 	Super::OnPlayerAttackHit(PlayerCharacter);
 
+	TakeDamage(100000);
+
 	PlayerCharacter->DropRandomItem();
+
+	UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
 }
 
 void ACatBurglar::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)

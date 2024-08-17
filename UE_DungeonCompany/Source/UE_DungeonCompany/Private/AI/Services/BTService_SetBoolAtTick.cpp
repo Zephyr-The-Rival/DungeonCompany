@@ -16,4 +16,6 @@ void UBTService_SetBoolAtTick::TickNode(UBehaviorTreeComponent& OwnerComp, uint8
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool(GetSelectedBlackboardKey(), NewValue);
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::FromInt(NewValue));
+
 }

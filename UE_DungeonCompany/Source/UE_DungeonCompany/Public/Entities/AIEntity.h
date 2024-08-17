@@ -44,6 +44,7 @@ public:
 	inline TSubclassOf<UAISense> GetDominantSense() const { return DominantSense; }
 
 	void RunBehaviorTree(UBehaviorTree* InBehaviorTree) const;
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
 	float AttackDamage = 20.f;
@@ -54,7 +55,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
 	float AttackRadius = 30.f;
 
-	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
+	UPROPERTY(EditAnywhere, Category = "Balancing|Attack", meta = (ClampMin = 0.05f))
 	float AttackDelay = 0.5f;
 
 private:
@@ -90,17 +91,21 @@ public:
 	virtual void OnTargetingPlayer_Implementation(APlayerCharacter* Target);
 
 public:
-	virtual void HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
+	virtual void OnDeath_Implementation() override;
+	
+	virtual void HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus,
+	                               UBlackboardComponent* BlackboardComponent);
 
 protected:
 	virtual void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
-	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
+	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus,
+	                                UBlackboardComponent* BlackboardComponent);
 
 public:
 	enum EAnimationFlags
 	{
-		FLAG_Attacking = 0x01,	
-		FLAG_Custom_0 = 0x02,	
+		FLAG_Attacking = 0x01,
+		FLAG_Custom_0 = 0x02,
 		FLAG_Custom_1 = 0x04,
 		FLAG_Custom_2 = 0x08,
 		FLAG_Custom_3 = 0x10,
@@ -122,7 +127,4 @@ protected:
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-
-
 };

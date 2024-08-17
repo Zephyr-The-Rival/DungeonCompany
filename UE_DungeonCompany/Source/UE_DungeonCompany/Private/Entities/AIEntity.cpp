@@ -24,6 +24,8 @@ AAIEntity::AAIEntity()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 360.f, 0.0f);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+	GetCharacterMovement()->bUseRVOAvoidance = true;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 100.f;
 
 	GetMesh()->SetCollisionProfileName("EntityMesh");
 	GetMesh()->SetGenerateOverlapEvents(true);
@@ -61,14 +63,13 @@ AAIEntity::AAIEntity()
 	SenseConfigs.Add(hearingConfig);
 
 	DominantSense = UAISenseConfig_Sight::StaticClass();
-
 }
 
 void AAIEntity::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if(!HasAuthority())
+	if (!HasAuthority())
 		return;
 
 	ADC_AIController* aiController = GetController<ADC_AIController>();
@@ -83,9 +84,9 @@ void AAIEntity::RunBehaviorTree(UBehaviorTree* InBehaviorTree) const
 {
 	AAIController* aiController = GetController<AAIController>();
 
-	if(!aiController)
+	if (!aiController)
 		return;
-	
+
 	UBlackboardComponent* b;
 	aiController->UseBlackboard(InBehaviorTree->BlackboardAsset, b);
 	aiController->RunBehaviorTree(InBehaviorTree);
@@ -98,6 +99,8 @@ void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 		SetTargetPlayer(nullptr);
 		return;
 	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Attacking"));
 
 	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
@@ -112,6 +115,7 @@ void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 
 void AAIEntity::ExecuteAttack(FVector Direction)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("ExecuteAttack"));
 	FCollisionShape shape = FCollisionShape::MakeSphere(AttackRadius);
 
 	TArray<FHitResult> hits;
@@ -122,19 +126,24 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 	FCollisionQueryParams params;
 	params.AddIgnoredActor(this);
 
-	GetWorld()->SweepMultiByChannel(hits, start, end, FQuat(), ECC_Pawn, shape, params);
-	DrawDebugSphereTraceSingle(GetWorld(), start, end, AttackRadius, EDrawDebugTrace::ForDuration, false, FHitResult(), FColor::Blue, FLinearColor::Red, 0.5f);
+	GetWorld()->SweepMultiByChannel(hits, start, end, FQuat(), ECC_GameTraceChannel4, shape, params);
+	DrawDebugSphereTraceSingle(GetWorld(), start, end, AttackRadius, EDrawDebugTrace::ForDuration, false, FHitResult(),
+	                           FColor::Blue, FLinearColor::Red, 0.5f);
 	DrawDebugLine(GetWorld(), start, end, FColor::Blue);
 	int hitsNum = hits.Num();
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::FromInt(hitsNum));
+	TArray<APlayerCharacter*> alreadyHitPlayers;
 
 	for (int i = 0; i < hitsNum; ++i)
 	{
 		APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(hits[i].GetActor());
 
-		if(!playerCharacter)
+		if (!playerCharacter || alreadyHitPlayers.Contains(playerCharacter))
 			continue;
 
 		OnPlayerAttackHit(playerCharacter);
+		alreadyHitPlayers.Add(playerCharacter);
 	}
 
 	SetInAttackOnBlackboard(false);
@@ -143,7 +152,6 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 void AAIEntity::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
 {
 	PlayerCharacter->TakeDamage(AttackDamage);
-
 }
 
 void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
@@ -160,7 +168,6 @@ void AAIEntity::SetTargetPlayer(APlayerCharacter* TargetPlayer)
 
 	if (aiController)
 		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", TargetPlayer);
-
 }
 
 bool AAIEntity::IsVisibleToPlayers() const
@@ -169,7 +176,6 @@ bool AAIEntity::IsVisibleToPlayers() const
 	{
 		if (UDC_Statics::IsActorVisibleToPlayer(iterator->Get(), this))
 			return true;
-
 	}
 
 	return false;
@@ -179,7 +185,7 @@ UAISenseConfig* AAIEntity::GetSenseConfig(FAISenseID SenseID)
 {
 	AAIController* aiController = GetController<AAIController>();
 
-	if(!aiController)
+	if (!aiController)
 		return nullptr;
 
 	return aiController->GetAIPerceptionComponent()->GetSenseConfig(SenseID);
@@ -204,11 +210,17 @@ void AAIEntity::HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBl
 		HandleSightSense(Actor, Stimulus, BlackboardComponent);
 	else if (Stimulus.Type == hearingID)
 		HandleHearingSense(Actor, Stimulus, BlackboardComponent);
-
 }
 
 void AAIEntity::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 {
+}
+
+void AAIEntity::OnDeath_Implementation()
+{
+	Super::OnDeath_Implementation();
+
+	GetController()->Destroy();
 }
 
 void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
@@ -235,7 +247,7 @@ void AAIEntity::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UB
 
 void AAIEntity::SetIsAttacking(bool InAttacking)
 {
-	if(InAttacking == IsAttacking())
+	if (InAttacking == IsAttacking())
 		return;
 
 	ToggleAnimationBitFlag(FLAG_Attacking);
@@ -261,5 +273,3 @@ void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AAIEntity, AnimationFlags);
 }
-
-
