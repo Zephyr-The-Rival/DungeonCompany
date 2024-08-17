@@ -21,7 +21,8 @@ AWorldItem::AWorldItem()
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> basicSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
 	this->PickUpSound = basicSound.Object;
-	
+
+
 }
 
 
@@ -45,6 +46,9 @@ void AWorldItem::BeginPlay()
 	{
 		MyData->DeserializeMyData(SerializedStringData);
 	}
+	
+	this->bNeedsHolding=this->bNeedsHoldToPickUp;
+	this->HoldInteractTime= this->HoldInteractTime;
 	
 	Super::BeginPlay();
 }
@@ -116,7 +120,7 @@ void AWorldItem::Interact(APawn* InteractingPawn)
 
 void AWorldItem::OnHovered(APlayerCharacter* PlayerCharacter)
 {
-	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Pick up");
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt(HoveredMessage);
 }
 
 void AWorldItem::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
