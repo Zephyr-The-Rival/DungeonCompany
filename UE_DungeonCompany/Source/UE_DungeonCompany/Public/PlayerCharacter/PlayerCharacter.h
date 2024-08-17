@@ -522,7 +522,13 @@ protected:
 public://blockers
 
 	bool bSwitchHandAllowed = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bMoveAllowed = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bJumpAllowed=true;
+	
 	bool bLookAllowed = true;
 	bool bSprintAllowed = true;
 	bool bPrimaryActionAllowed = true;
