@@ -26,7 +26,7 @@ void ACatBurglarSpawnVolume::BeginPlay()
 		GetBrushComponent()->SetCollisionProfileName("NoCollision");
 		SetActorTickEnabled(false);
 	}
-	
+
 	GetBrushComponent()->SetCollisionProfileName("Trigger");
 	SetActorTickEnabled(true);
 }
@@ -35,7 +35,7 @@ void ACatBurglarSpawnVolume::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if(SpawnedCatBurglars.Num() >= MaxCatBurglar)
+	if (SpawnedCatBurglars.Num() >= MaxCatBurglar)
 		return;
 
 	int playersNum = PlayerCharactersInVolume.Num();
@@ -67,7 +67,7 @@ void ACatBurglarSpawnVolume::Tick(float DeltaSeconds)
 void ACatBurglarSpawnVolume::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
-	
+
 	APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(OtherActor);
 
 	if (!playerCharacter)
@@ -75,6 +75,8 @@ void ACatBurglarSpawnVolume::NotifyActorBeginOverlap(AActor* OtherActor)
 
 	PlayerCharactersInVolume.Add(playerCharacter);
 	bBurglarsCanBeDespawned = false;
+	
+	GetWorld()->GetTimerManager().ClearTimer(DespawnBurglarHandle);
 }
 
 void ACatBurglarSpawnVolume::NotifyActorEndOverlap(AActor* OtherActor)
@@ -88,27 +90,35 @@ void ACatBurglarSpawnVolume::NotifyActorEndOverlap(AActor* OtherActor)
 
 	PlayerCharactersInVolume.Remove(playerCharacter);
 
-	if(PlayerCharactersInVolume.Num() < 1)
-		bBurglarsCanBeDespawned = true;
+	if (PlayerCharactersInVolume.Num() < 1)
+	{
+		GetWorld()->GetTimerManager().SetTimer(DespawnBurglarHandle, this,
+		                                       &ACatBurglarSpawnVolume::MarkBurglarsAsDespawnable,
+		                                       VolumeLeftBurglarDespawnDelay);
+	}
+}
+
+void ACatBurglarSpawnVolume::MarkBurglarsAsDespawnable()
+{
+	bBurglarsCanBeDespawned = true;
 }
 
 void ACatBurglarSpawnVolume::DespawnIdleBurglars()
 {
 	int catBurglarsNum = SpawnedCatBurglars.Num();
 
-	for(int i = 0; i < catBurglarsNum; ++i)
-	{
+	for (int i = 0; i < catBurglarsNum; ++i)
 		DespawnBurglarIfOnIdle(SpawnedCatBurglars[i]);
-	}
 }
 
 void ACatBurglarSpawnVolume::DespawnBurglarIfOnIdle(ACatBurglar* InCatBurglar)
 {
-	if(InCatBurglar->GetCurrentBehaviorState() > ECatBurglarBehaviorState::Harassing)
+	if (InCatBurglar->GetCurrentBehaviorState() > ECatBurglarBehaviorState::Harassing || InCatBurglar->
+		IsVisibleToPlayers())
 		return;
 
-	//for(TIterator<APlayerCharacter> It(GetWorld(), ))
-	
+	SpawnedCatBurglars.Remove(InCatBurglar);
+	InCatBurglar->Destroy();
 }
 
 ACatBurglar* ACatBurglarSpawnVolume::SpawnCatBurglarWithPlayerAsTarget(APlayerCharacter* TargetPlayer)
@@ -142,7 +152,7 @@ void ACatBurglarSpawnVolume::OnCatBurglarDeath(ADC_Entity* DeadBurglar)
 	if (!catBurglar)
 		return;
 
-	SpawnedCatBurglars.Remove(catBurglar);	
+	SpawnedCatBurglars.Remove(catBurglar);
 	OnCatBurglarCountChanged();
 }
 

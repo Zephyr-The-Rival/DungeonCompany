@@ -1011,23 +1011,24 @@ void APlayerCharacter::Client_DropRandomItem_Implementation()
 {
 	auto invSlots = Inventory->GetSlots();
 
-	int invSlotsNum = invSlots.Num();
-
-	int droppingSlotIndex = FMath::RandRange(0, invSlotsNum - 1);
-
+	TArray<UInventorySlot*> filledInventorySlots;
 	invSlots.Add(HandSlotA);
 	invSlots.Add(HandSlotB);
-
-	invSlotsNum += 2;
-
-	for (int i = 0; i < invSlotsNum && !invSlots[droppingSlotIndex]->MyItem; ++i)
+	
+	int invSlotsNum = invSlots.Num();
+	
+	for(int i = 0; i < invSlotsNum; ++i)
 	{
-		++droppingSlotIndex;
-		if (droppingSlotIndex < invSlotsNum)
+		if(!invSlots[i]->MyItem)
 			continue;
 
-		droppingSlotIndex = 0;
+		filledInventorySlots.Add(invSlots[i]);
 	}
+
+	if(filledInventorySlots.Num() < 1)
+		return;
+
+	int droppingSlotIndex = FMath::RandRange(0, filledInventorySlots.Num() - 1);
 
 	if (!invSlots[droppingSlotIndex])
 		return;

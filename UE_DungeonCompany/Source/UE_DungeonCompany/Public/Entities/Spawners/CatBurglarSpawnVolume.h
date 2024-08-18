@@ -27,6 +27,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	uint8 MaxCatBurglar = 5;
 
+	UPROPERTY(EditAnywhere)
+	float VolumeLeftBurglarDespawnDelay = 30.f;
+
 	TSubclassOf<ACatBurglar> CatBurglarClass;
 
 private:
@@ -47,6 +50,8 @@ public:
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 protected:
+	void MarkBurglarsAsDespawnable();
+
 	void DespawnIdleBurglars();
 	void DespawnBurglarIfOnIdle(ACatBurglar* InCatBurglar);
 
