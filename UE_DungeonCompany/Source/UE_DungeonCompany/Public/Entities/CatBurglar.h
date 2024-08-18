@@ -46,7 +46,7 @@ private:
 	UItemData* StolenItem;
 
 public:
-	inline const ECatBurglarBehaviorState& GetCurrentBehaviorState() 
+	inline const ECatBurglarBehaviorState& GetCurrentBehaviorState() const { return CurrentBehaviorState; }
 
 public:
 	void SetIdleBehaviorState(ECatBurglarBehaviorState NewIdleState);

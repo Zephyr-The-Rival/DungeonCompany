@@ -107,7 +107,7 @@ void ACatBurglarSpawnVolume::DespawnBurglarIfOnIdle(ACatBurglar* InCatBurglar)
 	if(InCatBurglar->GetCurrentBehaviorState() > ECatBurglarBehaviorState::Harassing)
 		return;
 
-	for(TIterator<APlayerCharacter> It(GetWorld(), ))
+	//for(TIterator<APlayerCharacter> It(GetWorld(), ))
 	
 }
 
