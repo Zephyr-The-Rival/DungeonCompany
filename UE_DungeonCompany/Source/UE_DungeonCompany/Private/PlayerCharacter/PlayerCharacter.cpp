@@ -33,7 +33,6 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
-#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "BuffSystem/DebuffExaustion.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
@@ -111,6 +110,9 @@ void APlayerCharacter::BeginPlay()
 	});
 
 	StartExaustionTimer();
+
+
+	
 }
 
 // Called every frame
@@ -127,6 +129,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	if (IsLocallyControlled())
 		LocalTick(DeltaTime);
+	
+		
 }
 
 void APlayerCharacter::LocalTick(float DeltaTime)
@@ -498,10 +502,16 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 		//rn only local but maybe that even stays that way
 		freeSlot->MyItem = WorldItem->GetMyData();
 		DestroyWorldItem(WorldItem);
-
+		UpdateHeldItems();
 
 		if (freeSlot == GetCurrentlyHeldInventorySlot())
 			TakeOutItem();
+
+		if(UTorch_Data* torch= Cast<UTorch_Data>(freeSlot->MyItem))
+		{
+			if( freeSlot!=GetCurrentlyHeldInventorySlot())
+				torch->bOn=false;
+		}
 	}
 }
 
@@ -936,7 +946,7 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 
 void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 {
-	if (SlotToEmpty.bIsBackpackSlot)
+	if (SlotToEmpty.bIsBackpackSlot)//
 	{
 		SetHasBackPack(false);
 		if (this->bInventoryIsOn)
@@ -957,7 +967,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 				this->Backpack->RemoveItem(i);
 			}
 		}
-
+		
 		OnDropItem.Broadcast();
 		Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
 		Server_DropBackpack(ItemClasses, this->DropTransform->GetComponentTransform(), ItemDatas);
@@ -966,7 +976,11 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
-		if (bThrow)
+		// if (UTorch_Data* torch = Cast<UTorch_Data>(SlotToEmpty.Slot->MyItem))
+		// 	if (SlotToEmpty.Slot != GetCurrentlyHeldInventorySlot())
+		// 		torch->bOn = false;
+		
+		if(bThrow)
 			Server_SpawnSoundAtLocation(ThrowSound, this->DropTransform->GetComponentLocation());
 		else
 			Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
@@ -977,6 +991,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 
 		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
 		OnDropItem.Broadcast();
+		UpdateHeldItems();
 	}
 }
 
@@ -1079,6 +1094,9 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 	if (MyPlayerHud->GetHighlightedSlot().bIsBackpackSlot)
 		return;
 
+	if(UTorch_Data* torch = Cast<UTorch_Data>(MyPlayerHud->GetHighlightedSlot().Slot->MyItem))//taken out torch is turned off
+		torch->bOn=false;
+		
 	UInventorySlot* slot;
 
 	if (BToA)
@@ -1086,6 +1104,12 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 	else
 		slot = HandSlotB;
 
+	if(UTorch_Data* torch = Cast<UTorch_Data>(slot->MyItem))//storedTorch is turned off
+		torch->bOn=false;
+
+	if(UTorch_Data* torch = Cast<UTorch_Data>(MyPlayerHud->GetHighlightedSlot().Slot->MyItem))
+		torch->bOn=false;
+	
 	//switch
 	UItemData* tmp = MyPlayerHud->GetHighlightedSlot().Slot->MyItem;
 	MyPlayerHud->GetHighlightedSlot().Slot->MyItem = slot->MyItem;
@@ -1093,6 +1117,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 	UGameplayStatics::PlaySound2D(GetWorld(), InventoryEquipSound);
 
+	
 
 	if (GetCurrentlyHeldInventorySlot() == slot) //if equipping to slot in hand
 	{
@@ -1540,23 +1565,34 @@ void APlayerCharacter::CreatePlayerHud()
 
 void APlayerCharacter::DropAllItems()
 {
-	TArray<UInventorySlot*> AllSlots = GetAllSlots();
-
-	for (UInventorySlot* IS : AllSlots)
+	if(IsLocallyControlled())
 	{
-		if (IsValid(IS->MyItem))
+		TArray<UInventorySlot*> AllSlots= GetAllSlots();
+
+		for (UInventorySlot* IS : AllSlots)
 		{
-			UItemData* data = IS->MyItem;
-			SpawnDroppedWorldItem(data->MyWorldItemClass, DropTransform->GetComponentTransform(),
-			                      data->SerializeMyData(), false, FVector::Zero());
+			if (IsValid(IS->MyItem))
+			{
+				UItemData* data = IS->MyItem;
+				SpawnDroppedWorldItem(data->MyWorldItemClass, DropTransform->GetComponentTransform(), data->SerializeMyData(), false, FVector::Zero());
+			}
+		}
+		if (bHasBackPack)
+		{
+			//backpack is spawning without items in it. Its items drop like the others
+			Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), DropTransform->GetComponentTransform(), TArray<FString>());
 		}
 	}
-	if (bHasBackPack)
+	else
 	{
-		//backpack is spawning without items in it. Its items drop like the others
-		Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), DropTransform->GetComponentTransform(),
-		                    TArray<FString>());
+		for(FHeldItem HeldItem : this->HeldItems)
+		{
+			
+			LogWarning("TryingToSpawnDroppedItem...");
+			SpawnDroppedWorldItem(HeldItem.ItemDataClass.GetDefaultObject()->MyWorldItemClass, DropTransform->GetComponentTransform(), HeldItem.ItemData, false, FVector::Zero());
+		}
 	}
+	
 }
 
 
@@ -1591,6 +1627,65 @@ void APlayerCharacter::TakeDamage(float Damage)
 void APlayerCharacter::LeftBehind_Implementation()
 {
 }
+
+TArray<FHeldItem> APlayerCharacter::GetHeldItems()
+{
+	TArray<FHeldItem> TemporaryArray;
+	for(UInventorySlot*  s: GetAllSlots())
+	{
+		if(!IsValid(s->MyItem))
+			continue;
+		
+		FHeldItem TemporaryHeldItem;
+		TemporaryHeldItem.ItemDataClass= s->MyItem->GetClass();
+		TemporaryHeldItem.ItemData=s->MyItem->SerializeMyData();
+		TemporaryArray.Add(TemporaryHeldItem);
+	}
+	if(bHasBackPack)
+	{
+		FHeldItem backpack;
+		backpack.ItemDataClass=BackpackClass;
+		backpack.ItemData=" ";
+		TemporaryArray.Add(backpack);
+	}
+	return TemporaryArray;
+}
+
+void APlayerCharacter::UpdateHeldItems()
+{
+	TArray<FHeldItem> heldItems = GetHeldItems();
+	
+	TArray<TSubclassOf<UItemData>> ItemDataClasses;
+	TArray<FString> SerializedItemDatas;
+
+	for(FHeldItem tmp : heldItems)
+	{
+		ItemDataClasses.Add(tmp.ItemDataClass);
+		SerializedItemDatas.Add(tmp.ItemData);
+	}
+	
+	if(HasAuthority())
+		Server_UpdateHeldItems_Implementation(ItemDataClasses, SerializedItemDatas);
+	else
+		Server_UpdateHeldItems(ItemDataClasses, SerializedItemDatas);
+		
+}
+
+void APlayerCharacter::Server_UpdateHeldItems_Implementation(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas)
+{
+	TArray<FHeldItem> newHeldItems = TArray<FHeldItem>();
+
+	for (int i = 0; i < ItemDataClasses.Num(); i++)
+	{
+		FHeldItem tmpHeldItem;
+		tmpHeldItem.ItemDataClass = ItemDataClasses[i];
+		tmpHeldItem.ItemData = SerializedItemDatas[i];
+		newHeldItems.Add(tmpHeldItem);
+	}
+
+	this->HeldItems = newHeldItems;	
+}
+
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
 {
