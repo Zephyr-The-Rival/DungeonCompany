@@ -79,9 +79,7 @@ void ACatBurglar::OnTookDamage()
 void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
 {
 	Super::OnPlayerAttackHit(PlayerCharacter);
-
-	TakeDamage(100000);
-
+	
 	PlayerCharacter->DropRandomItem();
 
 	UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
