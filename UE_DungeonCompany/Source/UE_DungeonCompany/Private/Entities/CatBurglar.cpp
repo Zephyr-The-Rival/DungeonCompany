@@ -4,6 +4,8 @@
 #include "Entities/CatBurglar.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
+#include "DCGame/DC_GM.h"
+#include "Items/ItemData.h"
 #include "Items/WorldItem.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 
@@ -31,6 +33,10 @@ ACatBurglar::ACatBurglar()
 	BehaviorTreesForStates.Add((ECatBurglarBehaviorState)2);
 	BehaviorTreesForStates.Add((ECatBurglarBehaviorState)3);
 	BehaviorTreesForStates.Add((ECatBurglarBehaviorState)4);
+
+	DropTransform = CreateDefaultSubobject<USceneComponent>(TEXT("DropTransform"));
+	DropTransform->SetupAttachment(RootComponent);
+	DropTransform->SetRelativeLocation(FVector(150, 0, 20));
 }
 
 void ACatBurglar::StealItem(AWorldItem* StealingItem)
@@ -55,14 +61,19 @@ void ACatBurglar::OnTookDamage()
 {
 	Super::OnTookDamage();
 
-	if (bHealthBelowFleeingUpper)
-		return;
-
-	if (HP < StartFleeingHPUpper && CurrentBehaviorState != ECatBurglarBehaviorState::Fleeing)
+	if (!bHealthBelowFleeingUpper && HP < StartFleeingHPUpper && CurrentBehaviorState !=
+		ECatBurglarBehaviorState::Fleeing)
 	{
 		bHealthBelowFleeingUpper = true;
 		UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
 	}
+
+	if (!StolenItem)
+		return;
+	
+	if (ADC_GM* gameMode = GetWorld()->GetAuthGameMode<ADC_GM>())
+		gameMode->SpawnWorldItem(StolenItem->MyWorldItemClass, DropTransform->GetComponentTransform(),
+		                         StolenItem->SerializeMyData());
 }
 
 void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)

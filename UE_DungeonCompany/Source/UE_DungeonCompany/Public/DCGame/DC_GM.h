@@ -9,7 +9,8 @@
 /**
  * 
  */
- class AAIEntity;
+class AAIEntity;
+class AWorldItem;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_GM : public AGameMode
@@ -29,6 +30,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	void SpawnSpurchins();
+
+public:
+	void SpawnWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData);
 
 private:
 	UPROPERTY(EditAnywhere)

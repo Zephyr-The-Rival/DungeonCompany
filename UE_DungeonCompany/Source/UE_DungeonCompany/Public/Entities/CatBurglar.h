@@ -29,6 +29,10 @@ class UE_DUNGEONCOMPANY_API ACatBurglar : public AAIEntity
 	GENERATED_BODY()
 
 private:
+	UPROPERTY(EditAnywhere)
+	USceneComponent* DropTransform;
+
+private:
 	UPROPERTY(EditDefaultsOnly)
 	float ItemDetectionRadius = 500.f;
 
