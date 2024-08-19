@@ -63,14 +63,17 @@ void ACatBurglar::Tick(float DeltaSeconds)
 
 void ACatBurglar::Retrieve()
 {
-	if (StolenItem)
+	if (!StolenItem)
 	{
-		TActorIterator<ALostItemsCollection> LostItemIt(GetWorld());
-
-		if (LostItemIt)
-			(*LostItemIt)->AddLostItem(StolenItem);
+		Destroy();
+		return;
 	}
 	
+	TActorIterator<ALostItemsCollection> LostItemIt(GetWorld());
+	
+	if (LostItemIt)
+		(*LostItemIt)->AddLostItem(StolenItem);
+
 	Destroy();
 }
 
