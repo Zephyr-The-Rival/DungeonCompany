@@ -8,6 +8,7 @@
 #include "Items/ItemData.h"
 #include "Items/WorldCurrency.h"
 #include "Items/BackPack.h"
+#include "Kismet/KismetStringLibrary.h"
 
 // Sets default values
 AStore::AStore()
@@ -71,7 +72,7 @@ void AStore::SellItems()
 	{
 		FTransform tmp = CoinSpawnPoint->GetComponentTransform();
 		AWorldCurrency* WC = GetWorld()->SpawnActorDeferred<AWorldCurrency>(MoneyBagToSpawn, tmp);
-		WC->Value = sumValue;
+		WC->SerializedStringData = UKismetStringLibrary::Conv_IntToString(sumValue);
 		WC->FinishSpawning(tmp);
 	}
 

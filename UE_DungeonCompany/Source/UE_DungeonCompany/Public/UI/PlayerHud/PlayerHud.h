@@ -30,9 +30,9 @@ USTRUCT(BlueprintType)
 struct FSlotData
 {
 	GENERATED_BODY()
-	UPROPERTY(BlueprintReadWrite)
-	bool bIsBackpackSlot;
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsBackpackSlot=false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UInventorySlot* Slot;
 };
 
@@ -102,6 +102,14 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void UpdateBuffs();
 	void UpdateBuffs_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ShowInteractProgressBar(float MaxTime);
+	void ShowInteractProgressBar_Implementation(float MaxTime);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void HideInteractProgressBar();
+	void HideInteractProgressBar_Implementation();
 
 
 };

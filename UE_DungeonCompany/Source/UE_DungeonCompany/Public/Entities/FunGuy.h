@@ -80,6 +80,7 @@ protected:
 protected: 
 	void CalculateCloudStart();
 	void UpdateCloud();
+	void ResetCloudSpawnRate() const;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Balancing")
