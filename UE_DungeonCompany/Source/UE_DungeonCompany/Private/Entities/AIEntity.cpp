@@ -58,14 +58,13 @@ AAIEntity::AAIEntity()
 	SenseConfigs.Add(hearingConfig);
 
 	DominantSense = UAISenseConfig_Sight::StaticClass();
-
 }
 
 void AAIEntity::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if(!HasAuthority())
+	if (!HasAuthority())
 		return;
 
 	ADC_AIController* aiController = GetController<ADC_AIController>();
@@ -76,7 +75,7 @@ void AAIEntity::BeginPlay()
 	aiController->OnTargetingPlayer.AddDynamic(this, &AAIEntity::OnTargetingPlayer);
 }
 
-void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
+void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 {
 	if (TargetPlayer->IsDead())
 	{
@@ -115,7 +114,7 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 	{
 		APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(hits[i].GetActor());
 
-		if(!playerCharacter)
+		if (!playerCharacter)
 			continue;
 
 		playerCharacter->TakeDamage(AttackDamage);
@@ -132,13 +131,14 @@ void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
 }
 
-void AAIEntity::SetTargetPlayer(APlayerCharacter* TargetPlayer)
+void AAIEntity::SetTargetPlayer(APlayerCharacter* InTargetPlayer)
 {
 	ADC_AIController* aiController = GetController<ADC_AIController>();
 
-	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", TargetPlayer);
+	TargetPlayer = InTargetPlayer; 
 
+	if (aiController)
+		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", InTargetPlayer);
 }
 
 bool AAIEntity::IsVisibleToPlayers() const
@@ -147,7 +147,6 @@ bool AAIEntity::IsVisibleToPlayers() const
 	{
 		if (UDC_Statics::IsActorVisibleToPlayer(iterator->Get(), this))
 			return true;
-
 	}
 
 	return false;
@@ -157,7 +156,7 @@ UAISenseConfig* AAIEntity::GetSenseConfig(FAISenseID SenseID)
 {
 	AAIController* aiController = GetController<AAIController>();
 
-	if(!aiController)
+	if (!aiController)
 		return nullptr;
 
 	return aiController->GetAIPerceptionComponent()->GetSenseConfig(SenseID);
@@ -182,11 +181,11 @@ void AAIEntity::HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBl
 		HandleSightSense(Actor, Stimulus, BlackboardComponent);
 	else if (Stimulus.Type == hearingID)
 		HandleHearingSense(Actor, Stimulus, BlackboardComponent);
-
 }
 
 void AAIEntity::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 {
+	TargetPlayer = Target;
 }
 
 void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
@@ -213,7 +212,7 @@ void AAIEntity::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UB
 
 void AAIEntity::SetIsAttacking(bool InAttacking)
 {
-	if(InAttacking == IsAttacking())
+	if (InAttacking == IsAttacking())
 		return;
 
 	ToggleAnimationBitFlag(FLAG_Attacking);

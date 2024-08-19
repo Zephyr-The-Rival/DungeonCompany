@@ -52,7 +52,7 @@ private:
 	bool bInAttack = false;
 
 public:
-	virtual void AttackPlayer(APlayerCharacter* TargetPlayer) override;
+	virtual void AttackPlayer(APlayerCharacter* PlayerAttacking) override;
 
 private:
 	FTimerHandle LaunchHandle;

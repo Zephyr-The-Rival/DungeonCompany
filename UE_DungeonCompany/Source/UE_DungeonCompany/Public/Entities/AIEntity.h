@@ -60,14 +60,19 @@ private:
 	FTimerHandle ExecuteAttackHandle;
 
 public:
-	virtual void AttackPlayer(APlayerCharacter* TargetPlayer);
+	virtual void AttackPlayer(APlayerCharacter* PlayerAttacking);
 
 protected:
 	virtual void ExecuteAttack(FVector Direction);
 
+private:
+	APlayerCharacter* TargetPlayer; 
+
 public:
 	void SetInAttackOnBlackboard(bool InAttack);
-	void SetTargetPlayer(APlayerCharacter* TargetPlayer);
+
+	inline APlayerCharacter* GetTargetPlayer() const { return TargetPlayer; }
+	void SetTargetPlayer(APlayerCharacter* InTargetPlayer);
 
 public:
 	bool IsVisibleToPlayers() const;
