@@ -106,16 +106,20 @@ void AFunGuy::UpdateCloud()
 
 		FTimerHandle resetHandle;
 
-		FTimerDelegate resetDelegate = FTimerDelegate::CreateLambda([this]() {
-			CloudNiagara->SetFloatParameter("SpawnRate", 0.0f);
-		});
-
-		GetWorld()->GetTimerManager().SetTimer(resetHandle, resetDelegate, 7.0f, false);
+		GetWorld()->GetTimerManager().SetTimer(resetHandle, this, &AFunGuy::ResetCloudSpawnRate, 7.0f, false);
 	}
 
 	if (HasAuthority())
 		CloudSphere->SetSphereRadius(newScale.X*50);
 
+}
+
+void AFunGuy::ResetCloudSpawnRate() const
+{
+	if(!CloudNiagara)
+		return;
+	
+	CloudNiagara->SetFloatParameter("SpawnRate", 0.0f);
 }
 
 void AFunGuy::Tick(float DeltaSeconds)
