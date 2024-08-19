@@ -8,7 +8,7 @@
 
 #include "Components/BrushComponent.h"
 #include "Engine/StaticMeshActor.h"
-#include "Items/ItemData.h"
+#include "Items/Torch_Data.h"
 
 ACatBurglarSpawnVolume::ACatBurglarSpawnVolume(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -16,10 +16,6 @@ ACatBurglarSpawnVolume::ACatBurglarSpawnVolume(const FObjectInitializer& ObjectI
 	static ConstructorHelpers::FClassFinder<ACatBurglar> BPClass(
 		TEXT("/Game/_DungeonCompanyContent/Code/Entities/BP_CatBurglar"));
 	CatBurglarClass = BPClass.Class;
-
-	static ConstructorHelpers::FClassFinder<AWorldItem> TorchBPClass(
-		TEXT("/Game/_DungeonCompanyContent/Code/Items/Torch/BP_Torch_World"));
-	TorchClass = TorchBPClass.Class;
 
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -231,18 +227,17 @@ void ACatBurglarSpawnVolume::OnBurglarNestEndOverlap(AActor* OverlappedActor, AA
 		bNestBlocked = false;
 }
 
-bool ACatBurglarSpawnVolume::IsActorANestBlocker(AActor* InActor) const
+bool ACatBurglarSpawnVolume::IsActorANestBlocker(AActor* InActor)
 {
 	AWorldItem* worldItem = Cast<AWorldItem>(InActor);
 
-	if(!worldItem || !InActor->IsA(TorchClass))
+	if(!worldItem)
 		return false;	
 	
-	UItemData* itemData = worldItem->GetMyData();
-	TArray<FString> dataArray = itemData->SeperateStringData(itemData->SerializeMyData());
+	UTorch_Data* torchData = Cast<UTorch_Data>(worldItem->GetMyData());
 
-	if(dataArray.Num() < 2)
+	if(!torchData)
 		return false;
 	
-	return dataArray[1] == "true";
+	return torchData->bOn;
 }

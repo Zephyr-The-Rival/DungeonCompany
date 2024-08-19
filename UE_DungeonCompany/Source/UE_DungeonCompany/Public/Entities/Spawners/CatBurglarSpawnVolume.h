@@ -35,7 +35,6 @@ private:
 	float VolumeLeftBurglarDespawnDelay = 30.f;
 
 	TSubclassOf<ACatBurglar> CatBurglarClass;
-	TSubclassOf<AWorldItem> TorchClass;
 
 private:
 	TArray<APlayerCharacter*> PlayerCharactersInVolume;
@@ -92,5 +91,5 @@ protected:
 	UFUNCTION()
 	void OnBurglarNestEndOverlap(AActor* OverlappedActor, AActor* OtherActor);
 
-	bool IsActorANestBlocker(AActor* InActor) const;
+	static bool IsActorANestBlocker(AActor* InActor);
 };
