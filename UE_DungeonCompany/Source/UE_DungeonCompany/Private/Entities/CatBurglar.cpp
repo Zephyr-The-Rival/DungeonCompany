@@ -67,7 +67,7 @@ void ACatBurglar::Retrieve()
 	{
 		TActorIterator<ALostItemsCollection> LostItemIt(GetWorld());
 
-		if (IsValid(*LostItemIt))
+		if (LostItemIt)
 			(*LostItemIt)->AddLostItem(StolenItem);
 	}
 	
