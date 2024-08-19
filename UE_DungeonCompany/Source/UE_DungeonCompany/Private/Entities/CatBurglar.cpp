@@ -3,12 +3,14 @@
 
 #include "Entities/CatBurglar.h"
 
+#include "EngineUtils.h"
 #include "AI/DC_AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DCGame/DC_GM.h"
 #include "Items/ItemData.h"
 #include "Items/WorldItem.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "WorldActors/LostItemsCollection.h"
 
 void ACatBurglar::SetIdleBehaviorState(ECatBurglarBehaviorState NewIdleState)
 {
@@ -61,9 +63,14 @@ void ACatBurglar::Tick(float DeltaSeconds)
 
 void ACatBurglar::Retrieve()
 {
-	if(ADC_GM* gameMode = GetWorld()->GetAuthGameMode<ADC_GM>())
-		gameMode->AddLostItem(StolenItem);
+	if (StolenItem)
+	{
+		TActorIterator<ALostItemsCollection> LostItemIt(GetWorld());
 
+		if (IsValid(*LostItemIt))
+			(*LostItemIt)->AddLostItem(StolenItem);
+	}
+	
 	Destroy();
 }
 

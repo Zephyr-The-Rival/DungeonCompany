@@ -32,12 +32,6 @@ protected:
 	virtual void BeginPlay() override;
 	void SpawnSpurchins();
 
-private:
-	TArray<UItemData*> LostItems;
-
-public:
-	void AddLostItem(UItemData* LostItem);
-
 public:
 	void SpawnWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData);
 

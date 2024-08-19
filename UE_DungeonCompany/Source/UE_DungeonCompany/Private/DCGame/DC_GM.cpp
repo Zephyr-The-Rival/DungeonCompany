@@ -142,14 +142,6 @@ void ADC_GM::SpawnSpurchins()
 	}
 }
 
-void ADC_GM::AddLostItem(UItemData* LostItem)
-{
-	if(!IsValid(LostItem))
-		return;
-	
-	LostItems.Add(LostItem);
-}
-
 void ADC_GM::SpawnWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData)
 {
 	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
