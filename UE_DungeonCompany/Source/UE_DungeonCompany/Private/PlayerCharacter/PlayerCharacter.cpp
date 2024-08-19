@@ -1637,6 +1637,25 @@ void APlayerCharacter::Server_UpdateHeldItems_Implementation(const TArray<TSubcl
 	this->HeldItems = newHeldItems;	
 }
 
+UUserWidget* APlayerCharacter::StartSelectionWheel(TArray<FString> Options)
+{
+	bMoveAllowed=false;
+	bLookAllowed=false;
+	bJumpAllowed=false;
+	bSwitchHandAllowed=false;
+	return GetMyHud()->ShowSelectionWheel(Options);
+}
+
+int APlayerCharacter::EndSelectionWheel()
+{
+	bMoveAllowed = true;
+	bLookAllowed = true;
+	bJumpAllowed = true;
+	bSwitchHandAllowed = true;
+
+	return GetMyHud()->DestroySelectionWheel();
+}
+
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
 {
