@@ -34,8 +34,10 @@ private:
 	FBlackboardKeySelector WriteResultTo;
 
 public:
-	UBTService_IsInRange();
+	UBTService_IsInRange();\
+	virtual void OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
+	bool IsInRange(UBehaviorTreeComponent& OwnerComp) const;
 	bool IsInRangeOfActorType(const AActor* InActor) const;
 };

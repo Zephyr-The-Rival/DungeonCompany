@@ -1030,11 +1030,11 @@ void APlayerCharacter::Client_DropRandomItem_Implementation()
 
 	int droppingSlotIndex = FMath::RandRange(0, filledInventorySlots.Num() - 1);
 
-	if (!invSlots[droppingSlotIndex])
+	if (!filledInventorySlots[droppingSlotIndex])
 		return;
 
 	FSlotData dropSlotData;
-	dropSlotData.Slot = invSlots[droppingSlotIndex];
+	dropSlotData.Slot = filledInventorySlots[droppingSlotIndex];
 	dropSlotData.bIsBackpackSlot = false;
 
 	DropItem(dropSlotData, false);

@@ -162,7 +162,7 @@ void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
 }
 
-void AAIEntity::SetTargetPlayer(APlayerCharacter* TargetPlayer)
+void AAIEntity::SetTargetPlayer(APlayerCharacter* TargetPlayer) const
 {
 	ADC_AIController* aiController = GetController<ADC_AIController>();
 

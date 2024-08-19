@@ -70,7 +70,7 @@ protected:
 
 public:
 	void SetInAttackOnBlackboard(bool InAttack);
-	void SetTargetPlayer(APlayerCharacter* TargetPlayer);
+	void SetTargetPlayer(APlayerCharacter* TargetPlayer) const;
 
 public:
 	bool IsVisibleToPlayers() const;

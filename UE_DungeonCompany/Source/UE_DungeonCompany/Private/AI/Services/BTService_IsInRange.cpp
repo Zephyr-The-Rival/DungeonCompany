@@ -15,37 +15,48 @@ UBTService_IsInRange::UBTService_IsInRange()
 	NodeName = "IsInRange";
 }
 
+void UBTService_IsInRange::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+{
+	Super::OnCeaseRelevant(OwnerComp, NodeMemory);
+
+	OwnerComp.GetBlackboardComponent()->SetValueAsBool(WriteResultTo.SelectedKeyName, IsInRange(OwnerComp));
+}
+
 #define WriteResult(result) { OwnerComp.GetBlackboardComponent()->SetValueAsBool(WriteResultTo.SelectedKeyName, result); return;}
 
 void UBTService_IsInRange::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
+	OwnerComp.GetBlackboardComponent()->SetValueAsBool(WriteResultTo.SelectedKeyName, IsInRange(OwnerComp));
+}
+
+bool UBTService_IsInRange::IsInRange(UBehaviorTreeComponent& OwnerComp) const
+{
 	AAIController* aiController = OwnerComp.GetAIOwner();
 
 	if (!aiController)
-		WriteResult(false);
+		return false;
 
 	APawn* aiPawn = aiController->GetPawn();
 	if (!aiPawn)
-		WriteResult(false);
+		return false;
 
 	if (bCheckAgainstActorClass)
-
-		WriteResult(IsInRangeOfActorType(aiPawn));
+		return IsInRangeOfActorType(aiPawn);
 
 	AActor* checkingActor = Cast<AActor>(
 		OwnerComp.GetBlackboardComponent()->GetValueAsObject(CheckingActor.SelectedKeyName));
 
 	if (!checkingActor)
-		WriteResult(false);
+		return false;
 
 	FVector targetLocation = checkingActor->GetActorLocation();
 
 	if (bIgnoreZValue)
 		targetLocation.Z = aiPawn->GetActorLocation().Z;
 
-	WriteResult((targetLocation - aiPawn->GetActorLocation()).Length() <= Range);
+	return (targetLocation - aiPawn->GetActorLocation()).Length() <= Range;
 }
 
 bool UBTService_IsInRange::IsInRangeOfActorType(const AActor* InActor) const

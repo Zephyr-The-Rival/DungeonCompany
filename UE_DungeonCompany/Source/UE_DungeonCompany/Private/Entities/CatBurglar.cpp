@@ -3,6 +3,7 @@
 
 #include "Entities/CatBurglar.h"
 
+#include "AI/DC_AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DCGame/DC_GM.h"
 #include "Items/ItemData.h"
@@ -50,11 +51,20 @@ void ACatBurglar::StealItem(AWorldItem* StealingItem)
 void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 {
 	CurrentBehaviorState = NewBehaviorState;
+	SetInFleeingRange(ECatBurglarBehaviorState::Fleeing == NewBehaviorState);
 
 	if (!BehaviorTreesForStates.Contains(NewBehaviorState))
 		return;
 
 	RunBehaviorTree(BehaviorTreesForStates[NewBehaviorState]);
+}
+
+void ACatBurglar::SetInFleeingRange(bool InInFleeingRange) const
+{
+	ADC_AIController* aiController = GetController<ADC_AIController>();
+
+	if (aiController)
+		aiController->GetBlackboardComponent()->SetValueAsBool("InFleeingRange", InInFleeingRange);
 }
 
 void ACatBurglar::OnTookDamage()
@@ -70,17 +80,22 @@ void ACatBurglar::OnTookDamage()
 
 	if (!StolenItem)
 		return;
+
+	ADC_GM* gameMode = GetWorld()->GetAuthGameMode<ADC_GM>();
+	if (!gameMode)
+		return;
 	
-	if (ADC_GM* gameMode = GetWorld()->GetAuthGameMode<ADC_GM>())
-		gameMode->SpawnWorldItem(StolenItem->MyWorldItemClass, DropTransform->GetComponentTransform(),
-		                         StolenItem->SerializeMyData());
+	gameMode->SpawnWorldItem(StolenItem->MyWorldItemClass, DropTransform->GetComponentTransform(),
+	                         StolenItem->SerializeMyData());
+	StolenItem = nullptr;
 }
 
 void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
 {
 	Super::OnPlayerAttackHit(PlayerCharacter);
-	
-	PlayerCharacter->DropRandomItem();
+
+	if(FMath::FRand() < AttackDropsItemOdds)
+		PlayerCharacter->DropRandomItem();
 
 	UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
 }

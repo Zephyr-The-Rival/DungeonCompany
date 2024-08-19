@@ -42,6 +42,9 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	float StartFleeingHPUpper = 30.f;
 
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f, ClampMax = 1.f))
+	float AttackDropsItemOdds = 0.2f;
+
 private:
 	ECatBurglarBehaviorState IdleBehaviorState;
 	ECatBurglarBehaviorState CurrentBehaviorState;
@@ -64,6 +67,8 @@ public:
 
 protected:
 	void UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState);
+
+	void SetInFleeingRange(bool InInFleeingRange) const;
 
 private:
 	bool bHealthBelowFleeingUpper = false;
