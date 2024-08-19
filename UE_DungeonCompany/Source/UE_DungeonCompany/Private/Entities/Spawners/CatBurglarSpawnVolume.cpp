@@ -4,8 +4,11 @@
 #include "Entities/Spawners/CatBurglarSpawnVolume.h"
 #include "Entities/CatBurglar.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "Items/WorldItem.h"
 
 #include "Components/BrushComponent.h"
+#include "Engine/StaticMeshActor.h"
+#include "Items/ItemData.h"
 
 ACatBurglarSpawnVolume::ACatBurglarSpawnVolume(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -14,7 +17,36 @@ ACatBurglarSpawnVolume::ACatBurglarSpawnVolume(const FObjectInitializer& ObjectI
 		TEXT("/Game/_DungeonCompanyContent/Code/Entities/BP_CatBurglar"));
 	CatBurglarClass = BPClass.Class;
 
+	static ConstructorHelpers::FClassFinder<AWorldItem> TorchClass(
+		TEXT("/Game/_DungeonCompanyContent/Code/Items/Torch/BP_Torch_World"));
+	NestBlockerClasses.Add(TorchClass.Class);
+
 	PrimaryActorTick.bCanEverTick = true;
+}
+
+void ACatBurglarSpawnVolume::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	SpawnTransform.SetScale3D(FVector(1, 1, 1) / GetActorScale3D());	
+
+	if (!Nest)
+	{
+		FActorSpawnParameters spawnParams;
+		Nest = GetWorld()->SpawnActor<AStaticMeshActor>(GetWorldSpawnLocation(),
+		                                                SpawnTransform.GetRotation().Rotator());
+
+		Nest->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+	}
+	else
+	{
+		Nest->SetActorLocation(GetWorldSpawnLocation());
+		Nest->SetActorRotation(SpawnTransform.GetRotation().Rotator());
+		Nest->SetActorScale3D(FVector(1, 1, 1));
+	};
+
+	Nest->GetStaticMeshComponent()->SetCollisionProfileName("OverlapAll");
+	Nest->SetLockLocation(true);
 }
 
 void ACatBurglarSpawnVolume::BeginPlay()
@@ -25,17 +57,23 @@ void ACatBurglarSpawnVolume::BeginPlay()
 	{
 		GetBrushComponent()->SetCollisionProfileName("NoCollision");
 		SetActorTickEnabled(false);
+		return;
 	}
-
+	
 	GetBrushComponent()->SetCollisionProfileName("Trigger");
 	SetActorTickEnabled(true);
+
+	Nest->OnActorBeginOverlap.AddDynamic(this, &ACatBurglarSpawnVolume::OnBurglarNestBeginOverlap);
+	Nest->OnActorEndOverlap.AddDynamic(this, &ACatBurglarSpawnVolume::OnBurglarNestEndOverlap);
+
+	Nest->GetStaticMeshComponent()->SetGenerateOverlapEvents(true);
 }
 
 void ACatBurglarSpawnVolume::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (SpawnedCatBurglars.Num() >= MaxCatBurglar)
+	if (SpawnedCatBurglars.Num() >= MaxCatBurglar || bNestBlocked)
 		return;
 
 	int playersNum = PlayerCharactersInVolume.Num();
@@ -50,7 +88,7 @@ void ACatBurglarSpawnVolume::Tick(float DeltaSeconds)
 		if (!IsValid(currentPlayer))
 			continue;
 
-		float currentDistance = (currentPlayer->GetActorLocation() - (SpawnLocation + GetActorLocation())).Length();
+		float currentDistance = (currentPlayer->GetActorLocation() - GetWorldSpawnLocation()).Length();
 		if (playerClosestToSpawnPoint && currentDistance > playerClosestDistance)
 			continue;
 
@@ -75,7 +113,7 @@ void ACatBurglarSpawnVolume::NotifyActorBeginOverlap(AActor* OtherActor)
 
 	PlayerCharactersInVolume.Add(playerCharacter);
 	bBurglarsCanBeDespawned = false;
-	
+
 	GetWorld()->GetTimerManager().ClearTimer(DespawnBurglarHandle);
 }
 
@@ -174,4 +212,61 @@ void ACatBurglarSpawnVolume::OnCatBurglarCountChanged()
 
 		currentBurglar->SetIdleBehaviorState((ECatBurglarBehaviorState)newIdleState);
 	}
+}
+
+void ACatBurglarSpawnVolume::OnBurglarNestBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
+{
+	int nestBlockersNum = NestBlockerClasses.Num();
+	
+	if(!IsActorANestBlocker(OtherActor))
+		return;
+
+	BlockersInNest.Add(OtherActor);
+	bNestBlocked = true;
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Blocked!"));
+}
+
+void ACatBurglarSpawnVolume::OnBurglarNestEndOverlap(AActor* OverlappedActor, AActor* OtherActor)
+{
+	BlockersInNest.Remove(OtherActor);
+
+	if(BlockersInNest.Num() < 1)
+	{
+		bNestBlocked = false;
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Unblocked!"));
+
+	}
+}
+
+bool ACatBurglarSpawnVolume::IsActorANestBlocker(AActor* InActor) const
+{
+	int nestBlockersNum = NestBlockerClasses.Num();
+
+	AWorldItem* worldItem = Cast<AWorldItem>(InActor);
+
+	if(!worldItem)
+		return false;
+
+	bool isBlockingType = false;
+
+	for (int i = 0; i < nestBlockersNum; ++i)
+	{
+		if (InActor->IsA(NestBlockerClasses[i]))
+		{
+			isBlockingType = true;
+			break;
+		}
+	}
+
+	if(!isBlockingType)
+		return false;
+	
+	UItemData* itemData = worldItem->GetMyData();
+	TArray<FString> dataArray = itemData->SeperateStringData(itemData->SerializeMyData());
+
+	if(dataArray.Num() < 2)
+		return false;
+	
+	return dataArray[1] == "true";
 }

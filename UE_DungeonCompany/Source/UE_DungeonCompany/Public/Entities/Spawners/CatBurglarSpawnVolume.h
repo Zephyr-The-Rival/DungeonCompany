@@ -9,6 +9,7 @@
 class ACatBurglar;
 class APlayerCharacter;
 class ADC_Entity;
+class AWorldItem;
 /**
  * 
  */
@@ -19,7 +20,10 @@ class UE_DUNGEONCOMPANY_API ACatBurglarSpawnVolume : public ATriggerVolume
 
 private:
 	UPROPERTY(EditInstanceOnly, meta = (MakeEditWidget = true))
-	FVector SpawnLocation;
+	FTransform SpawnTransform;
+
+	UPROPERTY(EditAnywhere)
+	AStaticMeshActor* Nest;
 
 	UPROPERTY(EditAnywhere)
 	float MinSpawnDistance = 1500.f;
@@ -30,6 +34,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	float VolumeLeftBurglarDespawnDelay = 30.f;
 
+	UPROPERTY(EditAnywhere)
+	TArray<TSubclassOf<AWorldItem>> NestBlockerClasses;
+
 	TSubclassOf<ACatBurglar> CatBurglarClass;
 
 private:
@@ -39,8 +46,10 @@ private:
 	FTimerHandle DespawnBurglarHandle;
 
 	bool bBurglarsCanBeDespawned = false;
+	bool bNestBlocked = false;
 
 protected:
+	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 
 public:
@@ -62,7 +71,11 @@ private:
 	FTimerHandle AllowSpawnHandle;
 
 public:
-	inline FVector GetWorldSpawnLocation() const { return GetActorLocation() + SpawnLocation; }
+	inline FVector GetWorldSpawnLocation() const
+	{
+		return GetActorLocation() + GetActorScale() * SpawnTransform.GetLocation();
+	}
+
 	ACatBurglar* SpawnCatBurglarWithPlayerAsTarget(APlayerCharacter* TargetPlayer);
 
 protected:
@@ -70,4 +83,16 @@ protected:
 	void OnCatBurglarDeath(ADC_Entity* DeadBurglar);
 
 	void OnCatBurglarCountChanged();
+
+private:
+	TArray<AActor*> BlockersInNest;
+
+protected:
+	UFUNCTION()
+	void OnBurglarNestBeginOverlap(AActor* OverlappedActor, AActor* OtherActor);
+
+	UFUNCTION()
+	void OnBurglarNestEndOverlap(AActor* OverlappedActor, AActor* OtherActor);
+
+	bool IsActorANestBlocker(AActor* InActor) const;
 };
