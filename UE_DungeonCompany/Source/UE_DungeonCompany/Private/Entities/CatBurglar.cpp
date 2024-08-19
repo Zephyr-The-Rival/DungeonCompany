@@ -40,6 +40,33 @@ ACatBurglar::ACatBurglar()
 	DropTransform->SetRelativeLocation(FVector(150, 0, 20));
 }
 
+void ACatBurglar::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	bool bCurrentlyInRetrievingRange = RetrievingRange < GetDistanceTo(GetClosestPlayer());
+
+	if (bCurrentlyInRetrievingRange && !bInRetrievingRange)
+	{
+		GetWorld()->GetTimerManager().SetTimer(RetrieveHandle, this, &ACatBurglar::Retrieve,
+		                                       OutOfRetrievingRangeDespawnTime);
+		bInRetrievingRange = true;
+	}
+	else if (!bCurrentlyInRetrievingRange && bInRetrievingRange)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(RetrieveHandle);
+		bInRetrievingRange = false;
+	}
+}
+
+void ACatBurglar::Retrieve()
+{
+	if(ADC_GM* gameMode = GetWorld()->GetAuthGameMode<ADC_GM>())
+		gameMode->AddLostItem(StolenItem);
+
+	Destroy();
+}
+
 void ACatBurglar::StealItem(AWorldItem* StealingItem)
 {
 	StolenItem = StealingItem->GetMyData();
@@ -51,10 +78,12 @@ void ACatBurglar::StealItem(AWorldItem* StealingItem)
 void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 {
 	CurrentBehaviorState = NewBehaviorState;
-	SetInFleeingRange(ECatBurglarBehaviorState::Fleeing == NewBehaviorState);
+	SetInFleeingRange(NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
 
 	if (!BehaviorTreesForStates.Contains(NewBehaviorState))
 		return;
+
+	SetActorTickEnabled(NewBehaviorState == ECatBurglarBehaviorState::Retrieving);
 
 	RunBehaviorTree(BehaviorTreesForStates[NewBehaviorState]);
 }
@@ -71,7 +100,7 @@ void ACatBurglar::OnTookDamage()
 {
 	Super::OnTookDamage();
 
-	if (!bHealthBelowFleeingUpper && HP < StartFleeingHPUpper && CurrentBehaviorState !=
+	if (!bHealthBelowFleeingUpper && HP < StartFleeingHPUpper && CurrentBehaviorState <
 		ECatBurglarBehaviorState::Fleeing)
 	{
 		bHealthBelowFleeingUpper = true;
@@ -84,7 +113,7 @@ void ACatBurglar::OnTookDamage()
 	ADC_GM* gameMode = GetWorld()->GetAuthGameMode<ADC_GM>();
 	if (!gameMode)
 		return;
-	
+
 	gameMode->SpawnWorldItem(StolenItem->MyWorldItemClass, DropTransform->GetComponentTransform(),
 	                         StolenItem->SerializeMyData());
 	StolenItem = nullptr;
@@ -94,7 +123,7 @@ void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
 {
 	Super::OnPlayerAttackHit(PlayerCharacter);
 
-	if(FMath::FRand() < AttackDropsItemOdds)
+	if (FMath::FRand() < AttackDropsItemOdds)
 		PlayerCharacter->DropRandomItem();
 
 	UpdateBehavior(ECatBurglarBehaviorState::Fleeing);

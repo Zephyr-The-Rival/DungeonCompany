@@ -91,6 +91,10 @@ public:
 	virtual void OnTargetingPlayer_Implementation(APlayerCharacter* Target);
 
 public:
+	APlayerCharacter* GetClosestPlayer() const;
+	APlayerCharacter* GetClosestNavPlayer() const;
+
+public:
 	virtual void OnDeath_Implementation() override;
 	
 	virtual void HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus,

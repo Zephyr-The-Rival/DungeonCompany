@@ -33,17 +33,23 @@ private:
 	USceneComponent* DropTransform;
 
 private:
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Balancing")
 	float ItemDetectionRadius = 500.f;
 
 	UPROPERTY(EditDefaultsOnly)
 	TMap<ECatBurglarBehaviorState, UBehaviorTree*> BehaviorTreesForStates;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Balancing")
 	float StartFleeingHPUpper = 30.f;
 
-	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f, ClampMax = 1.f))
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f, ClampMax = 1.f), Category = "Balancing")
 	float AttackDropsItemOdds = 0.2f;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
+	float RetrievingRange = 3000.f;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
+	float OutOfRetrievingRangeDespawnTime = 10.f;
 
 private:
 	ECatBurglarBehaviorState IdleBehaviorState;
@@ -62,6 +68,14 @@ public:
 public:
 	ACatBurglar();
 
+private:
+	bool bInRetrievingRange;
+	FTimerHandle RetrieveHandle;
+
+protected:
+	virtual void Tick(float DeltaSeconds) override;
+	void Retrieve();
+
 public:
 	void StealItem(AWorldItem* StealingItem);
 
@@ -79,7 +93,6 @@ protected:
 protected:
 	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter) override;
 
-protected:
 	virtual void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus,
 	                              UBlackboardComponent* BlackboardComponent) override;
 	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus,

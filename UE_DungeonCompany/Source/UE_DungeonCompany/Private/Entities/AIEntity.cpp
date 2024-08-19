@@ -6,6 +6,7 @@
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "DC_Statics.h"
 #include "KismetTraceUtils.h"
+#include "NavigationSystem.h"
 #include "BehaviorTree/BehaviorTree.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
@@ -15,6 +16,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "EngineUtils.h"
 
 AAIEntity::AAIEntity()
 {
@@ -214,6 +216,62 @@ void AAIEntity::HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBl
 
 void AAIEntity::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 {
+}
+
+APlayerCharacter* AAIEntity::GetClosestPlayer() const
+{
+	APlayerCharacter* closestPlayer = nullptr;
+	float closestDistance = -1.f;
+	for (TActorIterator<APlayerCharacter> It(GetWorld()); It; ++It)
+	{
+		if (!closestPlayer)
+		{
+			closestPlayer = *It;
+			closestDistance = GetDistanceTo(closestPlayer);
+			continue;
+		}
+
+		float currentDistance = GetDistanceTo(*It);
+
+		if (closestDistance < currentDistance)
+			continue;
+
+		closestPlayer = *It;
+		closestDistance = currentDistance;
+	}
+
+	return closestPlayer;
+}
+
+APlayerCharacter* AAIEntity::GetClosestNavPlayer() const
+{
+	APlayerCharacter* closestPlayer = nullptr;
+	double closestDistance = -1.f;
+
+	UNavigationSystemV1* navSys = UNavigationSystemV1::GetCurrent(GetWorld());
+
+	for (TActorIterator<APlayerCharacter> It(GetWorld()); It; ++It)
+	{
+		if (!closestPlayer)
+		{
+			closestPlayer = *It;
+			UNavigationSystemV1::GetPathLength(GetWorld(), GetActorLocation(), closestPlayer->GetActorLocation(),
+			                                   closestDistance);
+
+			continue;
+		}
+
+		double currentDistance;
+		UNavigationSystemV1::GetPathLength(GetWorld(), GetActorLocation(), (*It)->GetActorLocation(), currentDistance);
+
+		if (closestDistance < currentDistance)
+			continue;
+
+		closestPlayer = *It;
+		closestDistance = currentDistance;
+	}
+
+	return closestPlayer;
 }
 
 void AAIEntity::OnDeath_Implementation()

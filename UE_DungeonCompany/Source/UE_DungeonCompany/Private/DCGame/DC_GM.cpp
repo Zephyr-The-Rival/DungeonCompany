@@ -13,6 +13,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "EngineUtils.h"
+#include "Items/ItemData.h"
 #include "Items/WorldItem.h"
 
 template<class T>
@@ -139,6 +140,14 @@ void ADC_GM::SpawnSpurchins()
 		allSpurchinSpawner[spurchinIndex]->SpawnSpurchin();
 		allSpurchinSpawner.RemoveAt(spurchinIndex);
 	}
+}
+
+void ADC_GM::AddLostItem(UItemData* LostItem)
+{
+	if(!IsValid(LostItem))
+		return;
+	
+	LostItems.Add(LostItem);
 }
 
 void ADC_GM::SpawnWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData)

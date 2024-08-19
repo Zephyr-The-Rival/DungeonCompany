@@ -6,6 +6,7 @@
 #include "GameFramework/GameMode.h"
 #include "DC_GM.generated.h"
 
+class UItemData;
 /**
  * 
  */
@@ -31,6 +32,12 @@ protected:
 	virtual void BeginPlay() override;
 	void SpawnSpurchins();
 
+private:
+	TArray<UItemData*> LostItems;
+
+public:
+	void AddLostItem(UItemData* LostItem);
+
 public:
 	void SpawnWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData);
 
@@ -47,13 +54,12 @@ public:
 	AAIEntity* SpawnAIEntity(UClass* Class, AActor* NearActor = nullptr, float Radius = 500.f);
 
 protected:
-	template<class T = AAIEntity>
+	template <class T = AAIEntity>
 	T* RandomlySpawnAIEntity(UClass* Class) const;
 
-	template<class T = AAIEntity>
+	template <class T = AAIEntity>
 	T* SpawnAIEntityCloseToActor(UClass* Class, AActor* Actor, float Radius) const;
 
-	template<class T>
+	template <class T>
 	T* SpawnAIEntity(UClass* Class, FVector Location, FRotator Rotation = FRotator::ZeroRotator) const;
-
 };
