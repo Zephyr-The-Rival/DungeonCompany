@@ -34,10 +34,8 @@ private:
 	UPROPERTY(EditAnywhere)
 	float VolumeLeftBurglarDespawnDelay = 30.f;
 
-	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<AWorldItem>> NestBlockerClasses;
-
 	TSubclassOf<ACatBurglar> CatBurglarClass;
+	TSubclassOf<AWorldItem> TorchClass;
 
 private:
 	TArray<APlayerCharacter*> PlayerCharactersInVolume;

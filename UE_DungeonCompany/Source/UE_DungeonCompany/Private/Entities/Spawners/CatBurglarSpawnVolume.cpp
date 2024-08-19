@@ -17,9 +17,9 @@ ACatBurglarSpawnVolume::ACatBurglarSpawnVolume(const FObjectInitializer& ObjectI
 		TEXT("/Game/_DungeonCompanyContent/Code/Entities/BP_CatBurglar"));
 	CatBurglarClass = BPClass.Class;
 
-	static ConstructorHelpers::FClassFinder<AWorldItem> TorchClass(
+	static ConstructorHelpers::FClassFinder<AWorldItem> TorchBPClass(
 		TEXT("/Game/_DungeonCompanyContent/Code/Items/Torch/BP_Torch_World"));
-	NestBlockerClasses.Add(TorchClass.Class);
+	TorchClass = TorchBPClass.Class;
 
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -216,15 +216,11 @@ void ACatBurglarSpawnVolume::OnCatBurglarCountChanged()
 
 void ACatBurglarSpawnVolume::OnBurglarNestBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
 {
-	int nestBlockersNum = NestBlockerClasses.Num();
-	
 	if(!IsActorANestBlocker(OtherActor))
 		return;
 
 	BlockersInNest.Add(OtherActor);
 	bNestBlocked = true;
-
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Blocked!"));
 }
 
 void ACatBurglarSpawnVolume::OnBurglarNestEndOverlap(AActor* OverlappedActor, AActor* OtherActor)
@@ -232,35 +228,15 @@ void ACatBurglarSpawnVolume::OnBurglarNestEndOverlap(AActor* OverlappedActor, AA
 	BlockersInNest.Remove(OtherActor);
 
 	if(BlockersInNest.Num() < 1)
-	{
 		bNestBlocked = false;
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Unblocked!"));
-
-	}
 }
 
 bool ACatBurglarSpawnVolume::IsActorANestBlocker(AActor* InActor) const
 {
-	int nestBlockersNum = NestBlockerClasses.Num();
-
 	AWorldItem* worldItem = Cast<AWorldItem>(InActor);
 
-	if(!worldItem)
-		return false;
-
-	bool isBlockingType = false;
-
-	for (int i = 0; i < nestBlockersNum; ++i)
-	{
-		if (InActor->IsA(NestBlockerClasses[i]))
-		{
-			isBlockingType = true;
-			break;
-		}
-	}
-
-	if(!isBlockingType)
-		return false;
+	if(!worldItem || !InActor->IsA(TorchClass))
+		return false;	
 	
 	UItemData* itemData = worldItem->GetMyData();
 	TArray<FString> dataArray = itemData->SeperateStringData(itemData->SerializeMyData());
