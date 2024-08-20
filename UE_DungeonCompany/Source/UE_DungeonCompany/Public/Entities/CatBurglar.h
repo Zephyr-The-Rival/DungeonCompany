@@ -51,6 +51,16 @@ private:
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
 	float OutOfRetrievingRangeDespawnTime = 10.f;
 
+	//Movement
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing|Movement")
+	float DefaultSpeed = 350.f;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing|Movement")
+	float FleeingSpeed = 350.f * 1.6f;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing|Movement")
+	float RetrievingSpeed = 350.f * 1.3f;
+	
 private:
 	ECatBurglarBehaviorState IdleBehaviorState;
 	ECatBurglarBehaviorState CurrentBehaviorState;
@@ -73,11 +83,12 @@ private:
 	FTimerHandle RetrieveHandle;
 
 protected:
-	virtual void Tick(float DeltaSeconds) override;
+	virtual void Tick(float DeltaSeconds) override;	
 	void Retrieve();
 
 public:
 	void StealItem(AWorldItem* StealingItem);
+	void StartFleeing();
 
 protected:
 	void UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState);

@@ -7,6 +7,7 @@
 #include "AI/DC_AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DCGame/DC_GM.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Items/ItemData.h"
 #include "Items/WorldItem.h"
 #include "PlayerCharacter/PlayerCharacter.h"
@@ -68,9 +69,9 @@ void ACatBurglar::Retrieve()
 		Destroy();
 		return;
 	}
-	
+
 	TActorIterator<ALostItemsCollection> LostItemIt(GetWorld());
-	
+
 	if (LostItemIt)
 		(*LostItemIt)->AddLostItem(StolenItem);
 
@@ -85,15 +86,33 @@ void ACatBurglar::StealItem(AWorldItem* StealingItem)
 	UpdateBehavior(ECatBurglarBehaviorState::Retrieving);
 }
 
+void ACatBurglar::StartFleeing()
+{
+	UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
+}
+
 void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 {
-	CurrentBehaviorState = NewBehaviorState;
-	SetInFleeingRange(NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
-
 	if (!BehaviorTreesForStates.Contains(NewBehaviorState))
 		return;
 
-	SetActorTickEnabled(NewBehaviorState == ECatBurglarBehaviorState::Retrieving);
+	CurrentBehaviorState = NewBehaviorState;
+	SetInFleeingRange(NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
+	SetActorTickEnabled(NewBehaviorState == ECatBurglarBehaviorState::Retrieving || NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
+
+	switch (NewBehaviorState)
+	{
+	case ECatBurglarBehaviorState::Fleeing:
+		GetCharacterMovement()->MaxWalkSpeed = FleeingSpeed;
+		break;
+
+	case ECatBurglarBehaviorState::Retrieving:
+		GetCharacterMovement()->MaxWalkSpeed = RetrievingSpeed;
+		break;
+		
+	default:
+		GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
+	}
 
 	RunBehaviorTree(BehaviorTreesForStates[NewBehaviorState]);
 }

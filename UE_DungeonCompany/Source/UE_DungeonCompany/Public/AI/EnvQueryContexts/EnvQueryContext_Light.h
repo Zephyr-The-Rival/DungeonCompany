@@ -15,9 +15,8 @@ UCLASS()
 class UE_DUNGEONCOMPANY_API UEnvQueryContext_Light : public UEnvQueryContext
 {
 	GENERATED_BODY()
+
 public:
 	virtual void ProvideContext(FEnvQueryInstance& QueryInstance, FEnvQueryContextData& ContextData) const override;
 	void GetAllLights(TArray<AActor*>& Out) const;
-
-	
 };
