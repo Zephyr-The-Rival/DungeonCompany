@@ -126,7 +126,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	if (IsLocallyControlled())
 		LocalTick(DeltaTime);
-	
 }
 
 void APlayerCharacter::LocalTick(float DeltaTime)
@@ -296,9 +295,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 	FVector2D localMoveVector = Value.Get<FVector2D>();
 
-	FVector worldMoveVector;
-
-	worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
+	FVector worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
 
 	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
 		StopSprint();
@@ -314,17 +311,20 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
-
-	if(bUsingSelectionWheel)
+	if (bUsingSelectionWheel)
 	{
-		MouseValue.X=Value.Get<FVector2d>().X;
-		MouseValue.Y=Value.Get<FVector2d>().Y;
+		MouseValue.X = Value.Get<FVector2d>().X;
+		MouseValue.Y = Value.Get<FVector2d>().Y;
 		return;
 	}
 	if (!bLookAllowed)
 		return;
 
-	(*LookFunction)(Value, this);
+	FVector2d lookVector = Value.Get<FVector2d>();
+	if(GetCharacterMovement<UDC_CMC>()->IsClimbing())
+		lookVector.X = 0.f;
+	
+	(*LookFunction)(lookVector, this);
 
 	FRotator newRotation = FRotator(0, 0, 0);
 	newRotation.Pitch = GetControlRotation().Euler().Y;
@@ -549,7 +549,7 @@ void APlayerCharacter::Jump()
 		return;
 	}
 
-	if (Stamina <= 0.f || GetCharacterMovement()->IsCrouching()||!bJumpAllowed)
+	if (Stamina <= 0.f || GetCharacterMovement()->IsCrouching() || !bJumpAllowed)
 		return;
 
 	SubstractStamina(JumpStaminaDrain);
@@ -791,7 +791,7 @@ void APlayerCharacter::Cough()
 
 void APlayerCharacter::ToggleInventory()
 {
-	if (!bSwitchHandAllowed)
+	if (!bSwitchHandAllowed || GetCharacterMovement<UDC_CMC>()->IsClimbing())
 		return;
 
 	this->bInventoryIsOn = !bInventoryIsOn;
@@ -1068,7 +1068,7 @@ void APlayerCharacter::SwitchHand()
 		return;
 	}
 
-	if (!bSwitchHandAllowed || bInventoryIsOn)
+	if (!bSwitchHandAllowed || bInventoryIsOn || GetCharacterMovement<UDC_CMC>()->IsClimbing())
 		return;
 
 	bSwitchHandAllowed = false;
@@ -1439,7 +1439,7 @@ void APlayerCharacter::Server_TriggerSecondaryItemAction_Implementation()
 }
 
 void APlayerCharacter::StartAttacking()
-{
+{	
 	if (!HasAuthority())
 		Server_AttackStart();
 	else
@@ -1448,6 +1448,9 @@ void APlayerCharacter::StartAttacking()
 
 void APlayerCharacter::AttackStart()
 {
+	if (GetCharacterMovement<UDC_CMC>()->IsClimbing())
+		return;
+	
 	if (AttackBlend != 0 || this->Stamina <= 0) //so a new attack only stars when the old one is already over
 		return;
 	//different attack when sprinting?
@@ -1696,12 +1699,12 @@ void APlayerCharacter::Server_UpdateHeldItems_Implementation(const TArray<TSubcl
 
 UUserWidget* APlayerCharacter::StartSelectionWheel(TArray<FString> Options)
 {
-	bMoveAllowed=false;
-	bLookAllowed=false;
-	bJumpAllowed=false;
-	bSwitchHandAllowed=false;
+	bMoveAllowed = false;
+	bLookAllowed = false;
+	bJumpAllowed = false;
+	bSwitchHandAllowed = false;
 
-	bUsingSelectionWheel=true;
+	bUsingSelectionWheel = true;
 	return GetMyHud()->ShowSelectionWheel(Options);
 }
 
@@ -1712,7 +1715,7 @@ int APlayerCharacter::EndSelectionWheel()
 	bJumpAllowed = true;
 	bSwitchHandAllowed = true;
 
-	bUsingSelectionWheel=false;
+	bUsingSelectionWheel = false;
 	return GetMyHud()->DestroySelectionWheel();
 }
 

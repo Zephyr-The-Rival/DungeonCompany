@@ -228,12 +228,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float GamepadAccelerationSpeed = 7.f;
 
+	friend class UDC_CMC;
+
 private:
 	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
 	
 private:
-	void (*LookFunction)(const FInputActionValue& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
+	void (*LookFunction)(const FVector2d& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
 
 protected:
 	void Move(const FInputActionValue& Value);
@@ -358,7 +360,6 @@ protected://inventory & Backpack
 	TSubclassOf<ABackPack> BackpackActor;
 
 	bool bInventoryIsOn = false;
-
 
 protected:
 	void ToggleInventory();
