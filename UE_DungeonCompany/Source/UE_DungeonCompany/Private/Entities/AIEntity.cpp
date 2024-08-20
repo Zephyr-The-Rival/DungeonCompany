@@ -101,9 +101,7 @@ void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 		SetTargetPlayer(nullptr);
 		return;
 	}
-
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Attacking"));
-
+	
 	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
 
@@ -117,7 +115,6 @@ void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 
 void AAIEntity::ExecuteAttack(FVector Direction)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("ExecuteAttack"));
 	FCollisionShape shape = FCollisionShape::MakeSphere(AttackRadius);
 
 	TArray<FHitResult> hits;
@@ -134,7 +131,6 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 	DrawDebugLine(GetWorld(), start, end, FColor::Blue);
 	int hitsNum = hits.Num();
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::FromInt(hitsNum));
 	TArray<APlayerCharacter*> alreadyHitPlayers;
 
 	for (int i = 0; i < hitsNum; ++i)
