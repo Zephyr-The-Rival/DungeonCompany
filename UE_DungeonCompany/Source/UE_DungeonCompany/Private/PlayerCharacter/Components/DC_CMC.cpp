@@ -248,7 +248,7 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 
 			bPrevClimbed = true;
 			CharacterOwner->bUseControllerRotationYaw = false;
-			Cast<APlayerCharacter>(CharacterOwner)->FirstPersonCamera->bUsePawnControlRotation = true;
+			//Cast<APlayerCharacter>(CharacterOwner)->FirstPersonCamera->bUsePawnControlRotation = true;
 
 			FRotator newRotation = UpdatedComponent->GetComponentRotation();
 			newRotation.Yaw = ClimbingObject->GetClimbRotationYaw(GetOwner());
@@ -285,8 +285,8 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 		bPrevClimbed = false;
 
 		APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(CharacterOwner); 
-		playerCharacter->FirstPersonCamera->bUsePawnControlRotation = false;
-		playerCharacter->FirstPersonCamera->SetWorldRotation(playerCharacter->GetFirstPersonMesh()->GetComponentRotation());
+		//playerCharacter->FirstPersonCamera->bUsePawnControlRotation = false;
+		//playerCharacter->FirstPersonCamera->SetWorldRotation(playerCharacter->GetFirstPersonMesh()->GetComponentRotation());
 
 		SetMovementMode(MOVE_Falling);
 

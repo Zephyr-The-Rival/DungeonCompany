@@ -18,25 +18,25 @@ void AHook::UpdateHookBehavior()
 {
 	switch (State)
 	{
-	case HookState::InHand:
+	case EHookState::InHand:
 		HookMesh->SetSimulatePhysics(false);
 		HookMesh->SetCollisionProfileName(FName("NoCollision"));
 		HookMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
 
-	case HookState::InWorldInactive:
+	case EHookState::InWorldInactive:
 		HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		HookMesh->SetCollisionProfileName(FName("WorldItem"));
 		HookMesh->SetSimulatePhysics(true);
 		break;
 
-	case HookState::InWorldActive:
+	case EHookState::InWorldActive:
 		HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		HookMesh->SetCollisionProfileName(FName("WorldItem"));
 		HookMesh->SetSimulatePhysics(true);
 		break;
 
-	case HookState::InWorldAttached:
+	case EHookState::InWorldAttached:
 		HookMesh->SetSimulatePhysics(false);
 		HookMesh->SetCollisionProfileName(FName("BlockAll"));
 		HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
@@ -49,7 +49,7 @@ void AHook::UpdateHookBehavior()
 	if(!HasAuthority())
 		return;
 
-	if (State != HookState::InWorldActive)
+	if (State != EHookState::InWorldActive)
 	{
 		HookMesh->OnComponentHit.RemoveAll(this);
 	}
@@ -98,7 +98,7 @@ void AHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 
 	if (newClimbingHook)
 	{
-		newClimbingHook->State = HookState::InWorldActive;
+		newClimbingHook->State = EHookState::InWorldActive;
 		newClimbingHook->SerializedStringData = SerializedStringData;
 		newClimbingHook->FinishSpawning(SpawnTransform);
 	}
@@ -123,7 +123,7 @@ void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 
 	if (newClimbingHook)
 	{
-		newClimbingHook->State = HookState::InWorldAttached;
+		newClimbingHook->State = EHookState::InWorldAttached;
 		newClimbingHook->SerializedStringData = SerializedStringData;
 		newClimbingHook->FinishSpawning(SpawnTransform);
 	}
@@ -139,15 +139,15 @@ void AHook::OnHoldingInHand_Implementation(bool LocallyControlled)
 	HookMesh->SetCollisionProfileName("NoCollision");
 	EasyInteract->SetCollisionProfileName("NoCollision");
 
-	State = HookState::InHand;
+	State = EHookState::InHand;
 	UpdateState();
 }
 
 void AHook::Multicast_ThrowHook_Implementation(FVector Direction)
 {
-	if (State != HookState::InWorldActive)
+	if (State != EHookState::InWorldActive)
 	{
-		State = HookState::InWorldActive;
+		State = EHookState::InWorldActive;
 		UpdateState();
 	}
 
@@ -156,10 +156,10 @@ void AHook::Multicast_ThrowHook_Implementation(FVector Direction)
 
 void AHook::OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (State != HookState::InWorldActive || !IsValid(OtherActor) || OtherActor->GetRootComponent()->Mobility != EComponentMobility::Static)
+	if (State != EHookState::InWorldActive || !IsValid(OtherActor) || OtherActor->GetRootComponent()->Mobility != EComponentMobility::Static)
 		return;
 
-	State = HookState::InWorldAttached;
+	State = EHookState::InWorldAttached;
 	UpdateState();
 
 }

@@ -2,7 +2,10 @@
 
 
 #include "WorldActors/SharedStatsManager.h"
+
+#include "DC_Statics.h"
 #include "Net/UnrealNetwork.h"
+#include "WorldPartition/ContentBundle/ContentBundleLog.h"
 
 // Sets default values
 ASharedStatsManager::ASharedStatsManager()
@@ -24,4 +27,19 @@ void ASharedStatsManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ASharedStatsManager, Money);
+}
+
+void ASharedStatsManager::OnMoneyReplicated()
+{
+	OnMoneyChanged.Broadcast();
+
+	if(this->HasAuthority())
+	{
+		LogWarning(TEXT("Server got rep notify"));
+	}
+	else
+	{
+		LogWarning(TEXT("Client  got rep notify"));	
+	}
+	
 }

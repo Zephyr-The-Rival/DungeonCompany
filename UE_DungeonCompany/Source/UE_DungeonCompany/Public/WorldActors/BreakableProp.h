@@ -28,4 +28,20 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void Hit(FVector ImpulseDirection, TSubclassOf<AWeapon> WeaponClass);
 	void Hit_Implementation(FVector ImpulseDirection, TSubclassOf<AWeapon> WeaponClass);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetBrokenState();
+	void SetBrokenState_Implementation();
+
+public:
+
+	//save stuff
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	bool bIsBroken;
+
+protected:
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	
 };
