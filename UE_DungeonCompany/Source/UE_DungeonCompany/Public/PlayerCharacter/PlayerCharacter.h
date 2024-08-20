@@ -701,4 +701,16 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_UpdateHeldItems(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas);
 	void Server_UpdateHeldItems_Implementation(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas);
+
+public:
+	UFUNCTION(BlueprintCallable)
+	UUserWidget* StartSelectionWheel(TArray<FString>Options);
+
+	UFUNCTION(BlueprintCallable)
+	int EndSelectionWheel();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FVector2f MouseValue;
+	
+	bool bUsingSelectionWheel=false;
 };
