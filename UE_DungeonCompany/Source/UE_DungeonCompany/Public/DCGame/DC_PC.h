@@ -87,6 +87,7 @@ private:
 	bool bOptionsMenuIsOn = false;
 
 protected:
+	UFUNCTION(BlueprintCallable)
 	void ToggleOptions();
 	
 	void PushToTalkStarted();
@@ -109,4 +110,9 @@ protected:
 	UFUNCTION(BlueprintNativeEvent)
 	void ToggleOptionsMenu(bool On);
 	void ToggleOptionsMenu_Implementation(bool On);
+
+protected:
+
+	virtual void PawnLeavingGame() override;
+
 };

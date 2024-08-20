@@ -95,9 +95,6 @@ protected:
 	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
 
 public:
-	virtual void OnDeath_Implementation() override;
-
-public:
 	enum EAnimationFlags
 	{
 		FLAG_Attacking = 0x01,	
@@ -124,13 +121,6 @@ protected:
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sound")
-	USoundBase* DeathSound;
 
-private:
-	UFUNCTION(NetMulticast, Unreliable)
-	void PlayDeathSound();
-	void PlayDeathSound_Implementation();
 };

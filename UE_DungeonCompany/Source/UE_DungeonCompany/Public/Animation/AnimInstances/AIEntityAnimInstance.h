@@ -21,13 +21,13 @@ private:
 	AAIEntity* OwningEntity;
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
 	bool bDead = false; 
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
 	bool bAttacking = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
 	bool bHit = false;
 
 	UPROPERTY(Transient)
