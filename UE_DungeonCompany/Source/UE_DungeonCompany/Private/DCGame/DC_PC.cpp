@@ -174,7 +174,7 @@ void ADC_PC::PawnLeavingGame()
 {
 	if(APlayerCharacter* player = Cast<APlayerCharacter>(this->GetPawn()))
 	{
-		player->dropAllItems();
+		player->DropAllItems();
 		if(IsValid(player->GetCurrentlyHeldWorldItem()))
 			player->GetCurrentlyHeldWorldItem()->Destroy();
 	}

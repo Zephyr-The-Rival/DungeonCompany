@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/Tasks/BTTask_BlackboardBase.h"
-#include "BTTTask_FindPlayerLocation.generated.h"
+#include "BTTask_FindPlayerLocation.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE_DUNGEONCOMPANY_API UBTTTask_FindPlayerLocation : public UBTTask_BlackboardBase
+class UE_DUNGEONCOMPANY_API UBTTask_FindPlayerLocation : public UBTTask_BlackboardBase
 {
 	GENERATED_BODY()
 
@@ -22,7 +22,7 @@ private:
 	float SearchRadius = 1500.f;
 
 public:
-	explicit UBTTTask_FindPlayerLocation(FObjectInitializer const& ObjectInitializer);
+	explicit UBTTask_FindPlayerLocation(FObjectInitializer const& ObjectInitializer);
 
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	
