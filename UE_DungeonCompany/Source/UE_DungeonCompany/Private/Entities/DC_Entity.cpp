@@ -69,7 +69,7 @@ void ADC_Entity::TakeDamage(float Damage)
 
 void ADC_Entity::OnDeath_Implementation()
 {
-	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName());
+	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName())
 
 	HP = 0.f;
 	OnEntityDeath.Broadcast(this);

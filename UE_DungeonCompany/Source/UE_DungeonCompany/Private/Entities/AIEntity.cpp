@@ -277,7 +277,15 @@ APlayerCharacter* AAIEntity::GetClosestNavPlayer() const
 void AAIEntity::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
+	
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	GetMesh()->SetAnimation(nullptr);
 
+	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	GetMesh()->SetAllBodiesSimulatePhysics(true);
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->WakeAllRigidBodies();
+	
 	GetController()->Destroy();
 }
 
