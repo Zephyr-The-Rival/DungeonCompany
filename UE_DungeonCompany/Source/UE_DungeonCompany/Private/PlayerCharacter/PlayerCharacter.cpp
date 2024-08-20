@@ -547,6 +547,7 @@ void APlayerCharacter::Jump()
 	if (GetCharacterMovement()->MovementMode != MOVE_Walking)
 	{
 		Super::Jump();
+		this->bJumped=true;
 		if (!GetMovementComponent()->IsFalling())
 			Server_SpawnSoundAtLocation(this->JumpSound, GetActorLocation());
 		return;
@@ -556,6 +557,7 @@ void APlayerCharacter::Jump()
 		return;
 
 	SubstractStamina(JumpStaminaDrain);
+	this->bJumped=true;
 	Super::Jump();
 	if (!GetMovementComponent()->IsFalling())
 		Server_SpawnSoundAtLocation(this->JumpSound, GetActorLocation());
@@ -1230,6 +1232,7 @@ void APlayerCharacter::CheckForFallDamage()
 
 	if (GetMovementComponent()->Velocity.Z == 0 && BWasFallingInLastFrame) //frame of impact
 	{
+		this->bJumped=false;//ignore me i am only for the animation blueprint
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z + 20;
 		//+20 artificially because the capsule curvature lets the player stand lower
 
