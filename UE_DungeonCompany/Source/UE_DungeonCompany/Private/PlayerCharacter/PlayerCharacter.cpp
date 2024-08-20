@@ -130,7 +130,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	if (IsLocallyControlled())
 		LocalTick(DeltaTime);
 	
-		
 }
 
 void APlayerCharacter::LocalTick(float DeltaTime)
@@ -318,6 +317,13 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
+
+	if(bUsingSelectionWheel)
+	{
+		MouseValue.X=Value.Get<FVector2d>().X;
+		MouseValue.Y=Value.Get<FVector2d>().Y;
+		return;
+	}
 	if (!bLookAllowed)
 		return;
 
@@ -1643,6 +1649,8 @@ UUserWidget* APlayerCharacter::StartSelectionWheel(TArray<FString> Options)
 	bLookAllowed=false;
 	bJumpAllowed=false;
 	bSwitchHandAllowed=false;
+
+	bUsingSelectionWheel=true;
 	return GetMyHud()->ShowSelectionWheel(Options);
 }
 
@@ -1653,6 +1661,7 @@ int APlayerCharacter::EndSelectionWheel()
 	bJumpAllowed = true;
 	bSwitchHandAllowed = true;
 
+	bUsingSelectionWheel=false;
 	return GetMyHud()->DestroySelectionWheel();
 }
 

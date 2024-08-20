@@ -708,4 +708,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int EndSelectionWheel();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FVector2f MouseValue;
+	
+	bool bUsingSelectionWheel=false;
 };
