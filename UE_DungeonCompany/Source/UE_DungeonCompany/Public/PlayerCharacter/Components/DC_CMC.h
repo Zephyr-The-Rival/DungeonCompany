@@ -81,6 +81,8 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float ClimbingAttractionForce = 200.f;
 
+	inline bool IsClimbing() const { return MovementMode == MOVE_Custom && CustomMovementMode == ECustomMovementMode::CMOVE_Climb; }
+
 protected:
 	virtual void PhysCustom(float DeltaTime, int32 Iterations) override;
 
@@ -120,6 +122,10 @@ private:
 
 public:
 	virtual void UpdateCharacterStateBeforeMovement(float DeltaSeconds) override;
+
+protected:
+	void UpdateToClimbState();
+	void UpdateFromClimbState();
 
 public:
 	void ChangeClimbAllowedState(bool IsClimbAllowed);
