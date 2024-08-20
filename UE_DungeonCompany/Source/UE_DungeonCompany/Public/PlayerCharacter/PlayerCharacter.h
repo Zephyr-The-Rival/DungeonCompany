@@ -29,6 +29,14 @@ class UFootstepSystemComponent;
 
 struct  FWeaponInfo;
 
+USTRUCT()
+struct FHeldItem
+{
+	GENERATED_BODY()
+	TSubclassOf<UItemData> ItemDataClass;
+	FString ItemData;
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemDrop);
 
 UCLASS()
@@ -377,7 +385,8 @@ private:
 
 	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
-
+public:
+	AWorldItem* GetCurrentlyHeldWorldItem() const {return this->CurrentlyHeldWorldItem;}
 protected:
 	UFUNCTION(BlueprintCallable)
 	void TakeOutItem();
@@ -513,7 +522,13 @@ protected:
 public://blockers
 
 	bool bSwitchHandAllowed = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bMoveAllowed = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bJumpAllowed=true;
+	
 	bool bLookAllowed = true;
 	bool bSprintAllowed = true;
 	bool bPrimaryActionAllowed = true;
@@ -668,5 +683,34 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void LeftBehind();
 	void LeftBehind_Implementation();
+
+public:
+	//exists so the server can drop clients items when they disconnect
+	UPROPERTY()
+	TArray<FHeldItem> HeldItems;
+
+
+protected:
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateHeldItems();
 	
+private:
+	TArray<FHeldItem> GetHeldItems();
+	
+	UFUNCTION(Server, Reliable)
+	void Server_UpdateHeldItems(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas);
+	void Server_UpdateHeldItems_Implementation(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas);
+
+public:
+	UFUNCTION(BlueprintCallable)
+	UUserWidget* StartSelectionWheel(TArray<FString>Options);
+
+	UFUNCTION(BlueprintCallable)
+	int EndSelectionWheel();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FVector2f MouseValue;
+	
+	bool bUsingSelectionWheel=false;
 };

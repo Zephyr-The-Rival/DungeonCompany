@@ -36,7 +36,7 @@ void ABreakableProp::Hit_Implementation(FVector ImpulseDirection, TSubclassOf<AW
 
 void ABreakableProp::SetBrokenState_Implementation()
 {
-	FString text= this->GetClass()->GetDisplayNameText().ToString()+" SetBrokenState() must be overridden";
+	FString text= "SetBrokenState() must be overridden";
 	LogWarning(*text);
 }
 

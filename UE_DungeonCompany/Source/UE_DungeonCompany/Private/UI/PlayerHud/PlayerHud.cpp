@@ -64,4 +64,14 @@ void UPlayerHud::HideInteractProgressBar_Implementation()
 {
 }
 
+UUserWidget* UPlayerHud::ShowSelectionWheel_Implementation(const  TArray<FString>& Options)
+{
+	return nullptr;
+}
+
+int UPlayerHud::DestroySelectionWheel_Implementation()
+{
+	return -1;
+}
+
 
