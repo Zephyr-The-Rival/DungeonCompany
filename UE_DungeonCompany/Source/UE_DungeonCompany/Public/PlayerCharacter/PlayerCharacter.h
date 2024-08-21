@@ -303,7 +303,7 @@ private:
 public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bClimbingbClimbing = false;
+	bool bClimbing = false;
 	
 public:
 	virtual bool CanJumpInternal_Implementation() const override;
