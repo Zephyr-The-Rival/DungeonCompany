@@ -40,6 +40,9 @@ public:
 	void SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
 	void SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
 
+	UFUNCTION(BlueprintCallable)
+	virtual void Heal(float amount);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UNiagaraSystem* bloodEffect;

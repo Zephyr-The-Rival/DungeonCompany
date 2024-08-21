@@ -738,4 +738,20 @@ public:
 	FVector2f MouseValue;
 	
 	bool bUsingSelectionWheel=false;
+
+public://potionStuff
+	UFUNCTION(BlueprintCallable)
+	void OnPotionDrunk();
+
+	UFUNCTION(BlueprintCallable)
+	void StartDrinkingPotion();
+
+	UFUNCTION(BlueprintCallable)
+	void StopDrinkingPotion();
+
+	UFUNCTION(BlueprintCallable)
+	bool GetIsDrinkingPotion() const {return this->bIsDrinkingPotion;}
+private:
+	UPROPERTY(Replicated)
+	bool bIsDrinkingPotion=false;
 };

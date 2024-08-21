@@ -38,6 +38,7 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "DCGame/DC_PostMortemPawn.h"
+#include "Items/Potion.h"
 #include "Items/WorldCurrency_Data.h"
 #include "WorldActors/ResetManager.h"
 
@@ -188,6 +189,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
 	DOREPLIFETIME(APlayerCharacter, bClimbing);
+	DOREPLIFETIME(APlayerCharacter, bIsDrinkingPotion);
 }
 
 
@@ -1678,6 +1680,29 @@ int APlayerCharacter::EndSelectionWheel()
 
 	bUsingSelectionWheel=false;
 	return GetMyHud()->DestroySelectionWheel();
+}
+
+void APlayerCharacter::OnPotionDrunk()
+{
+	if(APotion* Potion=Cast<APotion>(GetCurrentlyHeldWorldItem()))
+	{
+		Potion->Local_ApplyEffect(this);
+	}
+}
+
+void APlayerCharacter::StartDrinkingPotion()
+{
+	this->bIsDrinkingPotion=true;
+	this->bSwitchHandAllowed=false;
+	this->bPrimaryActionAllowed=false;
+}
+
+void APlayerCharacter::StopDrinkingPotion()
+{
+	this->bIsDrinkingPotion=false;
+	this->bSwitchHandAllowed=true;
+	this->bPrimaryActionAllowed=true;
+	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
 }
 
 
