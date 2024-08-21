@@ -116,7 +116,7 @@ void ADC_PostMortemPawn::Restart()
 		
 
 		PlayerCharacters.Add(currentPlayer);
-		currentPlayer->OnPlayerDeath.AddDynamic(this, &ADC_PostMortemPawn::OnPlayerDied);
+		currentPlayer->OnEntityDeath.AddDynamic(this, &ADC_PostMortemPawn::OnPlayerDied);
 	}
 
 	if(!MySpectatorHud)
@@ -180,7 +180,7 @@ void ADC_PostMortemPawn::OnInputDeviceChanged(bool IsUsingGamepad)
 
 void ADC_PostMortemPawn::Look(const FInputActionValue& Value)
 {
-	(*LookFunction)(Value, this);
+	(*LookFunction)(Value.Get<FVector2d>(), this);
 }
 
 void ADC_PostMortemPawn::NoLook()

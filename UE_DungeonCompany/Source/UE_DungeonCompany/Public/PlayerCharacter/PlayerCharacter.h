@@ -228,12 +228,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float GamepadAccelerationSpeed = 7.f;
 
+	friend class UDC_CMC;
+
 private:
 	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
 	
 private:
-	void (*LookFunction)(const FInputActionValue& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
+	void (*LookFunction)(const FVector2d& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
 
 protected:
 	void Move(const FInputActionValue& Value);
@@ -244,6 +246,12 @@ protected:
 	void NoLook();
 	
 	virtual void Jump() override;
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bJumped= false;
+protected:
 
 	void CrouchActionStarted();
 	void CrouchActionCompleted();
@@ -359,7 +367,6 @@ protected://inventory & Backpack
 
 	bool bInventoryIsOn = false;
 
-
 protected:
 	void ToggleInventory();
 
@@ -412,12 +419,17 @@ protected:
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
 public:
+	void DropRandomItem();
+
+	UFUNCTION(Client, Unreliable)
+	void Client_DropRandomItem();
+	void Client_DropRandomItem_Implementation();
+	
+public:
 	UPROPERTY(BlueprintAssignable)
 	FOnItemDrop OnDropItem;
 
-
 public:
-	
 	void RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty);
 
 protected:
@@ -536,6 +548,10 @@ public://blockers
 
 private:
 	float OverridenWalkingSpeed;
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float SlowedWalkingSpeed=100;
 
 public://fighting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
@@ -609,10 +625,8 @@ public:
 	UFootstepSystemComponent* FootstepSystemComponent;
 
 public:
-	
-
 	UFUNCTION(BlueprintCallable)
-	void dropAllItems();
+	void DropAllItems();
 
 protected:
 
@@ -701,4 +715,16 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_UpdateHeldItems(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas);
 	void Server_UpdateHeldItems_Implementation(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas);
+
+public:
+	UFUNCTION(BlueprintCallable)
+	UUserWidget* StartSelectionWheel(TArray<FString>Options);
+
+	UFUNCTION(BlueprintCallable)
+	int EndSelectionWheel();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FVector2f MouseValue;
+	
+	bool bUsingSelectionWheel=false;
 };

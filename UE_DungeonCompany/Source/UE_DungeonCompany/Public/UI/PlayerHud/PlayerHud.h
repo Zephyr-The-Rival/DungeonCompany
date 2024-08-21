@@ -111,5 +111,13 @@ public:
 	void HideInteractProgressBar();
 	void HideInteractProgressBar_Implementation();
 
+	UFUNCTION(BlueprintNativeEvent)
+	UUserWidget* ShowSelectionWheel(const TArray<FString>& Options);
+	UUserWidget* ShowSelectionWheel_Implementation( const TArray<FString>& Options);
+
+	UFUNCTION(BlueprintNativeEvent)
+	int DestroySelectionWheel();
+	int DestroySelectionWheel_Implementation();
+
 
 };
