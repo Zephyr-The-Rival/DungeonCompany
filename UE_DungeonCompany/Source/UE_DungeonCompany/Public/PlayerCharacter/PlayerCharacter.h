@@ -308,7 +308,13 @@ public:
 	bool GetClimbing() const {return this->bClimbing;}
 
 	void SetClimbing(bool value);
-	
+
+
+private:
+
+	UFUNCTION(Server, Unreliable)
+	void Server_SetClimbing(bool Value);
+	void Server_SetClimbing_Implementation(bool Value);
 	
 public:
 	virtual bool CanJumpInternal_Implementation() const override;

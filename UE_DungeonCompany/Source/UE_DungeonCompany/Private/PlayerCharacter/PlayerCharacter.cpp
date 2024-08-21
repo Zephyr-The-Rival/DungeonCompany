@@ -749,7 +749,12 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 
 void APlayerCharacter::SetClimbing(bool value)
 {
-	this->bClimbing=value;
+	this->Server_SetClimbing(value);
+}
+
+void APlayerCharacter::Server_SetClimbing_Implementation(bool Value)
+{
+	this->bClimbing=Value;
 }
 
 bool APlayerCharacter::CanJumpInternal_Implementation() const
