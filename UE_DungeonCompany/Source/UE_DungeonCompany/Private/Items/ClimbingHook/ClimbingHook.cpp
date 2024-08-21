@@ -35,17 +35,17 @@ void AClimbingHook::UpdateHookBehavior()
 	if (!HasAuthority())
 		return;
 
-	if(GetHookState() == HookState::InWorldAttached)
+	if(GetHookState() == EHookState::InWorldAttached)
 		SetActorTickEnabled(true);
 
-	if ((GetHookState() == HookState::InWorldAttached || GetHookState() == HookState::InWorldActive) && !IsValid(SpawnedRope))
+	if ((GetHookState() == EHookState::InWorldAttached || GetHookState() == EHookState::InWorldActive) && !IsValid(SpawnedRope))
 	{
 		FActorSpawnParameters spawnParams;
 		spawnParams.Owner = this;
 
 		SpawnedRope = GetWorld()->SpawnActor<ARope>(RopeClass, GetActorLocation(), GetActorRotation(), spawnParams);
 	}
-	else if (GetHookState() != HookState::InWorldAttached && GetHookState() != HookState::InWorldActive && IsValid(SpawnedRope))
+	else if (GetHookState() != EHookState::InWorldAttached && GetHookState() != EHookState::InWorldActive && IsValid(SpawnedRope))
 	{
 		SpawnedRope->Destroy();
 	}
