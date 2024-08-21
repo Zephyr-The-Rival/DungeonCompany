@@ -115,9 +115,7 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 {
 	if (DeltaTime < MIN_TICK_TIME)
 		return;
-
-	DrawDebugSphere(GetWorld(), ClimbingObject->GetUpperEndLocation(), 100.f, 12, FColor::Blue, false, 5.f);
-
+	
 	if (!CharacterOwner || (!CharacterOwner->Controller && !bRunPhysicsWithNoController && !HasAnimRootMotion() && !
 		CurrentRootMotion.HasOverrideVelocity() && (CharacterOwner->GetLocalRole() != ROLE_SimulatedProxy)))
 	{
@@ -138,7 +136,9 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 
 	FVector climbVector = ClimbingObject->GetUpVectorAtDistance(ClimbedDistance);
 
-	if (Acceleration.Z < 0 && (ClimbingObject->GetLowerEndLocation() - oldLocation).Length() < 150.f)
+	float heightDeltaToLower = ClimbingObject->GetLowerEndLocation().Z - oldLocation.Z;
+	
+	if (Acceleration.Z < 0 && heightDeltaToLower < 150.f && heightDeltaToLower > -150.f)
 	{
 		FHitResult hit;
 
@@ -180,9 +180,40 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	{
 		FVector avoidanceDelta = FVector::CrossProduct(UpdatedComponent->GetRightVector(), hit.Normal) *
 			ClimbingAttractionForce * DeltaTime;
+
 		if (Acceleration.Z < 0)
 			avoidanceDelta *= -1;
+
 		SafeMoveUpdatedComponent(avoidanceDelta, UpdatedComponent->GetComponentQuat(), true, hit);
+	}
+	else
+	{
+		FVector updCompLocation = UpdatedComponent->GetComponentLocation();
+
+		FVector climbLocation = ClimbingObject->GetLocationAtDistance(ClimbedDistance);
+
+		FVector preferredActorLocation;
+
+		FRotator newRotation = UpdatedComponent->GetComponentRotation();
+		newRotation.Yaw = ClimbingObject->GetClimbRotationYaw(GetOwner());
+
+		FVector forwardVector = newRotation.Vector();
+
+		if (updCompLocation.Z > ClimbingObject->GetUpperEndLocation().Z /*|| ClimbingObject->IsA<ARope>()*/)
+		{
+			preferredActorLocation = climbLocation;
+			preferredActorLocation.Z = updCompLocation.Z;
+		}
+		else
+		{
+			preferredActorLocation = climbLocation + forwardVector * ClimbingDistance;
+		}
+
+		FVector locationDelta = (preferredActorLocation - UpdatedComponent->GetComponentLocation()) * DeltaTime;
+
+		forwardVector.Z = 0.f;
+
+		SafeMoveUpdatedComponent(locationDelta, newRotation, true, hit);
 	}
 
 	Velocity = (UpdatedComponent->GetComponentLocation() - oldLocation) / DeltaTime;
@@ -315,16 +346,16 @@ void UDC_CMC::UpdateFromClimbState()
 {
 	bWantsToClimb = false;
 	bPrevClimbed = false;
-	
+
 	SetMovementMode(MOVE_Falling);
 
 	APlayerCharacter* playerCharacter = GetOwner<APlayerCharacter>();
-	
+
 	OnStoppedClimbing.Broadcast(playerCharacter);
 
 	if (!playerCharacter || !playerCharacter->IsLocallyControlled())
 		return;
-	
+
 	playerCharacter->GetFirstPersonMesh()->SetVisibility(true);
 
 	if (AWorldItem* worldItem = playerCharacter->GetCurrentlyHeldWorldItem())
