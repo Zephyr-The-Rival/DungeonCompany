@@ -187,6 +187,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
+	DOREPLIFETIME(APlayerCharacter, bClimbing);
 }
 
 
@@ -744,6 +745,11 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 
 	if (bSprinting)
 		ToggleSprint();
+}
+
+void APlayerCharacter::SetClimbing(bool value)
+{
+	this->bClimbing=value;
 }
 
 bool APlayerCharacter::CanJumpInternal_Implementation() const

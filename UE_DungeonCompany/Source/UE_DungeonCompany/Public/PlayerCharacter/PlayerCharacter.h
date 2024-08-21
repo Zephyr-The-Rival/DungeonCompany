@@ -300,10 +300,15 @@ protected:
 private:
 	
 	FVector ClimbUpVector = FVector::UpVector;
-public:
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+
+	UPROPERTY(Replicated)
 	bool bClimbing = false;
+public:
+	UFUNCTION(BlueprintCallable)
+	bool GetClimbing() const {return this->bClimbing;}
+
+	void SetClimbing(bool value);
+	
 	
 public:
 	virtual bool CanJumpInternal_Implementation() const override;
