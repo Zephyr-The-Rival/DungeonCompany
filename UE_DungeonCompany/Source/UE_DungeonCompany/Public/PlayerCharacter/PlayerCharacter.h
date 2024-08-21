@@ -247,6 +247,12 @@ protected:
 	
 	virtual void Jump() override;
 
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bJumped= false;
+protected:
+
 	void CrouchActionStarted();
 	void CrouchActionCompleted();
 
@@ -542,6 +548,10 @@ public://blockers
 
 private:
 	float OverridenWalkingSpeed;
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float SlowedWalkingSpeed=100;
 
 public://fighting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
