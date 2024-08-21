@@ -245,6 +245,12 @@ protected:
 	
 	virtual void Jump() override;
 
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bJumped= false;
+protected:
+
 	void CrouchActionStarted();
 	void CrouchActionCompleted();
 
