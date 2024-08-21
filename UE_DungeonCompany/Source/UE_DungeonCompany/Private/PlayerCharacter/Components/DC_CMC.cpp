@@ -325,11 +325,11 @@ void UDC_CMC::UpdateToClimbState()
 	FHitResult moveHit;
 	SafeMoveUpdatedComponent(climbDelta, UpdatedComponent->GetComponentRotation(), true, moveHit);
 
-	if (!ClimbingObject->IsA<ALadder>())
-		return;
-
-	GetOwner()->SetActorLocation(climbPosition);
-	Velocity = FVector::ZeroVector;
+	if (ClimbingObject->IsA<ALadder>())
+	{
+		GetOwner()->SetActorLocation(climbPosition);
+		Velocity = FVector::ZeroVector;
+	}
 
 	if (!playerCharacter->IsLocallyControlled())
 		return;

@@ -281,8 +281,8 @@ void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransf
 		FVector direction = SplineComponent->GetDirectionAtSplinePoint(i, ESplineCoordinateSpace::World);
 		FVector location = SplineComponent->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::World);
 
-		DrawDebugLine(GetWorld(), location, location + direction * 50.f, FColor::Red, false, 5.f);
-		if (SplineComponent->GetDirectionAtSplinePoint(i, ESplineCoordinateSpace::World).Dot(-FVector::UpVector) < 0.5)
+		float heightDeltaToLower = location.Z - GetLowerEndLocation().Z;
+		if (direction.Dot(-FVector::UpVector) < 0.5 || (heightDeltaToLower < 50.f && heightDeltaToLower > -50.f))
 			continue;
 
 		UBoxComponent* newBox = NewObject<UBoxComponent>(this);
