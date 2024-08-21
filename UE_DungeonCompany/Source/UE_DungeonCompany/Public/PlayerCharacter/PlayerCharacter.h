@@ -298,9 +298,13 @@ protected:
 	void OnInputDeviceChanged(bool IsUsingGamepad);
 
 private:
-	bool bClimbing = false;
+	
 	FVector ClimbUpVector = FVector::UpVector;
-
+public:
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bClimbingbClimbing = false;
+	
 public:
 	virtual bool CanJumpInternal_Implementation() const override;
 
