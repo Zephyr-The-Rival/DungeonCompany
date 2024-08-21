@@ -58,14 +58,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	DropTransform->SetupAttachment(FirstPersonCamera);
 	DropTransform->SetRelativeLocation(FVector(150, 0, -20));
 
-	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
-	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
-	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
-	GetCharacterMovement<UDC_CMC>()->MaxClimbSpeed = ClimbingSpeed;
-	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
-	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
+
 
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationPitch = false;
@@ -98,6 +91,15 @@ void APlayerCharacter::BeginPlay()
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina; //doesnt seem to take the blueprint changes during construction
 
+	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
+	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
+	GetCharacterMovement<UDC_CMC>()->MaxClimbSpeed = ClimbingSpeed;
+	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
+	
 	this->HandSlotA = NewObject<UInventorySlot>();
 	this->HandSlotB = NewObject<UInventorySlot>();
 
@@ -1412,8 +1414,7 @@ void APlayerCharacter::AttackStart()
 	this->bSprintAllowed = false;
 
 	OverridenWalkingSpeed = WalkingSpeed;
-	WalkingSpeed = 100;
-	GetCharacterMovement()->MaxWalkSpeed = 100;
+	GetCharacterMovement()->MaxWalkSpeed = SlowedWalkingSpeed;
 
 	if (IsLocallyControlled())
 	{
