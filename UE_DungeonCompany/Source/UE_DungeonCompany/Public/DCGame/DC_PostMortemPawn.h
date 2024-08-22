@@ -80,7 +80,7 @@ protected:
 	void OnInputDeviceChanged(bool IsUsingGamepad);
 
 private:
-	void (*LookFunction)(const FInputActionValue& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
+	void (*LookFunction)(const FVector2d& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
 
 protected:
 	void Look(const FInputActionValue& Value);

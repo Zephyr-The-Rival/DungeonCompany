@@ -228,12 +228,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float GamepadAccelerationSpeed = 7.f;
 
+	friend class UDC_CMC;
+
 private:
 	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
 	
 private:
-	void (*LookFunction)(const FInputActionValue& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
+	void (*LookFunction)(const FVector2d& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
 
 protected:
 	void Move(const FInputActionValue& Value);
@@ -380,7 +382,6 @@ protected://inventory & Backpack
 
 	bool bInventoryIsOn = false;
 
-
 protected:
 	void ToggleInventory();
 
@@ -433,12 +434,17 @@ protected:
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
 public:
+	void DropRandomItem();
+
+	UFUNCTION(Client, Unreliable)
+	void Client_DropRandomItem();
+	void Client_DropRandomItem_Implementation();
+	
+public:
 	UPROPERTY(BlueprintAssignable)
 	FOnItemDrop OnDropItem;
 
-
 public:
-	
 	void RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty);
 
 protected:
@@ -634,10 +640,8 @@ public:
 	UFootstepSystemComponent* FootstepSystemComponent;
 
 public:
-	
-
 	UFUNCTION(BlueprintCallable)
-	void dropAllItems();
+	void DropAllItems();
 
 protected:
 
