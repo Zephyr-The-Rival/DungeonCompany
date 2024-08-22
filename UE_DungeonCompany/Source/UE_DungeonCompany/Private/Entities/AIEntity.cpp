@@ -17,6 +17,7 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "EngineUtils.h"
+#include "Components/CapsuleComponent.h"
 
 AAIEntity::AAIEntity()
 {
@@ -273,6 +274,8 @@ APlayerCharacter* AAIEntity::GetClosestNavPlayer() const
 void AAIEntity::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
+
+	GetCapsuleComponent()->SetCollisionProfileName(FName("IgnoreOnlyPawn"));
 	
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	GetMesh()->SetAnimation(nullptr);
@@ -281,8 +284,9 @@ void AAIEntity::OnDeath_Implementation()
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->WakeAllRigidBodies();
-	
-	GetController()->Destroy();
+
+	if(HasAuthority())
+		GetController()->Destroy();
 }
 
 void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
