@@ -95,7 +95,7 @@ void AAIEntity::RunBehaviorTree(UBehaviorTree* InBehaviorTree) const
 	aiController->RunBehaviorTree(InBehaviorTree);
 }
 
-void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
+void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 {
 	if (TargetPlayer->IsDead())
 	{
@@ -161,12 +161,12 @@ void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
 }
 
-void AAIEntity::SetTargetPlayer(APlayerCharacter* TargetPlayer) const
+void AAIEntity::SetTargetPlayer(APlayerCharacter* InTargetPlayer) const
 {
 	ADC_AIController* aiController = GetController<ADC_AIController>();
 
 	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", TargetPlayer);
+		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", InTargetPlayer);
 }
 
 bool AAIEntity::IsVisibleToPlayers() const
@@ -213,6 +213,7 @@ void AAIEntity::HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBl
 
 void AAIEntity::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 {
+	TargetPlayer = Target;
 }
 
 APlayerCharacter* AAIEntity::GetClosestPlayer() const
@@ -322,16 +323,23 @@ void AAIEntity::SetIsAttacking(bool InAttacking)
 void AAIEntity::SetAnimationBitFlag(EAnimationFlags InBit)
 {
 	AnimationFlags |= InBit;
+	OnAnimationFlagUpdated();
 }
 
 void AAIEntity::ClearAnimationBitFlag(EAnimationFlags InBit)
 {
 	AnimationFlags &= ~InBit;
+	OnAnimationFlagUpdated();
 }
 
 void AAIEntity::ToggleAnimationBitFlag(EAnimationFlags InBit)
 {
 	AnimationFlags ^= InBit;
+	OnAnimationFlagUpdated();
+}
+
+void AAIEntity::OnAnimationFlagUpdated_Implementation()
+{
 }
 
 void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

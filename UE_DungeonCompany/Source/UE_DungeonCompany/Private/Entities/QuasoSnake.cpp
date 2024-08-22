@@ -48,7 +48,15 @@ void AQuasoSnake::BeginPlay()
 	SetIsLurking(true);
 }
 
-void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
+void AQuasoSnake::OnAnimationFlagUpdated_Implementation()
+{
+	Super::OnAnimationFlagUpdated_Implementation();
+
+	TopCaveMesh->SetVisibility(IsLurking());
+	BottomCaveMesh->SetVisibility(IsLurking());
+}
+
+void AQuasoSnake::AttackPlayer(APlayerCharacter* PlayerAttacking)
 {
 	if (!HasAuthority() || bInAttack)
 		return;
@@ -58,7 +66,7 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 
 	FTimerHandle handle;
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AQuasoSnake::LaunchAtActor,
-	                                                        Cast<AActor>(TargetPlayer));
+	                                                        Cast<AActor>(PlayerAttacking));
 	GetWorld()->GetTimerManager().SetTimer(handle, delegate, WindUpSeconds, false);
 
 	SetInAttackOnBlackboard(true);
@@ -68,10 +76,10 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 	GetCharacterMovement()->SetMovementMode(MOVE_None);
 
 	FRotator attackRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),
-	                                                                 TargetPlayer->GetActorLocation());
+	                                                                 PlayerAttacking->GetActorLocation());
 	GetController()->SetControlRotation(attackRotation);
 
-	CalculateLaunchSplineToActor(TargetPlayer);
+	CalculateLaunchSplineToActor(PlayerAttacking);
 }
 
 void AQuasoSnake::LaunchAtActor(AActor* Actor)
