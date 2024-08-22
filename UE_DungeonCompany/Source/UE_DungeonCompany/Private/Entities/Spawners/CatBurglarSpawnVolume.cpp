@@ -17,6 +17,9 @@ ACatBurglarSpawnVolume::ACatBurglarSpawnVolume(const FObjectInitializer& ObjectI
 		TEXT("/Game/_DungeonCompanyContent/Code/Entities/BP_CatBurglar"));
 	CatBurglarClass = BPClass.Class;
 
+	//static ConstructorHelpers::FObjectFinder<UStaticMesh> NestMeshFile(TEXT(""));
+	//NestMesh = NestMeshFile.Object;
+
 	PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -31,18 +34,23 @@ void ACatBurglarSpawnVolume::OnConstruction(const FTransform& Transform)
 		FActorSpawnParameters spawnParams;
 		Nest = GetWorld()->SpawnActor<AStaticMeshActor>(GetWorldSpawnLocation(),
 		                                                SpawnTransform.GetRotation().Rotator());
-
-		Nest->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+		Nest->GetStaticMeshComponent()->SetStaticMesh(NestMesh);
 	}
 	else
 	{
+		Nest->GetStaticMeshComponent()->SetStaticMesh(NestMesh);
+
 		Nest->SetActorLocation(GetWorldSpawnLocation());
 		Nest->SetActorRotation(SpawnTransform.GetRotation().Rotator());
-		Nest->SetActorScale3D(FVector(1, 1, 1));
 	};
 
 	Nest->GetStaticMeshComponent()->SetCollisionProfileName("OverlapAll");
 	Nest->SetLockLocation(true);
+#if WITH_EDITOR
+	GEngine->OnLevelActorDeleted().RemoveAll(this);
+	GEngine->OnLevelActorDeleted().AddUObject(this, &ACatBurglarSpawnVolume::OnLevelActorDeleted);
+#endif
+	
 }
 
 void ACatBurglarSpawnVolume::BeginPlay()
@@ -64,6 +72,17 @@ void ACatBurglarSpawnVolume::BeginPlay()
 
 	Nest->GetStaticMeshComponent()->SetGenerateOverlapEvents(true);
 }
+
+#if WITH_EDITOR
+void ACatBurglarSpawnVolume::OnLevelActorDeleted(AActor* DeletedActor)
+{
+	if(DeletedActor != this)
+		return;
+	
+	if(Nest)
+		Nest->Destroy();
+}
+#endif
 
 void ACatBurglarSpawnVolume::Tick(float DeltaSeconds)
 {

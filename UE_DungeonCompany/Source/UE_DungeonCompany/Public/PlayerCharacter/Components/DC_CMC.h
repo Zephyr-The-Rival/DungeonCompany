@@ -27,24 +27,26 @@ class UE_DUNGEONCOMPANY_API UDC_CMC : public UCharacterMovementComponent
 	{
 		typedef FSavedMove_Character Super;
 
-		uint8 bWantsToSprint:1;
-		uint8 bWantsToClimb:1;
+		uint8 bWantsToSprint : 1;
+		uint8 bWantsToClimb : 1;
 
-		virtual bool CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter, float MaxDelta) const override;
+		virtual bool
+		CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter, float MaxDelta) const override;
 		virtual void Clear() override;
 		virtual uint8 GetCompressedFlags() const override;
-		virtual void SetMoveFor(ACharacter* C, float InDeltaTime, FVector const& NewAccel, class FNetworkPredictionData_Client_Character & ClientData) override;
+		virtual void SetMoveFor(ACharacter* C, float InDeltaTime, FVector const& NewAccel,
+		                        class FNetworkPredictionData_Client_Character& ClientData) override;
 		virtual void PrepMoveFor(ACharacter* C) override;
 	};
 
 	class FNetworkPredictionData_Client_PlayerCharacter : public FNetworkPredictionData_Client_Character
 	{
-			typedef FNetworkPredictionData_Client_Character Super;
+		typedef FNetworkPredictionData_Client_Character Super;
 
-		public:
-			FNetworkPredictionData_Client_PlayerCharacter(const UCharacterMovementComponent& ClientMovement);
+	public:
+		FNetworkPredictionData_Client_PlayerCharacter(const UCharacterMovementComponent& ClientMovement);
 
-			virtual FSavedMovePtr AllocateNewMove() override;
+		virtual FSavedMovePtr AllocateNewMove() override;
 	};
 
 public:
@@ -81,7 +83,10 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float ClimbingAttractionForce = 200.f;
 
-	inline bool IsClimbing() const { return MovementMode == MOVE_Custom && CustomMovementMode == ECustomMovementMode::CMOVE_Climb; }
+	inline bool IsClimbing() const
+	{
+		return MovementMode == MOVE_Custom && CustomMovementMode == ECustomMovementMode::CMOVE_Climb;
+	}
 
 protected:
 	virtual void PhysCustom(float DeltaTime, int32 Iterations) override;
@@ -100,7 +105,9 @@ public:
 	void Multicast_SetClimbingObject_Implementation(AClimbable* InClimbingObject);
 
 public:
-	UDELEGATE() DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStoppedClimbing, APlayerCharacter*, CharacterStoppedClimbing);
+	UDELEGATE()
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStoppedClimbing, APlayerCharacter*, CharacterStoppedClimbing);
+
 	FOnStoppedClimbing OnStoppedClimbing;
 
 private:
@@ -138,5 +145,4 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool IsCustomMovementModeActive(ECustomMovementMode InCustomMovementMode) const;
-
 };
