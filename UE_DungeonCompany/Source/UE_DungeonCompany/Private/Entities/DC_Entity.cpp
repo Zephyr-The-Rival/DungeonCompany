@@ -28,6 +28,13 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 	
 }
 
+void ADC_Entity::BeginPlay()
+{
+	Super::BeginPlay();
+
+	HP = MaxHP;
+}
+
 void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
 {
 	if (IsValid(this->bloodEffect))
@@ -35,6 +42,17 @@ void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FN
 		UNiagaraComponent* tmp = UNiagaraFunctionLibrary::SpawnSystemAttached(this->bloodEffect, hitComponent, BoneName, hitPoint, FRotator(0.f), EAttachLocation::Type::KeepWorldPosition, true);
 		tmp->SetVariableVec3(TEXT("Direction"), HitNormal * -1);
 	}
+}
+
+void ADC_Entity::Heal(float amount)
+{
+	this->HP+=amount;
+	if(HP>this->MaxHP)
+		HP=MaxHP;
+}
+
+void ADC_Entity::OnTookDamage_Implementation()
+{
 }
 
 void ADC_Entity::CheckIfDead()
@@ -52,6 +70,7 @@ void ADC_Entity::TakeDamage(float Damage)
 	UE_LOG(LogTemp, Log, TEXT("Taking damage : %s"), *FString::SanitizeFloat(Damage));
 
 	HP -= Damage;
+	OnTookDamage();
 
 	if (HP > 0.f)
 		return;
@@ -64,10 +83,10 @@ void ADC_Entity::TakeDamage(float Damage)
 
 void ADC_Entity::OnDeath_Implementation()
 {
-	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName());
+	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName())
 
 	HP = 0.f;
-	OnPlayerDeath.Broadcast(this);
+	OnEntityDeath.Broadcast(this);
 	PlayDeathSound();
 }
 

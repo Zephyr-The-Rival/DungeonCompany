@@ -111,6 +111,9 @@ protected:
 
 	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const;
 
+public:
+	virtual void OnDeath_Implementation() override;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
 	TSubclassOf<UDebuffPoisonGas> PoisonGasDebuffClass;
