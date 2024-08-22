@@ -38,6 +38,7 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "DCGame/DC_PostMortemPawn.h"
+#include "Items/Potion.h"
 #include "Items/WorldCurrency_Data.h"
 #include "WorldActors/ResetManager.h"
 
@@ -183,6 +184,8 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
+	DOREPLIFETIME(APlayerCharacter, bClimbing);
+	DOREPLIFETIME(APlayerCharacter, bIsDrinkingPotion);
 }
 
 
@@ -739,6 +742,16 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 
 	if (bSprinting)
 		ToggleSprint();
+}
+
+void APlayerCharacter::SetClimbing(bool value)
+{
+	this->Server_SetClimbing(value);
+}
+
+void APlayerCharacter::Server_SetClimbing_Implementation(bool Value)
+{
+	this->bClimbing=Value;
 }
 
 bool APlayerCharacter::CanJumpInternal_Implementation() const
@@ -1721,6 +1734,29 @@ int APlayerCharacter::EndSelectionWheel()
 
 	bUsingSelectionWheel = false;
 	return GetMyHud()->DestroySelectionWheel();
+}
+
+void APlayerCharacter::OnPotionDrunk()
+{
+	if(APotion* Potion=Cast<APotion>(GetCurrentlyHeldWorldItem()))
+	{
+		Potion->Local_ApplyEffect(this);
+	}
+}
+
+void APlayerCharacter::StartDrinkingPotion()
+{
+	this->bIsDrinkingPotion=true;
+	this->bSwitchHandAllowed=false;
+	this->bPrimaryActionAllowed=false;
+}
+
+void APlayerCharacter::StopDrinkingPotion()
+{
+	this->bIsDrinkingPotion=false;
+	this->bSwitchHandAllowed=true;
+	this->bPrimaryActionAllowed=true;
+	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
 }
 
 

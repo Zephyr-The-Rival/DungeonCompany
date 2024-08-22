@@ -300,9 +300,24 @@ protected:
 	void OnInputDeviceChanged(bool IsUsingGamepad);
 
 private:
-	bool bClimbing = false;
+	
 	FVector ClimbUpVector = FVector::UpVector;
 
+	UPROPERTY(Replicated)
+	bool bClimbing = false;
+public:
+	UFUNCTION(BlueprintCallable)
+	bool GetClimbing() const {return this->bClimbing;}
+
+	void SetClimbing(bool value);
+
+
+private:
+
+	UFUNCTION(Server, Unreliable)
+	void Server_SetClimbing(bool Value);
+	void Server_SetClimbing_Implementation(bool Value);
+	
 public:
 	virtual bool CanJumpInternal_Implementation() const override;
 
@@ -727,4 +742,20 @@ public:
 	FVector2f MouseValue;
 	
 	bool bUsingSelectionWheel=false;
+
+public://potionStuff
+	UFUNCTION(BlueprintCallable)
+	void OnPotionDrunk();
+
+	UFUNCTION(BlueprintCallable)
+	void StartDrinkingPotion();
+
+	UFUNCTION(BlueprintCallable)
+	void StopDrinkingPotion();
+
+	UFUNCTION(BlueprintCallable)
+	bool GetIsDrinkingPotion() const {return this->bIsDrinkingPotion;}
+private:
+	UPROPERTY(Replicated)
+	bool bIsDrinkingPotion=false;
 };

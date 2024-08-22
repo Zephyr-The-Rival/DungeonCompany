@@ -125,6 +125,9 @@ void AFunGuy::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	if(IsDead())
+		return;
+
 	if (HasAuthority() || AgeSeconds < MaxSizeAgeSeconds)
 		AgeSeconds += DeltaSeconds * AgingMultiplier;
 
@@ -213,13 +216,20 @@ void AFunGuy::OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const
 void AFunGuy::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
-	TArray<AActor*> overlappingActors;
-	CloudSphere->GetOverlappingActors(overlappingActors);
 
-	int overlappingActorsNum = overlappingActors.Num();
+	if(HasAuthority())
+	{
+		TArray<AActor*> overlappingActors;
+		CloudSphere->GetOverlappingActors(overlappingActors);
+	
+		int overlappingActorsNum = overlappingActors.Num();
 
-	for (int i = 0; i < overlappingActorsNum; ++i)
-		OnCloudEndOverlap(nullptr, overlappingActors[i], nullptr, 0);
+		for (int i = 0; i < overlappingActorsNum; ++i)
+			OnCloudEndOverlap(nullptr, overlappingActors[i], nullptr, 0);
+	}
+	
+	GetWorld()->GetTimerManager().ClearTimer(UpdateTimerHandle);
+	SetActorTickEnabled(false);
 
 	CloudSphere->DestroyComponent();
 	CloudMesh->DestroyComponent();
