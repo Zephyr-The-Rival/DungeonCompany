@@ -97,7 +97,7 @@ void AAIEntity::RunBehaviorTree(UBehaviorTree* InBehaviorTree) const
 
 void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 {
-	if (PlayerAttacking->IsDead())
+	if (TargetPlayer->IsDead())
 	{
 		SetTargetPlayer(nullptr);
 		return;
@@ -113,7 +113,7 @@ void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 
 	SetActorRotation(attackDirection.Rotation());
 
-	OnAttackingPlayer(PlayerAttacking);
+	OnAttackingPlayer(TargetPlayer);
 }
 
 void AAIEntity::ExecuteAttack(FVector Direction)
