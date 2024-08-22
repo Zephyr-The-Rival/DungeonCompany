@@ -102,7 +102,7 @@ void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 		SetTargetPlayer(nullptr);
 		return;
 	}
-	
+
 	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
 
@@ -277,7 +277,7 @@ void AAIEntity::OnDeath_Implementation()
 	Super::OnDeath_Implementation();
 
 	GetCapsuleComponent()->SetCollisionProfileName(FName("IgnoreOnlyPawn"));
-	
+
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	GetMesh()->SetAnimation(nullptr);
 
@@ -286,7 +286,7 @@ void AAIEntity::OnDeath_Implementation()
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->WakeAllRigidBodies();
 
-	if(HasAuthority())
+	if (HasAuthority())
 		GetController()->Destroy();
 }
 

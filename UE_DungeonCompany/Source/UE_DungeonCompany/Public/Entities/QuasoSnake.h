@@ -32,10 +32,10 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* BottomCaveMesh;
-	
+
 	UPROPERTY(EditAnywhere)
 	UAnimationAsset* FirstPersonChoke;
-	
+
 	UPROPERTY(EditAnywhere, Category="Balancing")
 	float DeathSeconds = 30.f;
 

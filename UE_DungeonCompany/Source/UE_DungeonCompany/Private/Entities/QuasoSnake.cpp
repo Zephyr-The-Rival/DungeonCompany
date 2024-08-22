@@ -187,9 +187,9 @@ void AQuasoSnake::Multicast_OnAttachedToPlayer_Implementation(APlayerCharacter* 
 
 	GetMesh()->SetVisibility(false);
 	FirstPersonAttach = NewObject<USkeletalMeshComponent>(AttachedPlayer);
-	FirstPersonAttach->SetSkeletalMesh(GetMesh()->GetSkeletalMeshAsset());	
+	FirstPersonAttach->SetSkeletalMesh(GetMesh()->GetSkeletalMeshAsset());
 	FirstPersonAttach->SetupAttachment(AttachedPlayer->GetFirstPersonMesh(), TEXT("QuasoSocket"));
-	
+
 	FirstPersonAttach->RegisterComponent();
 	FirstPersonAttach->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	FirstPersonAttach->SetAnimation(FirstPersonChoke);
@@ -290,9 +290,9 @@ void AQuasoSnake::ResetPlayerEffects()
 
 void AQuasoSnake::DetachFromPlayer()
 {
-	if(!IsAttachedToPlayer())
+	if (!IsAttachedToPlayer())
 		return;
-	
+
 	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	Multicast_OnDetachedFromPlayer();
 
