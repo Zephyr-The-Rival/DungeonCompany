@@ -37,6 +37,17 @@ void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FN
 	}
 }
 
+void ADC_Entity::Heal(float amount)
+{
+	this->HP+=amount;
+	if(HP>this->MaxHP)
+		HP=MaxHP;
+}
+
+void ADC_Entity::OnTookDamage()
+{
+}
+
 void ADC_Entity::CheckIfDead()
 {
 	if (HP <= 0.f)
@@ -52,6 +63,7 @@ void ADC_Entity::TakeDamage(float Damage)
 	UE_LOG(LogTemp, Log, TEXT("Taking damage : %s"), *FString::SanitizeFloat(Damage));
 
 	HP -= Damage;
+	OnTookDamage();
 
 	if (HP > 0.f)
 		return;
@@ -64,10 +76,10 @@ void ADC_Entity::TakeDamage(float Damage)
 
 void ADC_Entity::OnDeath_Implementation()
 {
-	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName());
+	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName())
 
 	HP = 0.f;
-	OnPlayerDeath.Broadcast(this);
+	OnEntityDeath.Broadcast(this);
 	PlayDeathSound();
 }
 

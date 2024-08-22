@@ -6,19 +6,17 @@
 #include "InputActionValue.h"
 #include "Kismet/KismetMathLibrary.h"
 
-void UInputFunctionLibrary::LookMouse(const FInputActionValue& Value, APawn* Player)
+void UInputFunctionLibrary::LookMouse(const FVector2d& Value, APawn* Player)
 {
-	FVector2D lookVector = Value.Get<FVector2D>();
-
-	Player->AddControllerYawInput(lookVector.X);
-	Player->AddControllerPitchInput(lookVector.Y);
+	Player->AddControllerYawInput(Value.X);
+	Player->AddControllerPitchInput(Value.Y);
 }
 
-void UInputFunctionLibrary::LookGamepad(const FInputActionValue& Value, APawn* Player)
+void UInputFunctionLibrary::LookGamepad(const FVector2d& Value, APawn* Player)
 {
-	FVector2D lookVector = Value.Get<FVector2D>();
+	FVector2D lookVector = Value;
 
-	float lookVectorLength = lookVector.Length();
+	float lookVectorLength = Value.Length();
 
 	float deltaSeconds = Player->GetWorld()->GetDeltaSeconds();
 
