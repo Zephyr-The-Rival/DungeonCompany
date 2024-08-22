@@ -6,9 +6,16 @@
 #include "DC_Statics.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "UI/PlayerHud/PlayerHud.h"
-#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Inventory/InventorySlot.h"
+
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
+
+void AWorldItem::SetWasDroppedByPlayer(bool InDroppedByPlayer)
+{
+	bDroppedByPlayer = InDroppedByPlayer;
+}
 
 // Sets default values
 AWorldItem::AWorldItem()
@@ -21,17 +28,16 @@ AWorldItem::AWorldItem()
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> basicSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
 	this->PickUpSound = basicSound.Object;
-
-
+	
+	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
+	StimulusSource->RegisterForSense(UAISense_Sight::StaticClass());
+	StimulusSource->RegisterWithPerceptionSystem();
+	
 }
-
-
-
 
 // Called when the game starts or when spawned
 void AWorldItem::BeginPlay()
 {
-
 	if (IsValid(MyCharacterToAttachTo))
 	{
 		AttachToPlayer();
@@ -68,7 +74,6 @@ void AWorldItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 void AWorldItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AWorldItem::OnHoldingInHand_Implementation(bool locallyControlled)

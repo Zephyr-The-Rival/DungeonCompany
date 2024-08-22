@@ -15,8 +15,5 @@ class UE_DUNGEONCOMPANY_API UEnvQueryContext_Player : public UEnvQueryContext
 	GENERATED_BODY()
 
 public:
-	UEnvQueryContext_Player(const FObjectInitializer& ObjectInitializer);
-
 	virtual void ProvideContext(FEnvQueryInstance& QueryInstance, FEnvQueryContextData& ContextData) const override;
-	
 };
