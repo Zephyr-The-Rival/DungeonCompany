@@ -433,6 +433,8 @@ protected:
 
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
+	FTransform GetDropTransform();
+
 public:
 	void DropRandomItem();
 
