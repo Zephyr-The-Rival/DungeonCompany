@@ -166,6 +166,7 @@ void ALadder::Interact(APawn* InteractingPawn)
 	bInteractable = false;
 
 	character->GetCharacterMovement<UDC_CMC>()->StartClimbing(this);
+	character->SetClimbing(true);
 
 	LocalPlayerOnLadder = character;
 
@@ -206,6 +207,7 @@ void ALadder::StoppedInteracting(APlayerCharacter* PlayerCharacter)
 		return;
 
 	LocalPlayerOnLadder->GetCharacterMovement<UDC_CMC>()->OnStoppedClimbing.RemoveAll(this);
+	LocalPlayerOnLadder->SetClimbing(false);
 	LocalPlayerOnLadder = nullptr;
 
 }
