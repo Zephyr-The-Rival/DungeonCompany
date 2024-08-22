@@ -47,7 +47,9 @@ public:
 	                                   FVector HitNormal);
 
 protected:
-	virtual void OnTookDamage();
+	UFUNCTION(BlueprintNativeEvent)
+	void OnTookDamage();
+	virtual void OnTookDamage_Implementation();
 
 	UFUNCTION(BlueprintCallable)
 	virtual void Heal(float amount);

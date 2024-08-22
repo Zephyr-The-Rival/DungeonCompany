@@ -99,7 +99,7 @@ private:
 	bool bHealthBelowFleeingUpper = false;
 
 protected:
-	virtual void OnTookDamage() override;
+	virtual void OnTookDamage_Implementation() override;
 
 protected:
 	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter) override;
