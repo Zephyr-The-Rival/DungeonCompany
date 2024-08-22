@@ -48,6 +48,14 @@ void AQuasoSnake::BeginPlay()
 	SetIsLurking(true);
 }
 
+void AQuasoSnake::OnAnimationFlagUpdated_Implementation()
+{
+	Super::OnAnimationFlagUpdated_Implementation();
+
+	TopCaveMesh->SetVisibility(IsLurking());
+	BottomCaveMesh->SetVisibility(IsLurking());
+}
+
 void AQuasoSnake::AttackPlayer(APlayerCharacter* PlayerAttacking)
 {
 	if (!HasAuthority() || bInAttack)
