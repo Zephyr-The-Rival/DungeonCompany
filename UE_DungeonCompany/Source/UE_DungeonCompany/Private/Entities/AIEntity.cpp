@@ -77,15 +77,15 @@ void AAIEntity::BeginPlay()
 	aiController->OnTargetingPlayer.AddDynamic(this, &AAIEntity::OnTargetingPlayer);
 }
 
-void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
+void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 {
-	if (TargetPlayer->IsDead())
+	if (PlayerAttacking->IsDead())
 	{
 		SetTargetPlayer(nullptr);
 		return;
 	}
 
-	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
+	FVector attackDirection = PlayerAttacking->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
 
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AAIEntity::ExecuteAttack, attackDirection);
@@ -94,6 +94,8 @@ void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 	SetInAttackOnBlackboard(true);
 
 	SetActorRotation(attackDirection.Rotation());
+
+	OnAttackingPlayer(PlayerAttacking);
 }
 
 void AAIEntity::ExecuteAttack(FVector Direction)
@@ -123,6 +125,15 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 	}
 
 	SetInAttackOnBlackboard(false);
+	OnExecuteAttack(Direction);
+}
+
+void AAIEntity::OnAttackingPlayer_Implementation(APlayerCharacter* PlayerAttacking)
+{
+}
+
+void AAIEntity::OnExecuteAttack_Implementation(FVector Direction)
+{
 }
 
 void AAIEntity::SetInAttackOnBlackboard(bool InAttack)

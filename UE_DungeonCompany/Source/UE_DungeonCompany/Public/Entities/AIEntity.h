@@ -60,10 +60,18 @@ private:
 	FTimerHandle ExecuteAttackHandle;
 
 public:
-	virtual void AttackPlayer(APlayerCharacter* TargetPlayer);
+	virtual void AttackPlayer(APlayerCharacter* PlayerAttacking);
 
 protected:
 	virtual void ExecuteAttack(FVector Direction);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnAttackingPlayer(APlayerCharacter* PlayerAttacking);
+	virtual void OnAttackingPlayer_Implementation(APlayerCharacter* PlayerAttacking);
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void OnExecuteAttack(FVector Direction);
+	virtual void OnExecuteAttack_Implementation(FVector Direction);
 
 public:
 	void SetInAttackOnBlackboard(bool InAttack);
