@@ -49,6 +49,9 @@ public:
 protected:
 	virtual void OnTookDamage();
 
+	UFUNCTION(BlueprintCallable)
+	virtual void Heal(float amount);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UNiagaraSystem* bloodEffect;

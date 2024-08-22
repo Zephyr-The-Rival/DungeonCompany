@@ -44,6 +44,13 @@ void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FN
 	}
 }
 
+void ADC_Entity::Heal(float amount)
+{
+	this->HP+=amount;
+	if(HP>this->MaxHP)
+		HP=MaxHP;
+}
+
 void ADC_Entity::OnTookDamage()
 {
 }
