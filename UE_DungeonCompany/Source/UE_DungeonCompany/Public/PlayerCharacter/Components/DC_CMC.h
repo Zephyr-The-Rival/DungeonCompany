@@ -60,7 +60,7 @@ private:
 	bool bWantsToSprint = false;
 	bool bWantsToClimb = false;
 
-	bool bCanClimb = false;
+	uint8 bCanClimb = false;
 
 public:
 	UPROPERTY(EditDefaultsOnly)

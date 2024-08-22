@@ -36,8 +36,8 @@ void ARope::BeginPlay()
 
 	SetActorTickEnabled(HasAuthority());
 
-	GetWorld()->GetTimerManager().SetTimer(CheckOwnerHandle, this, &ARope::SetupActorAttachment, 0.05f, true, 0.f);
-
+	GetWorld()->GetTimerManager().SetTimer(CheckOwnerHandle, this, &ARope::SetupActorAttachment, 0.01f, true);
+	SetupActorAttachment();
 	RopeMesh->GetBoneNames(BoneNames);
 }
 
@@ -74,12 +74,8 @@ void ARope::SetupActorAttachment()
 	constraintComp->SetLinearXLimit(LCM_Limited, 10.f);
 	constraintComp->SetLinearYLimit(LCM_Limited, 10.f);
 	constraintComp->SetLinearZLimit(LCM_Limited, 10.f);
-	constraintComp->SetAngularSwing1Limit(ACM_Locked, 0.f);
-	constraintComp->SetAngularSwing2Limit(ACM_Locked, 0.f);
-	constraintComp->SetAngularTwistLimit(ACM_Locked, 0.f);
-	constraintComp->SetDisableCollision(true);
 	
-	PhysicsConstraintActor->GetConstraintComp()->SetDisableCollision(false);
+	constraintComp->SetDisableCollision(true);
 	PhysicsConstraintActor->FinishSpawning(SpawnTransform);
 
 	PhysicsConstraintActor->AttachToActor(actorAttachedTo, FAttachmentTransformRules::KeepRelativeTransform);

@@ -364,7 +364,7 @@ void UDC_CMC::UpdateFromClimbState()
 
 void UDC_CMC::ChangeClimbAllowedState(bool IsClimbAllowed)
 {
-	bCanClimb = IsClimbAllowed;
+	bCanClimb += 1 + -2 * IsClimbAllowed;
 }
 
 void UDC_CMC::StartSprint()
