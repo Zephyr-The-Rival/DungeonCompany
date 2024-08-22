@@ -51,7 +51,7 @@ void ADC_Entity::Heal(float amount)
 		HP=MaxHP;
 }
 
-void ADC_Entity::OnTookDamage()
+void ADC_Entity::OnTookDamage_Implementation()
 {
 }
 

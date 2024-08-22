@@ -26,8 +26,8 @@ private:
 
 public:
 	inline USkeletalMeshComponent* GetRopeMesh() const { return RopeMesh; }
-	
-public:	
+
+public:
 	ARope();
 
 private:
@@ -46,6 +46,7 @@ private:
 	float SettledMaxRopeDelta = 1.f;
 
 	bool bStartedMoving = false;
+
 protected:
 	TArray<FVector> LastRopeLocations;
 
@@ -56,6 +57,8 @@ public:
 public:
 	virtual void Interact(APawn* InteractingPawn) override;
 	virtual void AuthorityInteract(APawn* InteractingPawn) override;
+
+	void SetMassScale(float InMassScale) const;
 
 private:
 	TArray<UShapeComponent*> InteractionVolumes;
@@ -70,10 +73,13 @@ protected:
 	void StoppedInteracting(APlayerCharacter* PlayerCharacter);
 
 	UFUNCTION()
-	void OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnInteractVolumeEntered(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	                             UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+	                             const FHitResult& SweepResult);
 
 	UFUNCTION()
-	void OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	void OnInteractVolumeLeft(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	                          UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 public:
 	void GetRopeTransforms(USkinnedMeshComponent* InRopeMesh, TArray<FTransform>& OutTransforms);
@@ -110,5 +116,4 @@ protected:
 
 public:
 	virtual void OnHovered(APlayerCharacter* PlayerCharacter) override;
-
 };

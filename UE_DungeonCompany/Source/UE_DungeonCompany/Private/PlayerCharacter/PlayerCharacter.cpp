@@ -990,7 +990,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 
 		OnDropItem.Broadcast();
 		Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
-		Server_DropBackpack(ItemClasses, this->DropTransform->GetComponentTransform(), ItemDatas);
+		Server_DropBackpack(ItemClasses, GetDropTransform(), ItemDatas);
 		return;
 	}
 
@@ -1005,7 +1005,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		else
 			Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
 
-		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, this->DropTransform->GetComponentTransform(),
+		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, GetDropTransform(),
 		                      SlotToEmpty.Slot->MyItem->SerializeMyData(),
 		                      bThrow, FirstPersonCamera->GetForwardVector());
 
@@ -1013,6 +1013,26 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		OnDropItem.Broadcast();
 		UpdateHeldItems();
 	}
+}
+
+FTransform APlayerCharacter::GetDropTransform()
+{
+	FVector TraceStart = this->FirstPersonCamera->GetComponentLocation();
+	FVector TraceEnd = this->DropTransform->GetComponentLocation();
+	
+	
+	FHitResult OutHit;
+
+	// Perform the line trace
+	bool bHit = GetWorld()->LineTraceSingleByChannel(OutHit, TraceStart, TraceEnd, ECC_Visibility);
+
+	//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, bHit ? FColor::Green : FColor::Red, false, 3.0f, 0, 1.0f);
+	
+	if(bHit)
+		return FTransform(DropTransform->GetComponentRotation(), OutHit.Location, FVector(1.0f, 1.0f, 1.0f));
+	else
+		return FTransform(DropTransform->GetComponentRotation(), TraceEnd, FVector(1.0f, 1.0f, 1.0f));
+
 }
 
 void APlayerCharacter::DropRandomItem()
@@ -1506,7 +1526,7 @@ void APlayerCharacter::Multicast_AttackStart_Implementation()
 
 void APlayerCharacter::Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn)
 {
-	Server_SpawnDroppedWorldItem(ItemToSpawn, DropTransform->GetComponentTransform(), FString(), false,
+	Server_SpawnDroppedWorldItem(ItemToSpawn, GetDropTransform(), FString(), false,
 	                             FVector(0, 0, 0));
 }
 
@@ -1601,14 +1621,14 @@ void APlayerCharacter::DropAllItems()
 			if (IsValid(IS->MyItem))
 			{
 				UItemData* data = IS->MyItem;
-				SpawnDroppedWorldItem(data->MyWorldItemClass, DropTransform->GetComponentTransform(),
+				SpawnDroppedWorldItem(data->MyWorldItemClass, GetDropTransform(),
 				                      data->SerializeMyData(), false, FVector::Zero());
 			}
 		}
 		if (bHasBackPack)
 		{
 			//backpack is spawning without items in it. Its items drop like the others
-			Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), DropTransform->GetComponentTransform(),
+			Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), GetDropTransform(),
 			                    TArray<FString>());
 		}
 	}
@@ -1618,7 +1638,7 @@ void APlayerCharacter::DropAllItems()
 		{
 			LogWarning("TryingToSpawnDroppedItem...");
 			SpawnDroppedWorldItem(HeldItem.ItemDataClass.GetDefaultObject()->MyWorldItemClass,
-			                      DropTransform->GetComponentTransform(), HeldItem.ItemData, false, FVector::Zero());
+			                      GetDropTransform(), HeldItem.ItemData, false, FVector::Zero());
 		}
 	}
 }
