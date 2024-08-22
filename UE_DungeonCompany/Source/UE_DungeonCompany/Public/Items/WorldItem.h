@@ -9,7 +9,9 @@
 
 class UItemData;
 class APlayerCharacter;
+
 class USoundBase;
+class UAIPerceptionStimuliSourceComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPickedUp);
 
@@ -17,6 +19,15 @@ UCLASS()
 class UE_DUNGEONCOMPANY_API AWorldItem : public AActor, public IInteractable
 {
 	GENERATED_BODY()
+
+private:
+	UAIPerceptionStimuliSourceComponent* StimulusSource;
+
+	bool bDroppedByPlayer = false;
+
+public:
+	void SetWasDroppedByPlayer(bool InDroppedByPlayer);
+	inline bool WasDroppedByPlayer() const { return bDroppedByPlayer; }
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -127,4 +138,15 @@ public://save game stuff
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsHeldByPlayer=false;
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bNeedsHoldToPickUp=false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float HoldPickUpTime=1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString HoveredMessage = "Pick Up";
 };

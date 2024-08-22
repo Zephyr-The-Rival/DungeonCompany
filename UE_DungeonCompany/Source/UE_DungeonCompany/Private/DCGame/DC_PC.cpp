@@ -11,6 +11,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Items/WorldItem.h"
 
 ADC_PC::ADC_PC()
 {
@@ -167,5 +168,17 @@ void ADC_PC::Server_RequestRespawn_Implementation()
 void ADC_PC::ToggleOptionsMenu_Implementation(bool On)
 {
 	LogWarning(TEXT("OverrideMe"));
+}
+
+void ADC_PC::PawnLeavingGame()
+{
+	if(APlayerCharacter* player = Cast<APlayerCharacter>(this->GetPawn()))
+	{
+		player->DropAllItems();
+		if(IsValid(player->GetCurrentlyHeldWorldItem()))
+			player->GetCurrentlyHeldWorldItem()->Destroy();
+	}
+	
+	Super::PawnLeavingGame();
 }
 

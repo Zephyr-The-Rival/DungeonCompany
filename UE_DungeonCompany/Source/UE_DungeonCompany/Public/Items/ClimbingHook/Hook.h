@@ -10,7 +10,7 @@
  * 
  */
 UENUM()
-enum class HookState : uint8 {
+enum class EHookState : uint8 {
      InHand = 0 UMETA(DisplayName = "In Hand"),
      InWorldInactive = 1  UMETA(DisplayName = "In World Inactive"),
      InWorldActive = 2    UMETA(DisplayName = "In World Active"),
@@ -39,7 +39,7 @@ private:
 	float MaxAttachDistance = 150.f;
 
 	UPROPERTY(EditAnywhere, ReplicatedUsing = UpdateState)
-	HookState State = HookState::InWorldInactive;
+	EHookState State = EHookState::InWorldInactive;
 
 protected:
 	UFUNCTION()
@@ -50,7 +50,7 @@ protected:
 public:
 	inline float GetMaxAttachDistance() const { return MaxAttachDistance; }
 
-	inline HookState GetHookState() const { return State; }
+	inline EHookState GetHookState() const { return State; }
 
 public:
 	AHook();
