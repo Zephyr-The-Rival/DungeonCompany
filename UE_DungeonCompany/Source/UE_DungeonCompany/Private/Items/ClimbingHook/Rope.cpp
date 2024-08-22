@@ -64,15 +64,21 @@ void ARope::SetupActorAttachment()
 	PhysicsConstraintActor = GetWorld()->SpawnActorDeferred<APhysicsConstraintActor>(
 		APhysicsConstraintActor::StaticClass(), SpawnTransform);
 
-	PhysicsConstraintActor->GetConstraintComp()->ConstraintActor1 = this;
-	PhysicsConstraintActor->GetConstraintComp()->ConstraintActor2 = actorAttachedTo;
+	auto constraintComp = PhysicsConstraintActor->GetConstraintComp();
 
-	PhysicsConstraintActor->GetConstraintComp()->ConstraintInstance.EnableParentDominates();
-
-	PhysicsConstraintActor->GetConstraintComp()->SetLinearXLimit(LCM_Limited, 10.f);
-	PhysicsConstraintActor->GetConstraintComp()->SetLinearYLimit(LCM_Limited, 10.f);
-	PhysicsConstraintActor->GetConstraintComp()->SetLinearZLimit(LCM_Limited, 10.f);
-
+	constraintComp->ConstraintActor1 = this;
+	constraintComp->ConstraintActor2 = actorAttachedTo;
+	
+	constraintComp->ConstraintInstance.EnableParentDominates();
+	
+	constraintComp->SetLinearXLimit(LCM_Limited, 10.f);
+	constraintComp->SetLinearYLimit(LCM_Limited, 10.f);
+	constraintComp->SetLinearZLimit(LCM_Limited, 10.f);
+	constraintComp->SetAngularSwing1Limit(ACM_Locked, 0.f);
+	constraintComp->SetAngularSwing2Limit(ACM_Locked, 0.f);
+	constraintComp->SetAngularTwistLimit(ACM_Locked, 0.f);
+	constraintComp->SetDisableCollision(true);
+	
 	PhysicsConstraintActor->GetConstraintComp()->SetDisableCollision(false);
 	PhysicsConstraintActor->FinishSpawning(SpawnTransform);
 
@@ -297,7 +303,7 @@ void ARope::Multicast_SetTransformsAndFreeze_Implementation(const TArray<FTransf
 		newBox->SetWorldLocation(RopeTransforms[i].GetLocation());
 
 		UBoxComponent* climbVolume = NewObject<UBoxComponent>(this);
-		climbVolume->InitBoxExtent(FVector(5, 25, 25));
+		climbVolume->InitBoxExtent(FVector(5, 35, 35));
 		climbVolume->RegisterComponent();
 		climbVolume->AttachToComponent(FixedRopeMesh, FAttachmentTransformRules::KeepRelativeTransform);
 		climbVolume->SetWorldLocation(RopeTransforms[i].GetLocation());

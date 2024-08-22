@@ -53,7 +53,7 @@ void AClimbingHook::UpdateHookBehavior()
 
 	if (GetHookState() == EHookState::InWorldAttached)
 	{
-		SpawnedRope->SetMassScale(100.f);
+		SpawnedRope->SetMassScale(10000.f);
 	}
 }
 

@@ -199,7 +199,7 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 
 		FVector forwardVector = newRotation.Vector();
 
-		if (updCompLocation.Z > ClimbingObject->GetUpperEndLocation().Z /*|| ClimbingObject->IsA<ARope>()*/)
+		if (updCompLocation.Z > ClimbingObject->GetUpperEndLocation().Z || ClimbingObject->IsA<ARope>())
 		{
 			preferredActorLocation = climbLocation;
 			preferredActorLocation.Z = updCompLocation.Z;
