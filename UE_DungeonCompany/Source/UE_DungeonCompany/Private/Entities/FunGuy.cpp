@@ -4,6 +4,7 @@
 #include "Entities/FunGuy.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "AI/DC_AIController.h"
+#include "BuffSystem/DebuffPoisonGas.h"
 
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -11,7 +12,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Perception/AISense_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraComponent.h"
 
 AFunGuy::AFunGuy()
@@ -31,6 +31,7 @@ AFunGuy::AFunGuy()
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	GetCharacterMovement()->MaxFlySpeed = 50.f;
 
+	PoisonGasDebuffClass = UDebuffPoisonGas::StaticClass();
 }
 
 void AFunGuy::OnConstruction(const FTransform& Transform)
@@ -51,7 +52,7 @@ void AFunGuy::BeginPlay()
 	DynamicMaterial->SetScalarParameterValue(FName("PulseFrequency"), PulseFrequency);
 
 	CloudSizeMultiplierPerUpdate = 1 + CloudSizeFactor / 1000;
-	
+
 	GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, this, &AFunGuy::UpdateCloud, CloudUpdateInterval, true);
 	CloudNiagara->SetFloatParameter("SpawnRadius", 100.0f);
 
@@ -60,7 +61,6 @@ void AFunGuy::BeginPlay()
 
 	CloudSphere->OnComponentBeginOverlap.AddDynamic(this, &AFunGuy::OnCloudBeginOverlap);
 	CloudSphere->OnComponentEndOverlap.AddDynamic(this, &AFunGuy::OnCloudEndOverlap);
-
 }
 
 void AFunGuy::CalculateCloudStart()
@@ -81,15 +81,16 @@ void AFunGuy::CalculateCloudStart()
 
 	CloudMesh->SetRelativeScale3D(FVector(2, 2, 2) * (newRadius / 100));
 
-	#if WITH_EDITOR
+#if WITH_EDITOR
 	float maxUpscaleNum = MaxSizeAgeSeconds / CloudUpdateInterval;
 
 	float maxScaleMultiplier = 1 + MaxSizeAgeSeconds * AgeBonusScaleMultiplier;
 	float maxRadius = StartCloudRadius * FMath::Pow(CloudSizeMultiplierPerUpdate, maxUpscaleNum);
 
 	FlushPersistentDebugLines(GetWorld());
-	DrawDebugSphere(GetWorld(), CloudSphere->GetComponentLocation(), maxRadius * maxScaleMultiplier, 32, FColor::Blue, true);
-	#endif
+	DrawDebugSphere(GetWorld(), CloudSphere->GetComponentLocation(), maxRadius * maxScaleMultiplier, 32, FColor::Blue,
+	                true);
+#endif
 }
 
 void AFunGuy::UpdateCloud()
@@ -105,23 +106,29 @@ void AFunGuy::UpdateCloud()
 
 		FTimerHandle resetHandle;
 
-		FTimerDelegate resetDelegate = FTimerDelegate::CreateLambda([this]() {
-			CloudNiagara->SetFloatParameter("SpawnRate", 0.0f);
-		});
-
-		GetWorld()->GetTimerManager().SetTimer(resetHandle, resetDelegate, 7.0f, false);
+		GetWorld()->GetTimerManager().SetTimer(resetHandle, this, &AFunGuy::ResetCloudSpawnRate, 7.0f, false);
 	}
 
 	if (HasAuthority())
-		CloudSphere->SetSphereRadius(newScale.X*50);
+		CloudSphere->SetSphereRadius(newScale.X * 50);
+}
 
+void AFunGuy::ResetCloudSpawnRate() const
+{
+	if (!CloudNiagara)
+		return;
+
+	CloudNiagara->SetFloatParameter("SpawnRate", 0.0f);
 }
 
 void AFunGuy::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if(HasAuthority() || AgeSeconds < MaxSizeAgeSeconds)
+	if(IsDead())
+		return;
+
+	if (HasAuthority() || AgeSeconds < MaxSizeAgeSeconds)
 		AgeSeconds += DeltaSeconds * AgingMultiplier;
 
 	if (AgeSeconds > MaxSizeAgeSeconds)
@@ -150,8 +157,8 @@ void AFunGuy::Tick(float DeltaSeconds)
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
 
 	bLifted = true;
-	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsVector(FName("MoveLocation"), GetActorLocation() + FVector::UpVector * LiftoffHeight);
-
+	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsVector(
+		FName("MoveLocation"), GetActorLocation() + FVector::UpVector * LiftoffHeight);
 }
 
 void AFunGuy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -161,51 +168,72 @@ void AFunGuy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	DOREPLIFETIME(AFunGuy, AgeSeconds);
 }
 
-void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                                  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+                                  const FHitResult& SweepResult)
 {
 	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
 
-	if (!character || PlayerTimerHandles.Contains(character))
+	if (!character)
 		return;
 
-	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &AFunGuy::OnSafeTimerElapsed, character);
-
-	PlayerTimerHandles.Add(character);
-
-	GetWorld()->GetTimerManager().SetTimer(PlayerTimerHandles[character], timerDelegate, SafeTime, false);
-
-
-}
-
-void AFunGuy::OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
-
-	if (!character || !PlayerTimerHandles.Contains(character))
-		return;
-
-	GetWorld()->GetTimerManager().ClearTimer(PlayerTimerHandles[character]);
-	PlayerTimerHandles.Remove(character);
-}
-
-void AFunGuy::OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter)
-{
-	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &AFunGuy::OnDamageTimerElapsed, PlayerCharacter);
-
-	GetWorld()->GetTimerManager().SetTimer(PlayerTimerHandles[PlayerCharacter], timerDelegate, DamageInterval, true, 0.f);
-
-}
-
-void AFunGuy::OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter)
-{
-	if (!IsValid(PlayerCharacter))
+	if (PlayerTimerHandles.Contains(character) && PlayerCloudOverlapCount.Contains(character))
 	{
-		GetWorld()->GetTimerManager().ClearTimer(PlayerTimerHandles[PlayerCharacter]);
-		PlayerTimerHandles.Remove(PlayerCharacter);
+		++PlayerCloudOverlapCount[character];
 		return;
 	}
 
-	PlayerCharacter->TakeDamage(Damage);
-	UAISense_Hearing::ReportNoiseEvent(GetWorld(), PlayerCharacter->GetActorLocation(), 2.f, PlayerCharacter);
+	PlayerTimerHandles.Add(character);
+	PlayerCloudOverlapCount.Add(character, 1);
 
+	FTimerDelegate timerDelegate = FTimerDelegate::CreateUObject(this, &AFunGuy::OnSafeTimerElapsed, character);
+	GetWorld()->GetTimerManager().SetTimer(PlayerTimerHandles[character], timerDelegate, SafeTime, false);
 }
+
+void AFunGuy::OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                                UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	APlayerCharacter* character = Cast<APlayerCharacter>(OtherActor);
+
+	if (!character || !PlayerTimerHandles.Contains(character) || !PlayerCloudOverlapCount.Contains(character))
+		return;
+
+	--PlayerCloudOverlapCount[character];
+
+	if (!PlayerCloudOverlapCount[character])
+	{
+		character->RemoveBuffOrDebuff(PoisonGasDebuffClass);
+		GetWorld()->GetTimerManager().ClearTimer(PlayerTimerHandles[character]);
+		PlayerTimerHandles.Remove(character);
+	}
+}
+
+void AFunGuy::OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const
+{
+	PlayerCharacter->AddBuffOrDebuff(PoisonGasDebuffClass);
+}
+
+void AFunGuy::OnDeath_Implementation()
+{
+	Super::OnDeath_Implementation();
+
+	if(HasAuthority())
+	{
+		TArray<AActor*> overlappingActors;
+		CloudSphere->GetOverlappingActors(overlappingActors);
+	
+		int overlappingActorsNum = overlappingActors.Num();
+
+		for (int i = 0; i < overlappingActorsNum; ++i)
+			OnCloudEndOverlap(nullptr, overlappingActors[i], nullptr, 0);
+	}
+	
+	GetWorld()->GetTimerManager().ClearTimer(UpdateTimerHandle);
+	SetActorTickEnabled(false);
+
+	CloudSphere->DestroyComponent();
+	CloudMesh->DestroyComponent();
+}
+
+TMap<APlayerCharacter*, FTimerHandle> AFunGuy::PlayerTimerHandles;
+TMap<APlayerCharacter*, uint16> AFunGuy::PlayerCloudOverlapCount;

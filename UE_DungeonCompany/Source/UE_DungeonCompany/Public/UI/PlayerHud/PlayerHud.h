@@ -30,9 +30,9 @@ USTRUCT(BlueprintType)
 struct FSlotData
 {
 	GENERATED_BODY()
-	UPROPERTY(BlueprintReadWrite)
-	bool bIsBackpackSlot;
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsBackpackSlot=false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UInventorySlot* Slot;
 };
 
@@ -89,10 +89,7 @@ public:
 	void UpdateCrouchIcon();
 	void UpdateCrouchIcon_Implementation();
 
-
-	UFUNCTION(BlueprintNativeEvent)
-	void ToggleOptionsMenu(bool On);
-	void ToggleOptionsMenu_Implementation(bool On);
+	
 
 	UFUNCTION(BlueprintNativeEvent)
 	void ShowTextInteractPrompt(const FString& NewText);
@@ -103,8 +100,24 @@ public:
 	void ShowBuyPrompt_Implementation(ABuyableItem* BuyableItem);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void UdateBuffs();
-	void UdateBuffs_Implementation();
+	void UpdateBuffs();
+	void UpdateBuffs_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ShowInteractProgressBar(float MaxTime);
+	void ShowInteractProgressBar_Implementation(float MaxTime);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void HideInteractProgressBar();
+	void HideInteractProgressBar_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	UUserWidget* ShowSelectionWheel(const TArray<FString>& Options);
+	UUserWidget* ShowSelectionWheel_Implementation( const TArray<FString>& Options);
+
+	UFUNCTION(BlueprintNativeEvent)
+	int DestroySelectionWheel();
+	int DestroySelectionWheel_Implementation();
 
 
 };

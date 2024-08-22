@@ -6,10 +6,15 @@
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "Entities/FunGuy.h"
 #include "Entities/QuasoSnake.h"
+#include "Entities/Spawners/SpurchinSpawner.h"
+#include "DCGame/DC_PostMortemPawn.h"
 
 #include "NavigationSystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "EngineUtils.h"
+#include "Items/ItemData.h"
+#include "Items/WorldItem.h"
 
 template<class T>
 T* ADC_GM::RandomlySpawnAIEntity(UClass* Class) const
@@ -108,6 +113,40 @@ void ADC_GM::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SpawnSpurchins();
+}
+
+void ADC_GM::SpawnSpurchins()
+{
+	TArray<ASpurchinSpawner*> allSpurchinSpawner;
+
+	for (TActorIterator<ASpurchinSpawner> It(GetWorld()); It; ++It)
+	{
+		ASpurchinSpawner* currentSpawner = *It;
+
+		if (currentSpawner->IsSpawnForced())
+		{
+			currentSpawner->SpawnSpurchin();
+			continue;
+		}
+
+		allSpurchinSpawner.Add(currentSpawner);
+	}
+
+	for (int i = 0; i < SpurchinCount && 0 < allSpurchinSpawner.Num(); ++i)
+	{
+		int spurchinIndex = FMath::RandRange(0, allSpurchinSpawner.Num() - 1);
+
+		allSpurchinSpawner[spurchinIndex]->SpawnSpurchin();
+		allSpurchinSpawner.RemoveAt(spurchinIndex);
+	}
+}
+
+void ADC_GM::SpawnWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData)
+{
+	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
+	i->SerializedStringData = SerializedData;
+	i->FinishSpawning(SpawnTransform);
 }
 
 void ADC_GM::Respawn(AController* Controller)
@@ -142,6 +181,26 @@ void ADC_GM::Respawn(AController* Controller)
 	
 	Controller->ClientSetRotation(playerStart->GetActorRotation());
 	Controller->Possess(newCharacter);
+	
+}
+
+void ADC_GM::StartSpectating(AController* Controller)
+{
+	if (!IsValid(Controller))
+		return;
+
+	APlayerCharacter* oldPawn = Controller->GetPawn<APlayerCharacter>();
+	ADC_PostMortemPawn* postMortemPawn = GetWorld()->SpawnActor<ADC_PostMortemPawn>(PostMortemPawnClass);
+
+	if (!postMortemPawn)
+		return;
+
+	Controller->Possess(postMortemPawn);
+
+	if (!oldPawn)
+		return;
+	
+	postMortemPawn->Client_ForceSpectatePlayer(oldPawn);
 
 }
 

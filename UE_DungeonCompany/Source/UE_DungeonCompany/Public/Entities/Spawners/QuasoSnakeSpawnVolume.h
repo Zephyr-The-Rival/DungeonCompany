@@ -12,11 +12,10 @@ class ADC_AIController;
 /**
  * 
  */
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, ClassGroup=Spawner)
 class UE_DUNGEONCOMPANY_API AQuasoSnakeSpawnVolume : public ATriggerVolume
 {
 	GENERATED_UCLASS_BODY()
-
 
 private:
 	TSubclassOf<AQuasoSnake> QuasoSnakeClass;
@@ -41,8 +40,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Timer")
 	float RespawnSeconds = 60.f;
-
-public:
 
 protected:
 	virtual void BeginPlay() override;

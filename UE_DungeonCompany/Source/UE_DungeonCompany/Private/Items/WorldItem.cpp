@@ -9,6 +9,14 @@
 #include "Net/UnrealNetwork.h"
 #include "Inventory/InventorySlot.h"
 
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
+
+void AWorldItem::SetWasDroppedByPlayer(bool InDroppedByPlayer)
+{
+	bDroppedByPlayer = InDroppedByPlayer;
+}
+
 // Sets default values
 AWorldItem::AWorldItem()
 {
@@ -16,16 +24,20 @@ AWorldItem::AWorldItem()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bAlwaysRelevant = true;
+	bAttachesToRightHand=true;
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> basicSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
+	this->PickUpSound = basicSound.Object;
+	
+	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
+	StimulusSource->RegisterForSense(UAISense_Sight::StaticClass());
+	StimulusSource->RegisterWithPerceptionSystem();
 	
 }
-
-
-
 
 // Called when the game starts or when spawned
 void AWorldItem::BeginPlay()
 {
-
 	if (IsValid(MyCharacterToAttachTo))
 	{
 		AttachToPlayer();
@@ -40,6 +52,9 @@ void AWorldItem::BeginPlay()
 	{
 		MyData->DeserializeMyData(SerializedStringData);
 	}
+	
+	this->bNeedsHolding=this->bNeedsHoldToPickUp;
+	this->HoldInteractTime= this->HoldInteractTime;
 	
 	Super::BeginPlay();
 }
@@ -59,7 +74,6 @@ void AWorldItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 void AWorldItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AWorldItem::OnHoldingInHand_Implementation(bool locallyControlled)
@@ -83,7 +97,10 @@ void AWorldItem::AttachToPlayer()
 
 	if (MyCharacterToAttachTo->IsLocallyControlled())
 	{
-		this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "Item_Joint_R");
+		if(bAttachesToRightHand)
+			this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_R_001");
+		else
+			this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_L_001");
 	}		
 	else
 	{	
@@ -97,19 +114,18 @@ void AWorldItem::AttachToPlayer()
 
 void AWorldItem::Interact(APawn* InteractingPawn)
 {
-	LogWarning(*(this->GetName()+" is beeing interacted with"));
 
 	APlayerCharacter* character = Cast<APlayerCharacter>(InteractingPawn);
 
 	if(!character)
 		return;
-
+	
 	character->PickUpItem(this);
 }
 
 void AWorldItem::OnHovered(APlayerCharacter* PlayerCharacter)
 {
-	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Pick up");
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt(HoveredMessage);
 }
 
 void AWorldItem::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
@@ -122,6 +138,27 @@ void AWorldItem::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User
 	LogWarning(TEXT("World Item parent local primary action was called"));
 }
 
+void AWorldItem::TriggerPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent primary action hold was called"));
+}
+
+void AWorldItem::EndPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent primary action END hold was called"));
+}
+
+void AWorldItem::TriggerLocalPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent local primary action hold was called"));
+}
+
+void AWorldItem::EndLocalPrimaryActionHold_Implementation(APlayerCharacter* User)
+{
+	LogWarning(TEXT("World Item parent local primary action END hold was called"));
+}
+
+
 void AWorldItem::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 {
 	LogWarning(TEXT("World Item parent secondary action was called"));
@@ -131,3 +168,5 @@ void AWorldItem::TriggerLocalSecondaryAction_Implementation(APlayerCharacter* Us
 {
 	LogWarning(TEXT("World Item parent local secondary action was called"));
 }
+
+

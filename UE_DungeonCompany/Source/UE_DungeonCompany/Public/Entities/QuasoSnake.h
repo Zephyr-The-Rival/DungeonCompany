@@ -27,9 +27,18 @@ private:
 	UPROPERTY(EditAnywhere)
 	USphereComponent* EyeCollision;
 
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* TopCaveMesh;
+
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* BottomCaveMesh;
+
+	UPROPERTY(EditAnywhere)
+	UAnimationAsset* FirstPersonChoke;
+
 	UPROPERTY(EditAnywhere, Category="Balancing")
 	float DeathSeconds = 30.f;
-	
+
 	UPROPERTY(EditAnywhere, Category="Balancing")
 	float WindUpSeconds = 1.f;
 
@@ -38,12 +47,13 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnAnimationFlagUpdated_Implementation() override;
 
 private:
 	bool bInAttack = false;
 
 public:
-	virtual void AttackPlayer(APlayerCharacter* TargetPlayer) override;
+	virtual void AttackPlayer(APlayerCharacter* PlayerAttacking) override;
 
 private:
 	FTimerHandle LaunchHandle;
@@ -62,14 +72,19 @@ protected:
 
 private:
 	APlayerCharacter* PlayerAttachedTo;
+	USkeletalMeshComponent* FirstPersonAttach;
+
+public:
+	inline APlayerCharacter* GetPlayerAttachedTo() const { return PlayerAttachedTo; }
 
 public:
 	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-	
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	           FVector NormalImpulse, const FHitResult& Hit);
+
 	UFUNCTION(NetMulticast, Unreliable)
-	void Multicast_OnAttachedToPlayer();
-	void Multicast_OnAttachedToPlayer_Implementation(); 
+	void Multicast_OnAttachedToPlayer(APlayerCharacter* AttachedPlayer);
+	void Multicast_OnAttachedToPlayer_Implementation(APlayerCharacter* AttachedPlayer);
 
 	virtual void OnDeath_Implementation() override;
 
@@ -98,7 +113,7 @@ public:
 public:
 	void ReturnToVolume();
 
-protected://blueprint debuffs
+protected: //blueprint debuffs
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
 	TSubclassOf<UDebuffDisableMovement> DisableMovementDebuff;
@@ -111,5 +126,11 @@ protected://blueprint debuffs
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
 	TSubclassOf<UDebuffImpairedVision> ImpairedVisionDebuff;
-	
+
+public:
+	inline bool IsAttachedToPlayer() const { return (AnimationFlags & FLAG_Custom_0) != 0; }
+	void SetIsAttachedToPlayer(bool InIsAttached);
+
+	inline bool IsLurking() const { return (AnimationFlags & FLAG_Custom_1) != 0; }
+	void SetIsLurking(bool InIsLurking);
 };

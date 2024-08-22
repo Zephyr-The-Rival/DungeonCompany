@@ -10,10 +10,15 @@
 #include "Net/UnrealNetwork.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 ADC_Entity::ADC_Entity()
 {
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> basicBloodeffect(TEXT("/Game/_DungeonCompanyContent/Assets/VFX/BaseElement/Blood/NS_Blood"));
+	this->bloodEffect= basicBloodeffect.Object;
 
+	static ConstructorHelpers::FObjectFinder<USoundBase> basicTakeDamageSound(TEXT("/Game/_DungeonCompanyContent/Audio/TakeDamageSounds/PlayerHit.PlayerHit"));
+	this->TakeDamageSound=basicTakeDamageSound.Object;
 }
 
 ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
@@ -23,13 +28,31 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 	
 }
 
-void ADC_Entity::SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
+void ADC_Entity::BeginPlay()
+{
+	Super::BeginPlay();
+
+	HP = MaxHP;
+}
+
+void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
 {
 	if (IsValid(this->bloodEffect))
 	{
 		UNiagaraComponent* tmp = UNiagaraFunctionLibrary::SpawnSystemAttached(this->bloodEffect, hitComponent, BoneName, hitPoint, FRotator(0.f), EAttachLocation::Type::KeepWorldPosition, true);
 		tmp->SetVariableVec3(TEXT("Direction"), HitNormal * -1);
 	}
+}
+
+void ADC_Entity::Heal(float amount)
+{
+	this->HP+=amount;
+	if(HP>this->MaxHP)
+		HP=MaxHP;
+}
+
+void ADC_Entity::OnTookDamage_Implementation()
+{
 }
 
 void ADC_Entity::CheckIfDead()
@@ -47,6 +70,7 @@ void ADC_Entity::TakeDamage(float Damage)
 	UE_LOG(LogTemp, Log, TEXT("Taking damage : %s"), *FString::SanitizeFloat(Damage));
 
 	HP -= Damage;
+	OnTookDamage();
 
 	if (HP > 0.f)
 		return;
@@ -59,10 +83,11 @@ void ADC_Entity::TakeDamage(float Damage)
 
 void ADC_Entity::OnDeath_Implementation()
 {
-	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName());
+	UE_LOG(LogTemp, Log, TEXT("%s died!"), *GetName())
 
-	OnPlayerDeath.Broadcast(this);
-
+	HP = 0.f;
+	OnEntityDeath.Broadcast(this);
+	PlayDeathSound();
 }
 
 void ADC_Entity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -78,31 +103,52 @@ UBuffDebuffBase* ADC_Entity::AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> 
 	if (!HasAuthority())
 		return nullptr;
 
-	UBuffDebuffBase* ExistingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
-
-	if (ExistingDeBuff)
+	UBuffDebuffBase* existingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
+	
+	if (existingDeBuff && !existingDeBuff->IsStackable())
 	{
-		ExistingDeBuff->Timegate(ActiveTime);
-		return ExistingDeBuff;
+		existingDeBuff->Timegate(ActiveTime);
+		existingDeBuff->IncrementAppliedCount();
+		
+		return existingDeBuff;
 	}
 
-	UBuffDebuffBase* DeBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
+	UBuffDebuffBase* deBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
 
-	DeBuff->RegisterComponent();
+	deBuff->RegisterComponent();
+	deBuff->Timegate(ActiveTime);
 
-	DeBuff->Timegate(ActiveTime);
-
-	return DeBuff;
+	return deBuff;
 }
 
 void ADC_Entity::RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass)
 {
 	if (!HasAuthority())
 		return;
+	
+	if (UBuffDebuffBase* existingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass)))
+		existingDeBuff->Destroy();
 
-	UBuffDebuffBase* ExistingDeBuff = Cast<UBuffDebuffBase>(GetComponentByClass(BuffDebuffClass));
+}
 
-	if (ExistingDeBuff)
-		ExistingDeBuff->Destroy();
+bool ADC_Entity::HasBuffOrDebuffApplied(TSubclassOf<UBuffDebuffBase> BuffDebuffClass) const
+{
+	return !!GetComponentByClass(BuffDebuffClass);
+}
 
+void ADC_Entity::PlayDeathSound_Implementation()
+{
+	if (DeathSound)
+		UGameplayStatics::SpawnSoundAttached(DeathSound, GetMesh());
+	else
+		LogWarning(TEXT("Death sound not valid"));
+	
+}
+
+void ADC_Entity::SpawnTakeDamageSound_Implementation()
+{
+	if (IsValid(this->TakeDamageSound))
+	{
+		UGameplayStatics::SpawnSoundAtLocation(this, TakeDamageSound, GetActorLocation());
+	}
 }

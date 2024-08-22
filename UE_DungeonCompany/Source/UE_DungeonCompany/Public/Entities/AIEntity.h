@@ -26,7 +26,7 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "AI")
-	UBehaviorTree* BehaviorTree;
+	UBehaviorTree* DefaultBehaviorTree;
 
 protected:
 	UPROPERTY(EditAnywhere, Instanced, Category = "AI|Perception")
@@ -39,12 +39,45 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	inline UBehaviorTree* GetBehaviorTree() const { return BehaviorTree; }
+	inline UBehaviorTree* GetDefaultBehaviorTree() const { return DefaultBehaviorTree; }
 	inline const TArray<UAISenseConfig*>& GetSenseConfigs() const { return SenseConfigs; }
 	inline TSubclassOf<UAISense> GetDominantSense() const { return DominantSense; }
 
-	virtual void AttackPlayer(APlayerCharacter* TargetPlayer);
+	void RunBehaviorTree(UBehaviorTree* InBehaviorTree) const;
 
+protected:
+	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
+	float AttackDamage = 20.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
+	float AttackRange = 250.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Attack")
+	float AttackRadius = 30.f;
+
+	UPROPERTY(EditAnywhere, Category = "Balancing|Attack", meta = (ClampMin = 0.05f))
+	float AttackDelay = 0.5f;
+
+private:
+	FTimerHandle ExecuteAttackHandle;
+
+public:
+	virtual void AttackPlayer(APlayerCharacter* PlayerAttacking);
+
+protected:
+	virtual void ExecuteAttack(FVector Direction);
+	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter);
+
+private:
+	APlayerCharacter* TargetPlayer;
+
+public:
+	void SetInAttackOnBlackboard(bool InAttack);
+	void SetTargetPlayer(APlayerCharacter* InTargetPlayer) const;
+
+	inline APlayerCharacter* GetTargetPlayer() const { return TargetPlayer; }
+
+public:
 	bool IsVisibleToPlayers() const;
 
 protected:
@@ -63,13 +96,49 @@ public:
 	virtual void OnTargetingPlayer_Implementation(APlayerCharacter* Target);
 
 public:
-	virtual void HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
-
-protected:
-	virtual void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
-	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
+	APlayerCharacter* GetClosestPlayer() const;
+	APlayerCharacter* GetClosestNavPlayer() const;
 
 public:
 	virtual void OnDeath_Implementation() override;
-	
+
+	virtual void HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus,
+	                               UBlackboardComponent* BlackboardComponent);
+
+protected:
+	virtual void HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent);
+	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus,
+	                                UBlackboardComponent* BlackboardComponent);
+
+public:
+	enum EAnimationFlags
+	{
+		FLAG_Attacking = 0x01,
+		FLAG_Custom_0 = 0x02,
+		FLAG_Custom_1 = 0x04,
+		FLAG_Custom_2 = 0x08,
+		FLAG_Custom_3 = 0x10,
+		FLAG_Custom_4 = 0x20,
+		FLAG_Custom_5 = 0x40,
+		FLAG_Custom_6 = 0x80,
+	};
+
+	inline bool IsAttacking() const { return (AnimationFlags & FLAG_Attacking) != 0; }
+	void SetIsAttacking(bool InAttacking);
+
+protected:
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnAnimationFlagUpdated)
+	uint8 AnimationFlags = 0;
+
+protected:
+	void SetAnimationBitFlag(EAnimationFlags InBit);
+	void ClearAnimationBitFlag(EAnimationFlags InBit);
+	void ToggleAnimationBitFlag(EAnimationFlags InBit);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OnAnimationFlagUpdated();
+	virtual void OnAnimationFlagUpdated_Implementation();
+
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
