@@ -8,8 +8,6 @@
 #include "PhysicsEngine/PhysicsConstraintComponent.h"
 #include "PhysicsEngine/PhysicsConstraintActor.h"
 #include "Components/PoseableMeshComponent.h"
-#include "Net/UnrealNetwork.h"
-#include "Components/SphereComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SplineComponent.h"
 #include "UI/PlayerHud/PlayerHud.h"
@@ -22,6 +20,7 @@ ARope::ARope()
 
 	RopeMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("RopeMesh"));
 	RootComponent = RopeMesh;
+	RopeMesh->SetCollisionProfileName(FName("Rope"));
 
 	RopeMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	RopeMesh->SetSimulatePhysics(true);
@@ -87,7 +86,6 @@ void ARope::SetupActorAttachment()
 void ARope::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
 
 	if (bStartedMoving)
 	{

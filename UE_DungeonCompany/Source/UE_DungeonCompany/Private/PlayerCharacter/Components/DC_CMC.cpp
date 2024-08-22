@@ -176,7 +176,7 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 
 	ClimbedDistance += (GetActorLocation() - oldLocation).Length();
 
-	if (hit.bBlockingHit)
+	if (hit.bBlockingHit && (!hit.GetActor() || !hit.GetActor()->IsA<APlayerCharacter>()))
 	{
 		FVector avoidanceDelta = FVector::CrossProduct(UpdatedComponent->GetRightVector(), hit.Normal) *
 			ClimbingAttractionForce * DeltaTime;
