@@ -66,6 +66,7 @@ AHook::AHook()
 
 	HookMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HookMesh"));
 	RootComponent = HookMesh;
+	HookMesh->SetNotifyRigidBodyCollision(true);
 
 	HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	HookMesh->SetSimulatePhysics(true);
