@@ -13,7 +13,7 @@
 
 class AWorldItem;
 class UItemData;
-class UVOIPTalker;
+class UDC_VOIPTalker;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
@@ -353,7 +353,7 @@ public:
 	float GetStamina() const { return Stamina; }
 
 private:
-	UVOIPTalker* VOIPTalker;
+	UDC_VOIPTalker* VOIPTalker;
 
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* VoiceSA;

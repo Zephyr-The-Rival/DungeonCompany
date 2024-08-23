@@ -22,7 +22,10 @@
 #include "Items/Torch_Data.h"
 #include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
 #include "Engine/World.h"
-#include "GameFramework/Actor.h"
+#include "DCGame/DC_PostMortemPawn.h"
+#include "Items/Potion.h"
+#include "Items/WorldCurrency_Data.h"
+#include "PlayerCharacter/Components/DC_VOIPTalker.h"
 #include "EngineUtils.h"
 
 #include "Components/CapsuleComponent.h"
@@ -37,9 +40,7 @@
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
-#include "DCGame/DC_PostMortemPawn.h"
-#include "Items/Potion.h"
-#include "Items/WorldCurrency_Data.h"
+#include "Subsystems/VoiceClassManagerSubsystem.h"
 #include "WorldActors/ResetManager.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -69,7 +70,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 		TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	VoiceSA = voiceSA.Object;
 
-	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+	VOIPTalker = CreateDefaultSubobject<UDC_VOIPTalker>(TEXT("VOIPTalker"));
 
 	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
 	this->Backpack = CreateDefaultSubobject<UInventory>(TEXT("BackpackComponent"));
@@ -767,9 +768,17 @@ void APlayerCharacter::SetVoiceEffect(USoundEffectSourcePresetChain* SoundEffect
 void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+	
+	UVoiceClassManagerSubsystem* voiceSubsystem = GetGameInstance()->GetSubsystem<UVoiceClassManagerSubsystem>();
+	
+	voiceSubsystem->UnregisterPlayerState(OldPlayerState);
 
-	if (NewPlayerState)
-		VOIPTalker->RegisterWithPlayerState(NewPlayerState);
+	if (!NewPlayerState)
+		return;
+	
+	voiceSubsystem->RegisterPlayerState(NewPlayerState);
+	VOIPTalker->RegisterWithPlayerState(NewPlayerState);
+	
 }
 
 

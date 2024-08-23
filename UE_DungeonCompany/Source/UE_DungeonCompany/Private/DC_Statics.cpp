@@ -5,6 +5,8 @@
 #include "PlayerCharacter/PlayerCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "GameFramework/PlayerState.h"
+#include "Subsystems/VoiceClassManagerSubsystem.h"
 
 void UDC_Statics::SetMicInputGain(float Value)
 {
@@ -88,6 +90,14 @@ void UDC_Statics::SetVoiceDebugPrintAmplitude(bool Value)
 {
 	static IConsoleVariable* printAmplitude = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.debug.PrintAmplitude"));
 	printAmplitude->Set(Value);
+}
+
+USoundClass* UDC_Statics::GetVoiceSoundClassForPlayer(APlayerState* PlayerState)
+{
+	if(!IsValid(PlayerState))
+		return nullptr;
+	
+	return PlayerState->GetGameInstance()->GetSubsystem<UVoiceClassManagerSubsystem>()->GetVoiceClassForPlayer(PlayerState);
 }
 
 bool UDC_Statics::IsLocationInViewportOfPlayer(APlayerController* PlayerController, const FVector& Location)
