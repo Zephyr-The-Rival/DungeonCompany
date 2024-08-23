@@ -760,4 +760,16 @@ public://potionStuff
 private:
 	UPROPERTY(Replicated)
 	bool bIsDrinkingPotion=false;
+
+protected:
+
+
+	void SpawnCorpse();
+
+	UFUNCTION(Server, Reliable)
+	void Server_SpawnCorpse();
+	void Server_SpawnCorpse_Implementation();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AActor> CorpseClass;
 };

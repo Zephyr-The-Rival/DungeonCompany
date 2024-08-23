@@ -1416,10 +1416,15 @@ void APlayerCharacter::OnDeath_Implementation()
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	GetMesh()->SetAnimation(nullptr);
 
-	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
-	GetMesh()->SetAllBodiesSimulatePhysics(true);
-	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->WakeAllRigidBodies();
+	// GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	// GetMesh()->SetAllBodiesSimulatePhysics(true);
+	// GetMesh()->SetSimulatePhysics(true);
+	// GetMesh()->WakeAllRigidBodies();
+
+	GetMesh()->SetVisibility(false);
+
+	if(HasAuthority())
+		SpawnCorpse();
 
 	if (IsLocallyControlled())
 	{
@@ -1788,6 +1793,22 @@ void APlayerCharacter::StopDrinkingPotion()
 	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
 }
 
+void APlayerCharacter::SpawnCorpse()
+{
+	if(HasAuthority())
+		Server_SpawnCorpse_Implementation();
+	else
+		Server_SpawnCorpse();
+}
+
+void APlayerCharacter::Server_SpawnCorpse_Implementation()
+{
+	
+	if(IsValid(CorpseClass)&& HasAuthority())
+	{
+		GetWorld()->SpawnActor<AActor>(CorpseClass, this->GetActorTransform());
+	}
+}
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
 {
