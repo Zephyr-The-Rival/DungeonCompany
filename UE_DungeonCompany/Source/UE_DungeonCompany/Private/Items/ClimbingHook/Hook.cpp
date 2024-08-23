@@ -46,7 +46,7 @@ void AHook::UpdateHookBehavior()
 		UE_LOG(LogTemp, Warning, TEXT("Invalid Hook State"));
 	}
 
-	if(!HasAuthority())
+	if (!HasAuthority())
 		return;
 
 	if (State != EHookState::InWorldActive)
@@ -74,7 +74,6 @@ AHook::AHook()
 	EasyInteract->SetupAttachment(RootComponent);
 
 	EasyInteract->SetCollisionProfileName("EasyInteract");
-
 }
 
 void AHook::BeginPlay()
@@ -82,23 +81,20 @@ void AHook::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateState();
-
 }
 
 void AHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 {
-	
-	if(this->GetHookState()== EHookState::InHandAfterThrow)
+	if (this->GetHookState() == EHookState::InHandAfterThrow)
 		return;
 
-	User->AttackBlend=1;
-	this->State=EHookState::InHandAfterThrow;
+	User->AttackBlend = 1;
+	this->State = EHookState::InHandAfterThrow;
 }
 
 void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 {
-
-	if(this->GetHookState()== EHookState::InHandAfterThrow)
+	if (this->GetHookState() == EHookState::InHandAfterThrow)
 		return;
 
 	FHitResult attachHit = GetAttachHit(User);
@@ -143,14 +139,15 @@ void AHook::Multicast_ThrowHook_Implementation(FVector Direction)
 	GetHookMesh()->AddImpulse(Direction * 1250.f * HookMesh->GetMass());
 }
 
-void AHook::OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AHook::OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+                      FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (State != EHookState::InWorldActive || !IsValid(OtherActor) || OtherActor->GetRootComponent()->Mobility != EComponentMobility::Static)
+	if (State != EHookState::InWorldActive || !IsValid(OtherActor) || OtherActor->GetRootComponent()->Mobility !=
+		EComponentMobility::Static)
 		return;
 
 	State = EHookState::InWorldAttached;
 	UpdateState();
-
 }
 
 FHitResult AHook::GetAttachHit(APlayerCharacter* User)
@@ -178,8 +175,6 @@ void AHook::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 
 void AHook::HookLetGo(APlayerCharacter* User)
 {
-
-	
 	FTransform SpawnTransform;
 
 	FVector direction = User->GetBaseAimDirection();
@@ -194,17 +189,15 @@ void AHook::HookLetGo(APlayerCharacter* User)
 		newClimbingHook->SerializedStringData = SerializedStringData;
 		newClimbingHook->FinishSpawning(SpawnTransform);
 	}
-	
+
 	newClimbingHook->Multicast_ThrowHook(direction);
 
 	this->HookMesh->SetVisibility(false);
-
-
 }
 
 void AHook::OnHookThrown(APlayerCharacter* User)
 {
-	User->AttackBlend=0;
+	User->AttackBlend = 0;
 	User->ClearCurrentlyHeldInventorySlot();
 	Destroy(true, true);
 }
