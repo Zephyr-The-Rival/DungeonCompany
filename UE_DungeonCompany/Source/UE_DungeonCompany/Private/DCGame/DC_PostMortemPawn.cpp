@@ -3,38 +3,37 @@
 
 #include "DCGame/DC_PostMortemPawn.h"
 #include "PlayerCharacter/PlayerCharacter.h"
+#include "PlayerCharacter/Components/DC_VOIPTalker.h"
 #include "DCGame/DC_PC.h"
-
-#include "Net/VoiceConfig.h"
-#include "EngineUtils.h"
-#include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputSubsystems.h"
-#include "../../../../Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
-#include "Blueprint/UserWidget.h"
 #include "UI/SpectatorHud/SpectatorHud.h"
+
+#include "EngineUtils.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "OnlineSubsystemUtils.h"
+#include "Subsystems/VoiceChatSubsystem.h"
 
 // Sets default values
 ADC_PostMortemPawn::ADC_PostMortemPawn()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
-
+	VOIPTalker = CreateDefaultSubobject<UDC_VOIPTalker>(TEXT("VOIPTalker"));
 }
 
 // Called when the game starts or when spawned
 void ADC_PostMortemPawn::BeginPlay()
 {
 	Super::BeginPlay();
-
-
 }
 
 void ADC_PostMortemPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	if(!IsLocallyControlled())
+	if (!IsLocallyControlled())
 		return;
 
 	APlayerController* playerController = GetController<APlayerController>();
@@ -47,7 +46,8 @@ void ADC_PostMortemPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (!localPlayer)
 		return;
 
-	UEnhancedInputLocalPlayerSubsystem* inputLocalPlayer =  localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	UEnhancedInputLocalPlayerSubsystem* inputLocalPlayer = localPlayer->GetSubsystem<
+		UEnhancedInputLocalPlayerSubsystem>();
 
 	if (!inputLocalPlayer)
 		return;
@@ -59,35 +59,59 @@ void ADC_PostMortemPawn::OnPlayerDied(ADC_Entity* DeadPlayer)
 {
 	APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(DeadPlayer);
 
-	if(!playerCharacter)
+	if (!playerCharacter)
 		return;
 
 	FTimerHandle stopSpectatingHandle;
-	FTimerDelegate stopSpectatingDelegate = FTimerDelegate::CreateUObject(this, &ADC_PostMortemPawn::StopSpectatingPlayer, playerCharacter);
+	FTimerDelegate stopSpectatingDelegate = FTimerDelegate::CreateUObject(
+		this, &ADC_PostMortemPawn::StopSpectatingPlayer, playerCharacter);
 
-	GetWorld()->GetTimerManager().SetTimer(stopSpectatingHandle, stopSpectatingDelegate, SpectateSwitchAfterDeathDelay, false);
+	GetWorld()->GetTimerManager().SetTimer(stopSpectatingHandle, stopSpectatingDelegate, SpectateSwitchAfterDeathDelay,
+	                                       false);
 }
 
 void ADC_PostMortemPawn::StopSpectatingPlayer(APlayerCharacter* InPlayer)
 {
-	if(!IsSpectatingPlayer(InPlayer))
+	if (!IsSpectatingPlayer(InPlayer))
 		return;
 
 	SpectatePreviousPlayer();
+}
+
+void ADC_PostMortemPawn::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
+{
+	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+
+	UVoiceChatSubsystem* voiceSubsystem = GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>();
+
+	voiceSubsystem->UnregisterPlayerState(OldPlayerState);
+
+	if (!NewPlayerState)
+		return;
+
+	voiceSubsystem->RegisterPlayerState(NewPlayerState);
+	VOIPTalker->RegisterWithPlayerState(NewPlayerState);
+
+	APlayerController* localPlayerController = GetWorld()->GetFirstPlayerController();
+	
+	if (!localPlayerController || !localPlayerController->GetPawn<APlayerCharacter>())
+	{
+		voiceSubsystem->MutePlayer(NewPlayerState);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Muted"));
+	}
 }
 
 // Called every frame
 void ADC_PostMortemPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ADC_PostMortemPawn::Restart()
 {
 	Super::Restart();
 
-	if(!IsLocallyControlled() || !PMPawnInputMapping)
+	if (!IsLocallyControlled() || !PMPawnInputMapping)
 		return;
 
 	ADC_PC* playerController = Cast<ADC_PC>(Controller);
@@ -103,7 +127,8 @@ void ADC_PostMortemPawn::Restart()
 	if (!localPlayer)
 		return;
 
-	UEnhancedInputLocalPlayerSubsystem* inputLocalPlayer = localPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	UEnhancedInputLocalPlayerSubsystem* inputLocalPlayer = localPlayer->GetSubsystem<
+		UEnhancedInputLocalPlayerSubsystem>();
 
 	if (!inputLocalPlayer)
 		return;
@@ -113,13 +138,13 @@ void ADC_PostMortemPawn::Restart()
 	for (TActorIterator<APlayerCharacter> It(GetWorld()); It; ++It)
 	{
 		APlayerCharacter* currentPlayer = *It;
-		
+
 
 		PlayerCharacters.Add(currentPlayer);
 		currentPlayer->OnEntityDeath.AddDynamic(this, &ADC_PostMortemPawn::OnPlayerDied);
 	}
 
-	if(!MySpectatorHud)
+	if (!MySpectatorHud)
 		this->CreateSpectatorHud();
 }
 
@@ -142,9 +167,9 @@ void ADC_PostMortemPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void ADC_PostMortemPawn::SpectatePlayer(APlayerCharacter* InSpectatingPlayer)
 {
-	if(!InSpectatingPlayer)
+	if (!InSpectatingPlayer)
 		return;
-	
+
 	AttachToActor(InSpectatingPlayer, FAttachmentTransformRules::KeepRelativeTransform);
 	OnSpectatingSwitch.Broadcast(this);
 }
@@ -155,7 +180,7 @@ void ADC_PostMortemPawn::Client_ForceSpectatePlayer_Implementation(APlayerCharac
 
 	for (int i = 0; i < playersNum; ++i)
 	{
-		if(PlayerCharacters[i] != InSpectatingPlayer)
+		if (PlayerCharacters[i] != InSpectatingPlayer)
 			continue;
 
 		SpecatingPlayerIndex = i;
@@ -167,7 +192,7 @@ void ADC_PostMortemPawn::Client_ForceSpectatePlayer_Implementation(APlayerCharac
 
 bool ADC_PostMortemPawn::IsSpectatingPlayer(APlayerCharacter* InPlayer)
 {
-	if(SpecatingPlayerIndex < 0 || SpecatingPlayerIndex >= PlayerCharacters.Num())
+	if (SpecatingPlayerIndex < 0 || SpecatingPlayerIndex >= PlayerCharacters.Num())
 		return false;
 
 	return InPlayer == PlayerCharacters[SpecatingPlayerIndex];
@@ -195,7 +220,6 @@ void ADC_PostMortemPawn::NoLook()
 
 void ADC_PostMortemPawn::SpectatePreviousPlayer()
 {
-	
 	--SpecatingPlayerIndex;
 	int playersNum = PlayerCharacters.Num();
 
@@ -204,7 +228,7 @@ void ADC_PostMortemPawn::SpectatePreviousPlayer()
 		if (SpecatingPlayerIndex < 0)
 			SpecatingPlayerIndex = playersNum - 1;
 
-		if(IsValid(PlayerCharacters[SpecatingPlayerIndex]) && !PlayerCharacters[SpecatingPlayerIndex]->IsDead())
+		if (IsValid(PlayerCharacters[SpecatingPlayerIndex]) && !PlayerCharacters[SpecatingPlayerIndex]->IsDead())
 			break;
 	}
 
@@ -216,8 +240,6 @@ void ADC_PostMortemPawn::SpectatePreviousPlayer()
 
 void ADC_PostMortemPawn::SpectateNextPlayer()
 {
-
-	
 	++SpecatingPlayerIndex;
 	int playersNum = PlayerCharacters.Num();
 
@@ -225,11 +247,9 @@ void ADC_PostMortemPawn::SpectateNextPlayer()
 	{
 		if (SpecatingPlayerIndex >= playersNum)
 			SpecatingPlayerIndex = 0;
-		
+
 		if (IsValid(PlayerCharacters[SpecatingPlayerIndex]) && !PlayerCharacters[SpecatingPlayerIndex]->IsDead())
 			break;
-		
-		
 	}
 
 	if (SpecatingPlayerIndex >= playersNum)
@@ -240,18 +260,16 @@ void ADC_PostMortemPawn::SpectateNextPlayer()
 
 void ADC_PostMortemPawn::CreateSpectatorHud()
 {
-	if(!IsLocallyControlled())
+	if (!IsLocallyControlled())
 		return;
 
-	this->MySpectatorHud= CreateWidget<USpectatorHud>(GetWorld(),this->SpectatorHudClass);
+	this->MySpectatorHud = CreateWidget<USpectatorHud>(GetWorld(), this->SpectatorHudClass);
 	this->MySpectatorHud->AddToViewport();
-	
 }
 
 void ADC_PostMortemPawn::Destroyed()
 {
 	Super::Destroyed();
-	if(IsValid(MySpectatorHud))
+	if (IsValid(MySpectatorHud))
 		MySpectatorHud->RemoveFromParent();
 }
-

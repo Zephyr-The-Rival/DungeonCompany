@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "VoiceClassManagerSubsystem.generated.h"
+#include "VoiceChatSubsystem.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE_DUNGEONCOMPANY_API UVoiceClassManagerSubsystem : public UGameInstanceSubsystem
+class UE_DUNGEONCOMPANY_API UVoiceChatSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
@@ -23,6 +23,11 @@ public:
 	
 	void RegisterPlayerState(APlayerState* PlayerState);
 	void UnregisterPlayerState(const APlayerState* PlayerState);
+
+	void MutePlayer(const APlayerState* PlayerState) const;
+	void UnmutePlayer(const APlayerState* PlayerState) const;
+	
+	void UnmuteAllPlayers() const;
 
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;

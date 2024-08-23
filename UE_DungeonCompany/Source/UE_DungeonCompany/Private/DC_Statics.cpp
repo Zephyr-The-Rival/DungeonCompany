@@ -6,7 +6,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerState.h"
-#include "Subsystems/VoiceClassManagerSubsystem.h"
+#include "Subsystems/VoiceChatSubsystem.h"
 
 void UDC_Statics::SetMicInputGain(float Value)
 {
@@ -97,7 +97,7 @@ USoundClass* UDC_Statics::GetVoiceSoundClassForPlayer(APlayerState* PlayerState)
 	if(!IsValid(PlayerState))
 		return nullptr;
 	
-	return PlayerState->GetGameInstance()->GetSubsystem<UVoiceClassManagerSubsystem>()->GetVoiceClassForPlayer(PlayerState);
+	return PlayerState->GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->GetVoiceClassForPlayer(PlayerState);
 }
 
 bool UDC_Statics::IsLocationInViewportOfPlayer(APlayerController* PlayerController, const FVector& Location)

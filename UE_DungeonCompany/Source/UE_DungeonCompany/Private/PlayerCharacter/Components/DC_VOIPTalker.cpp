@@ -3,11 +3,13 @@
 
 #include "PlayerCharacter/Components/DC_VOIPTalker.h"
 
-#include "Subsystems/VoiceClassManagerSubsystem.h"
+#include "Subsystems/VoiceChatSubsystem.h"
 
 void UDC_VOIPTalker::OnTalkingBegin(UAudioComponent* AudioComponent)
 {
 	Super::OnTalkingBegin(AudioComponent);
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("TALKING"));
 	
 	if (!IsValid(AudioComponent) || TalkerAudioComponent == AudioComponent)
 		return;
@@ -19,5 +21,5 @@ void UDC_VOIPTalker::OnTalkingBegin(UAudioComponent* AudioComponent)
 		return;
 
 	TalkerAudioComponent->SoundClassOverride = GetWorld()->GetGameInstance()->GetSubsystem<
-		UVoiceClassManagerSubsystem>()->GetVoiceClassForPlayer(ownerPawn->GetPlayerState());
+		UVoiceChatSubsystem>()->GetVoiceClassForPlayer(ownerPawn->GetPlayerState());
 }

@@ -40,7 +40,7 @@
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
-#include "Subsystems/VoiceClassManagerSubsystem.h"
+#include "Subsystems/VoiceChatSubsystem.h"
 #include "WorldActors/ResetManager.h"
 
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -769,7 +769,7 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
 	
-	UVoiceClassManagerSubsystem* voiceSubsystem = GetGameInstance()->GetSubsystem<UVoiceClassManagerSubsystem>();
+	UVoiceChatSubsystem* voiceSubsystem = GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>();
 	
 	voiceSubsystem->UnregisterPlayerState(OldPlayerState);
 
@@ -1313,7 +1313,7 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	{
 		if (UMeshComponent* u = Cast<UMeshComponent>(i->GetRootComponent()))
 		{
-			u->AddImpulse(CameraVector * this->throwStrengh * u->GetMass());
+			u->AddImpulse(CameraVector * this->ThrowStrengh * u->GetMass());
 		}
 	}
 }
@@ -1433,6 +1433,8 @@ void APlayerCharacter::OnDeath_Implementation()
 		DropAllItems();
 		if (IsValid(CurrentlyHeldWorldItem))
 			DestroyWorldItem(CurrentlyHeldWorldItem);
+
+		GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->UnmuteAllPlayers();
 	}
 
 
