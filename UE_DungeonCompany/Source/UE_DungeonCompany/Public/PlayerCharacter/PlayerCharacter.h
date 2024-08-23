@@ -408,6 +408,7 @@ private:
 	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
 public:
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AWorldItem* GetCurrentlyHeldWorldItem() const {return this->CurrentlyHeldWorldItem;}
 protected:
 	UFUNCTION(BlueprintCallable)

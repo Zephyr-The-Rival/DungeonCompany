@@ -837,7 +837,8 @@ UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
 
 void APlayerCharacter::ClearCurrentlyHeldInventorySlot_Implementation()
 {
-	GetCurrentlyHeldInventorySlot()->MyItem = nullptr;
+	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
+	//GetCurrentlyHeldInventorySlot()->MyItem = nullptr;
 }
 
 TArray<UInventorySlot*> APlayerCharacter::GetAllSlots()
