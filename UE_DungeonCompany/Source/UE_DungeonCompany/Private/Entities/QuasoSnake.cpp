@@ -2,6 +2,8 @@
 
 
 #include "Entities/QuasoSnake.h"
+
+#include "NiagaraFunctionLibrary.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "AI/DC_AIController.h"
 #include "Animation/AnimSingleNodeInstance.h"
@@ -54,6 +56,16 @@ void AQuasoSnake::OnAnimationFlagUpdated_Implementation()
 
 	TopCaveMesh->SetVisibility(IsLurking());
 	BottomCaveMesh->SetVisibility(IsLurking());
+}
+
+void AQuasoSnake::StopLurking()
+{
+	SetIsLurking(false);
+
+	if(!JumpOutOfWallEffect)
+		return;
+	
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), JumpOutOfWallEffect, GetActorLocation(), GetActorRotation());
 }
 
 void AQuasoSnake::AttackPlayer(APlayerCharacter* PlayerAttacking)

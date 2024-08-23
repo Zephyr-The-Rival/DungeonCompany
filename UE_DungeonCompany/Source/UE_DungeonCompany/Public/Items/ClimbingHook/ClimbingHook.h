@@ -10,7 +10,7 @@
  * 
  */
 
- class ARope;
+class ARope;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AClimbingHook : public AHook
@@ -39,5 +39,4 @@ protected:
 
 public:
 	virtual void Tick(float DeltaTime) override;
-
 };
