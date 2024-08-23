@@ -93,6 +93,9 @@ void AHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 		return;
 
 	User->AttackBlend=1;
+	User->bSwitchHandAllowed=false;
+	
+	
 	this->State=EHookState::InHandAfterThrow;
 }
 
@@ -206,6 +209,8 @@ void AHook::HookLetGo(APlayerCharacter* User)
 void AHook::OnHookThrown(APlayerCharacter* User)
 {
 	User->AttackBlend=0;
+	User->bSwitchHandAllowed=true;
+	
 	User->ClearCurrentlyHeldInventorySlot();
 	Destroy(true, true);
 }
