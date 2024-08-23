@@ -97,13 +97,13 @@ void AAIEntity::RunBehaviorTree(UBehaviorTree* InBehaviorTree) const
 
 void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 {
-	if (TargetPlayer->IsDead())
+	if (PlayerAttacking->IsDead())
 	{
 		SetTargetPlayer(nullptr);
 		return;
 	}
 
-	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
+	FVector attackDirection = PlayerAttacking->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
 
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AAIEntity::ExecuteAttack, attackDirection);

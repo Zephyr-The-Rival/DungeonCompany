@@ -73,7 +73,8 @@ protected:
 
 protected:
 	UFUNCTION()
-	void OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	void OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	               FVector NormalImpulse, const FHitResult& Hit);
 
 protected:
 	FHitResult GetAttachHit(APlayerCharacter* User);
@@ -82,7 +83,6 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
-	
 	UFUNCTION(BlueprintCallable)
 	void HookLetGo(APlayerCharacter* User);
 
