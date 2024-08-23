@@ -88,29 +88,19 @@ void AHook::BeginPlay()
 void AHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 {
 	
-	FTransform SpawnTransform;
+	if(this->GetHookState()== EHookState::InHandAfterThrow)
+		return;
 
-	FVector direction = User->GetBaseAimDirection();
-
-	SpawnTransform.SetLocation(User->FirstPersonCamera->GetComponentLocation() + direction * 100.f);
-
-	AHook* newClimbingHook = GetWorld()->SpawnActorDeferred<AHook>(MyData->MyWorldItemClass, SpawnTransform);
-
-	if (newClimbingHook)
-	{
-		newClimbingHook->State = EHookState::InWorldActive;
-		newClimbingHook->SerializedStringData = SerializedStringData;
-		newClimbingHook->FinishSpawning(SpawnTransform);
-	}
-
-	User->ClearCurrentlyHeldInventorySlot();	
-	newClimbingHook->Multicast_ThrowHook(direction);
-
-	Destroy(true, true);
+	User->AttackBlend=1;
+	this->State=EHookState::InHandAfterThrow;
 }
 
 void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 {
+
+	if(this->GetHookState()== EHookState::InHandAfterThrow)
+		return;
+
 	FHitResult attachHit = GetAttachHit(User);
 
 	if (!attachHit.bBlockingHit)
@@ -130,7 +120,6 @@ void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 
 	User->ClearCurrentlyHeldInventorySlot();
 	Destroy(true, true);
-
 }
 
 void AHook::OnHoldingInHand_Implementation(bool LocallyControlled)
@@ -185,4 +174,37 @@ void AHook::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AHook, State);
+}
+
+void AHook::HookLetGo(APlayerCharacter* User)
+{
+
+	
+	FTransform SpawnTransform;
+
+	FVector direction = User->GetBaseAimDirection();
+
+	SpawnTransform.SetLocation(User->FirstPersonCamera->GetComponentLocation() + direction * 100.f);
+
+	AHook* newClimbingHook = GetWorld()->SpawnActorDeferred<AHook>(MyData->MyWorldItemClass, SpawnTransform);
+
+	if (newClimbingHook)
+	{
+		newClimbingHook->State = EHookState::InWorldActive;
+		newClimbingHook->SerializedStringData = SerializedStringData;
+		newClimbingHook->FinishSpawning(SpawnTransform);
+	}
+	
+	newClimbingHook->Multicast_ThrowHook(direction);
+
+	this->HookMesh->SetVisibility(false);
+
+
+}
+
+void AHook::OnHookThrown(APlayerCharacter* User)
+{
+	User->AttackBlend=0;
+	User->ClearCurrentlyHeldInventorySlot();
+	Destroy(true, true);
 }
