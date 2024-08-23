@@ -30,6 +30,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	UNiagaraComponent* CloudNiagara;
 
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* FloorMesh;
+
 private:
 	UPROPERTY(EditAnywhere, Replicated)
 	float AgeSeconds = 0.f;
@@ -80,6 +83,7 @@ protected:
 protected: 
 	void CalculateCloudStart();
 	void UpdateCloud();
+	void ResetCloudSpawnRate() const;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Balancing")
@@ -93,19 +97,11 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 private:
-	TMap<APlayerCharacter*, FTimerHandle> PlayerTimerHandles;
+	static TMap<APlayerCharacter*, FTimerHandle> PlayerTimerHandles;
+	static TMap<APlayerCharacter*, uint16> PlayerCloudOverlapCount;
 
 	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
 	float SafeTime = 5.f;
-
-	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
-	float DamageInterval = 2.f;
-
-	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
-	float Damage = 2.5f;
-
-	UPROPERTY(EditAnywhere, Category="Balancing|PlayerEffects")
-	float DamageCoughLoudness = 2.f;
 
 	float CloudSizeMultiplierPerUpdate;
 
@@ -116,11 +112,12 @@ protected:
 	UFUNCTION()
 	void OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter);
-	void OnDamageTimerElapsed(APlayerCharacter* PlayerCharacter);
+	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const;
+
+public:
+	virtual void OnDeath_Implementation() override;
 
 protected:
-		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
-	TSubclassOf<UDebuffPoisonGas> PosionGasDebuff;
+	TSubclassOf<UDebuffPoisonGas> PoisonGasDebuffClass;
 };

@@ -13,6 +13,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "EngineUtils.h"
+#include "Items/ItemData.h"
+#include "Items/WorldItem.h"
 
 template<class T>
 T* ADC_GM::RandomlySpawnAIEntity(UClass* Class) const
@@ -138,6 +140,13 @@ void ADC_GM::SpawnSpurchins()
 		allSpurchinSpawner[spurchinIndex]->SpawnSpurchin();
 		allSpurchinSpawner.RemoveAt(spurchinIndex);
 	}
+}
+
+void ADC_GM::SpawnWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData)
+{
+	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
+	i->SerializedStringData = SerializedData;
+	i->FinishSpawning(SpawnTransform);
 }
 
 void ADC_GM::Respawn(AController* Controller)

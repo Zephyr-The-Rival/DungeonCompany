@@ -2,6 +2,8 @@
 
 
 #include "PlayerCharacter/Components/DC_CMC.h"
+
+#include "InputActionValue.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "WorldActors/Climbable.h"
 #include "Items/ClimbingHook/Rope.h"
@@ -9,13 +11,15 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/BoxComponent.h"
+#include "Items/WorldItem.h"
 #include "WorldActors/Ladder.h"
 
-bool UDC_CMC::FSavedMove_PlayerCharacter::CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter, float MaxDelta) const
+bool UDC_CMC::FSavedMove_PlayerCharacter::CanCombineWith(const FSavedMovePtr& NewMove, ACharacter* InCharacter,
+                                                         float MaxDelta) const
 {
 	FSavedMove_PlayerCharacter* newPCMove = static_cast<FSavedMove_PlayerCharacter*>(NewMove.Get());
 
-	if(bWantsToSprint != newPCMove->bWantsToSprint || bWantsToClimb != newPCMove->bWantsToClimb)
+	if (bWantsToSprint != newPCMove->bWantsToSprint || bWantsToClimb != newPCMove->bWantsToClimb)
 		return false;
 
 	return Super::CanCombineWith(NewMove, InCharacter, MaxDelta);
@@ -33,7 +37,7 @@ uint8 UDC_CMC::FSavedMove_PlayerCharacter::GetCompressedFlags() const
 {
 	uint8 result = Super::GetCompressedFlags();
 
-	if(bWantsToSprint)
+	if (bWantsToSprint)
 		result |= FLAG_Custom_0;
 
 	if (bWantsToClimb)
@@ -42,9 +46,10 @@ uint8 UDC_CMC::FSavedMove_PlayerCharacter::GetCompressedFlags() const
 	return result;
 }
 
-void UDC_CMC::FSavedMove_PlayerCharacter::SetMoveFor(ACharacter* C, float InDeltaTime, FVector const& NewAccel, class FNetworkPredictionData_Client_Character& ClientData)
+void UDC_CMC::FSavedMove_PlayerCharacter::SetMoveFor(ACharacter* C, float InDeltaTime, FVector const& NewAccel,
+                                                     class FNetworkPredictionData_Client_Character& ClientData)
 {
-	Super::SetMoveFor(C, InDeltaTime, NewAccel,	ClientData);
+	Super::SetMoveFor(C, InDeltaTime, NewAccel, ClientData);
 
 	UDC_CMC* cmc = Cast<UDC_CMC>(C->GetCharacterMovement());
 
@@ -82,7 +87,7 @@ void UDC_CMC::UpdateFromCompressedFlags(uint8 Flags)
 	Super::UpdateFromCompressedFlags(Flags);
 
 	bWantsToSprint = (Flags & FSavedMove_Character::FLAG_Custom_0) != 0;
-	bWantsToClimb = (Flags & FSavedMove_Character::FLAG_Custom_1) != 0; 
+	bWantsToClimb = (Flags & FSavedMove_Character::FLAG_Custom_1) != 0;
 }
 
 UDC_CMC::UDC_CMC()
@@ -103,18 +108,16 @@ void UDC_CMC::PhysCustom(float DeltaTime, int32 Iterations)
 
 	default:
 		UE_LOG(LogTemp, Fatal, TEXT("Invalid Movement Mode"));
-
 	}
 }
 
 void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 {
-	if(DeltaTime < MIN_TICK_TIME)
+	if (DeltaTime < MIN_TICK_TIME)
 		return;
-
-	DrawDebugSphere(GetWorld(), ClimbingObject->GetUpperEndLocation(), 100.f, 12, FColor::Blue, false, 5.f);
-
-	if (!CharacterOwner || (!CharacterOwner->Controller && !bRunPhysicsWithNoController && !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() && (CharacterOwner->GetLocalRole() != ROLE_SimulatedProxy)))
+	
+	if (!CharacterOwner || (!CharacterOwner->Controller && !bRunPhysicsWithNoController && !HasAnimRootMotion() && !
+		CurrentRootMotion.HasOverrideVelocity() && (CharacterOwner->GetLocalRole() != ROLE_SimulatedProxy)))
 	{
 		Acceleration = FVector::ZeroVector;
 		Velocity = FVector::ZeroVector;
@@ -133,28 +136,31 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 
 	FVector climbVector = ClimbingObject->GetUpVectorAtDistance(ClimbedDistance);
 
-	if (Acceleration.Z < 0 && (ClimbingObject->GetLowerEndLocation() - oldLocation).Length() < 150.f)
+	float heightDeltaToLower = ClimbingObject->GetLowerEndLocation().Z - oldLocation.Z;
+	
+	if (Acceleration.Z < 0 && heightDeltaToLower < 150.f && heightDeltaToLower > -150.f)
 	{
 		FHitResult hit;
-		
+
 		FVector start = oldLocation;
-		FVector end = start - CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() - climbVector * ClimbingStopHeight;
-		
+		FVector end = start - CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() - climbVector *
+			ClimbingStopHeight;
+
 		GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
-		
+
 		if (hit.bBlockingHit)
 		{
 			bWantsToClimb = false;
-		
+
 			SetMovementMode(MOVE_Falling);
 			StartNewPhysics(DeltaTime, Iterations);
-		
+
 			return;
 		}
 	}
 
 	FVector planeNormal = FVector::CrossProduct(climbVector, UpdatedComponent->GetRightVector());
-		
+
 	CalcVelocity(DeltaTime, 0.f, false, GetMaxBrakingDeceleration());
 	Velocity = FVector::VectorPlaneProject(Velocity, planeNormal);
 
@@ -164,19 +170,50 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 		Velocity = (UpdatedComponent->GetComponentLocation() - oldLocation) / DeltaTime;
 		return;
 	}
-	
+
 	FHitResult hit;
 	SafeMoveUpdatedComponent(delta, UpdatedComponent->GetComponentQuat(), true, hit);
 
 	ClimbedDistance += (GetActorLocation() - oldLocation).Length();
 
-	if (hit.bBlockingHit)
+	if (hit.bBlockingHit && (!hit.GetActor() || !hit.GetActor()->IsA<APlayerCharacter>()))
 	{
-		FVector avoidanceDelta = FVector::CrossProduct(UpdatedComponent->GetRightVector(), hit.Normal) * ClimbingAttractionForce * DeltaTime;
-		if(Acceleration.Z < 0)
-			avoidanceDelta *= -1;
-		SafeMoveUpdatedComponent(avoidanceDelta, UpdatedComponent->GetComponentQuat(), true, hit);
+		FVector avoidanceDelta = FVector::CrossProduct(UpdatedComponent->GetRightVector(), hit.Normal) *
+			ClimbingAttractionForce * DeltaTime;
 
+		if (Acceleration.Z < 0)
+			avoidanceDelta *= -1;
+
+		SafeMoveUpdatedComponent(avoidanceDelta, UpdatedComponent->GetComponentQuat(), true, hit);
+	}
+	else
+	{
+		FVector updCompLocation = UpdatedComponent->GetComponentLocation();
+
+		FVector climbLocation = ClimbingObject->GetLocationAtDistance(ClimbedDistance);
+
+		FVector preferredActorLocation;
+
+		FRotator newRotation = UpdatedComponent->GetComponentRotation();
+		newRotation.Yaw = ClimbingObject->GetClimbRotationYaw(GetOwner());
+
+		FVector forwardVector = newRotation.Vector();
+
+		if (updCompLocation.Z > ClimbingObject->GetUpperEndLocation().Z || ClimbingObject->IsA<ARope>())
+		{
+			preferredActorLocation = climbLocation;
+			preferredActorLocation.Z = updCompLocation.Z;
+		}
+		else
+		{
+			preferredActorLocation = climbLocation + forwardVector * ClimbingDistance;
+		}
+
+		FVector locationDelta = (preferredActorLocation - UpdatedComponent->GetComponentLocation()) * DeltaTime;
+
+		forwardVector.Z = 0.f;
+
+		SafeMoveUpdatedComponent(locationDelta, newRotation, true, hit);
 	}
 
 	Velocity = (UpdatedComponent->GetComponentLocation() - oldLocation) / DeltaTime;
@@ -187,7 +224,7 @@ float UDC_CMC::GetMaxSpeed() const
 	if (MovementMode == MOVE_Walking && bWantsToSprint && !IsCrouching())
 		return MaxSprintSpeed;
 
-	if (MovementMode != MOVE_Custom) 
+	if (MovementMode != MOVE_Custom)
 		return Super::GetMaxSpeed();
 
 	switch (CustomMovementMode)
@@ -220,7 +257,6 @@ float UDC_CMC::GetMaxBrakingDeceleration() const
 bool UDC_CMC::CanAttemptJump() const
 {
 	return Super::CanAttemptJump() || IsCustomMovementModeActive(CMOVE_Climb);
-
 }
 
 bool UDC_CMC::DoJump(bool bReplayingMoves)
@@ -242,65 +278,93 @@ void UDC_CMC::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 {
 	if (bWantsToClimb && IsValid(ClimbingObject) && !bWantsToCrouch && bCanClimb)
 	{
-		if (CustomMovementMode != CMOVE_Climb)
-		{
-			SetMovementMode(MOVE_Custom, CMOVE_Climb);
+		if (CustomMovementMode == CMOVE_Climb)
+			return;
 
-			bPrevClimbed = true;
-			CharacterOwner->bUseControllerRotationYaw = false;
-			//Cast<APlayerCharacter>(CharacterOwner)->FirstPersonCamera->bUsePawnControlRotation = true;
-
-			FRotator newRotation = UpdatedComponent->GetComponentRotation();
-			newRotation.Yaw = ClimbingObject->GetClimbRotationYaw(GetOwner());
-
-			float startZ = UpdatedComponent->GetComponentLocation().Z;
-
-			FVector upperEnd = ClimbingObject->GetUpperEndLocation();
-
-			if (ClimbingObject->GetUpperEndLocation().Z < startZ)
-				startZ = upperEnd.Z;
-
-			ClimbedDistance = ClimbingObject->GetDistanceAtLocation(UpdatedComponent->GetComponentLocation());
-			FVector forwardVector = ClimbingObject->IsA<ALadder>() ? ClimbingObject->GetActorForwardVector() : 
-									FVector::CrossProduct(ClimbingObject->GetUpVectorAtDistance(ClimbedDistance), UpdatedComponent->GetRightVector());
-
-			FVector climbPosition = ClimbingObject->GetLocationAtDistance(ClimbedDistance) + (forwardVector * ClimbingDistance);
-			climbPosition.Z = startZ;
-
-			FVector climbDelta = climbPosition - GetActorLocation();
-
-			FHitResult moveHit;
-			SafeMoveUpdatedComponent(climbDelta, newRotation, true, moveHit);
-
-			if(!ClimbingObject->IsA<ALadder>())
-				return;
-
-			GetOwner()->SetActorLocation(climbPosition);
-
-		}
+		UpdateToClimbState();
 	}
 	else if (bPrevClimbed)
-	{
-		bWantsToClimb = false;
-		bPrevClimbed = false;
+		UpdateFromClimbState();
 
-		APlayerCharacter* playerCharacter = Cast<APlayerCharacter>(CharacterOwner); 
-		//playerCharacter->FirstPersonCamera->bUsePawnControlRotation = false;
-		//playerCharacter->FirstPersonCamera->SetWorldRotation(playerCharacter->GetFirstPersonMesh()->GetComponentRotation());
-
-		SetMovementMode(MOVE_Falling);
-
-		CharacterOwner->bUseControllerRotationYaw = true;
-		OnStoppedClimbing.Broadcast(GetOwner<APlayerCharacter>());
-
-	}
-	
 	Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);
+}
+
+void UDC_CMC::UpdateToClimbState()
+{
+	APlayerCharacter* playerCharacter = GetOwner<APlayerCharacter>();
+
+	if (playerCharacter->IsLocallyControlled() && playerCharacter->bInventoryIsOn)
+		playerCharacter->ToggleInventory();
+
+	SetMovementMode(MOVE_Custom, CMOVE_Climb);
+
+	bPrevClimbed = true;
+
+	FRotator newRotation = UpdatedComponent->GetComponentRotation();
+	newRotation.Yaw = ClimbingObject->GetClimbRotationYaw(GetOwner());
+
+	float startZ = UpdatedComponent->GetComponentLocation().Z;
+
+	FVector upperEnd = ClimbingObject->GetUpperEndLocation();
+
+	if (ClimbingObject->GetUpperEndLocation().Z < startZ)
+		startZ = upperEnd.Z;
+
+	ClimbedDistance = ClimbingObject->GetDistanceAtLocation(UpdatedComponent->GetComponentLocation());
+	FVector forwardVector = ClimbingObject->IsA<ALadder>()
+		                        ? ClimbingObject->GetActorForwardVector()
+		                        : FVector::CrossProduct(ClimbingObject->GetUpVectorAtDistance(ClimbedDistance),
+		                                                UpdatedComponent->GetRightVector());
+
+	FVector climbPosition = ClimbingObject->GetLocationAtDistance(ClimbedDistance) + (forwardVector *
+		ClimbingDistance);
+	climbPosition.Z = startZ;
+
+	FVector climbDelta = climbPosition - GetActorLocation();
+
+	FHitResult moveHit;
+	SafeMoveUpdatedComponent(climbDelta, UpdatedComponent->GetComponentRotation(), true, moveHit);
+
+	if (ClimbingObject->IsA<ALadder>())
+	{
+		GetOwner()->SetActorLocation(climbPosition);
+		Velocity = FVector::ZeroVector;
+	}
+
+	if (!playerCharacter->IsLocallyControlled())
+		return;
+
+	playerCharacter->GetController()->SetControlRotation(newRotation);
+	playerCharacter->Look(FInputActionValue(FVector2D::ZeroVector));
+	playerCharacter->GetFirstPersonMesh()->SetVisibility(false);
+
+	if (AWorldItem* worldItem = playerCharacter->GetCurrentlyHeldWorldItem())
+		worldItem->GetRootComponent()->SetVisibility(false);
+}
+
+void UDC_CMC::UpdateFromClimbState()
+{
+	bWantsToClimb = false;
+	bPrevClimbed = false;
+
+	SetMovementMode(MOVE_Falling);
+
+	APlayerCharacter* playerCharacter = GetOwner<APlayerCharacter>();
+
+	OnStoppedClimbing.Broadcast(playerCharacter);
+
+	if (!playerCharacter || !playerCharacter->IsLocallyControlled())
+		return;
+
+	playerCharacter->GetFirstPersonMesh()->SetVisibility(true);
+
+	if (AWorldItem* worldItem = playerCharacter->GetCurrentlyHeldWorldItem())
+		worldItem->GetRootComponent()->SetVisibility(true);
 }
 
 void UDC_CMC::ChangeClimbAllowedState(bool IsClimbAllowed)
 {
-	bCanClimb = IsClimbAllowed;
+	bCanClimb += 1 + -2 * IsClimbAllowed;
 }
 
 void UDC_CMC::StartSprint()
@@ -322,7 +386,6 @@ void UDC_CMC::StartClimbing(AClimbable* ActorClimbingAt)
 		Multicast_SetClimbingObject(ActorClimbingAt);
 	else
 		Server_SetClimbingObject(ActorClimbingAt);
-
 }
 
 void UDC_CMC::StopClimbing()
@@ -345,7 +408,8 @@ bool UDC_CMC::IsCustomMovementModeActive(ECustomMovementMode InCustomMovementMod
 	return MovementMode == MOVE_Custom && CustomMovementMode == InCustomMovementMode;
 }
 
-UDC_CMC::FNetworkPredictionData_Client_PlayerCharacter::FNetworkPredictionData_Client_PlayerCharacter(const UCharacterMovementComponent& ClientMovement)
+UDC_CMC::FNetworkPredictionData_Client_PlayerCharacter::FNetworkPredictionData_Client_PlayerCharacter(
+	const UCharacterMovementComponent& ClientMovement)
 	: Super(ClientMovement)
 {
 }

@@ -21,17 +21,23 @@ private:
 	AQuasoSnake* OwningQuaso;
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
 	FVector Velocity = FVector::ZeroVector; 
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
 	FVector Location = FVector::ZeroVector;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	FRotator TargetEyeRotation = FRotator::ZeroRotator;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
 	bool bLurking = true;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
 	bool bAttachedToPlayer = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	bool bAttachedFirstPersonPlayer = false;
 
 public:
 	virtual void NativeInitializeAnimation() override;

@@ -46,15 +46,13 @@ public:
 	FString SerializeMyData();
 	virtual FString SerializeMyData_Implementation();
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void DeserializeMyData(const FString& StringData);
 	virtual void DeserializeMyData_Implementation(const FString& StringData);
 
-protected:
-
-
+public:
 	UFUNCTION(BlueprintCallable)
-	TArray<FString> SeperateStringData(const FString& StringData);
+	static TArray<FString> SeperateStringData(const FString& StringData);
 
 
 };

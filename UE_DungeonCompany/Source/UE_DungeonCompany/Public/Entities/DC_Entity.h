@@ -8,13 +8,14 @@
 
 class UBuffDebuffBase;
 class UNiagaraSystem;
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_Entity : public ACharacter
 {
 	GENERATED_BODY()
 
-protected:	
-	UPROPERTY(EditAnywhere,	BlueprintGetter = GetMaxHealth, Category = "Balancing|Health")
+protected:
+	UPROPERTY(EditAnywhere, BlueprintGetter = GetMaxHealth, Category = "Balancing|Health")
 	float MaxHP = 100.f;
 
 	UPROPERTY(EditAnywhere, ReplicatedUsing = CheckIfDead, BlueprintGetter = GetHealth)
@@ -23,6 +24,9 @@ protected:
 public:
 	ADC_Entity();
 	ADC_Entity(const FObjectInitializer& ObjectInitializer);
+
+protected:
+	virtual void BeginPlay() override;
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
@@ -36,9 +40,19 @@ public:
 
 	using Super::TakeDamage;
 	virtual void TakeDamage(float Damage);
+
 	UFUNCTION(NetMulticast, Unreliable)
 	void SpawnHitEffect(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
-	void SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal);
+	void SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint,
+	                                   FVector HitNormal);
+
+protected:
+	UFUNCTION(BlueprintNativeEvent)
+	void OnTookDamage();
+	virtual void OnTookDamage_Implementation();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void Heal(float amount);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -53,23 +67,34 @@ public:
 	virtual void OnDeath_Implementation();
 
 	UDELEGATE()
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerDeath, ADC_Entity*, DeadPlayer);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEntityDeath, ADC_Entity*, DeadPlayer);
 
-	FOnPlayerDeath OnPlayerDeath;
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnEntityDeath OnEntityDeath;
 
 public:
-	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	UBuffDebuffBase* AddBuffOrDebuff(TSubclassOf<UBuffDebuffBase> BuffDebuffClass, float ActiveTime = 0.f);
-	void RemoveBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> BuffDebuffClass);
+	void RemoveBuffOrDebuff(TSubclassOf<UBuffDebuffBase> BuffDebuffClass);
+
+	bool HasBuffOrDebuffApplied(TSubclassOf<UBuffDebuffBase> BuffDebuffClass) const;
 
 protected:
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
 	USoundBase* TakeDamageSound;
+
 public:
-	
 	UFUNCTION(NetMulticast, Unreliable)
 	void SpawnTakeDamageSound();
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sound")
+	USoundBase* DeathSound;
+
+private:
+	UFUNCTION(NetMulticast, Unreliable)
+	void PlayDeathSound();
+	void PlayDeathSound_Implementation();
 };

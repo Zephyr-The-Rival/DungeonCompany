@@ -11,7 +11,7 @@ void UAnimNotify_FootstepFeedback::Notify(USkeletalMeshComponent* MeshComp, UAni
 		{
 			if(UFootstepSystemComponent* FootstepSystem = Owner->FindComponentByClass<UFootstepSystemComponent>())
 			{
-				FootstepSystem -> PlayStepsFeedback();
+				FootstepSystem -> PlayStepsFeedback(this->SocketName);
 			}
 		}
 	}

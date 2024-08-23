@@ -15,11 +15,6 @@ class UE_DUNGEONCOMPANY_API AWorldCurrency : public AWorldItem
 {
 	GENERATED_BODY()
 	
-public:
-	UPROPERTY(BlueprintReadWrite,Replicated)
-	int32 Value=1;
-
-protected:
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 
 };
