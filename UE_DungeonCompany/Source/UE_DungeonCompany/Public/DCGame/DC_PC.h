@@ -9,17 +9,18 @@
 /**
  * 
  */
- class UPlayerHud;
+class UPlayerHud;
 
- class UVOIPTalker;
- class UInputMappingContext;
- class UInputAction;
+class UVOIPTalker;
+class UInputMappingContext;
+class UInputAction;
 
 UENUM(BlueprintType)
-enum class EPawnType : uint8 {
-     None = 0 UMETA(DisplayName = "None"),
-     Gameplay = 1  UMETA(DisplayName = "Gameplay"),
-     Spectator = 2     UMETA(DisplayName = "Spectator"),
+enum class EPawnType : uint8
+{
+	None = 0 UMETA(DisplayName = "None"),
+	Gameplay = 1 UMETA(DisplayName = "Gameplay"),
+	Spectator = 2 UMETA(DisplayName = "Spectator"),
 };
 
 UCLASS()
@@ -77,7 +78,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* OptionsAction;
 
-	UPROPERTY(EditAnywhere,BlueprintGetter=IsPushToTalkActive, BlueprintSetter=SetPushToTalkActive, Category = "Microphone")
+	UPROPERTY(EditAnywhere, BlueprintGetter=IsPushToTalkActive, BlueprintSetter=SetPushToTalkActive,
+		Category = "Microphone")
 	bool bPushToTalkActive = false;
 
 public:
@@ -89,7 +91,7 @@ private:
 protected:
 	UFUNCTION(BlueprintCallable)
 	void ToggleOptions();
-	
+
 	void PushToTalkStarted();
 	void PushToTalkCompleted();
 
@@ -105,14 +107,11 @@ public:
 	void Server_RequestRespawn();
 	void Server_RequestRespawn_Implementation();
 
-
 protected:
 	UFUNCTION(BlueprintNativeEvent)
 	void ToggleOptionsMenu(bool On);
 	void ToggleOptionsMenu_Implementation(bool On);
 
 protected:
-
 	virtual void PawnLeavingGame() override;
-
 };
