@@ -66,6 +66,7 @@ AHook::AHook()
 
 	HookMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HookMesh"));
 	RootComponent = HookMesh;
+	HookMesh->SetNotifyRigidBodyCollision(true);
 
 	HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	HookMesh->SetSimulatePhysics(true);
@@ -88,8 +89,11 @@ void AHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 	if (this->GetHookState() == EHookState::InHandAfterThrow)
 		return;
 
-	User->AttackBlend = 1;
-	this->State = EHookState::InHandAfterThrow;
+	User->AttackBlend=1;
+	User->bSwitchHandAllowed=false;
+	
+	
+	this->State=EHookState::InHandAfterThrow;
 }
 
 void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
@@ -197,7 +201,9 @@ void AHook::HookLetGo(APlayerCharacter* User)
 
 void AHook::OnHookThrown(APlayerCharacter* User)
 {
-	User->AttackBlend = 0;
+	User->AttackBlend=0;
+	User->bSwitchHandAllowed=true;
+	
 	User->ClearCurrentlyHeldInventorySlot();
 	Destroy(true, true);
 }
