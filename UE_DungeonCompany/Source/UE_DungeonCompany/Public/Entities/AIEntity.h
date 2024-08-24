@@ -62,15 +62,28 @@ private:
 	FTimerHandle ExecuteAttackHandle;
 
 public:
-	virtual void AttackPlayer(APlayerCharacter* TargetPlayer);
+	virtual void AttackPlayer(APlayerCharacter* PlayerAttacking);
 
 protected:
 	virtual void ExecuteAttack(FVector Direction);
 	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter);
 
+	UFUNCTION(BlueprintNativeEvent)
+	void OnAttackingPlayer(APlayerCharacter* PlayerAttacking);
+	virtual void OnAttackingPlayer_Implementation(APlayerCharacter* PlayerAttacking);
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void OnExecuteAttack(FVector Direction);
+	virtual void OnExecuteAttack_Implementation(FVector Direction);
+
+private:
+	APlayerCharacter* TargetPlayer;
+
 public:
 	void SetInAttackOnBlackboard(bool InAttack);
-	void SetTargetPlayer(APlayerCharacter* TargetPlayer) const;
+	void SetTargetPlayer(APlayerCharacter* InTargetPlayer) const;
+
+	inline APlayerCharacter* GetTargetPlayer() const { return TargetPlayer; }
 
 public:
 	bool IsVisibleToPlayers() const;
@@ -96,7 +109,7 @@ public:
 
 public:
 	virtual void OnDeath_Implementation() override;
-	
+
 	virtual void HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus,
 	                               UBlackboardComponent* BlackboardComponent);
 
@@ -122,12 +135,17 @@ public:
 	void SetIsAttacking(bool InAttacking);
 
 protected:
-	UPROPERTY(Replicated)
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnAnimationFlagUpdated)
 	uint8 AnimationFlags = 0;
 
+protected:
 	void SetAnimationBitFlag(EAnimationFlags InBit);
 	void ClearAnimationBitFlag(EAnimationFlags InBit);
 	void ToggleAnimationBitFlag(EAnimationFlags InBit);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void OnAnimationFlagUpdated();
+	virtual void OnAnimationFlagUpdated_Implementation();
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

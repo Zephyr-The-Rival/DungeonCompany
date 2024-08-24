@@ -142,9 +142,9 @@ void ACatBurglar::SetInFleeingRange(bool InInFleeingRange) const
 		aiController->GetBlackboardComponent()->SetValueAsBool("InFleeingRange", InInFleeingRange);
 }
 
-void ACatBurglar::OnTookDamage()
+void ACatBurglar::OnTookDamage_Implementation()
 {
-	Super::OnTookDamage();
+	Super::OnTookDamage_Implementation();
 
 	if (!bHealthBelowFleeingUpper && HP < StartFleeingHPUpper && CurrentBehaviorState <
 		ECatBurglarBehaviorState::Fleeing)
@@ -223,4 +223,12 @@ void ACatBurglar::SetIsStealingItem(bool InIsStealing)
 		return;
 
 	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_0);
+}
+
+void ACatBurglar::SetAreEyesGlowing(bool InAreEyesGlowing)
+{
+	if (InAreEyesGlowing == AreEyesGlowing())
+		return;
+
+	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_1);
 }

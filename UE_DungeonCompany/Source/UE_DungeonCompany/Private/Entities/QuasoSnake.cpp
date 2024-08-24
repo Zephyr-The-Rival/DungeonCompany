@@ -2,6 +2,8 @@
 
 
 #include "Entities/QuasoSnake.h"
+
+#include "NiagaraFunctionLibrary.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "AI/DC_AIController.h"
 #include "Animation/AnimSingleNodeInstance.h"
@@ -48,7 +50,25 @@ void AQuasoSnake::BeginPlay()
 	SetIsLurking(true);
 }
 
-void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
+void AQuasoSnake::OnAnimationFlagUpdated_Implementation()
+{
+	Super::OnAnimationFlagUpdated_Implementation();
+
+	TopCaveMesh->SetVisibility(IsLurking());
+	BottomCaveMesh->SetVisibility(IsLurking());
+}
+
+void AQuasoSnake::StopLurking()
+{
+	SetIsLurking(false);
+
+	if(!JumpOutOfWallEffect)
+		return;
+	
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), JumpOutOfWallEffect, GetActorLocation(), GetActorRotation());
+}
+
+void AQuasoSnake::AttackPlayer(APlayerCharacter* PlayerAttacking)
 {
 	if (!HasAuthority() || bInAttack)
 		return;
@@ -58,7 +78,7 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 
 	FTimerHandle handle;
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AQuasoSnake::LaunchAtActor,
-	                                                        Cast<AActor>(TargetPlayer));
+	                                                        Cast<AActor>(PlayerAttacking));
 	GetWorld()->GetTimerManager().SetTimer(handle, delegate, WindUpSeconds, false);
 
 	SetInAttackOnBlackboard(true);
@@ -68,10 +88,10 @@ void AQuasoSnake::AttackPlayer(APlayerCharacter* TargetPlayer)
 	GetCharacterMovement()->SetMovementMode(MOVE_None);
 
 	FRotator attackRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),
-	                                                                 TargetPlayer->GetActorLocation());
+	                                                                 PlayerAttacking->GetActorLocation());
 	GetController()->SetControlRotation(attackRotation);
 
-	CalculateLaunchSplineToActor(TargetPlayer);
+	CalculateLaunchSplineToActor(PlayerAttacking);
 }
 
 void AQuasoSnake::LaunchAtActor(AActor* Actor)
@@ -179,9 +199,9 @@ void AQuasoSnake::Multicast_OnAttachedToPlayer_Implementation(APlayerCharacter* 
 
 	GetMesh()->SetVisibility(false);
 	FirstPersonAttach = NewObject<USkeletalMeshComponent>(AttachedPlayer);
-	FirstPersonAttach->SetSkeletalMesh(GetMesh()->GetSkeletalMeshAsset());	
+	FirstPersonAttach->SetSkeletalMesh(GetMesh()->GetSkeletalMeshAsset());
 	FirstPersonAttach->SetupAttachment(AttachedPlayer->GetFirstPersonMesh(), TEXT("QuasoSocket"));
-	
+
 	FirstPersonAttach->RegisterComponent();
 	FirstPersonAttach->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	FirstPersonAttach->SetAnimation(FirstPersonChoke);
@@ -282,9 +302,9 @@ void AQuasoSnake::ResetPlayerEffects()
 
 void AQuasoSnake::DetachFromPlayer()
 {
-	if(!IsAttachedToPlayer())
+	if (!IsAttachedToPlayer())
 		return;
-	
+
 	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	Multicast_OnDetachedFromPlayer();
 

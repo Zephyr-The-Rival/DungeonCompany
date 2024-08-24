@@ -38,6 +38,7 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "DCGame/DC_PostMortemPawn.h"
+#include "Items/Potion.h"
 #include "Items/WorldCurrency_Data.h"
 #include "WorldActors/ResetManager.h"
 
@@ -58,14 +59,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	DropTransform->SetupAttachment(FirstPersonCamera);
 	DropTransform->SetRelativeLocation(FVector(150, 0, -20));
 
-	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
-	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
-	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
-	GetCharacterMovement<UDC_CMC>()->MaxClimbSpeed = ClimbingSpeed;
-	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
-	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
+
 
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationPitch = false;
@@ -98,6 +92,15 @@ void APlayerCharacter::BeginPlay()
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina; //doesnt seem to take the blueprint changes during construction
 
+	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
+	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
+	GetCharacterMovement<UDC_CMC>()->MaxClimbSpeed = ClimbingSpeed;
+	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
+	
 	this->HandSlotA = NewObject<UInventorySlot>();
 	this->HandSlotB = NewObject<UInventorySlot>();
 
@@ -126,7 +129,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	if (IsLocallyControlled())
 		LocalTick(DeltaTime);
-	
 }
 
 void APlayerCharacter::LocalTick(float DeltaTime)
@@ -182,6 +184,8 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
+	DOREPLIFETIME(APlayerCharacter, bClimbing);
+	DOREPLIFETIME(APlayerCharacter, bIsDrinkingPotion);
 }
 
 
@@ -296,9 +300,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 	FVector2D localMoveVector = Value.Get<FVector2D>();
 
-	FVector worldMoveVector;
-
-	worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
+	FVector worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
 
 	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
 		StopSprint();
@@ -314,17 +316,20 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
-
-	if(bUsingSelectionWheel)
+	if (bUsingSelectionWheel)
 	{
-		MouseValue.X=Value.Get<FVector2d>().X;
-		MouseValue.Y=Value.Get<FVector2d>().Y;
+		MouseValue.X = Value.Get<FVector2d>().X;
+		MouseValue.Y = Value.Get<FVector2d>().Y;
 		return;
 	}
 	if (!bLookAllowed)
 		return;
 
-	(*LookFunction)(Value, this);
+	FVector2d lookVector = Value.Get<FVector2d>();
+	if(GetCharacterMovement<UDC_CMC>()->IsClimbing())
+		lookVector.X = 0.f;
+	
+	(*LookFunction)(lookVector, this);
 
 	FRotator newRotation = FRotator(0, 0, 0);
 	newRotation.Pitch = GetControlRotation().Euler().Y;
@@ -544,15 +549,17 @@ void APlayerCharacter::Jump()
 	if (GetCharacterMovement()->MovementMode != MOVE_Walking)
 	{
 		Super::Jump();
+		this->bJumped=true;
 		if (!GetMovementComponent()->IsFalling())
 			Server_SpawnSoundAtLocation(this->JumpSound, GetActorLocation());
 		return;
 	}
 
-	if (Stamina <= 0.f || GetCharacterMovement()->IsCrouching()||!bJumpAllowed)
+	if (Stamina <= 0.f || GetCharacterMovement()->IsCrouching() || !bJumpAllowed)
 		return;
 
 	SubstractStamina(JumpStaminaDrain);
+	this->bJumped=true;
 	Super::Jump();
 	if (!GetMovementComponent()->IsFalling())
 		Server_SpawnSoundAtLocation(this->JumpSound, GetActorLocation());
@@ -737,6 +744,16 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 		ToggleSprint();
 }
 
+void APlayerCharacter::SetClimbing(bool value)
+{
+	this->Server_SetClimbing(value);
+}
+
+void APlayerCharacter::Server_SetClimbing_Implementation(bool Value)
+{
+	this->bClimbing=Value;
+}
+
 bool APlayerCharacter::CanJumpInternal_Implementation() const
 {
 	return JumpIsAllowedInternal();
@@ -791,7 +808,7 @@ void APlayerCharacter::Cough()
 
 void APlayerCharacter::ToggleInventory()
 {
-	if (!bSwitchHandAllowed)
+	if (!bSwitchHandAllowed || GetCharacterMovement<UDC_CMC>()->IsClimbing())
 		return;
 
 	this->bInventoryIsOn = !bInventoryIsOn;
@@ -820,7 +837,8 @@ UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
 
 void APlayerCharacter::ClearCurrentlyHeldInventorySlot_Implementation()
 {
-	GetCurrentlyHeldInventorySlot()->MyItem = nullptr;
+	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
+	//GetCurrentlyHeldInventorySlot()->MyItem = nullptr;
 }
 
 TArray<UInventorySlot*> APlayerCharacter::GetAllSlots()
@@ -973,7 +991,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 
 		OnDropItem.Broadcast();
 		Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
-		Server_DropBackpack(ItemClasses, this->DropTransform->GetComponentTransform(), ItemDatas);
+		Server_DropBackpack(ItemClasses, GetDropTransform(), ItemDatas);
 		return;
 	}
 
@@ -988,7 +1006,7 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		else
 			Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
 
-		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, this->DropTransform->GetComponentTransform(),
+		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, GetDropTransform(),
 		                      SlotToEmpty.Slot->MyItem->SerializeMyData(),
 		                      bThrow, FirstPersonCamera->GetForwardVector());
 
@@ -996,6 +1014,26 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 		OnDropItem.Broadcast();
 		UpdateHeldItems();
 	}
+}
+
+FTransform APlayerCharacter::GetDropTransform()
+{
+	FVector TraceStart = this->FirstPersonCamera->GetComponentLocation();
+	FVector TraceEnd = this->DropTransform->GetComponentLocation();
+	
+	
+	FHitResult OutHit;
+
+	// Perform the line trace
+	bool bHit = GetWorld()->LineTraceSingleByChannel(OutHit, TraceStart, TraceEnd, ECC_Visibility);
+
+	//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, bHit ? FColor::Green : FColor::Red, false, 3.0f, 0, 1.0f);
+	
+	if(bHit)
+		return FTransform(DropTransform->GetComponentRotation(), OutHit.Location, FVector(1.0f, 1.0f, 1.0f));
+	else
+		return FTransform(DropTransform->GetComponentRotation(), TraceEnd, FVector(1.0f, 1.0f, 1.0f));
+
 }
 
 void APlayerCharacter::DropRandomItem()
@@ -1068,7 +1106,7 @@ void APlayerCharacter::SwitchHand()
 		return;
 	}
 
-	if (!bSwitchHandAllowed || bInventoryIsOn)
+	if (!bSwitchHandAllowed || bInventoryIsOn || GetCharacterMovement<UDC_CMC>()->IsClimbing())
 		return;
 
 	bSwitchHandAllowed = false;
@@ -1279,6 +1317,7 @@ void APlayerCharacter::CheckForFallDamage()
 
 	if (GetMovementComponent()->Velocity.Z == 0 && BWasFallingInLastFrame) //frame of impact
 	{
+		this->bJumped=false;//ignore me i am only for the animation blueprint
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z + 20;
 		//+20 artificially because the capsule curvature lets the player stand lower
 
@@ -1369,10 +1408,15 @@ void APlayerCharacter::OnDeath_Implementation()
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	GetMesh()->SetAnimation(nullptr);
 
-	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
-	GetMesh()->SetAllBodiesSimulatePhysics(true);
-	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->WakeAllRigidBodies();
+	// GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	// GetMesh()->SetAllBodiesSimulatePhysics(true);
+	// GetMesh()->SetSimulatePhysics(true);
+	// GetMesh()->WakeAllRigidBodies();
+
+	GetMesh()->SetVisibility(false);
+
+	if(HasAuthority())
+		SpawnCorpse();
 
 	if (IsLocallyControlled())
 	{
@@ -1439,7 +1483,7 @@ void APlayerCharacter::Server_TriggerSecondaryItemAction_Implementation()
 }
 
 void APlayerCharacter::StartAttacking()
-{
+{	
 	if (!HasAuthority())
 		Server_AttackStart();
 	else
@@ -1448,6 +1492,9 @@ void APlayerCharacter::StartAttacking()
 
 void APlayerCharacter::AttackStart()
 {
+	if (GetCharacterMovement<UDC_CMC>()->IsClimbing())
+		return;
+	
 	if (AttackBlend != 0 || this->Stamina <= 0) //so a new attack only stars when the old one is already over
 		return;
 	//different attack when sprinting?
@@ -1460,8 +1507,7 @@ void APlayerCharacter::AttackStart()
 	this->bSprintAllowed = false;
 
 	OverridenWalkingSpeed = WalkingSpeed;
-	WalkingSpeed = 100;
-	GetCharacterMovement()->MaxWalkSpeed = 100;
+	GetCharacterMovement()->MaxWalkSpeed = SlowedWalkingSpeed;
 
 	if (IsLocallyControlled())
 	{
@@ -1486,7 +1532,7 @@ void APlayerCharacter::Multicast_AttackStart_Implementation()
 
 void APlayerCharacter::Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn)
 {
-	Server_SpawnDroppedWorldItem(ItemToSpawn, DropTransform->GetComponentTransform(), FString(), false,
+	Server_SpawnDroppedWorldItem(ItemToSpawn, GetDropTransform(), FString(), false,
 	                             FVector(0, 0, 0));
 }
 
@@ -1581,14 +1627,14 @@ void APlayerCharacter::DropAllItems()
 			if (IsValid(IS->MyItem))
 			{
 				UItemData* data = IS->MyItem;
-				SpawnDroppedWorldItem(data->MyWorldItemClass, DropTransform->GetComponentTransform(),
+				SpawnDroppedWorldItem(data->MyWorldItemClass, GetDropTransform(),
 				                      data->SerializeMyData(), false, FVector::Zero());
 			}
 		}
 		if (bHasBackPack)
 		{
 			//backpack is spawning without items in it. Its items drop like the others
-			Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), DropTransform->GetComponentTransform(),
+			Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), GetDropTransform(),
 			                    TArray<FString>());
 		}
 	}
@@ -1598,7 +1644,7 @@ void APlayerCharacter::DropAllItems()
 		{
 			LogWarning("TryingToSpawnDroppedItem...");
 			SpawnDroppedWorldItem(HeldItem.ItemDataClass.GetDefaultObject()->MyWorldItemClass,
-			                      DropTransform->GetComponentTransform(), HeldItem.ItemData, false, FVector::Zero());
+			                      GetDropTransform(), HeldItem.ItemData, false, FVector::Zero());
 		}
 	}
 }
@@ -1696,12 +1742,12 @@ void APlayerCharacter::Server_UpdateHeldItems_Implementation(const TArray<TSubcl
 
 UUserWidget* APlayerCharacter::StartSelectionWheel(TArray<FString> Options)
 {
-	bMoveAllowed=false;
-	bLookAllowed=false;
-	bJumpAllowed=false;
-	bSwitchHandAllowed=false;
+	bMoveAllowed = false;
+	bLookAllowed = false;
+	bJumpAllowed = false;
+	bSwitchHandAllowed = false;
 
-	bUsingSelectionWheel=true;
+	bUsingSelectionWheel = true;
 	return GetMyHud()->ShowSelectionWheel(Options);
 }
 
@@ -1712,10 +1758,49 @@ int APlayerCharacter::EndSelectionWheel()
 	bJumpAllowed = true;
 	bSwitchHandAllowed = true;
 
-	bUsingSelectionWheel=false;
+	bUsingSelectionWheel = false;
 	return GetMyHud()->DestroySelectionWheel();
 }
 
+void APlayerCharacter::OnPotionDrunk()
+{
+	if(APotion* Potion=Cast<APotion>(GetCurrentlyHeldWorldItem()))
+	{
+		Potion->Local_ApplyEffect(this);
+	}
+}
+
+void APlayerCharacter::StartDrinkingPotion()
+{
+	this->bIsDrinkingPotion=true;
+	this->bSwitchHandAllowed=false;
+	this->bPrimaryActionAllowed=false;
+}
+
+void APlayerCharacter::StopDrinkingPotion()
+{
+	this->bIsDrinkingPotion=false;
+	this->bSwitchHandAllowed=true;
+	this->bPrimaryActionAllowed=true;
+	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
+}
+
+void APlayerCharacter::SpawnCorpse()
+{
+	if(HasAuthority())
+		Server_SpawnCorpse_Implementation();
+	else
+		Server_SpawnCorpse();
+}
+
+void APlayerCharacter::Server_SpawnCorpse_Implementation()
+{
+	
+	if(IsValid(CorpseClass)&& HasAuthority())
+	{
+		GetWorld()->SpawnActor<AActor>(CorpseClass, this->GetActorTransform());
+	}
+}
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
 {
