@@ -228,12 +228,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float GamepadAccelerationSpeed = 7.f;
 
+	friend class UDC_CMC;
+
 private:
 	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
 	
 private:
-	void (*LookFunction)(const FInputActionValue& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
+	void (*LookFunction)(const FVector2d& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
 
 protected:
 	void Move(const FInputActionValue& Value);
@@ -244,6 +246,12 @@ protected:
 	void NoLook();
 	
 	virtual void Jump() override;
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bJumped= false;
+protected:
 
 	void CrouchActionStarted();
 	void CrouchActionCompleted();
@@ -292,9 +300,24 @@ protected:
 	void OnInputDeviceChanged(bool IsUsingGamepad);
 
 private:
-	bool bClimbing = false;
+	
 	FVector ClimbUpVector = FVector::UpVector;
 
+	UPROPERTY(Replicated)
+	bool bClimbing = false;
+public:
+	UFUNCTION(BlueprintCallable)
+	bool GetClimbing() const {return this->bClimbing;}
+
+	void SetClimbing(bool value);
+
+
+private:
+
+	UFUNCTION(Server, Unreliable)
+	void Server_SetClimbing(bool Value);
+	void Server_SetClimbing_Implementation(bool Value);
+	
 public:
 	virtual bool CanJumpInternal_Implementation() const override;
 
@@ -359,7 +382,6 @@ protected://inventory & Backpack
 
 	bool bInventoryIsOn = false;
 
-
 protected:
 	void ToggleInventory();
 
@@ -386,6 +408,7 @@ private:
 	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
 public:
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AWorldItem* GetCurrentlyHeldWorldItem() const {return this->CurrentlyHeldWorldItem;}
 protected:
 	UFUNCTION(BlueprintCallable)
@@ -410,6 +433,8 @@ protected:
 	void AddMoneyToWallet_Implementation(int32 Amount);
 
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
+
+	FTransform GetDropTransform();
 
 public:
 	void DropRandomItem();
@@ -541,6 +566,10 @@ public://blockers
 
 private:
 	float OverridenWalkingSpeed;
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
+	float SlowedWalkingSpeed=100;
 
 public://fighting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
@@ -716,4 +745,32 @@ public:
 	FVector2f MouseValue;
 	
 	bool bUsingSelectionWheel=false;
+
+public://potionStuff
+	UFUNCTION(BlueprintCallable)
+	void OnPotionDrunk();
+
+	UFUNCTION(BlueprintCallable)
+	void StartDrinkingPotion();
+
+	UFUNCTION(BlueprintCallable)
+	void StopDrinkingPotion();
+
+	UFUNCTION(BlueprintCallable)
+	bool GetIsDrinkingPotion() const {return this->bIsDrinkingPotion;}
+private:
+	UPROPERTY(Replicated)
+	bool bIsDrinkingPotion=false;
+
+protected:
+
+
+	void SpawnCorpse();
+
+	UFUNCTION(Server, Reliable)
+	void Server_SpawnCorpse();
+	void Server_SpawnCorpse_Implementation();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AActor> CorpseClass;
 };

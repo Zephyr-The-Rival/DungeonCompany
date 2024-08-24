@@ -25,6 +25,10 @@ AFunGuy::AFunGuy()
 	CloudNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("CloudNiagara"));
 	CloudNiagara->SetupAttachment(RootComponent);
 
+	FloorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FloorMesh"));
+	FloorMesh->SetupAttachment(GetCapsuleComponent());
+	FloorMesh->SetCollisionProfileName(FName("EntityMesh"));
+	
 	CloudMesh->SetCollisionProfileName("NoCollision");
 	CloudSphere->SetCollisionProfileName("AOECollision");
 
@@ -44,6 +48,8 @@ void AFunGuy::OnConstruction(const FTransform& Transform)
 void AFunGuy::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetMesh()->SetVisibility(false);
 
 	auto material = GetMesh()->GetMaterial(0);
 
@@ -125,6 +131,9 @@ void AFunGuy::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	if(IsDead())
+		return;
+
 	if (HasAuthority() || AgeSeconds < MaxSizeAgeSeconds)
 		AgeSeconds += DeltaSeconds * AgingMultiplier;
 
@@ -139,23 +148,31 @@ void AFunGuy::Tick(float DeltaSeconds)
 		GetCapsuleComponent()->SetRelativeScale3D(newScale);
 	}
 
-	if (!HasAuthority())
-		return;
-
-	if (bLifted)
+	if (bLifted && HasAuthority())
 	{
 		AddMovementInput(FVector::UpVector, FMath::Sin(AgeSeconds) * WobblingScale);
 		return;
 	}
 
+	if(bLifted)
+		return;
+
 	if (AgeSeconds < LiftoffAge)
 		return;
+	
+	bLifted = true;
+
+	GetMesh()->SetVisibility(true);
+	FloorMesh->DestroyComponent();
+
+	if(!HasAuthority())
+		return;
+
+	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsVector(
+		FName("MoveLocation"), GetActorLocation() + FVector::UpVector * LiftoffHeight);
 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
 
-	bLifted = true;
-	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsVector(
-		FName("MoveLocation"), GetActorLocation() + FVector::UpVector * LiftoffHeight);
 }
 
 void AFunGuy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -213,13 +230,20 @@ void AFunGuy::OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const
 void AFunGuy::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
-	TArray<AActor*> overlappingActors;
-	CloudSphere->GetOverlappingActors(overlappingActors);
 
-	int overlappingActorsNum = overlappingActors.Num();
+	if(HasAuthority())
+	{
+		TArray<AActor*> overlappingActors;
+		CloudSphere->GetOverlappingActors(overlappingActors);
+	
+		int overlappingActorsNum = overlappingActors.Num();
 
-	for (int i = 0; i < overlappingActorsNum; ++i)
-		OnCloudEndOverlap(nullptr, overlappingActors[i], nullptr, 0);
+		for (int i = 0; i < overlappingActorsNum; ++i)
+			OnCloudEndOverlap(nullptr, overlappingActors[i], nullptr, 0);
+	}
+	
+	GetWorld()->GetTimerManager().ClearTimer(UpdateTimerHandle);
+	SetActorTickEnabled(false);
 
 	CloudSphere->DestroyComponent();
 	CloudMesh->DestroyComponent();

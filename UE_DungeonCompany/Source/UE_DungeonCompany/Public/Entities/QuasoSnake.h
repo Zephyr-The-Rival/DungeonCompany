@@ -32,10 +32,13 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* BottomCaveMesh;
-	
+
 	UPROPERTY(EditAnywhere)
 	UAnimationAsset* FirstPersonChoke;
 	
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* JumpOutOfWallEffect;
+
 	UPROPERTY(EditAnywhere, Category="Balancing")
 	float DeathSeconds = 30.f;
 
@@ -47,12 +50,14 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnAnimationFlagUpdated_Implementation() override;
 
 private:
 	bool bInAttack = false;
 
 public:
-	virtual void AttackPlayer(APlayerCharacter* TargetPlayer) override;
+	void StopLurking();
+	virtual void AttackPlayer(APlayerCharacter* PlayerAttacking) override;
 
 private:
 	FTimerHandle LaunchHandle;
