@@ -14,6 +14,10 @@ class UE_DUNGEONCOMPANY_API UBTTask_ChaseLocation : public UBTTask_BlackboardBas
 {
 	GENERATED_BODY()
 
+private:
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f))
+	float MinMoveDistance = 0.f;
+
 public:
 	explicit UBTTask_ChaseLocation(FObjectInitializer const& ObjectInitializer);
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

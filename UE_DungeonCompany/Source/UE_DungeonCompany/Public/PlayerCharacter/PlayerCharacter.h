@@ -403,8 +403,8 @@ private:
 	AWorldItem* CurrentlyHeldWorldItem;
 
 public:
-	AWorldItem* GetCurrentlyHeldWorldItem() const { return this->CurrentlyHeldWorldItem; }
-
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	AWorldItem* GetCurrentlyHeldWorldItem() const {return this->CurrentlyHeldWorldItem;}
 protected:
 	UFUNCTION(BlueprintCallable)
 	void TakeOutItem();

@@ -68,6 +68,14 @@ protected:
 	virtual void ExecuteAttack(FVector Direction);
 	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter);
 
+	UFUNCTION(BlueprintNativeEvent)
+	void OnAttackingPlayer(APlayerCharacter* PlayerAttacking);
+	virtual void OnAttackingPlayer_Implementation(APlayerCharacter* PlayerAttacking);
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void OnExecuteAttack(FVector Direction);
+	virtual void OnExecuteAttack_Implementation(FVector Direction);
+
 private:
 	APlayerCharacter* TargetPlayer;
 
