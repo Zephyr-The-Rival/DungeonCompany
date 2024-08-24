@@ -43,6 +43,19 @@ ACatBurglar::ACatBurglar()
 	DropTransform->SetRelativeLocation(FVector(150, 0, 20));
 }
 
+void ACatBurglar::BeginPlay()
+{
+	Super::BeginPlay();
+
+	DynMaterialInstance = UMaterialInstanceDynamic::Create(GetMesh()->GetMaterial(0), this);
+	GetMesh()->SetMaterial(0, DynMaterialInstance);
+}
+
+void ACatBurglar::ToggleEyesGlow(bool bInEyesGlow) const
+{
+	DynMaterialInstance->SetScalarParameterValue(FName("Emissive brightness"), bInEyesGlow);
+}
+
 void ACatBurglar::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -101,6 +114,8 @@ void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 	SetActorTickEnabled(
 		NewBehaviorState == ECatBurglarBehaviorState::Retrieving || NewBehaviorState ==
 		ECatBurglarBehaviorState::Fleeing);
+
+	ToggleEyesGlow(false);
 
 	switch (NewBehaviorState)
 	{

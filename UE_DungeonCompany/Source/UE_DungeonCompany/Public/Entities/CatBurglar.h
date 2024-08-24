@@ -84,6 +84,15 @@ public:
 	ACatBurglar();
 
 private:
+	UMaterialInstanceDynamic* DynMaterialInstance;
+	
+protected:
+	virtual void BeginPlay() override;
+
+public:
+	void ToggleEyesGlow(bool bInEyesGlow) const;
+
+private:
 	bool bInRetrievingRange;
 	FTimerHandle RetrieveHandle;
 
