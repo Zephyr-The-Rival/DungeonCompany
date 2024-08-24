@@ -11,8 +11,9 @@
 
 ASpurchin::ASpurchin()
 {
-	SetActorTickInterval(0.5f);
-}
+	
+}	
+
 
 bool ASpurchin::IsInHallway()
 {
@@ -52,12 +53,18 @@ void ASpurchin::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
 	bbComponent->SetValueAsBool(FName("EatingPlayer"), true);
 }
 
-void ASpurchin::Tick(float DeltaSeconds)
+void ASpurchin::CheckSpace()
 {
-	if (IsInHallway())
+	if(IsInHallway())
 		GetCharacterMovement()->MaxWalkSpeed = HallwaySpeed;
 	else
 		GetCharacterMovement()->MaxWalkSpeed = OpenSpaceSpeed;
+}
+
+void ASpurchin::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
 }
 
 void ASpurchin::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
@@ -73,11 +80,16 @@ void ASpurchin::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 void ASpurchin::BeginPlay()
 {
 	Super::BeginPlay();
-	if (!HasAuthority())
+
+	SetActorTickEnabled(true);
+	
+	if(!HasAuthority())
 		return;
 
 	OriginalSightRadius = GetSenseConfig<UAISenseConfig_Sight>()->SightRadius;
 	GetSenseConfig<UAISenseConfig_Sight>()->SightRadius = 0.f;
 
 	UpdatePerception();
+
+	
 }
