@@ -18,25 +18,25 @@ void AHook::UpdateHookBehavior()
 {
 	switch (State)
 	{
-	case HookState::InHand:
+	case EHookState::InHand:
 		HookMesh->SetSimulatePhysics(false);
 		HookMesh->SetCollisionProfileName(FName("NoCollision"));
 		HookMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
 
-	case HookState::InWorldInactive:
+	case EHookState::InWorldInactive:
 		HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		HookMesh->SetCollisionProfileName(FName("WorldItem"));
 		HookMesh->SetSimulatePhysics(true);
 		break;
 
-	case HookState::InWorldActive:
+	case EHookState::InWorldActive:
 		HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 		HookMesh->SetCollisionProfileName(FName("WorldItem"));
 		HookMesh->SetSimulatePhysics(true);
 		break;
 
-	case HookState::InWorldAttached:
+	case EHookState::InWorldAttached:
 		HookMesh->SetSimulatePhysics(false);
 		HookMesh->SetCollisionProfileName(FName("BlockAll"));
 		HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
@@ -46,10 +46,10 @@ void AHook::UpdateHookBehavior()
 		UE_LOG(LogTemp, Warning, TEXT("Invalid Hook State"));
 	}
 
-	if(!HasAuthority())
+	if (!HasAuthority())
 		return;
 
-	if (State != HookState::InWorldActive)
+	if (State != EHookState::InWorldActive)
 	{
 		HookMesh->OnComponentHit.RemoveAll(this);
 	}
@@ -66,6 +66,7 @@ AHook::AHook()
 
 	HookMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HookMesh"));
 	RootComponent = HookMesh;
+	HookMesh->SetNotifyRigidBodyCollision(true);
 
 	HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	HookMesh->SetSimulatePhysics(true);
@@ -74,7 +75,6 @@ AHook::AHook()
 	EasyInteract->SetupAttachment(RootComponent);
 
 	EasyInteract->SetCollisionProfileName("EasyInteract");
-
 }
 
 void AHook::BeginPlay()
@@ -82,35 +82,25 @@ void AHook::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateState();
-
 }
 
 void AHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 {
+	if (this->GetHookState() == EHookState::InHandAfterThrow)
+		return;
+
+	User->AttackBlend=1;
+	User->bSwitchHandAllowed=false;
 	
-	FTransform SpawnTransform;
-
-	FVector direction = User->GetBaseAimDirection();
-
-	SpawnTransform.SetLocation(User->FirstPersonCamera->GetComponentLocation() + direction * 100.f);
-
-	AHook* newClimbingHook = GetWorld()->SpawnActorDeferred<AHook>(MyData->MyWorldItemClass, SpawnTransform);
-
-	if (newClimbingHook)
-	{
-		newClimbingHook->State = HookState::InWorldActive;
-		newClimbingHook->SerializedStringData = SerializedStringData;
-		newClimbingHook->FinishSpawning(SpawnTransform);
-	}
-
-	User->ClearCurrentlyHeldInventorySlot();	
-	newClimbingHook->Multicast_ThrowHook(direction);
-
-	Destroy(true, true);
+	
+	this->State=EHookState::InHandAfterThrow;
 }
 
 void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 {
+	if (this->GetHookState() == EHookState::InHandAfterThrow)
+		return;
+
 	FHitResult attachHit = GetAttachHit(User);
 
 	if (!attachHit.bBlockingHit)
@@ -123,14 +113,13 @@ void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 
 	if (newClimbingHook)
 	{
-		newClimbingHook->State = HookState::InWorldAttached;
+		newClimbingHook->State = EHookState::InWorldAttached;
 		newClimbingHook->SerializedStringData = SerializedStringData;
 		newClimbingHook->FinishSpawning(SpawnTransform);
 	}
 
 	User->ClearCurrentlyHeldInventorySlot();
 	Destroy(true, true);
-
 }
 
 void AHook::OnHoldingInHand_Implementation(bool LocallyControlled)
@@ -139,29 +128,30 @@ void AHook::OnHoldingInHand_Implementation(bool LocallyControlled)
 	HookMesh->SetCollisionProfileName("NoCollision");
 	EasyInteract->SetCollisionProfileName("NoCollision");
 
-	State = HookState::InHand;
+	State = EHookState::InHand;
 	UpdateState();
 }
 
 void AHook::Multicast_ThrowHook_Implementation(FVector Direction)
 {
-	if (State != HookState::InWorldActive)
+	if (State != EHookState::InWorldActive)
 	{
-		State = HookState::InWorldActive;
+		State = EHookState::InWorldActive;
 		UpdateState();
 	}
 
 	GetHookMesh()->AddImpulse(Direction * 1250.f * HookMesh->GetMass());
 }
 
-void AHook::OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AHook::OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+                      FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (State != HookState::InWorldActive || !IsValid(OtherActor) || OtherActor->GetRootComponent()->Mobility != EComponentMobility::Static)
+	if (State != EHookState::InWorldActive || !IsValid(OtherActor) || OtherActor->GetRootComponent()->Mobility !=
+		EComponentMobility::Static)
 		return;
 
-	State = HookState::InWorldAttached;
+	State = EHookState::InWorldAttached;
 	UpdateState();
-
 }
 
 FHitResult AHook::GetAttachHit(APlayerCharacter* User)
@@ -185,4 +175,35 @@ void AHook::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AHook, State);
+}
+
+void AHook::HookLetGo(APlayerCharacter* User)
+{
+	FTransform SpawnTransform;
+
+	FVector direction = User->GetBaseAimDirection();
+
+	SpawnTransform.SetLocation(User->FirstPersonCamera->GetComponentLocation() + direction * 100.f);
+
+	AHook* newClimbingHook = GetWorld()->SpawnActorDeferred<AHook>(MyData->MyWorldItemClass, SpawnTransform);
+
+	if (newClimbingHook)
+	{
+		newClimbingHook->State = EHookState::InWorldActive;
+		newClimbingHook->SerializedStringData = SerializedStringData;
+		newClimbingHook->FinishSpawning(SpawnTransform);
+	}
+
+	newClimbingHook->Multicast_ThrowHook(direction);
+
+	this->HookMesh->SetVisibility(false);
+}
+
+void AHook::OnHookThrown(APlayerCharacter* User)
+{
+	User->AttackBlend=0;
+	User->bSwitchHandAllowed=true;
+	
+	User->ClearCurrentlyHeldInventorySlot();
+	Destroy(true, true);
 }

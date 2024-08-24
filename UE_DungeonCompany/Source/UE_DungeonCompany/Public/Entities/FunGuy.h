@@ -30,6 +30,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	UNiagaraComponent* CloudNiagara;
 
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* FloorMesh;
+
 private:
 	UPROPERTY(EditAnywhere, Replicated)
 	float AgeSeconds = 0.f;
@@ -110,6 +113,9 @@ protected:
 	void OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const;
+
+public:
+	virtual void OnDeath_Implementation() override;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")

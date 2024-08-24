@@ -41,8 +41,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Balancing|Timer")
 	float RespawnSeconds = 60.f;
 
-public:
-
 protected:
 	virtual void BeginPlay() override;
 

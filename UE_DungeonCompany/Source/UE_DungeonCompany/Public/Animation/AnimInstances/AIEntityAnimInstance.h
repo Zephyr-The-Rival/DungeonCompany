@@ -28,7 +28,7 @@ protected:
 	bool bAttacking = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
-	bool bHit = false;
+	bool bTookDamage = false;
 
 	UPROPERTY(Transient)
 	float LastHP;

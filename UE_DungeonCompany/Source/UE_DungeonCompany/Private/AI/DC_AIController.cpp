@@ -36,7 +36,7 @@ void ADC_AIController::OnPossess(APawn* InPawn)
 
 	GetAIPerceptionComponent()->RequestStimuliListenerUpdate();
 
-	UBehaviorTree* tree = AIEntity->GetBehaviorTree();
+	UBehaviorTree* tree = AIEntity->GetDefaultBehaviorTree();
 
 	if(!tree)
 		return;

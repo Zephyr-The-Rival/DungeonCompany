@@ -17,7 +17,7 @@ class UE_DUNGEONCOMPANY_API UInputFunctionLibrary : public UBlueprintFunctionLib
 	GENERATED_BODY()
 
 public:
-	static void LookMouse(const FInputActionValue& Value, APawn* Player);
-	static void LookGamepad(const FInputActionValue& Value, APawn* Player);
+	static void LookMouse(const FVector2d& Value, APawn* Player);
+	static void LookGamepad(const FVector2d& Value, APawn* Player);
 	
 };
