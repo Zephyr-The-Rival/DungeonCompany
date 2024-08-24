@@ -112,6 +112,8 @@ void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 	SetInAttackOnBlackboard(true);
 
 	SetActorRotation(attackDirection.Rotation());
+
+	OnAttackingPlayer(TargetPlayer);
 }
 
 void AAIEntity::ExecuteAttack(FVector Direction)
@@ -146,6 +148,15 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 	}
 
 	SetInAttackOnBlackboard(false);
+	OnExecuteAttack(Direction);
+}
+
+void AAIEntity::OnAttackingPlayer_Implementation(APlayerCharacter* PlayerAttacking)
+{
+}
+
+void AAIEntity::OnExecuteAttack_Implementation(FVector Direction)
+{
 }
 
 void AAIEntity::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
