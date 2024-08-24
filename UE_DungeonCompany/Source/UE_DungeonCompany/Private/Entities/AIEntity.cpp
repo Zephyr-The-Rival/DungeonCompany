@@ -97,13 +97,13 @@ void AAIEntity::RunBehaviorTree(UBehaviorTree* InBehaviorTree) const
 
 void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 {
-	if (TargetPlayer->IsDead())
+	if (PlayerAttacking->IsDead())
 	{
 		SetTargetPlayer(nullptr);
 		return;
 	}
 
-	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
+	FVector attackDirection = PlayerAttacking->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
 
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AAIEntity::ExecuteAttack, attackDirection);
@@ -112,6 +112,8 @@ void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 	SetInAttackOnBlackboard(true);
 
 	SetActorRotation(attackDirection.Rotation());
+
+	OnAttackingPlayer(TargetPlayer);
 }
 
 void AAIEntity::ExecuteAttack(FVector Direction)
@@ -146,6 +148,15 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 	}
 
 	SetInAttackOnBlackboard(false);
+	OnExecuteAttack(Direction);
+}
+
+void AAIEntity::OnAttackingPlayer_Implementation(APlayerCharacter* PlayerAttacking)
+{
+}
+
+void AAIEntity::OnExecuteAttack_Implementation(FVector Direction)
+{
 }
 
 void AAIEntity::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
@@ -161,12 +172,15 @@ void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
 }
 
-void AAIEntity::SetTargetPlayer(APlayerCharacter* InTargetPlayer) const
+void AAIEntity::SetTargetPlayer(APlayerCharacter* InTargetPlayer)
 {
 	ADC_AIController* aiController = GetController<ADC_AIController>();
 
-	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", InTargetPlayer);
+	if (!aiController)
+		return;
+
+	aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", InTargetPlayer);
+	TargetPlayer = InTargetPlayer;
 }
 
 bool AAIEntity::IsVisibleToPlayers() const
@@ -346,4 +360,5 @@ void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AAIEntity, AnimationFlags);
+	DOREPLIFETIME(AAIEntity, TargetPlayer);
 }

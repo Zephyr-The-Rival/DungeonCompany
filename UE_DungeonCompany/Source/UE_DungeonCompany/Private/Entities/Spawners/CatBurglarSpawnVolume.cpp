@@ -17,8 +17,8 @@ ACatBurglarSpawnVolume::ACatBurglarSpawnVolume(const FObjectInitializer& ObjectI
 		TEXT("/Game/_DungeonCompanyContent/Code/Entities/BP_CatBurglar"));
 	CatBurglarClass = BPClass.Class;
 
-	//static ConstructorHelpers::FObjectFinder<UStaticMesh> NestMeshFile(TEXT(""));
-	//NestMesh = NestMeshFile.Object;
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> NestMeshFile(TEXT("/Script/Engine.StaticMesh'/Game/_DungeonCompanyContent/Assets/Enemies/Spawners/CatBurglar/CatB_nest.CatB_nest'"));
+	NestMesh = NestMeshFile.Object;
 
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -27,12 +27,14 @@ void ACatBurglarSpawnVolume::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	SpawnTransform.SetScale3D(FVector(1, 1, 1) / GetActorScale3D());	
+	SpawnTransform.SetScale3D(FVector(1, 1, 1) / GetActorScale3D());
+
+	FVector meshLocation = GetWorldSpawnLocation() - FVector::UpVector * 50.f;
 
 	if (!Nest)
 	{
 		FActorSpawnParameters spawnParams;
-		Nest = GetWorld()->SpawnActor<AStaticMeshActor>(GetWorldSpawnLocation(),
+		Nest = GetWorld()->SpawnActor<AStaticMeshActor>(meshLocation,
 		                                                SpawnTransform.GetRotation().Rotator());
 		Nest->GetStaticMeshComponent()->SetStaticMesh(NestMesh);
 	}
@@ -40,7 +42,7 @@ void ACatBurglarSpawnVolume::OnConstruction(const FTransform& Transform)
 	{
 		Nest->GetStaticMeshComponent()->SetStaticMesh(NestMesh);
 
-		Nest->SetActorLocation(GetWorldSpawnLocation());
+		Nest->SetActorLocation(meshLocation);
 		Nest->SetActorRotation(SpawnTransform.GetRotation().Rotator());
 	};
 

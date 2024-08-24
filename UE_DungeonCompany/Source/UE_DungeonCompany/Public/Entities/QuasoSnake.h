@@ -35,6 +35,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	UAnimationAsset* FirstPersonChoke;
+	
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* JumpOutOfWallEffect;
 
 	UPROPERTY(EditAnywhere, Category="Balancing")
 	float DeathSeconds = 30.f;
@@ -53,6 +56,7 @@ private:
 	bool bInAttack = false;
 
 public:
+	void StopLurking();
 	virtual void AttackPlayer(APlayerCharacter* PlayerAttacking) override;
 
 private:
