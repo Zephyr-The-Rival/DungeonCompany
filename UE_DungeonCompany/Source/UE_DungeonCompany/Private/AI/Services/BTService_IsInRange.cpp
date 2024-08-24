@@ -46,10 +46,9 @@ bool UBTService_IsInRange::IsInRange(UBehaviorTreeComponent& OwnerComp) const
 	AActor* checkingActor = Cast<AActor>(
 		OwnerComp.GetBlackboardComponent()->GetValueAsObject(CheckingActor.SelectedKeyName));
 
-	if (!checkingActor)
-		return false;
-
-	FVector targetLocation = checkingActor->GetActorLocation();
+	FVector targetLocation = checkingActor
+		                         ? checkingActor->GetActorLocation()
+		                         : OwnerComp.GetBlackboardComponent()->GetValueAsVector(CheckingActor.SelectedKeyName);
 
 	if (bIgnoreZValue)
 		targetLocation.Z = aiPawn->GetActorLocation().Z;
