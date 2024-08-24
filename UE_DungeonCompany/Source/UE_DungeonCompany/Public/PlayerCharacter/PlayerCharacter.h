@@ -408,6 +408,7 @@ private:
 	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
 public:
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AWorldItem* GetCurrentlyHeldWorldItem() const {return this->CurrentlyHeldWorldItem;}
 protected:
 	UFUNCTION(BlueprintCallable)
@@ -432,6 +433,8 @@ protected:
 	void AddMoneyToWallet_Implementation(int32 Amount);
 
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
+
+	FTransform GetDropTransform();
 
 public:
 	void DropRandomItem();
@@ -758,4 +761,16 @@ public://potionStuff
 private:
 	UPROPERTY(Replicated)
 	bool bIsDrinkingPotion=false;
+
+protected:
+
+
+	void SpawnCorpse();
+
+	UFUNCTION(Server, Reliable)
+	void Server_SpawnCorpse();
+	void Server_SpawnCorpse_Implementation();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AActor> CorpseClass;
 };

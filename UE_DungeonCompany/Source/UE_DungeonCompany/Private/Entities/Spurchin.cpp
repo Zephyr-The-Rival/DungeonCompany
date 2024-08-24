@@ -3,9 +3,12 @@
 
 #include "Entities/Spurchin.h"
 
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "DC_Statics.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "PlayerCharacter/PlayerCharacter.h"
 
 ASpurchin::ASpurchin()
 {
@@ -23,12 +26,32 @@ bool ASpurchin::IsInHallway()
 	GetWorld()->LineTraceSingleByChannel(rightHit, start, start + rightVector * 1000.f, ECC_GameTraceChannel3);
 	GetWorld()->LineTraceSingleByChannel(leftHit, start, start - rightVector * 1000.f, ECC_GameTraceChannel3);
 
-	if(!rightHit.bBlockingHit || !leftHit.bBlockingHit)
+	if (!rightHit.bBlockingHit || !leftHit.bBlockingHit)
 		return false;
 
 	float estimatedWidth = (rightHit.Location - leftHit.Location).Length();
 
 	return estimatedWidth < MaxHallwayWidth;
+}
+
+void ASpurchin::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
+{
+	Super::OnPlayerAttackHit(PlayerCharacter);
+
+	if (!IsValid(PlayerCharacter) || !PlayerCharacter->IsDead())
+		return;
+
+	AAIController* aiController = GetController<AAIController>();
+
+	if (!aiController)
+		return;
+
+	UBlackboardComponent* bbComponent = aiController->GetBlackboardComponent();
+
+	if (!bbComponent)
+		return;
+
+	bbComponent->SetValueAsBool(FName("EatingPlayer"), true);
 }
 
 void ASpurchin::CheckSpace()
@@ -38,7 +61,6 @@ void ASpurchin::CheckSpace()
 		GetCharacterMovement()->MaxWalkSpeed = HallwaySpeed;
 	else
 		GetCharacterMovement()->MaxWalkSpeed = OpenSpaceSpeed;
-
 }
 
 void ASpurchin::Tick(float DeltaSeconds)
@@ -49,7 +71,7 @@ void ASpurchin::Tick(float DeltaSeconds)
 
 void ASpurchin::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 {
-	if(!Target)
+	if (!Target)
 		return;
 
 	GetSenseConfig<UAISenseConfig_Sight>()->SightRadius = OriginalSightRadius;

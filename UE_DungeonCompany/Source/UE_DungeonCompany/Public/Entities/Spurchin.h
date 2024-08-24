@@ -43,6 +43,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void CheckSpace();
 public:
+	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter) override;
+
 	virtual void OnTargetingPlayer_Implementation(APlayerCharacter* Target) override;
 	
 };
