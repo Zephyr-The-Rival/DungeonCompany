@@ -5,7 +5,6 @@
 
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "DC_Statics.h"
 #include "Perception/AISenseConfig_Sight.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "PlayerCharacter/PlayerCharacter.h"
@@ -56,7 +55,6 @@ void ASpurchin::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
 
 void ASpurchin::CheckSpace()
 {
-	LogWarning(TEXT("Spurchin is checking space"));
 	if(IsInHallway())
 		GetCharacterMovement()->MaxWalkSpeed = HallwaySpeed;
 	else
