@@ -33,4 +33,10 @@ void UCatBurglarAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Velocity = OwningCarBurglar->GetVelocity();
 
 	bSteals = OwningCarBurglar->IsStealingItem();
+
+	if(bEyesGlowCurrently != OwningCarBurglar->AreEyesGlowing())
+	{
+		bEyesGlowCurrently = OwningCarBurglar->AreEyesGlowing();
+		OwningCarBurglar->ToggleEyesGlow(bEyesGlowCurrently);
+	}
 }

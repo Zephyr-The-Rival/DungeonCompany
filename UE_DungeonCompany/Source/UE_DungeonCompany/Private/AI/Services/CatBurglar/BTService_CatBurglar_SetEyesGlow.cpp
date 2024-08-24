@@ -23,5 +23,5 @@ void UBTService_CatBurglar_SetEyesGlow::OnBecomeRelevant(UBehaviorTreeComponent&
 	if (!catBurglar)
 		return;
 
-	catBurglar->ToggleEyesGlow(bNewEyesGlow);
+	catBurglar->SetAreEyesGlowing(bNewEyesGlow);
 }

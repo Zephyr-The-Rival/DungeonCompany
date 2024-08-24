@@ -126,4 +126,7 @@ protected:
 public:
 	inline bool IsStealingItem() const { return (AnimationFlags & FLAG_Custom_0) != 0; }
 	void SetIsStealingItem(bool InIsStealing);
+
+	inline bool AreEyesGlowing() const { return (AnimationFlags & FLAG_Custom_1) != 0; }
+	void SetAreEyesGlowing(bool InAreEyesGlowing);
 };

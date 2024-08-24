@@ -33,6 +33,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
 	bool bSteals = false;
+	
+private:
+	bool bEyesGlowCurrently = false;
 
 public:
 	virtual void NativeInitializeAnimation() override;

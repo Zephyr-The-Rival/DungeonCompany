@@ -224,3 +224,11 @@ void ACatBurglar::SetIsStealingItem(bool InIsStealing)
 
 	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_0);
 }
+
+void ACatBurglar::SetAreEyesGlowing(bool InAreEyesGlowing)
+{
+	if (InAreEyesGlowing == AreEyesGlowing())
+		return;
+
+	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_1);
+}
