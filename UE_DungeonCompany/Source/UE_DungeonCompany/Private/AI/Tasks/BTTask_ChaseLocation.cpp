@@ -20,7 +20,17 @@ EBTNodeResult::Type UBTTask_ChaseLocation::ExecuteTask(UBehaviorTreeComponent& O
 
 	FVector targetLocation = OwnerComp.GetBlackboardComponent()->GetValueAsVector(GetSelectedBlackboardKey());
 
-	UAIBlueprintHelperLibrary::SimpleMoveToLocation(aiController, targetLocation);
+	bool bMoveToLocation = !MinMoveDistance;
+
+	if (!bMoveToLocation)
+	{
+		AActor* pawnActor = aiController->GetPawn();
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::SanitizeFloat((targetLocation - pawnActor->GetActorLocation()).Length()));
+		bMoveToLocation = !pawnActor || (targetLocation - pawnActor->GetActorLocation()).Length() > MinMoveDistance;
+	}
+
+	if (bMoveToLocation)
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(aiController, targetLocation);
 
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 
