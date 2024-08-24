@@ -142,9 +142,9 @@ void ACatBurglar::SetInFleeingRange(bool InInFleeingRange) const
 		aiController->GetBlackboardComponent()->SetValueAsBool("InFleeingRange", InInFleeingRange);
 }
 
-void ACatBurglar::OnTookDamage()
+void ACatBurglar::OnTookDamage_Implementation()
 {
-	Super::OnTookDamage();
+	Super::OnTookDamage_Implementation();
 
 	if (!bHealthBelowFleeingUpper && HP < StartFleeingHPUpper && CurrentBehaviorState <
 		ECatBurglarBehaviorState::Fleeing)
