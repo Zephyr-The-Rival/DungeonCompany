@@ -1,26 +1,27 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AI/Tasks/BTTask_GetClosestPlayer.h"
+#include "AI/Tasks/BTTask_AggroClosestPlayer.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "AI/DC_AIController.h"
 
 #include "EngineUtils.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Entities/AIEntity.h"
 
-UBTTask_GetClosestPlayer::UBTTask_GetClosestPlayer()
+UBTTask_AggroClosestPlayer::UBTTask_AggroClosestPlayer()
 {
 	NodeName = "AggroClosestPlayer";
 }
 
-EBTNodeResult::Type UBTTask_GetClosestPlayer::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_AggroClosestPlayer::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	AAIController* aiController = OwnerComp.GetAIOwner();
 
 	if(!aiController)
 		return EBTNodeResult::Failed;
 
-	APawn* aiPawn = aiController->GetPawn();
+	AAIEntity* aiPawn = aiController->GetPawn<AAIEntity>();
 
 	if (!aiPawn)
 		return EBTNodeResult::Failed;
@@ -42,7 +43,7 @@ EBTNodeResult::Type UBTTask_GetClosestPlayer::ExecuteTask(UBehaviorTreeComponent
 	}
 
 	if(closestPlayer || bResetValueIfNoPlayerFound)
-		OwnerComp.GetBlackboardComponent()->SetValueAsObject(GetSelectedBlackboardKey(), closestPlayer);
+		aiPawn->SetTargetPlayer(closestPlayer);
 
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);	
 	return EBTNodeResult::Succeeded;
