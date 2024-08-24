@@ -92,9 +92,12 @@ void ADC_PostMortemPawn::OnPlayerStateChanged(APlayerState* NewPlayerState, APla
 	voiceSubsystem->RegisterPlayerState(NewPlayerState);
 	VOIPTalker->RegisterWithPlayerState(NewPlayerState);
 
+	if(IsLocallyControlled())
+		return;
+
 	APlayerController* localPlayerController = GetWorld()->GetFirstPlayerController();
 	
-	if (!localPlayerController || !localPlayerController->GetPawn<APlayerCharacter>())
+	if (!localPlayerController || localPlayerController->GetPawn<APlayerCharacter>())
 	{
 		voiceSubsystem->MutePlayer(NewPlayerState);
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Muted"));
