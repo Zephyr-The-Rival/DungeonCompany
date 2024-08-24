@@ -46,7 +46,7 @@ void AHook::UpdateHookBehavior()
 		UE_LOG(LogTemp, Warning, TEXT("Invalid Hook State"));
 	}
 
-	if (!HasAuthority())
+	if(!HasAuthority())
 		return;
 
 	if (State != EHookState::InWorldActive)
@@ -66,7 +66,6 @@ AHook::AHook()
 
 	HookMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HookMesh"));
 	RootComponent = HookMesh;
-	HookMesh->SetNotifyRigidBodyCollision(true);
 
 	HookMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	HookMesh->SetSimulatePhysics(true);
@@ -75,6 +74,7 @@ AHook::AHook()
 	EasyInteract->SetupAttachment(RootComponent);
 
 	EasyInteract->SetCollisionProfileName("EasyInteract");
+
 }
 
 void AHook::BeginPlay()
@@ -82,25 +82,35 @@ void AHook::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateState();
+
 }
 
 void AHook::TriggerPrimaryAction_Implementation(APlayerCharacter* User)
 {
-	if (this->GetHookState() == EHookState::InHandAfterThrow)
-		return;
+	
+	FTransform SpawnTransform;
 
-	User->AttackBlend=1;
-	User->bSwitchHandAllowed=false;
-	
-	
-	this->State=EHookState::InHandAfterThrow;
+	FVector direction = User->GetBaseAimDirection();
+
+	SpawnTransform.SetLocation(User->FirstPersonCamera->GetComponentLocation() + direction * 100.f);
+
+	AHook* newClimbingHook = GetWorld()->SpawnActorDeferred<AHook>(MyData->MyWorldItemClass, SpawnTransform);
+
+	if (newClimbingHook)
+	{
+		newClimbingHook->State = EHookState::InWorldActive;
+		newClimbingHook->SerializedStringData = SerializedStringData;
+		newClimbingHook->FinishSpawning(SpawnTransform);
+	}
+
+	User->ClearCurrentlyHeldInventorySlot();	
+	newClimbingHook->Multicast_ThrowHook(direction);
+
+	Destroy(true, true);
 }
 
 void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 {
-	if (this->GetHookState() == EHookState::InHandAfterThrow)
-		return;
-
 	FHitResult attachHit = GetAttachHit(User);
 
 	if (!attachHit.bBlockingHit)
@@ -120,6 +130,7 @@ void AHook::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 
 	User->ClearCurrentlyHeldInventorySlot();
 	Destroy(true, true);
+
 }
 
 void AHook::OnHoldingInHand_Implementation(bool LocallyControlled)
@@ -143,15 +154,14 @@ void AHook::Multicast_ThrowHook_Implementation(FVector Direction)
 	GetHookMesh()->AddImpulse(Direction * 1250.f * HookMesh->GetMass());
 }
 
-void AHook::OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-                      FVector NormalImpulse, const FHitResult& Hit)
+void AHook::OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (State != EHookState::InWorldActive || !IsValid(OtherActor) || OtherActor->GetRootComponent()->Mobility !=
-		EComponentMobility::Static)
+	if (State != EHookState::InWorldActive || !IsValid(OtherActor) || OtherActor->GetRootComponent()->Mobility != EComponentMobility::Static)
 		return;
 
 	State = EHookState::InWorldAttached;
 	UpdateState();
+
 }
 
 FHitResult AHook::GetAttachHit(APlayerCharacter* User)
@@ -175,35 +185,4 @@ void AHook::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AHook, State);
-}
-
-void AHook::HookLetGo(APlayerCharacter* User)
-{
-	FTransform SpawnTransform;
-
-	FVector direction = User->GetBaseAimDirection();
-
-	SpawnTransform.SetLocation(User->FirstPersonCamera->GetComponentLocation() + direction * 100.f);
-
-	AHook* newClimbingHook = GetWorld()->SpawnActorDeferred<AHook>(MyData->MyWorldItemClass, SpawnTransform);
-
-	if (newClimbingHook)
-	{
-		newClimbingHook->State = EHookState::InWorldActive;
-		newClimbingHook->SerializedStringData = SerializedStringData;
-		newClimbingHook->FinishSpawning(SpawnTransform);
-	}
-
-	newClimbingHook->Multicast_ThrowHook(direction);
-
-	this->HookMesh->SetVisibility(false);
-}
-
-void AHook::OnHookThrown(APlayerCharacter* User)
-{
-	User->AttackBlend=0;
-	User->bSwitchHandAllowed=true;
-	
-	User->ClearCurrentlyHeldInventorySlot();
-	Destroy(true, true);
 }

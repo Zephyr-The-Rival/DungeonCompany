@@ -22,6 +22,8 @@ void UBTService_IsInRange::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, u
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool(WriteResultTo.SelectedKeyName, IsInRange(OwnerComp));
 }
 
+#define WriteResult(result) { OwnerComp.GetBlackboardComponent()->SetValueAsBool(WriteResultTo.SelectedKeyName, result); return;}
+
 void UBTService_IsInRange::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);

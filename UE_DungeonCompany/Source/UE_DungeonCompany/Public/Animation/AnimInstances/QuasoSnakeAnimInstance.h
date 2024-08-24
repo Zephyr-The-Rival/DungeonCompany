@@ -28,9 +28,6 @@ protected:
 	FVector Location = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
-	FRotator TargetEyeRotation = FRotator::ZeroRotator;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
 	bool bLurking = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")

@@ -24,6 +24,5 @@ private:
 public:
 	UBTService_IsInAttackRange();
 	virtual void OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-
-	bool IsInAttackingRange(UBehaviorTreeComponent& OwnerComp) const;
+	
 };

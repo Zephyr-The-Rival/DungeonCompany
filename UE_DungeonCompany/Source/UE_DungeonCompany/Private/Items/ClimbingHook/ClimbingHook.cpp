@@ -14,6 +14,7 @@ void AClimbingHook::BeginPlay()
 {
 	SetActorTickEnabled(false);
 	Super::BeginPlay();
+
 }
 
 void AClimbingHook::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -21,7 +22,7 @@ void AClimbingHook::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (!HasAuthority())
 		return;
 
-	if (IsValid(SpawnedRope))
+	if(IsValid(SpawnedRope))
 		SpawnedRope->Destroy();
 
 	Super::EndPlay(EndPlayReason);
@@ -34,34 +35,28 @@ void AClimbingHook::UpdateHookBehavior()
 	if (!HasAuthority())
 		return;
 
-	if (GetHookState() == EHookState::InWorldAttached)
+	if(GetHookState() == EHookState::InWorldAttached)
 		SetActorTickEnabled(true);
 
-	if ((GetHookState() == EHookState::InWorldAttached || GetHookState() == EHookState::InWorldActive) && !
-		IsValid(SpawnedRope))
+	if ((GetHookState() == EHookState::InWorldAttached || GetHookState() == EHookState::InWorldActive) && !IsValid(SpawnedRope))
 	{
 		FActorSpawnParameters spawnParams;
 		spawnParams.Owner = this;
 
 		SpawnedRope = GetWorld()->SpawnActor<ARope>(RopeClass, GetActorLocation(), GetActorRotation(), spawnParams);
 	}
-	else if (GetHookState() != EHookState::InWorldAttached && GetHookState() != EHookState::InWorldActive &&
-		IsValid(SpawnedRope))
+	else if (GetHookState() != EHookState::InWorldAttached && GetHookState() != EHookState::InWorldActive && IsValid(SpawnedRope))
 	{
 		SpawnedRope->Destroy();
 	}
 
-	if (GetHookState() == EHookState::InWorldAttached)
-	{
-		SpawnedRope->SetMassScale(10000.f);
-	}
 }
 
 void AClimbingHook::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!IsValid(SpawnedRope))
+	if(!IsValid(SpawnedRope))
 		return;
 
 	RopeLifetime += DeltaTime;

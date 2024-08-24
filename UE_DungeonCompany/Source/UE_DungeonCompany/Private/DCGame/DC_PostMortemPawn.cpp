@@ -180,7 +180,7 @@ void ADC_PostMortemPawn::OnInputDeviceChanged(bool IsUsingGamepad)
 
 void ADC_PostMortemPawn::Look(const FInputActionValue& Value)
 {
-	(*LookFunction)(Value.Get<FVector2d>(), this);
+	(*LookFunction)(Value, this);
 }
 
 void ADC_PostMortemPawn::NoLook()

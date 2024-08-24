@@ -25,9 +25,6 @@ public:
 	ADC_Entity();
 	ADC_Entity(const FObjectInitializer& ObjectInitializer);
 
-protected:
-	virtual void BeginPlay() override;
-
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetHealth() const { return HP; }
@@ -47,12 +44,7 @@ public:
 	                                   FVector HitNormal);
 
 protected:
-	UFUNCTION(BlueprintNativeEvent)
-	void OnTookDamage();
-	virtual void OnTookDamage_Implementation();
-
-	UFUNCTION(BlueprintCallable)
-	virtual void Heal(float amount);
+	virtual void OnTookDamage();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

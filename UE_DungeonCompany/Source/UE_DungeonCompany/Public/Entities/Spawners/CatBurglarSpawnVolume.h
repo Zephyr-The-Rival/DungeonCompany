@@ -36,9 +36,6 @@ private:
 
 	TSubclassOf<ACatBurglar> CatBurglarClass;
 
-	UPROPERTY(EditAnywhere)
-	UStaticMesh* NestMesh;
-
 private:
 	TArray<APlayerCharacter*> PlayerCharactersInVolume;
 	TArray<ACatBurglar*> SpawnedCatBurglars;
@@ -52,10 +49,6 @@ protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 
-#if WITH_EDITOR
-	virtual void OnLevelActorDeleted(AActor* DeletedActor);
-#endif
-	
 public:
 	virtual void Tick(float DeltaSeconds) override;
 

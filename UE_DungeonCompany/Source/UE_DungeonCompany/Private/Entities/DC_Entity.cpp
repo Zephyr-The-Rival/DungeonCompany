@@ -28,13 +28,6 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 	
 }
 
-void ADC_Entity::BeginPlay()
-{
-	Super::BeginPlay();
-
-	HP = MaxHP;
-}
-
 void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
 {
 	if (IsValid(this->bloodEffect))
@@ -44,14 +37,7 @@ void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FN
 	}
 }
 
-void ADC_Entity::Heal(float amount)
-{
-	this->HP+=amount;
-	if(HP>this->MaxHP)
-		HP=MaxHP;
-}
-
-void ADC_Entity::OnTookDamage_Implementation()
+void ADC_Entity::OnTookDamage()
 {
 }
 

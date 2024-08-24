@@ -30,9 +30,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	UNiagaraComponent* CloudNiagara;
 
-	UPROPERTY(EditAnywhere)
-	UStaticMeshComponent* FloorMesh;
-
 private:
 	UPROPERTY(EditAnywhere, Replicated)
 	float AgeSeconds = 0.f;

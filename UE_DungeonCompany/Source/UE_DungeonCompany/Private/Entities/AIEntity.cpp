@@ -17,7 +17,6 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "EngineUtils.h"
-#include "Components/CapsuleComponent.h"
 
 AAIEntity::AAIEntity()
 {
@@ -95,15 +94,15 @@ void AAIEntity::RunBehaviorTree(UBehaviorTree* InBehaviorTree) const
 	aiController->RunBehaviorTree(InBehaviorTree);
 }
 
-void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
+void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 {
-	if (PlayerAttacking->IsDead())
+	if (TargetPlayer->IsDead())
 	{
 		SetTargetPlayer(nullptr);
 		return;
 	}
-
-	FVector attackDirection = PlayerAttacking->GetActorLocation() - GetActorLocation();
+	
+	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
 
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AAIEntity::ExecuteAttack, attackDirection);
@@ -161,12 +160,12 @@ void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
 }
 
-void AAIEntity::SetTargetPlayer(APlayerCharacter* InTargetPlayer) const
+void AAIEntity::SetTargetPlayer(APlayerCharacter* TargetPlayer) const
 {
 	ADC_AIController* aiController = GetController<ADC_AIController>();
 
 	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", InTargetPlayer);
+		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", TargetPlayer);
 }
 
 bool AAIEntity::IsVisibleToPlayers() const
@@ -213,7 +212,6 @@ void AAIEntity::HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBl
 
 void AAIEntity::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 {
-	TargetPlayer = Target;
 }
 
 APlayerCharacter* AAIEntity::GetClosestPlayer() const
@@ -275,9 +273,7 @@ APlayerCharacter* AAIEntity::GetClosestNavPlayer() const
 void AAIEntity::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
-
-	GetCapsuleComponent()->SetCollisionProfileName(FName("IgnoreOnlyPawn"));
-
+	
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	GetMesh()->SetAnimation(nullptr);
 
@@ -285,9 +281,8 @@ void AAIEntity::OnDeath_Implementation()
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->WakeAllRigidBodies();
-
-	if (HasAuthority())
-		GetController()->Destroy();
+	
+	GetController()->Destroy();
 }
 
 void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
@@ -323,23 +318,16 @@ void AAIEntity::SetIsAttacking(bool InAttacking)
 void AAIEntity::SetAnimationBitFlag(EAnimationFlags InBit)
 {
 	AnimationFlags |= InBit;
-	OnAnimationFlagUpdated();
 }
 
 void AAIEntity::ClearAnimationBitFlag(EAnimationFlags InBit)
 {
 	AnimationFlags &= ~InBit;
-	OnAnimationFlagUpdated();
 }
 
 void AAIEntity::ToggleAnimationBitFlag(EAnimationFlags InBit)
 {
 	AnimationFlags ^= InBit;
-	OnAnimationFlagUpdated();
-}
-
-void AAIEntity::OnAnimationFlagUpdated_Implementation()
-{
 }
 
 void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

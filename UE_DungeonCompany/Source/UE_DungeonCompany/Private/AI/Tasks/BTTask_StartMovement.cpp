@@ -31,7 +31,7 @@ EBTNodeResult::Type UBTTask_StartMovement::ExecuteTask(UBehaviorTreeComponent& O
 
 	if (AQuasoSnake* quaso = Cast<AQuasoSnake>(aiEntity))
 	{
-		quaso->StopLurking();
+		quaso->SetIsLurking(false);
 	}
 
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
