@@ -43,6 +43,19 @@ ACatBurglar::ACatBurglar()
 	DropTransform->SetRelativeLocation(FVector(150, 0, 20));
 }
 
+void ACatBurglar::BeginPlay()
+{
+	Super::BeginPlay();
+
+	DynMaterialInstance = UMaterialInstanceDynamic::Create(GetMesh()->GetMaterial(0), this);
+	GetMesh()->SetMaterial(0, DynMaterialInstance);
+}
+
+void ACatBurglar::ToggleEyesGlow(bool bInEyesGlow) const
+{
+	DynMaterialInstance->SetScalarParameterValue(FName("Emissive brightness"), bInEyesGlow);
+}
+
 void ACatBurglar::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -98,7 +111,11 @@ void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 
 	CurrentBehaviorState = NewBehaviorState;
 	SetInFleeingRange(NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
-	SetActorTickEnabled(NewBehaviorState == ECatBurglarBehaviorState::Retrieving || NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
+	SetActorTickEnabled(
+		NewBehaviorState == ECatBurglarBehaviorState::Retrieving || NewBehaviorState ==
+		ECatBurglarBehaviorState::Fleeing);
+
+	ToggleEyesGlow(false);
 
 	switch (NewBehaviorState)
 	{
@@ -109,7 +126,7 @@ void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 	case ECatBurglarBehaviorState::Retrieving:
 		GetCharacterMovement()->MaxWalkSpeed = RetrievingSpeed;
 		break;
-		
+
 	default:
 		GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
 	}
@@ -125,9 +142,9 @@ void ACatBurglar::SetInFleeingRange(bool InInFleeingRange) const
 		aiController->GetBlackboardComponent()->SetValueAsBool("InFleeingRange", InInFleeingRange);
 }
 
-void ACatBurglar::OnTookDamage_Implementation()
+void ACatBurglar::OnTookDamage()
 {
-	Super::OnTookDamage_Implementation();
+	Super::OnTookDamage();
 
 	if (!bHealthBelowFleeingUpper && HP < StartFleeingHPUpper && CurrentBehaviorState <
 		ECatBurglarBehaviorState::Fleeing)
@@ -146,6 +163,7 @@ void ACatBurglar::OnTookDamage_Implementation()
 	gameMode->SpawnWorldItem(StolenItem->MyWorldItemClass, DropTransform->GetComponentTransform(),
 	                         StolenItem->SerializeMyData());
 	StolenItem = nullptr;
+	SetIsStealingItem(false);
 }
 
 void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
@@ -197,4 +215,12 @@ void ACatBurglar::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus,
                                      UBlackboardComponent* BlackboardComponent)
 {
 	Super::HandleHearingSense(Actor, Stimulus, BlackboardComponent);
+}
+
+void ACatBurglar::SetIsStealingItem(bool InIsStealing)
+{
+	if (InIsStealing == IsStealingItem())
+		return;
+
+	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_0);
 }
