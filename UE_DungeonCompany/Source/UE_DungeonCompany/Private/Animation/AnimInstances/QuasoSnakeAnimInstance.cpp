@@ -24,8 +24,7 @@ void UQuasoSnakeAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
-	Velocity = OwningQuaso->GetVelocity() * (0.f < OwningQuaso->GetCharacterMovement()->GetCurrentAcceleration().
-	                                                            Length());
+	Velocity = OwningQuaso->GetVelocity();
 	Location = OwningQuaso->GetActorLocation();
 
 

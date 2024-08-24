@@ -3,38 +3,38 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Animation/AnimInstance.h"
-#include "AIEntityAnimInstance.generated.h"
+#include "Animation/AnimInstances/AIEntityAnimInstance.h"
+#include "CatBurglarAnimInstance.generated.h"
 
+class ACatBurglar;
 /**
  * 
  */
-
-class AAIEntity;
-
 UCLASS()
-class UE_DUNGEONCOMPANY_API UAIEntityAnimInstance : public UAnimInstance
+class UE_DUNGEONCOMPANY_API UCatBurglarAnimInstance : public UAIEntityAnimInstance
 {
 	GENERATED_BODY()
 
 private:
-	AAIEntity* OwningEntity;
+	ACatBurglar* OwningCarBurglar;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
-	bool bDead = false; 
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
-	bool bAttacking = false;
+	FVector Velocity = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
-	bool bTookDamage = false;
+	float StalkSpeed = -1.f;
 
-	UPROPERTY(Transient)
-	float LastHP;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	float RunSpeed = -1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	float RetrieveSpeed = -1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation Properties")
+	bool bSteals = false;
 
 public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-	
 };

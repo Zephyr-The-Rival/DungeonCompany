@@ -31,7 +31,7 @@ void UAIEntityAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bAttacking = OwningEntity->IsAttacking();
 	bDead = OwningEntity->IsDead();
 
-	bHit = OwningEntity->GetHealth() < LastHP;
+	bTookDamage = OwningEntity->GetHealth() < LastHP;
 
 	LastHP = OwningEntity->GetHealth();
 }

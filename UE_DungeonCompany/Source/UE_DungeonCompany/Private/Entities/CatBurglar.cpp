@@ -98,7 +98,9 @@ void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 
 	CurrentBehaviorState = NewBehaviorState;
 	SetInFleeingRange(NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
-	SetActorTickEnabled(NewBehaviorState == ECatBurglarBehaviorState::Retrieving || NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
+	SetActorTickEnabled(
+		NewBehaviorState == ECatBurglarBehaviorState::Retrieving || NewBehaviorState ==
+		ECatBurglarBehaviorState::Fleeing);
 
 	switch (NewBehaviorState)
 	{
@@ -109,7 +111,7 @@ void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 	case ECatBurglarBehaviorState::Retrieving:
 		GetCharacterMovement()->MaxWalkSpeed = RetrievingSpeed;
 		break;
-		
+
 	default:
 		GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
 	}
@@ -146,6 +148,7 @@ void ACatBurglar::OnTookDamage()
 	gameMode->SpawnWorldItem(StolenItem->MyWorldItemClass, DropTransform->GetComponentTransform(),
 	                         StolenItem->SerializeMyData());
 	StolenItem = nullptr;
+	SetIsStealingItem(false);
 }
 
 void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
@@ -197,4 +200,12 @@ void ACatBurglar::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus,
                                      UBlackboardComponent* BlackboardComponent)
 {
 	Super::HandleHearingSense(Actor, Stimulus, BlackboardComponent);
+}
+
+void ACatBurglar::SetIsStealingItem(bool InIsStealing)
+{
+	if (InIsStealing == IsStealingItem())
+		return;
+
+	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_0);
 }
