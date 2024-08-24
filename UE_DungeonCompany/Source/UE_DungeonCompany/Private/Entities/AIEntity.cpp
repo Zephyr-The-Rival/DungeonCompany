@@ -172,12 +172,15 @@ void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
 		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
 }
 
-void AAIEntity::SetTargetPlayer(APlayerCharacter* InTargetPlayer) const
+void AAIEntity::SetTargetPlayer(APlayerCharacter* InTargetPlayer)
 {
 	ADC_AIController* aiController = GetController<ADC_AIController>();
 
-	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", InTargetPlayer);
+	if (!aiController)
+		return;
+
+	aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", InTargetPlayer);
+	TargetPlayer = InTargetPlayer;
 }
 
 bool AAIEntity::IsVisibleToPlayers() const
@@ -357,4 +360,5 @@ void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AAIEntity, AnimationFlags);
+	DOREPLIFETIME(AAIEntity, TargetPlayer);
 }
