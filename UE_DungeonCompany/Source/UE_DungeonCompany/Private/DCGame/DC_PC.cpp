@@ -27,7 +27,7 @@ void ADC_PC::BeginPlay()
 	if(!IsLocalController())
 		return;
 
-	UVOIPStatics::SetMicThreshold(-3.0);
+	UVOIPStatics::SetMicThreshold(-20.0);
 
 	GetWorld()->Exec(GetWorld(), TEXT("OSS.VoiceLoopback 1"));
 
