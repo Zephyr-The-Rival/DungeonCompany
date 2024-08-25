@@ -32,4 +32,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<APlayerCharacter> ClassToSwitchTo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Price=25;
 };

@@ -4,6 +4,9 @@
 #include "WorldActors/ClassSwitcher.h"
 
 #include "DCGame/DC_PC.h"
+#include "Kismet/GameplayStatics.h"
+#include "PlayerCharacter/PlayerCharacter.h"
+#include "WorldActors/SharedStatsManager.h"
 
 
 // Sets default values
@@ -29,13 +32,28 @@ void AClassSwitcher::Tick(float DeltaTime)
 
 void AClassSwitcher::OnHovered(APlayerCharacter* PlayerCharacter)
 {
-	this->InteractPromptText="SwichToMercenary";
+	ASharedStatsManager* wallet = Cast<ASharedStatsManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
+	
+	if (wallet->Money < this->Price)
+		this->InteractPromptText="Not Enough Money (25)";
+	else
+		this->InteractPromptText="Hire To Mercenary (25)";
+	
 	Super::OnHovered(PlayerCharacter);
 	
 }
 
 void AClassSwitcher::AuthorityInteract(APawn* InteractingPawn)
 {
+
+	ASharedStatsManager* wallet = Cast<ASharedStatsManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
+
+	if(wallet->Money< this->Price)
+		return;
+	
+	wallet->Money-=Price;
+	wallet->OnMoneyChanged.Broadcast();
+	
 	Super::Interact(InteractingPawn);
 	Cast<ADC_PC>(InteractingPawn->GetController())->SwitchPlayerCharacterClass(this->ClassToSwitchTo);
 }
