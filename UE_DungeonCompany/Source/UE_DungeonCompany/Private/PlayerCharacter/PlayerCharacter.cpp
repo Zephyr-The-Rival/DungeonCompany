@@ -22,7 +22,10 @@
 #include "Items/Torch_Data.h"
 #include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
 #include "Engine/World.h"
-#include "GameFramework/Actor.h"
+#include "DCGame/DC_PostMortemPawn.h"
+#include "Items/Potion.h"
+#include "Items/WorldCurrency_Data.h"
+#include "PlayerCharacter/Components/DC_VOIPTalker.h"
 #include "EngineUtils.h"
 
 #include "Components/CapsuleComponent.h"
@@ -37,6 +40,7 @@
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Subsystems/VoiceChatSubsystem.h"
 #include "DCGame/DC_PostMortemPawn.h"
 #include "Items/Potion.h"
 #include "Items/SendingStone.h"
@@ -70,7 +74,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 		TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	VoiceSA = voiceSA.Object;
 
-	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+	VOIPTalker = CreateDefaultSubobject<UDC_VOIPTalker>(TEXT("VOIPTalker"));
 
 	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
 	this->Backpack = CreateDefaultSubobject<UInventory>(TEXT("BackpackComponent"));
@@ -770,9 +774,17 @@ void APlayerCharacter::SetVoiceEffect(USoundEffectSourcePresetChain* SoundEffect
 void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
+	
+	UVoiceChatSubsystem* voiceSubsystem = GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>();
+	
+	voiceSubsystem->UnregisterPlayerState(OldPlayerState);
 
-	if (NewPlayerState)
-		VOIPTalker->RegisterWithPlayerState(NewPlayerState);
+	if (!NewPlayerState)
+		return;
+	
+	voiceSubsystem->RegisterPlayerState(NewPlayerState);
+	VOIPTalker->RegisterWithPlayerState(NewPlayerState);
+	
 }
 
 
@@ -1308,7 +1320,7 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	{
 		if (UMeshComponent* u = Cast<UMeshComponent>(i->GetRootComponent()))
 		{
-			u->AddImpulse(CameraVector * this->throwStrengh * u->GetMass());
+			u->AddImpulse(CameraVector * this->ThrowStrengh * u->GetMass());
 		}
 	}
 }
@@ -1428,6 +1440,8 @@ void APlayerCharacter::OnDeath_Implementation()
 		DropAllItems();
 		if (IsValid(CurrentlyHeldWorldItem))
 			DestroyWorldItem(CurrentlyHeldWorldItem);
+
+		GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->UnmuteAllPlayers();
 	}
 
 
