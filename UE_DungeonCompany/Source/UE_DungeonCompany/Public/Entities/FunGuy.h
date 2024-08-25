@@ -96,6 +96,11 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
+protected:
+	UFUNCTION(BlueprintNativeEvent)
+	void OnLiftOff();
+	virtual void OnLiftOff_Implementation();
+
 private:
 	static TMap<APlayerCharacter*, FTimerHandle> PlayerTimerHandles;
 	static TMap<APlayerCharacter*, uint16> PlayerCloudOverlapCount;
