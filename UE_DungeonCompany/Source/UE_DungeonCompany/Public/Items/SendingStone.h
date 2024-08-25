@@ -35,4 +35,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void Server_SendSignal(ESendingStoneAnimatoinState Signal);
 	void Server_SendSignal_Implementation(ESendingStoneAnimatoinState Signal);
+
+public:
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ToggleTutorial(bool bOn);
+	void ToggleTutorial_Implementation(bool bOn);
 };

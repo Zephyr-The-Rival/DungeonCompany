@@ -45,6 +45,8 @@ public:
 	void RemoveItem(int32 index);
 	
 	UItemData* GetItemAtIndex(int32 Index);
+
+	bool ContainsItem(TSubclassOf<UItemData> ItemClass);
 	
 
 };
