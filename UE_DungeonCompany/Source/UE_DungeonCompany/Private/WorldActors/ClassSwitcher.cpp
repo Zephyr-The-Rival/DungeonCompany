@@ -3,12 +3,15 @@
 
 #include "WorldActors/ClassSwitcher.h"
 
+#include "DCGame/DC_PC.h"
+
 
 // Sets default values
 AClassSwitcher::AClassSwitcher()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bInteractOnServer=true;
 }
 
 // Called when the game starts or when spawned
@@ -26,7 +29,14 @@ void AClassSwitcher::Tick(float DeltaTime)
 
 void AClassSwitcher::OnHovered(APlayerCharacter* PlayerCharacter)
 {
-	Super::OnHovered(PlayerCharacter);
 	this->InteractPromptText="SwichToMercenary";
+	Super::OnHovered(PlayerCharacter);
+	
+}
+
+void AClassSwitcher::AuthorityInteract(APawn* InteractingPawn)
+{
+	Super::Interact(InteractingPawn);
+	Cast<ADC_PC>(InteractingPawn->GetController())->SwitchPlayerCharacterClass(this->ClassToSwitchTo);
 }
 

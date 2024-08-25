@@ -812,4 +812,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool HasItemOfClass(TSubclassOf<UItemData> Item);
+
+protected:
+	virtual void Destroyed() override;
+
+public:
+	void SetAttackBlend(float NewBlend);
+protected:
+	UFUNCTION(Server, Reliable)
+	void Server_SetAttackBlend(float NewBlend);
+	void Server_SetAttackBlend_Implementation(float NewBlend);
 };

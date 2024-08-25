@@ -201,7 +201,7 @@ void AHook::HookLetGo(APlayerCharacter* User)
 
 void AHook::OnHookThrown(APlayerCharacter* User)
 {
-	User->AttackBlend=0;
+	User->SetAttackBlend(0);
 	User->bSwitchHandAllowed=true;
 	
 	User->ClearCurrentlyHeldInventorySlot();

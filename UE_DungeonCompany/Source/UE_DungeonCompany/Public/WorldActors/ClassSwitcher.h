@@ -26,5 +26,10 @@ public:
 
 protected:
 
-	void OnHovered(APlayerCharacter* PlayerCharacter) override;
+	virtual void OnHovered(APlayerCharacter* PlayerCharacter) override;
+	
+	virtual void AuthorityInteract(APawn* InteractingPawn) override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<APlayerCharacter> ClassToSwitchTo;
 };

@@ -1864,6 +1864,27 @@ bool APlayerCharacter::HasItemOfClass(TSubclassOf<UItemData> Item)
 	return false;
 }
 
+void APlayerCharacter::Destroyed()
+{
+	if(IsLocallyControlled())
+		MyPlayerHud->RemoveFromParent();
+	
+	Super::Destroyed();
+}
+
+void APlayerCharacter::SetAttackBlend(float NewBlend)
+{
+	if(HasAuthority())
+		Server_SetAttackBlend_Implementation(NewBlend);
+	else
+		Server_SetAttackBlend(NewBlend);
+}
+
+void APlayerCharacter::Server_SetAttackBlend_Implementation(float NewBlend)
+{
+	this->AttackBlend=NewBlend;
+}
+
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
 {
 }
