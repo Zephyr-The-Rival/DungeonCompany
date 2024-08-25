@@ -33,6 +33,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* FloorMesh;
 
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* MeshSwitchEffect;
+
 private:
 	UPROPERTY(EditAnywhere, Replicated)
 	float AgeSeconds = 0.f;
@@ -95,6 +98,11 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+protected:
+	UFUNCTION(BlueprintNativeEvent)
+	void OnLiftOff();
+	virtual void OnLiftOff_Implementation();
 
 private:
 	static TMap<APlayerCharacter*, FTimerHandle> PlayerTimerHandles;
