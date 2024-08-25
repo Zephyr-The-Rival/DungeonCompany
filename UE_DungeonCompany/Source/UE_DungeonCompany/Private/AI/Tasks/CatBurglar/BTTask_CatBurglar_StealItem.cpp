@@ -30,9 +30,6 @@ EBTNodeResult::Type UBTTask_CatBurglar_StealItem::ExecuteTask(UBehaviorTreeCompo
 		return EBTNodeResult::Failed;
 
 	catBurglar->StealItem(targetItem);
-	OwnerComp.GetBlackboardComponent()->ClearValue(GetSelectedBlackboardKey());
-
-	OwnerComp.GetBlackboardComponent()->SetValueAsBool("StoleItem", true);
 	
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 
