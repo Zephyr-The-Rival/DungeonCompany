@@ -102,7 +102,7 @@ void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 		SetTargetPlayer(nullptr);
 		return;
 	}
-
+	
 	FVector attackDirection = PlayerAttacking->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
 
@@ -114,10 +114,14 @@ void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 	SetActorRotation(attackDirection.Rotation());
 
 	OnAttackingPlayer(TargetPlayer);
+
+	SetIsAttacking(true);
 }
 
 void AAIEntity::ExecuteAttack(FVector Direction)
 {
+	SetIsAttacking(false);
+
 	FCollisionShape shape = FCollisionShape::MakeSphere(AttackRadius);
 
 	TArray<FHitResult> hits;
