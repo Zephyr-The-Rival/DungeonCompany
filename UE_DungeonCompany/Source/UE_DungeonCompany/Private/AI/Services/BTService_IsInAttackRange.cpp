@@ -12,31 +12,33 @@ UBTService_IsInAttackRange::UBTService_IsInAttackRange()
 	NodeName = "IsInAttackRange";
 }
 
-#define WriteResult(result) { OwnerComp.GetBlackboardComponent()->SetValueAsBool(GetSelectedBlackboardKey(), result); return;}
-
 void UBTService_IsInAttackRange::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	Super::OnBecomeRelevant(OwnerComp, NodeMemory);
 
+	OwnerComp.GetBlackboardComponent()->SetValueAsBool(GetSelectedBlackboardKey(), IsInAttackingRange(OwnerComp));
+}
+
+bool UBTService_IsInAttackRange::IsInAttackingRange(UBehaviorTreeComponent& OwnerComp) const
+{
 	AActor* targetPlayer = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("TargetPlayer"));
 
 	if (!targetPlayer)
-		WriteResult(false);
+		return false;
 
 	AAIController* aiController = OwnerComp.GetAIOwner();
 
 	if (!aiController)
-		WriteResult(false);
+		return false;
 
 	APawn* aiPawn = aiController->GetPawn();
 	if (!aiPawn)
-		WriteResult(false);
+		return false;
 
 	FVector targetLocation = targetPlayer->GetActorLocation();
 
-	if(bIgnoreZValue)
+	if (bIgnoreZValue)
 		targetLocation.Z = aiPawn->GetActorLocation().Z;
 
-	WriteResult((targetLocation - aiPawn->GetActorLocation()).Length() <= AttackRange);
-
+	return (targetLocation - aiPawn->GetActorLocation()).Length() <= AttackRange;
 }

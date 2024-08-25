@@ -22,8 +22,6 @@ void UBTService_IsInRange::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, u
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool(WriteResultTo.SelectedKeyName, IsInRange(OwnerComp));
 }
 
-#define WriteResult(result) { OwnerComp.GetBlackboardComponent()->SetValueAsBool(WriteResultTo.SelectedKeyName, result); return;}
-
 void UBTService_IsInRange::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
@@ -48,10 +46,9 @@ bool UBTService_IsInRange::IsInRange(UBehaviorTreeComponent& OwnerComp) const
 	AActor* checkingActor = Cast<AActor>(
 		OwnerComp.GetBlackboardComponent()->GetValueAsObject(CheckingActor.SelectedKeyName));
 
-	if (!checkingActor)
-		return false;
-
-	FVector targetLocation = checkingActor->GetActorLocation();
+	FVector targetLocation = checkingActor
+		                         ? checkingActor->GetActorLocation()
+		                         : OwnerComp.GetBlackboardComponent()->GetValueAsVector(CheckingActor.SelectedKeyName);
 
 	if (bIgnoreZValue)
 		targetLocation.Z = aiPawn->GetActorLocation().Z;
