@@ -8,8 +8,6 @@
 void UDC_VOIPTalker::OnTalkingBegin(UAudioComponent* AudioComponent)
 {
 	Super::OnTalkingBegin(AudioComponent);
-
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("TALKING"));
 	
 	if (!IsValid(AudioComponent) || TalkerAudioComponent == AudioComponent)
 		return;
