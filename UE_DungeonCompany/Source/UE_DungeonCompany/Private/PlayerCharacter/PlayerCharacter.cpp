@@ -39,6 +39,7 @@
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "DCGame/DC_PostMortemPawn.h"
 #include "Items/Potion.h"
+#include "Items/SendingStone.h"
 #include "Items/WorldCurrency_Data.h"
 #include "WorldActors/ResetManager.h"
 
@@ -291,6 +292,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(NavigateInventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::NavigateInventory);
 	EIC->BindAction(EquipItemInvAction, ETriggerEvent::Started, this, &APlayerCharacter::EquipItem);
 	EIC->BindAction(DropItemInvAction, ETriggerEvent::Started, this, &APlayerCharacter::DropItemInvPressed);
+
+	EIC->BindAction(SendingStoneInput, ETriggerEvent::Triggered, this, &APlayerCharacter::SendindStoneInputPressed);
 }
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
@@ -1173,7 +1176,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	if (AttackBlend)
+	if (AttackBlend || bIsUsingSendingStone)
 		return;
 
 	FSlotData SD;
@@ -1184,7 +1187,7 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::ThrowItemPressed()
 {
-	if (AttackBlend)
+	if (AttackBlend|| bIsUsingSendingStone)
 		return;
 
 	FSlotData SD;
@@ -1363,7 +1366,7 @@ void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 	FVector2D input = Value.Get<FVector2D>();
 
 
-	if (!MyPlayerHud)
+	if (!MyPlayerHud|| bIsUsingSendingStone)
 		return;
 
 
@@ -1579,6 +1582,9 @@ void APlayerCharacter::Multicast_EndAttack_Implementation()
 
 void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 {
+
+	Server_SpawnSoundAtLocation(BuySpound, ItemToBuy->GetActorLocation());
+	
 	if (ItemToBuy->MyItemDataClass == BackpackClass)
 	{
 		if (!this->bHasBackPack)
@@ -1800,6 +1806,62 @@ void APlayerCharacter::Server_SpawnCorpse_Implementation()
 	{
 		GetWorld()->SpawnActor<AActor>(CorpseClass, this->GetActorTransform());
 	}
+}
+
+void APlayerCharacter::SendindStoneInputPressed(const FInputActionValue& Value)
+{
+	if (!bIsUsingSendingStone|| SendingStoneAnimatoinState!=ESendingStoneAnimatoinState::Neutral)
+		return;
+
+	FVector2d InputValue = Value.Get<FVector2d>();
+	if (InputValue.X == 1)
+	{
+		this->SendingStoneAnimatoinState = ESendingStoneAnimatoinState::Up;
+		return;
+	}
+	if (InputValue.X == -1)
+	{
+		this->SendingStoneAnimatoinState = ESendingStoneAnimatoinState::Down;
+		return;
+	}
+
+	if (InputValue.Y == 1)
+	{
+		this->SendingStoneAnimatoinState = ESendingStoneAnimatoinState::Right;
+		return;
+	}
+
+	if (InputValue.Y == -1)
+	{
+		this->SendingStoneAnimatoinState = ESendingStoneAnimatoinState::Left;
+		return;
+	}
+}
+
+void APlayerCharacter::SendSendingStoneSignal(ESendingStoneAnimatoinState Signal)
+{
+	if(HasAuthority())
+		Server_SendSendingStoneSignal_Implementation(Signal);
+	else
+		Server_SendSendingStoneSignal(Signal);
+}
+
+void APlayerCharacter::Server_SendSendingStoneSignal_Implementation(ESendingStoneAnimatoinState Signal)
+{
+	if(ASendingStone* SendingStone = Cast<ASendingStone>(GetCurrentlyHeldWorldItem()))
+	{
+		SendingStone->Server_SendSignal(Signal);
+	}
+}
+
+bool APlayerCharacter::HasItemOfClass(TSubclassOf<UItemData> Item)
+{
+	for(FHeldItem f : this->HeldItems)
+	{
+		if(f.ItemDataClass==Item)
+			return true;
+	}
+	return false;
 }
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
