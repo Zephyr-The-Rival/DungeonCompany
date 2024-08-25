@@ -33,6 +33,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* FloorMesh;
 
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* MeshSwitchEffect;
+
 private:
 	UPROPERTY(EditAnywhere, Replicated)
 	float AgeSeconds = 0.f;

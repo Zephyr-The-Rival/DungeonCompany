@@ -28,7 +28,7 @@ AAIEntity::AAIEntity()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
 	GetCharacterMovement()->bUseRVOAvoidance = true;
-	GetCharacterMovement()->AvoidanceConsiderationRadius = 100.f;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 225.f;
 
 	GetMesh()->SetCollisionProfileName("EntityMesh");
 	GetMesh()->SetGenerateOverlapEvents(true);
@@ -168,12 +168,9 @@ void AAIEntity::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
 	PlayerCharacter->TakeDamage(AttackDamage);
 }
 
-void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
+void AAIEntity::SetInAttackOnBlackboard(bool InAttack) const
 {
-	ADC_AIController* aiController = GetController<ADC_AIController>();
-
-	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
+	SetBlackboardBool("AttackingPlayer", InAttack);
 }
 
 void AAIEntity::SetTargetPlayer(APlayerCharacter* InTargetPlayer)
@@ -185,6 +182,18 @@ void AAIEntity::SetTargetPlayer(APlayerCharacter* InTargetPlayer)
 
 	aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", InTargetPlayer);
 	TargetPlayer = InTargetPlayer;
+}
+
+void AAIEntity::SetBlackboardBool(const FName& KeyName, bool InValue) const
+{
+	if (ADC_AIController* aiController = GetController<ADC_AIController>())
+		aiController->GetBlackboardComponent()->SetValueAsBool(KeyName, InValue);
+}
+
+void AAIEntity::SetBlackboardObject(const FName& KeyName, UObject* InValue) const
+{
+	if (ADC_AIController* aiController = GetController<ADC_AIController>())
+		aiController->GetBlackboardComponent()->SetValueAsObject(KeyName, InValue);
 }
 
 bool AAIEntity::IsVisibleToPlayers() const
@@ -314,11 +323,18 @@ void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBla
 
 	if (!playerCharacter)
 		return;
-
-	if (Stimulus.WasSuccessfullySensed() && !playerCharacter->IsDead())
-		BlackboardComponent->SetValueAsObject("TargetPlayer", Actor);
-	else
+	
+	if(!Stimulus.WasSuccessfullySensed() || playerCharacter->IsDead())
+	{
 		BlackboardComponent->ClearValue("TargetPlayer");
+		return;
+	}
+
+	AActor* currentTarget = Cast<AActor>(BlackboardComponent->GetValueAsObject("TargetPlayer"));
+	
+	if(!currentTarget || GetDistanceTo(currentTarget) < GetDistanceTo(Actor))
+		BlackboardComponent->SetValueAsObject("TargetPlayer", Actor);
+
 }
 
 void AAIEntity::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
