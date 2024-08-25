@@ -82,26 +82,18 @@ void ADC_PostMortemPawn::OnPlayerStateChanged(APlayerState* NewPlayerState, APla
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
 
-	UVoiceChatSubsystem* voiceSubsystem = GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>();
-
-	voiceSubsystem->UnregisterPlayerState(OldPlayerState);
-
 	if (!NewPlayerState)
 		return;
 
-	voiceSubsystem->RegisterPlayerState(NewPlayerState);
 	VOIPTalker->RegisterWithPlayerState(NewPlayerState);
 
-	if(IsLocallyControlled())
+	if (IsLocallyControlled())
 		return;
 
 	APlayerController* localPlayerController = GetWorld()->GetFirstPlayerController();
-	
+
 	if (!localPlayerController || localPlayerController->GetPawn<APlayerCharacter>())
-	{
-		voiceSubsystem->MutePlayer(NewPlayerState);
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Muted"));
-	}
+		GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->MutePlayer(NewPlayerState);
 }
 
 // Called every frame
