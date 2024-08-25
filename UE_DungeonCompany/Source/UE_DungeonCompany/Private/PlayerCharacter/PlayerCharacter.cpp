@@ -22,7 +22,10 @@
 #include "Items/Torch_Data.h"
 #include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
 #include "Engine/World.h"
-#include "GameFramework/Actor.h"
+#include "DCGame/DC_PostMortemPawn.h"
+#include "Items/Potion.h"
+#include "Items/WorldCurrency_Data.h"
+#include "PlayerCharacter/Components/DC_VOIPTalker.h"
 #include "EngineUtils.h"
 
 #include "Components/CapsuleComponent.h"
@@ -37,6 +40,7 @@
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Subsystems/VoiceChatSubsystem.h"
 #include "DCGame/DC_PostMortemPawn.h"
 #include "Items/Potion.h"
 #include "Items/SendingStone.h"
@@ -61,7 +65,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	DropTransform->SetRelativeLocation(FVector(150, 0, -20));
 
 
-
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
@@ -70,7 +73,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 		TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	VoiceSA = voiceSA.Object;
 
-	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+	VOIPTalker = CreateDefaultSubobject<UDC_VOIPTalker>(TEXT("VOIPTalker"));
 
 	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
 	this->Backpack = CreateDefaultSubobject<UInventory>(TEXT("BackpackComponent"));
@@ -101,7 +104,7 @@ void APlayerCharacter::BeginPlay()
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
-	
+
 	this->HandSlotA = NewObject<UInventorySlot>();
 	this->HandSlotB = NewObject<UInventorySlot>();
 
@@ -329,9 +332,9 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 		return;
 
 	FVector2d lookVector = Value.Get<FVector2d>();
-	if(GetCharacterMovement<UDC_CMC>()->IsClimbing())
+	if (GetCharacterMovement<UDC_CMC>()->IsClimbing())
 		lookVector.X = 0.f;
-	
+
 	(*LookFunction)(lookVector, this);
 
 	FRotator newRotation = FRotator(0, 0, 0);
@@ -552,7 +555,7 @@ void APlayerCharacter::Jump()
 	if (GetCharacterMovement()->MovementMode != MOVE_Walking)
 	{
 		Super::Jump();
-		this->bJumped=true;
+		this->bJumped = true;
 		if (!GetMovementComponent()->IsFalling())
 			Server_SpawnSoundAtLocation(this->JumpSound, GetActorLocation());
 		return;
@@ -562,7 +565,7 @@ void APlayerCharacter::Jump()
 		return;
 
 	SubstractStamina(JumpStaminaDrain);
-	this->bJumped=true;
+	this->bJumped = true;
 	Super::Jump();
 	if (!GetMovementComponent()->IsFalling())
 		Server_SpawnSoundAtLocation(this->JumpSound, GetActorLocation());
@@ -754,7 +757,7 @@ void APlayerCharacter::SetClimbing(bool value)
 
 void APlayerCharacter::Server_SetClimbing_Implementation(bool Value)
 {
-	this->bClimbing=Value;
+	this->bClimbing = Value;
 }
 
 bool APlayerCharacter::CanJumpInternal_Implementation() const
@@ -1023,20 +1026,19 @@ FTransform APlayerCharacter::GetDropTransform()
 {
 	FVector TraceStart = this->FirstPersonCamera->GetComponentLocation();
 	FVector TraceEnd = this->DropTransform->GetComponentLocation();
-	
-	
+
+
 	FHitResult OutHit;
 
 	// Perform the line trace
 	bool bHit = GetWorld()->LineTraceSingleByChannel(OutHit, TraceStart, TraceEnd, ECC_Visibility);
 
 	//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, bHit ? FColor::Green : FColor::Red, false, 3.0f, 0, 1.0f);
-	
-	if(bHit)
+
+	if (bHit)
 		return FTransform(DropTransform->GetComponentRotation(), OutHit.Location, FVector(1.0f, 1.0f, 1.0f));
 	else
 		return FTransform(DropTransform->GetComponentRotation(), TraceEnd, FVector(1.0f, 1.0f, 1.0f));
-
 }
 
 void APlayerCharacter::DropRandomItem()
@@ -1187,7 +1189,7 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::ThrowItemPressed()
 {
-	if (AttackBlend|| bIsUsingSendingStone)
+	if (AttackBlend || bIsUsingSendingStone)
 		return;
 
 	FSlotData SD;
@@ -1308,7 +1310,7 @@ void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<A
 	{
 		if (UMeshComponent* u = Cast<UMeshComponent>(i->GetRootComponent()))
 		{
-			u->AddImpulse(CameraVector * this->throwStrengh * u->GetMass());
+			u->AddImpulse(CameraVector * this->ThrowStrengh * u->GetMass());
 		}
 	}
 }
@@ -1320,7 +1322,7 @@ void APlayerCharacter::CheckForFallDamage()
 
 	if (GetMovementComponent()->Velocity.Z == 0 && BWasFallingInLastFrame) //frame of impact
 	{
-		this->bJumped=false;//ignore me i am only for the animation blueprint
+		this->bJumped = false; //ignore me i am only for the animation blueprint
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z + 20;
 		//+20 artificially because the capsule curvature lets the player stand lower
 
@@ -1366,7 +1368,7 @@ void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 	FVector2D input = Value.Get<FVector2D>();
 
 
-	if (!MyPlayerHud|| bIsUsingSendingStone)
+	if (!MyPlayerHud || bIsUsingSendingStone)
 		return;
 
 
@@ -1418,7 +1420,7 @@ void APlayerCharacter::OnDeath_Implementation()
 
 	GetMesh()->SetVisibility(false);
 
-	if(HasAuthority())
+	if (HasAuthority())
 		SpawnCorpse();
 
 	if (IsLocallyControlled())
@@ -1428,6 +1430,8 @@ void APlayerCharacter::OnDeath_Implementation()
 		DropAllItems();
 		if (IsValid(CurrentlyHeldWorldItem))
 			DestroyWorldItem(CurrentlyHeldWorldItem);
+
+		GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->UnmuteAllPlayers();
 	}
 
 
@@ -1486,7 +1490,7 @@ void APlayerCharacter::Server_TriggerSecondaryItemAction_Implementation()
 }
 
 void APlayerCharacter::StartAttacking()
-{	
+{
 	if (!HasAuthority())
 		Server_AttackStart();
 	else
@@ -1497,7 +1501,7 @@ void APlayerCharacter::AttackStart()
 {
 	if (GetCharacterMovement<UDC_CMC>()->IsClimbing())
 		return;
-	
+
 	if (AttackBlend != 0 || this->Stamina <= 0) //so a new attack only stars when the old one is already over
 		return;
 	//different attack when sprinting?
@@ -1582,9 +1586,8 @@ void APlayerCharacter::Multicast_EndAttack_Implementation()
 
 void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 {
-
 	Server_SpawnSoundAtLocation(BuySpound, ItemToBuy->GetActorLocation());
-	
+
 	if (ItemToBuy->MyItemDataClass == BackpackClass)
 	{
 		if (!this->bHasBackPack)
@@ -1770,7 +1773,7 @@ int APlayerCharacter::EndSelectionWheel()
 
 void APlayerCharacter::OnPotionDrunk()
 {
-	if(APotion* Potion=Cast<APotion>(GetCurrentlyHeldWorldItem()))
+	if (APotion* Potion = Cast<APotion>(GetCurrentlyHeldWorldItem()))
 	{
 		Potion->Local_ApplyEffect(this);
 	}
@@ -1778,22 +1781,22 @@ void APlayerCharacter::OnPotionDrunk()
 
 void APlayerCharacter::StartDrinkingPotion()
 {
-	this->bIsDrinkingPotion=true;
-	this->bSwitchHandAllowed=false;
-	this->bPrimaryActionAllowed=false;
+	this->bIsDrinkingPotion = true;
+	this->bSwitchHandAllowed = false;
+	this->bPrimaryActionAllowed = false;
 }
 
 void APlayerCharacter::StopDrinkingPotion()
 {
-	this->bIsDrinkingPotion=false;
-	this->bSwitchHandAllowed=true;
-	this->bPrimaryActionAllowed=true;
+	this->bIsDrinkingPotion = false;
+	this->bSwitchHandAllowed = true;
+	this->bPrimaryActionAllowed = true;
 	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
 }
 
 void APlayerCharacter::SpawnCorpse()
 {
-	if(HasAuthority())
+	if (HasAuthority())
 		Server_SpawnCorpse_Implementation();
 	else
 		Server_SpawnCorpse();
@@ -1801,8 +1804,7 @@ void APlayerCharacter::SpawnCorpse()
 
 void APlayerCharacter::Server_SpawnCorpse_Implementation()
 {
-	
-	if(IsValid(CorpseClass)&& HasAuthority())
+	if (IsValid(CorpseClass) && HasAuthority())
 	{
 		GetWorld()->SpawnActor<AActor>(CorpseClass, this->GetActorTransform());
 	}
@@ -1810,7 +1812,7 @@ void APlayerCharacter::Server_SpawnCorpse_Implementation()
 
 void APlayerCharacter::SendindStoneInputPressed(const FInputActionValue& Value)
 {
-	if (!bIsUsingSendingStone|| SendingStoneAnimatoinState!=ESendingStoneAnimatoinState::Neutral)
+	if (!bIsUsingSendingStone || SendingStoneAnimatoinState != ESendingStoneAnimatoinState::Neutral)
 		return;
 
 	FVector2d InputValue = Value.Get<FVector2d>();
@@ -1840,7 +1842,7 @@ void APlayerCharacter::SendindStoneInputPressed(const FInputActionValue& Value)
 
 void APlayerCharacter::SendSendingStoneSignal(ESendingStoneAnimatoinState Signal)
 {
-	if(HasAuthority())
+	if (HasAuthority())
 		Server_SendSendingStoneSignal_Implementation(Signal);
 	else
 		Server_SendSendingStoneSignal(Signal);
@@ -1848,7 +1850,7 @@ void APlayerCharacter::SendSendingStoneSignal(ESendingStoneAnimatoinState Signal
 
 void APlayerCharacter::Server_SendSendingStoneSignal_Implementation(ESendingStoneAnimatoinState Signal)
 {
-	if(ASendingStone* SendingStone = Cast<ASendingStone>(GetCurrentlyHeldWorldItem()))
+	if (ASendingStone* SendingStone = Cast<ASendingStone>(GetCurrentlyHeldWorldItem()))
 	{
 		SendingStone->Server_SendSignal(Signal);
 	}
@@ -1856,9 +1858,9 @@ void APlayerCharacter::Server_SendSendingStoneSignal_Implementation(ESendingSton
 
 bool APlayerCharacter::HasItemOfClass(TSubclassOf<UItemData> Item)
 {
-	for(FHeldItem f : this->HeldItems)
+	for (FHeldItem f : this->HeldItems)
 	{
-		if(f.ItemDataClass==Item)
+		if (f.ItemDataClass == Item)
 			return true;
 	}
 	return false;

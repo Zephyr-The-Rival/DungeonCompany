@@ -13,10 +13,11 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "EngineUtils.h"
+#include "DCGame/DC_PS.h"
 #include "Items/ItemData.h"
 #include "Items/WorldItem.h"
 
-template<class T>
+template <class T>
 T* ADC_GM::RandomlySpawnAIEntity(UClass* Class) const
 {
 	UNavigationSystemV1* navSys = UNavigationSystemV1::GetCurrent(GetWorld());
@@ -40,7 +41,7 @@ T* ADC_GM::RandomlySpawnAIEntity(UClass* Class) const
 	return newAIEntity;
 }
 
-template<class T>
+template <class T>
 T* ADC_GM::SpawnAIEntityCloseToActor(UClass* Class, AActor* Actor, float Radius) const
 {
 	UNavigationSystemV1* navSys = UNavigationSystemV1::GetCurrent(GetWorld());
@@ -64,7 +65,7 @@ T* ADC_GM::SpawnAIEntityCloseToActor(UClass* Class, AActor* Actor, float Radius)
 	return newAIEntity;
 }
 
-template<>
+template <>
 AQuasoSnake* ADC_GM::SpawnAIEntityCloseToActor<AQuasoSnake>(UClass* Class, AActor* Actor, float Radius) const
 {
 	if (!IsValid(Actor))
@@ -78,8 +79,9 @@ AQuasoSnake* ADC_GM::SpawnAIEntityCloseToActor<AQuasoSnake>(UClass* Class, AActo
 	{
 		float randomNumber = UKismetMathLibrary::RandomFloatInRange(0.f, 62.8f);
 
-		FVector coneDirection = { FMath::Sin(randomNumber), FMath::Cos(randomNumber), 0.25f };
-		FVector traceDirection = UKismetMathLibrary::RandomUnitVectorInConeInRadians(coneDirection, FMath::DegreesToRadians(20.f));
+		FVector coneDirection = {FMath::Sin(randomNumber), FMath::Cos(randomNumber), 0.25f};
+		FVector traceDirection = UKismetMathLibrary::RandomUnitVectorInConeInRadians(
+			coneDirection, FMath::DegreesToRadians(20.f));
 		FVector end = Radius * traceDirection + start;
 
 		GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_GameTraceChannel3);
@@ -93,20 +95,19 @@ AQuasoSnake* ADC_GM::SpawnAIEntityCloseToActor<AQuasoSnake>(UClass* Class, AActo
 	return SpawnAIEntity<AQuasoSnake>(Class, hit.Location + hit.Normal * 25, hit.Normal.Rotation());
 }
 
-template<class T>
+template <class T>
 T* ADC_GM::SpawnAIEntity(UClass* Class, FVector Location, FRotator Rotation) const
 {
 	UE_LOG(LogTemp, Log, TEXT("Spawning %s at Location: %s"), *T::StaticClass()->GetName(), *Location.ToString());
 
 	return GetWorld()->SpawnActor<T>(Class, Location, Rotation);
-
 }
 
 ADC_GM::ADC_GM()
 {
 	DefaultPawnClass = APlayerCharacter::StaticClass();
 	PlayerControllerClass = ADC_PC::StaticClass();
-
+	PlayerStateClass = ADC_PS::StaticClass();
 }
 
 void ADC_GM::BeginPlay()
@@ -142,7 +143,8 @@ void ADC_GM::SpawnSpurchins()
 	}
 }
 
-void ADC_GM::SpawnWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData)
+void ADC_GM::SpawnWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
+                            const FString& SerializedData)
 {
 	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	i->SerializedStringData = SerializedData;
@@ -151,25 +153,26 @@ void ADC_GM::SpawnWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform Spaw
 
 void ADC_GM::Respawn(AController* Controller)
 {
-	if(!IsValid(Controller))
+	if (!IsValid(Controller))
 		return;
 
 	if (APawn* currentPawn = Controller->GetPawn())
 		currentPawn->Destroy();
-	
+
 	AActor* playerStart = ChoosePlayerStart(Controller);
-	
-	if (!playerStart) 
+
+	if (!playerStart)
 	{
 		FTimerDelegate RespawnDelegate = FTimerDelegate::CreateUObject(this, &ADC_GM::Respawn, Controller);
 		FTimerHandle RespawnTimerHandle;
-	
+
 		GetWorld()->GetTimerManager().SetTimer(RespawnTimerHandle, RespawnDelegate, 0.1f, false);
 		return;
 	}
-	
-	APlayerCharacter* newCharacter = GetWorld()->SpawnActor<APlayerCharacter>(DefaultPawnClass, playerStart->GetActorLocation(), playerStart->GetActorRotation());
-	
+
+	APlayerCharacter* newCharacter = GetWorld()->SpawnActor<APlayerCharacter>(
+		DefaultPawnClass, playerStart->GetActorLocation(), playerStart->GetActorRotation());
+
 	if (!newCharacter)
 	{
 		FTimerDelegate RespawnDelegate = FTimerDelegate::CreateUObject(this, &ADC_GM::Respawn, Controller);
@@ -178,10 +181,9 @@ void ADC_GM::Respawn(AController* Controller)
 		GetWorld()->GetTimerManager().SetTimer(RespawnTimerHandle, RespawnDelegate, 0.1f, false);
 		return;
 	}
-	
+
 	Controller->ClientSetRotation(playerStart->GetActorRotation());
 	Controller->Possess(newCharacter);
-	
 }
 
 void ADC_GM::StartSpectating(AController* Controller)
@@ -199,29 +201,28 @@ void ADC_GM::StartSpectating(AController* Controller)
 
 	if (!oldPawn)
 		return;
-	
-	postMortemPawn->Client_ForceSpectatePlayer(oldPawn);
 
+	postMortemPawn->Client_ForceSpectatePlayer(oldPawn);
 }
 
 AAIEntity* ADC_GM::SpawnAIEntity(UClass* Class, AActor* NearActor, float Radius)
 {
 	if (Class->IsChildOf<AFunGuy>())
 	{
-		if(NearActor)
+		if (NearActor)
 			return SpawnAIEntityCloseToActor<AFunGuy>(Class, NearActor, Radius);
-		
+
 		return RandomlySpawnAIEntity<AFunGuy>(Class);
 	}
 	else if (Class->IsChildOf<AQuasoSnake>())
 	{
-		if(NearActor)
+		if (NearActor)
 			return SpawnAIEntityCloseToActor<AQuasoSnake>(Class, NearActor, Radius);
 
 		return RandomlySpawnAIEntity<AQuasoSnake>(Class);
 	}
-	
-	if(NearActor)
+
+	if (NearActor)
 		SpawnAIEntityCloseToActor(Class, NearActor, Radius);
 
 	return RandomlySpawnAIEntity(Class);;
