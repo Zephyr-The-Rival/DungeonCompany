@@ -1582,6 +1582,9 @@ void APlayerCharacter::Multicast_EndAttack_Implementation()
 
 void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 {
+
+	Server_SpawnSoundAtLocation(BuySpound, ItemToBuy->GetActorLocation());
+	
 	if (ItemToBuy->MyItemDataClass == BackpackClass)
 	{
 		if (!this->bHasBackPack)

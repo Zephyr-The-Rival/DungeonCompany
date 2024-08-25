@@ -634,6 +634,10 @@ public://buyingItems
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Backpack")
 	TSubclassOf<UItemData> BackpackClass;
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
+	USoundBase* BuySpound;
+
 
 
 public:
