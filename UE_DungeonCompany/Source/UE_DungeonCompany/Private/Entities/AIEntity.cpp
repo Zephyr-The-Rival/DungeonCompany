@@ -28,7 +28,7 @@ AAIEntity::AAIEntity()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
 	GetCharacterMovement()->bUseRVOAvoidance = true;
-	GetCharacterMovement()->AvoidanceConsiderationRadius = 100.f;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 225.f;
 
 	GetMesh()->SetCollisionProfileName("EntityMesh");
 	GetMesh()->SetGenerateOverlapEvents(true);
@@ -314,11 +314,18 @@ void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBla
 
 	if (!playerCharacter)
 		return;
-
-	if (Stimulus.WasSuccessfullySensed() && !playerCharacter->IsDead())
-		BlackboardComponent->SetValueAsObject("TargetPlayer", Actor);
-	else
+	
+	if(!Stimulus.WasSuccessfullySensed() || playerCharacter->IsDead())
+	{
 		BlackboardComponent->ClearValue("TargetPlayer");
+		return;
+	}
+
+	AActor* currentTarget = Cast<AActor>(BlackboardComponent->GetValueAsObject("TargetPlayer"));
+	
+	if(!currentTarget || GetDistanceTo(currentTarget) < GetDistanceTo(Actor))
+		BlackboardComponent->SetValueAsObject("TargetPlayer", Actor);
+
 }
 
 void AAIEntity::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)

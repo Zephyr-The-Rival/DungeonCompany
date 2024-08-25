@@ -31,6 +31,8 @@ AQuasoSnake::AQuasoSnake()
 
 	BottomCaveMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BottomCaveMesh"));
 	BottomCaveMesh->SetupAttachment(GetMesh(), FName("BottomCaveSocket"));
+
+	MaxHP = 50.f;
 }
 
 void AQuasoSnake::BeginPlay()
@@ -247,8 +249,11 @@ void AQuasoSnake::OnDeath_Implementation()
 	if (!HasAuthority())
 		return;
 
+	GetWorld()->GetTimerManager().ClearTimer(StageProgressHandle);
+	
 	ResetPlayerEffects();
 	DetachFromPlayer();
+	
 }
 
 void AQuasoSnake::ProgressStage()
