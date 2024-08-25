@@ -803,4 +803,9 @@ public:
 	UFUNCTION(Server, Unreliable)
 	void Server_SendSendingStoneSignal(ESendingStoneAnimatoinState Signal);
 	void Server_SendSendingStoneSignal_Implementation(ESendingStoneAnimatoinState Signal);
+
+public:
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool HasItemOfClass(TSubclassOf<UItemData> Item);
 };
