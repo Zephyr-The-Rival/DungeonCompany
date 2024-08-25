@@ -192,11 +192,8 @@ void ACatBurglar::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UB
 {
 	AWorldItem* worldItem = Cast<AWorldItem>(Actor);
 	if (!worldItem)
-	{
-		Super::HandleSightSense(Actor, Stimulus, BlackboardComponent);
 		return;
-	}
-
+	
 	if (!Stimulus.WasSuccessfullySensed())
 	{
 		WorldItemsInSight.Remove(worldItem);
