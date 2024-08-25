@@ -165,6 +165,8 @@ void AFunGuy::Tick(float DeltaSeconds)
 	GetMesh()->SetVisibility(true);
 	FloorMesh->DestroyComponent();
 
+	OnLiftOff();
+
 	if(!HasAuthority())
 		return;
 
@@ -180,6 +182,10 @@ void AFunGuy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AFunGuy, AgeSeconds);
+}
+
+void AFunGuy::OnLiftOff_Implementation()
+{
 }
 
 void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

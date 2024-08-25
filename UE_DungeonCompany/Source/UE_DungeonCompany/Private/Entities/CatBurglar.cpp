@@ -96,6 +96,8 @@ void ACatBurglar::StealItem(AWorldItem* StealingItem)
 	StolenItem = StealingItem->GetMyData();
 	StealingItem->Destroy();
 
+	SetIsStealingItem(true);
+
 	UpdateBehavior(ECatBurglarBehaviorState::Retrieving);
 }
 
@@ -156,12 +158,22 @@ void ACatBurglar::OnTookDamage_Implementation()
 	if (!StolenItem)
 		return;
 
+	FTimerHandle throwUpHandle;
+
+	GetWorld()->GetTimerManager().SetTimer(throwUpHandle, this, &ACatBurglar::ThrowUpItem, ThrowUpDelay);
+}
+
+void ACatBurglar::ThrowUpItem()
+{
+	if (!IsValid(StolenItem))
+		return;
+
 	ADC_GM* gameMode = GetWorld()->GetAuthGameMode<ADC_GM>();
 	if (!gameMode)
 		return;
 
-	gameMode->SpawnWorldItem(StolenItem->MyWorldItemClass, DropTransform->GetComponentTransform(),
-	                         StolenItem->SerializeMyData());
+	gameMode->SpawnWorldItem(StolenItem->MyWorldItemClass, GetDropTransform(),
+							 StolenItem->SerializeMyData());
 	StolenItem = nullptr;
 	SetIsStealingItem(false);
 }
