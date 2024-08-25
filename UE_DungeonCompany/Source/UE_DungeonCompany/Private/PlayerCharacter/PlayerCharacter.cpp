@@ -352,6 +352,9 @@ void APlayerCharacter::NoLook()
 
 void APlayerCharacter::InteractorLineTrace()
 {
+	if(!IsValid(MyPlayerHud))
+		return;
+	
 	//raycast to pick up and interact with stuff
 	FHitResult Hit;
 	FVector Start = this->FirstPersonCamera->GetComponentLocation();
@@ -359,6 +362,7 @@ void APlayerCharacter::InteractorLineTrace()
 
 	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility);
 
+	
 	if (Hit.bBlockingHit)
 	{
 		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
@@ -1866,7 +1870,7 @@ bool APlayerCharacter::HasItemOfClass(TSubclassOf<UItemData> Item)
 
 void APlayerCharacter::Destroyed()
 {
-	if(IsLocallyControlled())
+	if(IsValid(MyPlayerHud))
 		MyPlayerHud->RemoveFromParent();
 	
 	Super::Destroyed();
@@ -1883,6 +1887,48 @@ void APlayerCharacter::SetAttackBlend(float NewBlend)
 void APlayerCharacter::Server_SetAttackBlend_Implementation(float NewBlend)
 {
 	this->AttackBlend=NewBlend;
+}
+
+void APlayerCharacter::TransferInventory_Implementation(APlayerCharacter* OldCharacter)
+{
+	if(!IsValid(OldCharacter))
+		return;
+	
+	this->bHasBackPack= OldCharacter->bHasBackPack;
+
+	for (int i = 0; i < OldCharacter->Inventory->GetSlots().Num(); i++)
+	{
+		if (!IsValid(OldCharacter->Inventory->GetSlots()[i]->MyItem))
+			continue;
+
+		this->Inventory->GetSlots()[i]->MyItem = OldCharacter->GetInventory()->GetSlots()[i]->MyItem;
+	}
+
+	if(this->bHasBackPack)
+	{
+		for (int i = 0; i < OldCharacter->Backpack->GetSlots().Num(); i++)
+		{
+			if (!IsValid(OldCharacter->Backpack->GetSlots()[i]->MyItem))
+				continue;
+
+			this->GetBackpack()->GetSlots()[i]->MyItem = OldCharacter->Backpack->GetSlots()[i]->MyItem;
+		}	
+	}
+
+	if(IsValid(OldCharacter->HandSlotA->MyItem))
+		this->HandSlotA->MyItem=OldCharacter->HandSlotA->MyItem;
+
+	if(IsValid(OldCharacter->HandSlotB->MyItem))
+	this->HandSlotB->MyItem=OldCharacter->HandSlotB->MyItem;
+	
+	TakeOutItem();
+
+	OldCharacter->SelfDestruct();
+}
+
+void APlayerCharacter::SelfDestruct_Implementation()
+{
+	this->Destroy(true, true);
 }
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()

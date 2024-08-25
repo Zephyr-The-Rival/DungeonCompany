@@ -188,9 +188,11 @@ void ADC_PC::SwitchPlayerCharacterClass(TSubclassOf<APlayerCharacter> NewClass)
 	APlayerCharacter* OldCharacter= Cast<APlayerCharacter>(GetPawn());
 	APlayerCharacter* NewCharacter = GetWorld()->SpawnActor<APlayerCharacter>(NewClass, OldCharacter->GetActorTransform());
 
-	//transfer inventory
+
 	Possess(NewCharacter);
-	OldCharacter->Destroy();
+	NewCharacter->TransferInventory(OldCharacter);
+
+	//OldCharacter->Destroy(); //destroyHappens later when the inventory is finished transfering
 	
 }
 

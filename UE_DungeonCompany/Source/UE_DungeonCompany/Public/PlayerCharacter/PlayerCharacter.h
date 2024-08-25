@@ -822,4 +822,16 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void Server_SetAttackBlend(float NewBlend);
 	void Server_SetAttackBlend_Implementation(float NewBlend);
+
+public:
+
+	UFUNCTION(Client, Reliable)
+	void TransferInventory(APlayerCharacter* OldCharacter);
+	void TransferInventory_Implementation(APlayerCharacter* OldCharacter);
+
+private:
+	UFUNCTION(Server, Reliable)
+	void SelfDestruct();
+	void SelfDestruct_Implementation();
+	
 };
