@@ -2,6 +2,9 @@
 
 
 #include "Entities/Spawners/CatBurglarSpawnVolume.h"
+
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Entities/CatBurglar.h"
 #include "PlayerCharacter/PlayerCharacter.h"
 #include "Items/WorldItem.h"
@@ -19,6 +22,9 @@ ACatBurglarSpawnVolume::ACatBurglarSpawnVolume(const FObjectInitializer& ObjectI
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> NestMeshFile(TEXT("/Script/Engine.StaticMesh'/Game/_DungeonCompanyContent/Assets/Enemies/Spawners/CatBurglar/CatB_nest.CatB_nest'"));
 	NestMesh = NestMeshFile.Object;
+
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NestBurnEffectFile(TEXT("/Script/Niagara.NiagaraSystem'/Game/_DungeonCompanyContent/Assets/VFX/NiagaraSystem/NS_Burglar_Burn.NS_Burglar_Burn'"));
+	NestBurnEffect = NestBurnEffectFile.Object;
 
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -237,15 +243,26 @@ void ACatBurglarSpawnVolume::OnBurglarNestBeginOverlap(AActor* OverlappedActor, 
 		return;
 
 	BlockersInNest.Add(OtherActor);
+	
 	bNestBlocked = true;
+
+	if(NestBurnEffect && !NestBurnNiagaraComponent)
+		NestBurnNiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), NestBurnEffect, Nest->GetActorLocation(), Nest->GetActorRotation(), FVector(1));
 }
 
 void ACatBurglarSpawnVolume::OnBurglarNestEndOverlap(AActor* OverlappedActor, AActor* OtherActor)
 {
 	BlockersInNest.Remove(OtherActor);
 
-	if(BlockersInNest.Num() < 1)
-		bNestBlocked = false;
+	if(BlockersInNest.Num() > 0)
+		return;
+	
+	bNestBlocked = false;
+	if(IsValid(NestBurnNiagaraComponent))
+	{
+		NestBurnNiagaraComponent->DestroyComponent();
+		NestBurnNiagaraComponent = nullptr;
+	}
 }
 
 bool ACatBurglarSpawnVolume::IsActorANestBlocker(AActor* InActor)

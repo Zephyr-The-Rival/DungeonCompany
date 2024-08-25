@@ -8,9 +8,7 @@
 #include "WorldActors/Climbable.h"
 #include "Items/ClimbingHook/Rope.h"
 
-#include "Kismet/KismetMathLibrary.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/BoxComponent.h"
 #include "Items/WorldItem.h"
 #include "WorldActors/Ladder.h"
 
@@ -115,7 +113,7 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 {
 	if (DeltaTime < MIN_TICK_TIME)
 		return;
-	
+
 	if (!CharacterOwner || (!CharacterOwner->Controller && !bRunPhysicsWithNoController && !HasAnimRootMotion() && !
 		CurrentRootMotion.HasOverrideVelocity() && (CharacterOwner->GetLocalRole() != ROLE_SimulatedProxy)))
 	{
@@ -137,7 +135,7 @@ void UDC_CMC::PhysClimb(float DeltaTime, int32 Iterations)
 	FVector climbVector = ClimbingObject->GetUpVectorAtDistance(ClimbedDistance);
 
 	float heightDeltaToLower = ClimbingObject->GetLowerEndLocation().Z - oldLocation.Z;
-	
+
 	if (Acceleration.Z < 0 && heightDeltaToLower < 150.f && heightDeltaToLower > -150.f)
 	{
 		FHitResult hit;
@@ -331,15 +329,15 @@ void UDC_CMC::UpdateToClimbState()
 		Velocity = FVector::ZeroVector;
 	}
 
+	if (AWorldItem* worldItem = playerCharacter->GetCurrentlyHeldWorldItem())
+		worldItem->GetRootComponent()->SetVisibility(false);
+
 	if (!playerCharacter->IsLocallyControlled())
 		return;
 
 	playerCharacter->GetController()->SetControlRotation(newRotation);
 	playerCharacter->Look(FInputActionValue(FVector2D::ZeroVector));
 	playerCharacter->GetFirstPersonMesh()->SetVisibility(false);
-
-	if (AWorldItem* worldItem = playerCharacter->GetCurrentlyHeldWorldItem())
-		worldItem->GetRootComponent()->SetVisibility(false);
 }
 
 void UDC_CMC::UpdateFromClimbState()
@@ -353,7 +351,10 @@ void UDC_CMC::UpdateFromClimbState()
 
 	OnStoppedClimbing.Broadcast(playerCharacter);
 
-	if (!playerCharacter || !playerCharacter->IsLocallyControlled())
+	if (AWorldItem* worldItem = playerCharacter->GetCurrentlyHeldWorldItem())
+		worldItem->GetRootComponent()->SetVisibility(true);
+
+	if (!playerCharacter->IsLocallyControlled())
 		return;
 
 	playerCharacter->GetFirstPersonMesh()->SetVisibility(true);

@@ -90,6 +90,8 @@ protected:
 	void SetBlackboardBool(const FName& KeyName, bool InValue) const;
 	void SetBlackboardObject(const FName& KeyName, UObject* InValue) const;
 
+	UObject* GetBlackboardObject(const FName& KeyName) const;
+
 public:
 	bool IsVisibleToPlayers() const;
 

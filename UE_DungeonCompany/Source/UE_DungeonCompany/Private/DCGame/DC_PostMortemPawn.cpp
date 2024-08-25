@@ -14,16 +14,13 @@
 #include "OnlineSubsystemUtils.h"
 #include "Subsystems/VoiceChatSubsystem.h"
 
-// Sets default values
 ADC_PostMortemPawn::ADC_PostMortemPawn()
 {
-	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	VOIPTalker = CreateDefaultSubobject<UDC_VOIPTalker>(TEXT("VOIPTalker"));
 }
 
-// Called when the game starts or when spawned
 void ADC_PostMortemPawn::BeginPlay()
 {
 	Super::BeginPlay();
@@ -96,7 +93,6 @@ void ADC_PostMortemPawn::OnPlayerStateChanged(APlayerState* NewPlayerState, APla
 		GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->MutePlayer(NewPlayerState);
 }
 
-// Called every frame
 void ADC_PostMortemPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

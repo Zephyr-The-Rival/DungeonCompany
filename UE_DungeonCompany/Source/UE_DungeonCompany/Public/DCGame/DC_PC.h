@@ -114,4 +114,8 @@ protected:
 
 protected:
 	virtual void PawnLeavingGame() override;
+
+public:
+
+	void SwitchPlayerCharacterClass(TSubclassOf<APlayerCharacter> NewClass);
 };

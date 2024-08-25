@@ -180,7 +180,7 @@ void ACatBurglar::OnTookDamage_Implementation()
 {
 	Super::OnTookDamage_Implementation();
 	
-	if(FTimerManager& timerManager = GetWorld()->GetTimerManager(); timerManager.IsTimerActive(StealHandle))
+	if(FTimerManager& timerManager = GetWorld()->GetTimerManager(); timerManager.IsTimerActive(StealHandle) || GetBlackboardObject("TargetItem"))
 	{
 		timerManager.ClearTimer(StealHandle);
 		SetIsStealingBB(false);
@@ -194,7 +194,7 @@ void ACatBurglar::OnTookDamage_Implementation()
 		bHealthBelowFleeingUpper = true;
 		UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
 	}
-
+	
 	if (!StolenItem)
 		return;
 
