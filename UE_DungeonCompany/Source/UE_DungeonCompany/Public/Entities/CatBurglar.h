@@ -50,6 +50,12 @@ private:
 
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
 	float OutOfRetrievingRangeDespawnTime = 10.f;
+	
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
+	float StealDelay = 0.6f;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
+	float ThrowUpDelay = 0.6f;
 
 	//Movement
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing|Movement")
@@ -85,7 +91,7 @@ public:
 
 private:
 	UMaterialInstanceDynamic* DynMaterialInstance;
-	
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -100,20 +106,37 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 	void Retrieve();
 
+private:
+	FTimerHandle StealHandle;
+
 public:
 	void StealItem(AWorldItem* StealingItem);
 	void StartFleeing();
 
 protected:
+	void ExecuteItemSteal(AWorldItem* StealingItem);
+
+protected:
 	void UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState);
 
-	void SetInFleeingRange(bool InInFleeingRange) const;
+	void SetInFleeingRangeBB(bool InInFleeingRange) const;
+	void SetIsStealingBB(bool InIsStealing) const;
+	void SetStoleItemBB(bool InStoleItem) const;
+	void SetTargetItemBB(AActor* InTargetItem) const;
 
 private:
 	bool bHealthBelowFleeingUpper = false;
 
 protected:
 	virtual void OnTookDamage_Implementation() override;
+
+	UFUNCTION()
+	void ThrowUpItem();
+
+	inline const FTransform& GetDropTransform() const
+	{
+		return IsValid(DropTransform) ? DropTransform->GetComponentTransform() : GetActorTransform();
+	};
 
 protected:
 	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter) override;

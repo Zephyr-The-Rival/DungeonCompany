@@ -18,6 +18,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	float RotationSpeed = 15.f;
 
+	UPROPERTY(EditAnywhere)
+	bool bRotateOnlyYaw = false;
+
 public:
 	UBTTask_RotateToActor();
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

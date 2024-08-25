@@ -77,13 +77,18 @@ protected:
 	virtual void OnExecuteAttack_Implementation(FVector Direction);
 
 private:
+	UPROPERTY(Replicated)
 	APlayerCharacter* TargetPlayer;
 
 public:
-	void SetInAttackOnBlackboard(bool InAttack);
-	void SetTargetPlayer(APlayerCharacter* InTargetPlayer) const;
+	void SetInAttackOnBlackboard(bool InAttack) const;
+	void SetTargetPlayer(APlayerCharacter* InTargetPlayer);
 
 	inline APlayerCharacter* GetTargetPlayer() const { return TargetPlayer; }
+
+protected:
+	void SetBlackboardBool(const FName& KeyName, bool InValue) const;
+	void SetBlackboardObject(const FName& KeyName, UObject* InValue) const;
 
 public:
 	bool IsVisibleToPlayers() const;

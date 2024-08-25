@@ -13,6 +13,7 @@
 #include "Perception/AISense_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 
 AFunGuy::AFunGuy()
 {
@@ -164,6 +165,11 @@ void AFunGuy::Tick(float DeltaSeconds)
 
 	GetMesh()->SetVisibility(true);
 	FloorMesh->DestroyComponent();
+	
+	if(MeshSwitchEffect)
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MeshSwitchEffect, GetMesh()->GetComponentLocation(), GetMesh()->GetComponentRotation());
+
+	OnLiftOff();
 
 	if(!HasAuthority())
 		return;
@@ -180,6 +186,10 @@ void AFunGuy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AFunGuy, AgeSeconds);
+}
+
+void AFunGuy::OnLiftOff_Implementation()
+{
 }
 
 void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

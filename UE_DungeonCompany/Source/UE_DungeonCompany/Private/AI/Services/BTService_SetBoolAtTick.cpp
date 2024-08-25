@@ -9,6 +9,7 @@ UBTService_SetBoolAtTick::UBTService_SetBoolAtTick()
 {
 	bNotifyTick = true;
 	NodeName = "Set Bool At Tick";
+	bRestartTimerOnEachActivation = true;
 }
 
 void UBTService_SetBoolAtTick::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
