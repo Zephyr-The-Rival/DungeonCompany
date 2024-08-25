@@ -32,6 +32,7 @@ void ASendingStone::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* U
 	User->AttackBlend=1;
 	User->bSwitchHandAllowed=false;
 	User->bIsUsingSendingStone=true;
+	this->ToggleTutorial(true);
 }
 
 void ASendingStone::EndLocalPrimaryActionHold_Implementation(APlayerCharacter* User)
@@ -40,9 +41,14 @@ void ASendingStone::EndLocalPrimaryActionHold_Implementation(APlayerCharacter* U
 	User->AttackBlend=0;
 	User->bSwitchHandAllowed=true;
 	User->bIsUsingSendingStone=false;
+	this->ToggleTutorial(false);
 }
 
 void ASendingStone::Server_SendSignal_Implementation(ESendingStoneAnimatoinState Signal)
+{
+}
+
+void ASendingStone::ToggleTutorial_Implementation(bool bOn)
 {
 }
 

@@ -1851,6 +1851,16 @@ void APlayerCharacter::Server_SendSendingStoneSignal_Implementation(ESendingSton
 	}
 }
 
+bool APlayerCharacter::HasItemOfClass(TSubclassOf<UItemData> Item)
+{
+	for(FHeldItem f : this->HeldItems)
+	{
+		if(f.ItemDataClass==Item)
+			return true;
+	}
+	return false;
+}
+
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
 {
 }
