@@ -50,9 +50,12 @@ private:
 
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
 	float OutOfRetrievingRangeDespawnTime = 10.f;
+	
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
+	float StealDelay = 0.6f;
 
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
-	float ThrowUpDelay = 0.6;
+	float ThrowUpDelay = 0.6f;
 
 	//Movement
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing|Movement")
@@ -103,14 +106,23 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 	void Retrieve();
 
+private:
+	FTimerHandle StealHandle;
+
 public:
 	void StealItem(AWorldItem* StealingItem);
 	void StartFleeing();
 
 protected:
+	void ExecuteItemSteal(AWorldItem* StealingItem);
+
+protected:
 	void UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState);
 
-	void SetInFleeingRange(bool InInFleeingRange) const;
+	void SetInFleeingRangeBB(bool InInFleeingRange) const;
+	void SetIsStealingBB(bool InIsStealing) const;
+	void SetStoleItemBB(bool InStoleItem) const;
+	void SetTargetItemBB(AActor* InTargetItem) const;
 
 private:
 	bool bHealthBelowFleeingUpper = false;
