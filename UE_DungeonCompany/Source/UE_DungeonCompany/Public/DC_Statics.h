@@ -17,13 +17,14 @@ class UE_DUNGEONCOMPANY_API UDC_Statics : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
-public:
+	//Voice Settings
+public:	
 	UFUNCTION(BlueprintCallable, Category="Voice")
 	static void SetMicInputGain(float Value);
 
 	UFUNCTION(BlueprintCallable, Category="Voice")
-	static void SetMicNoiseGateTreshold(float Value); 
-	
+	static void SetMicNoiseGateTreshold(float Value);
+
 	UFUNCTION(BlueprintCallable, Category = "Voice")
 	static void SetMicNoiseAttackTime(float Value);
 
@@ -38,7 +39,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Voice")
 	static void SetVoiceSilenceDetectionAttackTime(float Value);
-	
+
 	UFUNCTION(BlueprintCallable, Category="Voice")
 	static void SetVoiceSilenceDetectionReleaseTime(float Value);
 
@@ -61,6 +62,10 @@ public:
 	static void SetVoiceDebugPrintAmplitude(bool Value);
 
 public:
+	UFUNCTION(BlueprintCallable, Category="Voice")
+	static USoundClass* GetVoiceSoundClassForPlayer(APlayerState* PlayerState);
+
+public:
 	/* Remote Controllers will only be checked via their pawns rotation. */
 	UFUNCTION(BlueprintCallable, Category = "Vision")
 	static bool IsLocationInViewportOfPlayer(APlayerController* PlayerController, const FVector& Location);
@@ -70,5 +75,4 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Vision")
 	static bool IsActorVisibleToPlayer(APlayerController* PlayerController, const AActor* Actor);
-
 };

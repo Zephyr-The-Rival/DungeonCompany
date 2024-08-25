@@ -11,7 +11,7 @@ USTRUCT(BlueprintType)
 struct FServerInfo
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY(BlueprintReadOnly)
 	FString ServerName;
 	UPROPERTY(BlueprintReadOnly)
@@ -25,7 +25,7 @@ struct FServerInfo
 
 	void SetPlayerCount()
 	{
-		PlayerCountString= FString(FString::FromInt(CurrentPlayers) + "/" + FString::FromInt(MaxPlayers));
+		PlayerCountString = FString(FString::FromInt(CurrentPlayers) + "/" + FString::FromInt(MaxPlayers));
 	}
 };
 
@@ -38,6 +38,7 @@ class UE_DUNGEONCOMPANY_API USessionSubsystem : public UGameInstanceSubsystem
 
 public:
 	USessionSubsystem();
+
 private:
 	UPROPERTY(BlueprintAssignable)
 	FServerDel SearchComplete;
@@ -53,9 +54,8 @@ protected:
 	virtual void OnCreateSessionComplete(FName SessionName, bool Succeeded);
 	virtual void OnFindSessionComplete(bool Succeeded);
 	virtual void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
-	virtual void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
-
-
+	virtual void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId,
+	                                         FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -70,12 +70,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DestroyCurrentSession();
 
-
 private:
 	TSubclassOf<UUserWidget> LoadingScreen;
 
 private:
-
-	void OnSessionLeft( FName SessionName, bool bWasSuccessful);
-	
+	void OnSessionLeft(FName SessionName, bool bWasSuccessful);
 };
