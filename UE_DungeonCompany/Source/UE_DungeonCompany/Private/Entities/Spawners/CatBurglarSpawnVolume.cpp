@@ -243,9 +243,10 @@ void ACatBurglarSpawnVolume::OnBurglarNestBeginOverlap(AActor* OverlappedActor, 
 		return;
 
 	BlockersInNest.Add(OtherActor);
+	
 	bNestBlocked = true;
 
-	if(NestBurnEffect)
+	if(NestBurnEffect && !NestBurnNiagaraComponent)
 		NestBurnNiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), NestBurnEffect, Nest->GetActorLocation(), Nest->GetActorRotation(), FVector(1));
 }
 
@@ -258,7 +259,10 @@ void ACatBurglarSpawnVolume::OnBurglarNestEndOverlap(AActor* OverlappedActor, AA
 	
 	bNestBlocked = false;
 	if(IsValid(NestBurnNiagaraComponent))
+	{
 		NestBurnNiagaraComponent->DestroyComponent();
+		NestBurnNiagaraComponent = nullptr;
+	}
 }
 
 bool ACatBurglarSpawnVolume::IsActorANestBlocker(AActor* InActor)

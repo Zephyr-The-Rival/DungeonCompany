@@ -355,6 +355,9 @@ void APlayerCharacter::NoLook()
 
 void APlayerCharacter::InteractorLineTrace()
 {
+	if(!IsValid(MyPlayerHud))
+		return;
+	
 	//raycast to pick up and interact with stuff
 	FHitResult Hit;
 	FVector Start = this->FirstPersonCamera->GetComponentLocation();
@@ -362,6 +365,7 @@ void APlayerCharacter::InteractorLineTrace()
 
 	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility);
 
+	
 	if (Hit.bBlockingHit)
 	{
 		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
@@ -1281,10 +1285,14 @@ void APlayerCharacter::SetHasBackPack(bool bNewHasBackpack)
 {
 	this->bHasBackPack = bNewHasBackpack;
 
-	if (bNewHasBackpack)
-		this->AddBuffOrDebuff(NoSprintDebuff);
-	else
-		this->RemoveBuffOrDebuff(NoSprintDebuff);
+	if(!this->IsA(Cast<ADC_GM>(GetWorld()->GetAuthGameMode())->PlayerclassFarmer))
+	{
+		if (bNewHasBackpack)
+			this->AddBuffOrDebuff(NoSprintDebuff);
+		else
+			this->RemoveBuffOrDebuff(NoSprintDebuff);	
+	}
+	
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
@@ -1864,6 +1872,69 @@ bool APlayerCharacter::HasItemOfClass(TSubclassOf<UItemData> Item)
 			return true;
 	}
 	return false;
+}
+
+void APlayerCharacter::Destroyed()
+{
+	if(IsValid(MyPlayerHud))
+		MyPlayerHud->RemoveFromParent();
+	
+	Super::Destroyed();
+}
+
+void APlayerCharacter::SetAttackBlend(float NewBlend)
+{
+	if(HasAuthority())
+		Server_SetAttackBlend_Implementation(NewBlend);
+	else
+		Server_SetAttackBlend(NewBlend);
+}
+
+void APlayerCharacter::Server_SetAttackBlend_Implementation(float NewBlend)
+{
+	this->AttackBlend=NewBlend;
+}
+
+void APlayerCharacter::TransferInventory_Implementation(APlayerCharacter* OldCharacter)
+{
+	if(!IsValid(OldCharacter))
+		return;
+	
+	this->SetHasBackPack(OldCharacter->bHasBackPack); 
+
+	for (int i = 0; i < OldCharacter->Inventory->GetSlots().Num(); i++)
+	{
+		if (!IsValid(OldCharacter->Inventory->GetSlots()[i]->MyItem))
+			continue;
+
+		this->Inventory->GetSlots()[i]->MyItem = OldCharacter->GetInventory()->GetSlots()[i]->MyItem;
+	}
+
+	if(this->bHasBackPack)
+	{
+		for (int i = 0; i < OldCharacter->Backpack->GetSlots().Num(); i++)
+		{
+			if (!IsValid(OldCharacter->Backpack->GetSlots()[i]->MyItem))
+				continue;
+
+			this->GetBackpack()->GetSlots()[i]->MyItem = OldCharacter->Backpack->GetSlots()[i]->MyItem;
+		}	
+	}
+
+	if(IsValid(OldCharacter->HandSlotA->MyItem))
+		this->HandSlotA->MyItem=OldCharacter->HandSlotA->MyItem;
+
+	if(IsValid(OldCharacter->HandSlotB->MyItem))
+	this->HandSlotB->MyItem=OldCharacter->HandSlotB->MyItem;
+	
+	TakeOutItem();
+
+	OldCharacter->SelfDestruct();
+}
+
+void APlayerCharacter::SelfDestruct_Implementation()
+{
+	this->Destroy(true, true);
 }
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
