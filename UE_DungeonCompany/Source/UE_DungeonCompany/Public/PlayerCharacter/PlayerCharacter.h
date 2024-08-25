@@ -37,6 +37,16 @@ struct FHeldItem
 	FString ItemData;
 };
 
+UENUM(BlueprintType)
+enum class ESendingStoneAnimatoinState : uint8
+{
+	Neutral UMETA(DisplayName = "Neutral"),
+	Up      UMETA(DisplayName = "Up"),
+	Down    UMETA(DisplayName = "Down"),
+	Left    UMETA(DisplayName = "Left"),
+	Right   UMETA(DisplayName = "Right")
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemDrop);
 
 UCLASS()
@@ -120,6 +130,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* InventoryAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* SendingStoneInput;
 
 	//Inventory Input
 
@@ -773,4 +786,21 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AActor> CorpseClass;
+
+public:
+	bool bIsUsingSendingStone=false;
+
+private:
+	void SendindStoneInputPressed(const FInputActionValue& Value);
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	 ESendingStoneAnimatoinState SendingStoneAnimatoinState;
+
+	UFUNCTION(BlueprintCallable)
+	void SendSendingStoneSignal(ESendingStoneAnimatoinState Signal);
+	
+	UFUNCTION(Server, Unreliable)
+	void Server_SendSendingStoneSignal(ESendingStoneAnimatoinState Signal);
+	void Server_SendSendingStoneSignal_Implementation(ESendingStoneAnimatoinState Signal);
 };
