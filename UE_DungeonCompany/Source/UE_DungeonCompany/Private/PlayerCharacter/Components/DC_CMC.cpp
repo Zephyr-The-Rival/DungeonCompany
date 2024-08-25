@@ -8,9 +8,7 @@
 #include "WorldActors/Climbable.h"
 #include "Items/ClimbingHook/Rope.h"
 
-#include "Kismet/KismetMathLibrary.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/BoxComponent.h"
 #include "Items/WorldItem.h"
 #include "WorldActors/Ladder.h"
 

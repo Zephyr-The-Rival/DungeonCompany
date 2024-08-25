@@ -6,6 +6,8 @@
 #include "Engine/TriggerVolume.h"
 #include "CatBurglarSpawnVolume.generated.h"
 
+class UNiagaraComponent;
+class UNiagaraSystem;
 class ACatBurglar;
 class APlayerCharacter;
 class ADC_Entity;
@@ -39,6 +41,8 @@ private:
 	UPROPERTY(EditAnywhere)
 	UStaticMesh* NestMesh;
 
+	UNiagaraSystem* NestBurnEffect;
+
 private:
 	TArray<APlayerCharacter*> PlayerCharactersInVolume;
 	TArray<ACatBurglar*> SpawnedCatBurglars;
@@ -55,6 +59,9 @@ protected:
 #if WITH_EDITOR
 	virtual void OnLevelActorDeleted(AActor* DeletedActor);
 #endif
+
+private:
+	UNiagaraComponent* NestBurnNiagaraComponent;
 	
 public:
 	virtual void Tick(float DeltaSeconds) override;

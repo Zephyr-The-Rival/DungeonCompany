@@ -196,6 +196,14 @@ void AAIEntity::SetBlackboardObject(const FName& KeyName, UObject* InValue) cons
 		aiController->GetBlackboardComponent()->SetValueAsObject(KeyName, InValue);
 }
 
+UObject* AAIEntity::GetBlackboardObject(const FName& KeyName) const
+{
+	if (ADC_AIController* aiController = GetController<ADC_AIController>())
+		return aiController->GetBlackboardComponent()->GetValueAsObject(KeyName);
+
+	return nullptr;
+}
+
 bool AAIEntity::IsVisibleToPlayers() const
 {
 	for (FConstPlayerControllerIterator iterator = GetWorld()->GetPlayerControllerIterator(); iterator; ++iterator)
