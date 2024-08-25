@@ -1285,10 +1285,14 @@ void APlayerCharacter::SetHasBackPack(bool bNewHasBackpack)
 {
 	this->bHasBackPack = bNewHasBackpack;
 
-	if (bNewHasBackpack)
-		this->AddBuffOrDebuff(NoSprintDebuff);
-	else
-		this->RemoveBuffOrDebuff(NoSprintDebuff);
+	if(!this->IsA(Cast<ADC_GM>(GetWorld()->GetAuthGameMode())->PlayerclassFarmer))
+	{
+		if (bNewHasBackpack)
+			this->AddBuffOrDebuff(NoSprintDebuff);
+		else
+			this->RemoveBuffOrDebuff(NoSprintDebuff);	
+	}
+	
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
@@ -1896,7 +1900,7 @@ void APlayerCharacter::TransferInventory_Implementation(APlayerCharacter* OldCha
 	if(!IsValid(OldCharacter))
 		return;
 	
-	this->bHasBackPack= OldCharacter->bHasBackPack;
+	this->SetHasBackPack(OldCharacter->bHasBackPack); 
 
 	for (int i = 0; i < OldCharacter->Inventory->GetSlots().Num(); i++)
 	{

@@ -39,6 +39,9 @@ void AClassSwitcher::OnHovered(APlayerCharacter* PlayerCharacter)
 	else
 		this->InteractPromptText="Hire To Mercenary (25)";
 	
+	if(PlayerCharacter->IsA(ClassToSwitchTo))
+		this->InteractPromptText="Already a Mercenary";
+	
 	Super::OnHovered(PlayerCharacter);
 	
 }
@@ -46,6 +49,9 @@ void AClassSwitcher::OnHovered(APlayerCharacter* PlayerCharacter)
 void AClassSwitcher::AuthorityInteract(APawn* InteractingPawn)
 {
 
+	if(InteractingPawn->IsA(ClassToSwitchTo))
+		return;
+	
 	ASharedStatsManager* wallet = Cast<ASharedStatsManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
 
 	if(wallet->Money< this->Price)
