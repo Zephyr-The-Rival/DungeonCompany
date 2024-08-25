@@ -51,6 +51,9 @@ private:
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
 	float OutOfRetrievingRangeDespawnTime = 10.f;
 
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
+	float ThrowUpDelay = 0.6;
+
 	//Movement
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing|Movement")
 	float DefaultSpeed = 350.f;
@@ -85,7 +88,7 @@ public:
 
 private:
 	UMaterialInstanceDynamic* DynMaterialInstance;
-	
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -114,6 +117,14 @@ private:
 
 protected:
 	virtual void OnTookDamage_Implementation() override;
+
+	UFUNCTION()
+	void ThrowUpItem();
+
+	inline const FTransform& GetDropTransform() const
+	{
+		return IsValid(DropTransform) ? DropTransform->GetComponentTransform() : GetActorTransform();
+	};
 
 protected:
 	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter) override;

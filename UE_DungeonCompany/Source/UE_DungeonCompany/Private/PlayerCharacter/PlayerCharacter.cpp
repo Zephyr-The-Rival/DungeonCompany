@@ -1582,6 +1582,9 @@ void APlayerCharacter::Multicast_EndAttack_Implementation()
 
 void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 {
+
+	Server_SpawnSoundAtLocation(BuySpound, ItemToBuy->GetActorLocation());
+	
 	if (ItemToBuy->MyItemDataClass == BackpackClass)
 	{
 		if (!this->bHasBackPack)
@@ -1849,6 +1852,16 @@ void APlayerCharacter::Server_SendSendingStoneSignal_Implementation(ESendingSton
 	{
 		SendingStone->Server_SendSignal(Signal);
 	}
+}
+
+bool APlayerCharacter::HasItemOfClass(TSubclassOf<UItemData> Item)
+{
+	for(FHeldItem f : this->HeldItems)
+	{
+		if(f.ItemDataClass==Item)
+			return true;
+	}
+	return false;
 }
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
