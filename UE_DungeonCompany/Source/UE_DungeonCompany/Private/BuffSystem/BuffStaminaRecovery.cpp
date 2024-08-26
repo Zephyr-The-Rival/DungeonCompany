@@ -5,6 +5,11 @@
 
 #include "PlayerCharacter/PlayerCharacter.h"
 
+UBuffStaminaRecovery::UBuffStaminaRecovery()
+{
+	SetActiveSeconds(60.f);
+}
+
 void UBuffStaminaRecovery::LocalApply()
 {
 	Super::LocalApply();

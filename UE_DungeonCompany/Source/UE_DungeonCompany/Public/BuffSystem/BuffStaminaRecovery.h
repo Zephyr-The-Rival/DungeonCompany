@@ -21,6 +21,9 @@ private:
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 1.f))
 	float StaminaGainPerSecondMultiplier = 1.f;
 
+public:
+	UBuffStaminaRecovery();
+
 private:
 	UPROPERTY(Transient)
 	float OriginalStaminaGain;
