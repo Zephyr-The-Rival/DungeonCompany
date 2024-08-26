@@ -1315,17 +1315,22 @@ void APlayerCharacter::TriggerSecondaryItemAction()
 
 void APlayerCharacter::SetHasBackPack(bool bNewHasBackpack)
 {
+	//local
 	this->bHasBackPack = bNewHasBackpack;
 	
+	TSubclassOf<APlayerCharacter> FarmerClass= Cast<ADC_PC>(Controller)->PlayerclassFarmer; 
 	
-	if(!this->IsA(Cast<ADC_PC>(GetController())->PlayerclassFarmer))
-	{
-		if (bNewHasBackpack)
-			this->AddBuffOrDebuff(NoSprintDebuff);
-		else
-			this->RemoveBuffOrDebuff(NoSprintDebuff);	
-	}
+	if(this->GetClass()!=FarmerClass)
+		AddBackPackDebuff(this->bHasBackPack);
 	
+}
+
+void APlayerCharacter::AddBackPackDebuff_Implementation(bool bHasBackpack)
+{
+	if (bHasBackpack)
+		this->AddBuffOrDebuff(NoSprintDebuff);
+	else
+		this->RemoveBuffOrDebuff(NoSprintDebuff);	
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,

@@ -524,6 +524,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetHasBackPack(bool bNewHasBackpack);
 
+private:
+
+	UFUNCTION(Server, Unreliable)
+	void AddBackPackDebuff(bool bHasBackpack);
+	void AddBackPackDebuff_Implementation(bool bHasBackpack);
+	
+public:
+
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	UInventory* GetInventory() const { return Inventory; }
 
