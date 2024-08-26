@@ -114,7 +114,6 @@ void AWorldItem::AttachToPlayer()
 
 void AWorldItem::Interact(APawn* InteractingPawn)
 {
-
 	APlayerCharacter* character = Cast<APlayerCharacter>(InteractingPawn);
 
 	if(!character)
