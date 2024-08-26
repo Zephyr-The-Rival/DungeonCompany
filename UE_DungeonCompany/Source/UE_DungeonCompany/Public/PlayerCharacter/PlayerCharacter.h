@@ -795,8 +795,7 @@ public: //potionStuff
 	UFUNCTION(BlueprintCallable)
 	void StopDrinkingPotion();
 
-	UFUNCTION(BlueprintCallable)
-	bool GetIsDrinkingPotion() const { return this->bIsDrinkingPotion; }
+
 
 protected:
 	UFUNCTION(Server, Unreliable)
@@ -804,13 +803,19 @@ protected:
 	void Server_OnPotionDrunk_Implementation();
 
 private:
-	UPROPERTY(Replicated)
-	bool bIsDrinkingPotion = false;
 
+	UFUNCTION(Client, Reliable)
+	void Client_StartDrinkingPotion();
+	void Client_StartDrinkingPotion_Implementation();
+
+	UFUNCTION(Client, Reliable)
+	void Client_StopDrinkingPotion();
+	void Client_StopDrinkingPotion_Implementation();
+	
 protected:
 	void SpawnCorpse();
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Unreliable)
 	void Server_SpawnCorpse();
 	void Server_SpawnCorpse_Implementation();
 

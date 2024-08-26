@@ -187,7 +187,6 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
 	DOREPLIFETIME(APlayerCharacter, bClimbing);
-	DOREPLIFETIME(APlayerCharacter, bIsDrinkingPotion);
 }
 
 
@@ -1836,14 +1835,26 @@ void APlayerCharacter::OnPotionDrunk()
 
 void APlayerCharacter::StartDrinkingPotion()
 {
-	this->bIsDrinkingPotion = true;
+	//onServer
+	this->SetAttackBlend(1);
+	Client_StartDrinkingPotion();
+}
+
+void APlayerCharacter::Client_StartDrinkingPotion_Implementation()
+{
 	this->bSwitchHandAllowed = false;
 	this->bPrimaryActionAllowed = false;
 }
 
 void APlayerCharacter::StopDrinkingPotion()
 {
-	this->bIsDrinkingPotion = false;
+	this->SetAttackBlend(0);
+	Client_StopDrinkingPotion();
+}
+
+
+void APlayerCharacter::Client_StopDrinkingPotion_Implementation()
+{
 	this->bSwitchHandAllowed = true;
 	this->bPrimaryActionAllowed = true;
 	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
