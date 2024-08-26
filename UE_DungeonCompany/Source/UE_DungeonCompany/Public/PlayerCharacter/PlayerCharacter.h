@@ -693,13 +693,32 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UBuffDebuffBase> ExaustionDebuff;
 
+public:
+	UFUNCTION(BlueprintCallable)
 	void StartExaustionTimer();
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveExaustion();
+	
+protected:
 	FTimerHandle ExaustionTimer;
 	void ApplyExaustion();
 
+	UFUNCTION(Client, Unreliable)
+	void  Yawn();
+	void  Yawn_Implementation();
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void Yawn();
-	void Yawn_Implementation();
+	void BP_Yawn();
+	void BP_Yawn_Implementation();
+
+	UFUNCTION(Client, Unreliable)
+	void  StopYawn();
+	void  StopYawn_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void BP_StopYawn();
+	auto BP_StopYawn_Implementation() -> void;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
