@@ -1781,6 +1781,8 @@ int APlayerCharacter::EndSelectionWheel()
 
 void APlayerCharacter::OnPotionDrunk()
 {
+	Server_OnPotionDrunk();
+	
 	if (APotion* Potion = Cast<APotion>(GetCurrentlyHeldWorldItem()))
 	{
 		Potion->Local_ApplyEffect(this);
@@ -1800,6 +1802,14 @@ void APlayerCharacter::StopDrinkingPotion()
 	this->bSwitchHandAllowed = true;
 	this->bPrimaryActionAllowed = true;
 	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
+}
+
+void APlayerCharacter::Server_OnPotionDrunk_Implementation()
+{
+	if (APotion* Potion = Cast<APotion>(GetCurrentlyHeldWorldItem()))
+	{
+		Potion->Authority_ApplyEffect(this);
+	}
 }
 
 void APlayerCharacter::SpawnCorpse()

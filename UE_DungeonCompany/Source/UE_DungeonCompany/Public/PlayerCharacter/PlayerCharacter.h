@@ -772,6 +772,11 @@ public: //potionStuff
 	UFUNCTION(BlueprintCallable)
 	bool GetIsDrinkingPotion() const { return this->bIsDrinkingPotion; }
 
+protected:
+	UFUNCTION(Server, Unreliable)
+	void Server_OnPotionDrunk();
+	void Server_OnPotionDrunk_Implementation();
+
 private:
 	UPROPERTY(Replicated)
 	bool bIsDrinkingPotion = false;
