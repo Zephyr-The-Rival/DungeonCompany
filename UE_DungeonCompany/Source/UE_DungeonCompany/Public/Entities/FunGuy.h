@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interactable.h"
 #include "Entities/AIEntity.h"
 #include "FunGuy.generated.h"
 
@@ -14,9 +15,10 @@ class USphereComponent;
 class APlayerCharacter;
 class UNiagaraComponent;
 class UDebuffPoisonGas;
+class AWorldItem;
 
 UCLASS()
-class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity
+class UE_DUNGEONCOMPANY_API AFunGuy : public AAIEntity, public IInteractable
 {
 	GENERATED_BODY()
 
@@ -69,6 +71,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Balancing")
 	float PulseFrequency = 0.5f;
 
+	UPROPERTY(EditAnywhere, Category = "Balancing|Interactable")
+	float HoldInteractTimeToPick = 3.f;
+
 public:
 	AFunGuy();
 
@@ -83,7 +88,7 @@ protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 
-protected: 
+protected:
 	void CalculateCloudStart();
 	void UpdateCloud();
 	void ResetCloudSpawnRate() const;
@@ -97,7 +102,7 @@ private:
 public:
 	virtual void Tick(float DeltaSeconds) override;
 
-	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	UFUNCTION(BlueprintNativeEvent)
@@ -115,10 +120,13 @@ private:
 
 protected:
 	UFUNCTION()
-	void OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
+	void OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+	                         const FHitResult& SweepResult);
+
 	UFUNCTION()
-	void OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	void OnCloudEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	                       int32 OtherBodyIndex);
 
 	void OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const;
 
@@ -128,4 +136,12 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Buff/Debuff")
 	TSubclassOf<UDebuffPoisonGas> PoisonGasDebuffClass;
+
+private:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AWorldItem> FunGuyWorldItemClass;
+
+public:
+	virtual void AuthorityInteract(APawn* InteractingPawn) override;
+	virtual void OnHovered(APlayerCharacter* PlayerCharacter) override;
 };
