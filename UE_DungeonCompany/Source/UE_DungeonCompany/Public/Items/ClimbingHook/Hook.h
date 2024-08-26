@@ -9,7 +9,7 @@
 /**
  * 
  */
-UENUM()
+UENUM(meta = (ScriptName = EHookState))
 enum class EHookState : uint8
 {
 	InHand = 0 UMETA(DisplayName = "In Hand"),

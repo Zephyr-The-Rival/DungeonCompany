@@ -53,8 +53,9 @@ void ACatBurglarSpawnVolume::OnConstruction(const FTransform& Transform)
 	};
 
 	Nest->GetStaticMeshComponent()->SetCollisionProfileName("OverlapAll");
-	//Nest->SetLockLocation(true);
+	
 #if WITH_EDITOR
+	Nest->SetLockLocation(true);
 	GEngine->OnLevelActorDeleted().RemoveAll(this);
 	GEngine->OnLevelActorDeleted().AddUObject(this, &ACatBurglarSpawnVolume::OnLevelActorDeleted);
 #endif
