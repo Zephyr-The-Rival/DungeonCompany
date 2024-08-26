@@ -133,8 +133,7 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 	params.AddIgnoredActor(this);
 
 	GetWorld()->SweepMultiByChannel(hits, start, end, FQuat(), ECC_GameTraceChannel4, shape, params);
-	DrawDebugSphereTraceSingle(GetWorld(), start, end, AttackRadius, EDrawDebugTrace::ForDuration, false, FHitResult(),
-	                           FColor::Blue, FLinearColor::Red, 0.5f);
+	//DrawDebugSphereTraceSingle(GetWorld(), start, end, AttackRadius, EDrawDebugTrace::ForDuration, false, FHitResult(),FColor::Blue, FLinearColor::Red, 0.5f);
 	DrawDebugLine(GetWorld(), start, end, FColor::Blue);
 	int hitsNum = hits.Num();
 

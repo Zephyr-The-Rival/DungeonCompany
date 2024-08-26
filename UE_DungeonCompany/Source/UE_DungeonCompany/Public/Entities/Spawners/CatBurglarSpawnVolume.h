@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Engine/TriggerVolume.h"
+#include "Engine/StaticMeshActor.h"
 #include "CatBurglarSpawnVolume.generated.h"
+
 
 class UNiagaraComponent;
 class UNiagaraSystem;
