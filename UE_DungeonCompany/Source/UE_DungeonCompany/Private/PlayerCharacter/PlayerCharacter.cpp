@@ -115,8 +115,6 @@ void APlayerCharacter::BeginPlay()
 	{
 		bResting = true;
 	});
-
-	StartExaustionTimer();
 }
 
 // Called every frame
@@ -189,7 +187,6 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
 	DOREPLIFETIME(APlayerCharacter, bClimbing);
-	DOREPLIFETIME(APlayerCharacter, bIsDrinkingPotion);
 }
 
 
@@ -769,6 +766,33 @@ bool APlayerCharacter::CanJumpInternal_Implementation() const
 	return JumpIsAllowedInternal();
 }
 
+void APlayerCharacter::SetStaminaGainDelay(float InDelaySeconds)
+{
+	FTimerManager& timerManager = GetWorld()->GetTimerManager();
+	
+	StaminaGainDelay = InDelaySeconds;
+	
+	bool bTimerAlreadyRunning = bTimerAlreadyRunning = timerManager.IsTimerActive(RestDelayTimerHandle);
+
+	if(!bTimerAlreadyRunning)
+		return;
+
+	float nextDelay = InDelaySeconds - timerManager.GetTimerElapsed(RestDelayTimerHandle);
+	
+	if(nextDelay <= 0.f)
+	{
+		timerManager.ClearTimer(RestDelayTimerHandle);
+		bResting = true;
+	}
+	
+	timerManager.SetTimer(RestDelayTimerHandle, RestDelegate, nextDelay, false);
+}
+
+void APlayerCharacter::SetStaminaGainPerSecond(float InStaminaGainPS)
+{
+	StaminaGainPerSecond = InStaminaGainPS;
+}
+
 void APlayerCharacter::SetVoiceEffect(USoundEffectSourcePresetChain* SoundEffect)
 {
 	VOIPTalker->Settings.SourceEffectChain = SoundEffect;
@@ -1285,10 +1309,14 @@ void APlayerCharacter::SetHasBackPack(bool bNewHasBackpack)
 {
 	this->bHasBackPack = bNewHasBackpack;
 
-	if (bNewHasBackpack)
-		this->AddBuffOrDebuff(NoSprintDebuff);
-	else
-		this->RemoveBuffOrDebuff(NoSprintDebuff);
+	if(!this->IsA(Cast<ADC_GM>(GetWorld()->GetAuthGameMode())->PlayerclassFarmer))
+	{
+		if (bNewHasBackpack)
+			this->AddBuffOrDebuff(NoSprintDebuff);
+		else
+			this->RemoveBuffOrDebuff(NoSprintDebuff);	
+	}
+	
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
@@ -1674,6 +1702,12 @@ void APlayerCharacter::StartExaustionTimer()
 	GetWorld()->GetTimerManager().SetTimer(ExaustionTimer, this, &APlayerCharacter::ApplyExaustion, Time, false);
 }
 
+void APlayerCharacter::RemoveExaustion()
+{
+	this->RemoveBuffOrDebuff(ExaustionDebuff);
+	StopYawn();
+}
+
 void APlayerCharacter::ApplyExaustion()
 {
 	this->AddBuffOrDebuff(ExaustionDebuff);
@@ -1681,6 +1715,20 @@ void APlayerCharacter::ApplyExaustion()
 }
 
 void APlayerCharacter::Yawn_Implementation()
+{
+	BP_Yawn();
+}
+
+void APlayerCharacter::BP_Yawn_Implementation()
+{
+}
+
+void APlayerCharacter::StopYawn_Implementation()
+{
+	BP_StopYawn();
+}
+
+auto APlayerCharacter::BP_StopYawn_Implementation() -> void
 {
 }
 
@@ -1777,6 +1825,8 @@ int APlayerCharacter::EndSelectionWheel()
 
 void APlayerCharacter::OnPotionDrunk()
 {
+	Server_OnPotionDrunk();
+	
 	if (APotion* Potion = Cast<APotion>(GetCurrentlyHeldWorldItem()))
 	{
 		Potion->Local_ApplyEffect(this);
@@ -1785,17 +1835,37 @@ void APlayerCharacter::OnPotionDrunk()
 
 void APlayerCharacter::StartDrinkingPotion()
 {
-	this->bIsDrinkingPotion = true;
+	//onServer
+	this->SetAttackBlend(1);
+	Client_StartDrinkingPotion();
+}
+
+void APlayerCharacter::Client_StartDrinkingPotion_Implementation()
+{
 	this->bSwitchHandAllowed = false;
 	this->bPrimaryActionAllowed = false;
 }
 
 void APlayerCharacter::StopDrinkingPotion()
 {
-	this->bIsDrinkingPotion = false;
+	this->SetAttackBlend(0);
+	Client_StopDrinkingPotion();
+}
+
+
+void APlayerCharacter::Client_StopDrinkingPotion_Implementation()
+{
 	this->bSwitchHandAllowed = true;
 	this->bPrimaryActionAllowed = true;
 	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
+}
+
+void APlayerCharacter::Server_OnPotionDrunk_Implementation()
+{
+	if (APotion* Potion = Cast<APotion>(GetCurrentlyHeldWorldItem()))
+	{
+		Potion->Authority_ApplyEffect(this);
+	}
 }
 
 void APlayerCharacter::SpawnCorpse()
@@ -1896,7 +1966,7 @@ void APlayerCharacter::TransferInventory_Implementation(APlayerCharacter* OldCha
 	if(!IsValid(OldCharacter))
 		return;
 	
-	this->bHasBackPack= OldCharacter->bHasBackPack;
+	this->SetHasBackPack(OldCharacter->bHasBackPack); 
 
 	for (int i = 0; i < OldCharacter->Inventory->GetSlots().Num(); i++)
 	{
