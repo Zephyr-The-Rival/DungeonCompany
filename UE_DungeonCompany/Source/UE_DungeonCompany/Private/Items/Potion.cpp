@@ -26,6 +26,25 @@ void APotion::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void APotion::Authority_ApplyEffect(APlayerCharacter* User)
+{
+	if(!HasAuthority())
+		return;
+
+	int buffsNum = ApplyingBuffs.Num();
+
+	for(int i = 0; i < buffsNum; ++i)
+	{
+		User->AddBuffOrDebuff(ApplyingBuffs[i]);
+	}
+	
+	Authority_OnApplyEffect(User);
+}
+
+void APotion::Authority_OnApplyEffect_Implementation(APlayerCharacter* User)
+{
+}
+
 void APotion::Local_ApplyEffect_Implementation(APlayerCharacter* User)
 {
 }

@@ -187,7 +187,6 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
 	DOREPLIFETIME(APlayerCharacter, bClimbing);
-	DOREPLIFETIME(APlayerCharacter, bIsDrinkingPotion);
 }
 
 
@@ -765,6 +764,33 @@ void APlayerCharacter::Server_SetClimbing_Implementation(bool Value)
 bool APlayerCharacter::CanJumpInternal_Implementation() const
 {
 	return JumpIsAllowedInternal();
+}
+
+void APlayerCharacter::SetStaminaGainDelay(float InDelaySeconds)
+{
+	FTimerManager& timerManager = GetWorld()->GetTimerManager();
+	
+	StaminaGainDelay = InDelaySeconds;
+	
+	bool bTimerAlreadyRunning = bTimerAlreadyRunning = timerManager.IsTimerActive(RestDelayTimerHandle);
+
+	if(!bTimerAlreadyRunning)
+		return;
+
+	float nextDelay = InDelaySeconds - timerManager.GetTimerElapsed(RestDelayTimerHandle);
+	
+	if(nextDelay <= 0.f)
+	{
+		timerManager.ClearTimer(RestDelayTimerHandle);
+		bResting = true;
+	}
+	
+	timerManager.SetTimer(RestDelayTimerHandle, RestDelegate, nextDelay, false);
+}
+
+void APlayerCharacter::SetStaminaGainPerSecond(float InStaminaGainPS)
+{
+	StaminaGainPerSecond = InStaminaGainPS;
 }
 
 void APlayerCharacter::SetVoiceEffect(USoundEffectSourcePresetChain* SoundEffect)
@@ -1799,6 +1825,8 @@ int APlayerCharacter::EndSelectionWheel()
 
 void APlayerCharacter::OnPotionDrunk()
 {
+	Server_OnPotionDrunk();
+	
 	if (APotion* Potion = Cast<APotion>(GetCurrentlyHeldWorldItem()))
 	{
 		Potion->Local_ApplyEffect(this);
@@ -1807,17 +1835,37 @@ void APlayerCharacter::OnPotionDrunk()
 
 void APlayerCharacter::StartDrinkingPotion()
 {
-	this->bIsDrinkingPotion = true;
+	//onServer
+	this->SetAttackBlend(1);
+	Client_StartDrinkingPotion();
+}
+
+void APlayerCharacter::Client_StartDrinkingPotion_Implementation()
+{
 	this->bSwitchHandAllowed = false;
 	this->bPrimaryActionAllowed = false;
 }
 
 void APlayerCharacter::StopDrinkingPotion()
 {
-	this->bIsDrinkingPotion = false;
+	this->SetAttackBlend(0);
+	Client_StopDrinkingPotion();
+}
+
+
+void APlayerCharacter::Client_StopDrinkingPotion_Implementation()
+{
 	this->bSwitchHandAllowed = true;
 	this->bPrimaryActionAllowed = true;
 	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
+}
+
+void APlayerCharacter::Server_OnPotionDrunk_Implementation()
+{
+	if (APotion* Potion = Cast<APotion>(GetCurrentlyHeldWorldItem()))
+	{
+		Potion->Authority_ApplyEffect(this);
+	}
 }
 
 void APlayerCharacter::SpawnCorpse()
