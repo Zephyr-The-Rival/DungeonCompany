@@ -341,6 +341,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
 	float StaminaGainDelay = 3.f;
 
+public:
+	inline float GetStaminaGainDelay() const { return StaminaGainDelay; }
+	void SetStaminaGainDelay(float InDelaySeconds);
+
+	inline float GetStaminaGainPerSecond() const { return StaminaGainPerSecond; }
+	void SetStaminaGainPerSecond(float InStaminaGainPS);
+
 private:
 	UPROPERTY(BlueprintGetter=GetStamina)
 	float Stamina;
@@ -790,6 +797,11 @@ public: //potionStuff
 
 	UFUNCTION(BlueprintCallable)
 	bool GetIsDrinkingPotion() const { return this->bIsDrinkingPotion; }
+
+protected:
+	UFUNCTION(Server, Unreliable)
+	void Server_OnPotionDrunk();
+	void Server_OnPotionDrunk_Implementation();
 
 private:
 	UPROPERTY(Replicated)
