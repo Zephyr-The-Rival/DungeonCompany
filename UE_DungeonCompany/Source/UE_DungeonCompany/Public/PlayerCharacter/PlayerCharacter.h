@@ -864,5 +864,13 @@ private:
 	UFUNCTION(Server, Reliable)
 	void SelfDestruct();
 	void SelfDestruct_Implementation();
-	
+
+protected:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UItemData> CallToAdventureItemClassData;
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	void AddItemToInventory(UItemData* NewItem);
 };
