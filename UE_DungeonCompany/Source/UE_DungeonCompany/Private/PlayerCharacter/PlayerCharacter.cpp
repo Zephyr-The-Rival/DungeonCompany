@@ -769,6 +769,33 @@ bool APlayerCharacter::CanJumpInternal_Implementation() const
 	return JumpIsAllowedInternal();
 }
 
+void APlayerCharacter::SetStaminaGainDelay(float InDelaySeconds)
+{
+	FTimerManager& timerManager = GetWorld()->GetTimerManager();
+	
+	StaminaGainDelay = InDelaySeconds;
+	
+	bool bTimerAlreadyRunning = bTimerAlreadyRunning = timerManager.IsTimerActive(RestDelayTimerHandle);
+
+	if(!bTimerAlreadyRunning)
+		return;
+
+	float nextDelay = InDelaySeconds - timerManager.GetTimerElapsed(RestDelayTimerHandle);
+	
+	if(nextDelay <= 0.f)
+	{
+		timerManager.ClearTimer(RestDelayTimerHandle);
+		bResting = true;
+	}
+	
+	timerManager.SetTimer(RestDelayTimerHandle, RestDelegate, nextDelay, false);
+}
+
+void APlayerCharacter::SetStaminaGainPerSecond(float InStaminaGainPS)
+{
+	StaminaGainPerSecond = InStaminaGainPS;
+}
+
 void APlayerCharacter::SetVoiceEffect(USoundEffectSourcePresetChain* SoundEffect)
 {
 	VOIPTalker->Settings.SourceEffectChain = SoundEffect;

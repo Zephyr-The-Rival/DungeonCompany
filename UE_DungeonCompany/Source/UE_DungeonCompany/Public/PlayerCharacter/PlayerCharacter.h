@@ -341,6 +341,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
 	float StaminaGainDelay = 3.f;
 
+public:
+	inline float GetStaminaGainDelay() const { return StaminaGainDelay; }
+	void SetStaminaGainDelay(float InDelaySeconds);
+
+	inline float GetStaminaGainPerSecond() const { return StaminaGainPerSecond; }
+	void SetStaminaGainPerSecond(float InStaminaGainPS);
+
 private:
 	UPROPERTY(BlueprintGetter=GetStamina)
 	float Stamina;
