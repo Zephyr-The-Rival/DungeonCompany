@@ -115,8 +115,6 @@ void APlayerCharacter::BeginPlay()
 	{
 		bResting = true;
 	});
-
-	StartExaustionTimer();
 }
 
 // Called every frame
@@ -1678,6 +1676,12 @@ void APlayerCharacter::StartExaustionTimer()
 	GetWorld()->GetTimerManager().SetTimer(ExaustionTimer, this, &APlayerCharacter::ApplyExaustion, Time, false);
 }
 
+void APlayerCharacter::RemoveExaustion()
+{
+	this->RemoveBuffOrDebuff(ExaustionDebuff);
+	StopYawn();
+}
+
 void APlayerCharacter::ApplyExaustion()
 {
 	this->AddBuffOrDebuff(ExaustionDebuff);
@@ -1685,6 +1689,20 @@ void APlayerCharacter::ApplyExaustion()
 }
 
 void APlayerCharacter::Yawn_Implementation()
+{
+	BP_Yawn();
+}
+
+void APlayerCharacter::BP_Yawn_Implementation()
+{
+}
+
+void APlayerCharacter::StopYawn_Implementation()
+{
+	BP_StopYawn();
+}
+
+auto APlayerCharacter::BP_StopYawn_Implementation() -> void
 {
 }
 
