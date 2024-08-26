@@ -107,16 +107,17 @@ UBuffDebuffBase* ADC_Entity::AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> 
 	
 	if (existingDeBuff && !existingDeBuff->IsStackable())
 	{
-		existingDeBuff->Timegate(ActiveTime);
-		existingDeBuff->IncrementAppliedCount();
+		existingDeBuff->ResetTimer();
 		
 		return existingDeBuff;
 	}
 
 	UBuffDebuffBase* deBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
 
+	if(ActiveTime)
+		deBuff->SetActiveSeconds(ActiveTime);
+	
 	deBuff->RegisterComponent();
-	deBuff->Timegate(ActiveTime);
 
 	return deBuff;
 }

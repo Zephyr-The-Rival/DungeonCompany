@@ -341,6 +341,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
 	float StaminaGainDelay = 3.f;
 
+public:
+	inline float GetStaminaGainDelay() const { return StaminaGainDelay; }
+	void SetStaminaGainDelay(float InDelaySeconds);
+
+	inline float GetStaminaGainPerSecond() const { return StaminaGainPerSecond; }
+	void SetStaminaGainPerSecond(float InStaminaGainPS);
+
 private:
 	UPROPERTY(BlueprintGetter=GetStamina)
 	float Stamina;
@@ -693,13 +700,32 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UBuffDebuffBase> ExaustionDebuff;
 
+public:
+	UFUNCTION(BlueprintCallable)
 	void StartExaustionTimer();
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveExaustion();
+	
+protected:
 	FTimerHandle ExaustionTimer;
 	void ApplyExaustion();
 
+	UFUNCTION(Client, Unreliable)
+	void  Yawn();
+	void  Yawn_Implementation();
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void Yawn();
-	void Yawn_Implementation();
+	void BP_Yawn();
+	void BP_Yawn_Implementation();
+
+	UFUNCTION(Client, Unreliable)
+	void  StopYawn();
+	void  StopYawn_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void BP_StopYawn();
+	auto BP_StopYawn_Implementation() -> void;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
@@ -771,6 +797,11 @@ public: //potionStuff
 
 	UFUNCTION(BlueprintCallable)
 	bool GetIsDrinkingPotion() const { return this->bIsDrinkingPotion; }
+
+protected:
+	UFUNCTION(Server, Unreliable)
+	void Server_OnPotionDrunk();
+	void Server_OnPotionDrunk_Implementation();
 
 private:
 	UPROPERTY(Replicated)
