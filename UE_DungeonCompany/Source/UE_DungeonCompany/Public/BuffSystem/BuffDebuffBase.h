@@ -8,32 +8,28 @@
 
 class ADC_Entity;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class UE_DUNGEONCOMPANY_API UBuffDebuffBase : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UBuffDebuffBase();
 
 private:
 	ADC_Entity* OuterEntity;
-	
+
 public:
 	inline ADC_Entity* GetOuterEntity() const { return OuterEntity; }
-	
-	template<class T>
+
+	template <class T>
 	T* GetOuterEntity() const { return Cast<T>(OuterEntity); }
-	
-private:
-	uint16 AppliedCount = 1;
 
 protected:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	bool bStackable = false;
 
 public:
-	void IncrementAppliedCount();
 	inline bool IsStackable() const { return bStackable; }
 
 protected:
@@ -49,7 +45,7 @@ protected:
 	virtual void AuthorityRemove();
 	virtual void LocalRemove();
 
-public:	
+public:
 	void Destroy();
 
 private:
@@ -58,18 +54,22 @@ private:
 
 	FTimerHandle ActiveTimerHandle;
 
-public:
+protected:
 	void Timegate(float TimeSeconds);
-	
 
+public:
+	void SetActiveSeconds(float InActiveSeconds);
+	void ResetTimer();
+
+public:
 	//player hud stuff
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTexture2D* HudIcon;
 
 private:
 	bool bIsActive;
-	
+
 public:
 	UFUNCTION(BlueprintCallable)
-	bool GetIsActive() const { return this->bIsActive;}
+	bool GetIsActive() const { return this->bIsActive; }
 };
