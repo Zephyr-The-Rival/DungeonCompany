@@ -42,6 +42,7 @@
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Subsystems/VoiceChatSubsystem.h"
 #include "DCGame/DC_PostMortemPawn.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "Items/Potion.h"
 #include "Items/SendingStone.h"
 #include "Items/WorldCurrency_Data.h"
@@ -1317,12 +1318,34 @@ void APlayerCharacter::SetHasBackPack(bool bNewHasBackpack)
 {
 	//local
 	this->bHasBackPack = bNewHasBackpack;
-	
+
+	if(this->bHasBackPack)
+		Server_SpawnBackpackOnBack();
+	else
+		Server_DestroyBackPackOnBack();
+
 	TSubclassOf<APlayerCharacter> FarmerClass= Cast<ADC_PC>(Controller)->PlayerclassFarmer; 
-	
 	if(this->GetClass()!=FarmerClass)
 		AddBackPackDebuff(this->bHasBackPack);
 	
+}
+
+void APlayerCharacter::Server_SpawnBackpackOnBack_Implementation()
+{
+	const USkeletalMeshSocket* Socket= this->GetMesh()->GetSocketByName("Backpack_Socket");
+	this->AttachedBackpack = GetWorld()->SpawnActor<AActor>(BackpackActorToAttach, this->GetMesh()->GetSocketTransform("Backpack_Socket"));
+
+
+	FAttachmentTransformRules Rules=FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+	
+	this->AttachedBackpack->AttachToComponent(this->GetMesh(),Rules,"Backpack_Socket");
+	
+}
+
+void APlayerCharacter::Server_DestroyBackPackOnBack_Implementation()
+{
+	if(IsValid(this->AttachedBackpack))
+		this->AttachedBackpack->Destroy(true, true);
 }
 
 void APlayerCharacter::AddBackPackDebuff_Implementation(bool bHasBackpack)
@@ -1397,7 +1420,7 @@ void APlayerCharacter::CheckForFallDamage()
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 {
-	const float free = 300;
+	const float free = 400;
 	const float max = 1000;
 
 	if (deltaHeight <= free)
