@@ -141,3 +141,9 @@ void UCustomGameUserSettings::ApplyAudioSettings()
 	}
 	UGameplayStatics::PushSoundMixModifier(this, MasterSoundMix.Get());
 }
+
+void UCustomGameUserSettings::ApplyGammaSettings()
+{
+	FString GammaCommand = FString::Printf(TEXT("gamma %f"), gammaValue);
+	GEngine->Exec(GetWorld(), *GammaCommand);
+}

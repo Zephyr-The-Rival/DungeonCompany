@@ -78,7 +78,13 @@ void UBuffDebuffBase::LocalRemove()
 {
 	this->bIsActive = false;
 	if (APlayerCharacter* player = Cast<APlayerCharacter>(OuterEntity))
-		player->GetMyHud()->UpdateBuffs();
+	{
+		if(IsValid(player->GetMyHud())&& player->GetMyHud()->GetParent()!=nullptr)
+		{
+			player->GetMyHud()->UpdateBuffs();
+		}		
+	}
+	
 }
 
 void UBuffDebuffBase::Destroy()
