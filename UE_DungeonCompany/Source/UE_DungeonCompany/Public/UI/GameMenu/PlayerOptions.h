@@ -13,5 +13,8 @@ UCLASS()
 class UE_DUNGEONCOMPANY_API UPlayerOptions : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
+
+private:
+	APlayerState* ControllingPlayer;
 	
 };
