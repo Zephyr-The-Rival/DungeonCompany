@@ -31,7 +31,7 @@ void UQuasoSnakeAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	TargetEyeRotation = !IsValid(OwningQuaso->GetTargetPlayer())
 		              ? FRotator::ZeroRotator
 		              : (OwningQuaso->GetTargetPlayer()->GetActorLocation() - GetSkelMeshComponent()->GetBoneLocation(
-			              FName("DEF_BODY_007"))).Rotation();
+			              FName("DEF_JOINT_008"))).Rotation();
 
 	bAttachedToPlayer = OwningQuaso->IsAttachedToPlayer();
 	bAttacking = bAttacking || bAttachedToPlayer;
