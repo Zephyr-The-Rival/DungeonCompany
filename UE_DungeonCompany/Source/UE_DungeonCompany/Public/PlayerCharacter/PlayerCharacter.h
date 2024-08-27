@@ -524,6 +524,23 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetHasBackPack(bool bNewHasBackpack);
 
+protected:
+
+	UFUNCTION(Server, Unreliable)
+	void Server_SpawnBackpackOnBack(); 
+	void Server_SpawnBackpackOnBack_Implementation(); 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AActor> BackpackActorToAttach;
+
+	
+private:
+
+	UFUNCTION(Server, Unreliable)
+	void Server_DestroyBackPackOnBack();
+	void Server_DestroyBackPackOnBack_Implementation();
+	AActor* AttachedBackpack;
+
 private:
 
 	UFUNCTION(Server, Unreliable)
