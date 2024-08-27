@@ -108,6 +108,9 @@ protected:
 	void Multicast_OnDetachedFromPlayer();
 	void Multicast_OnDetachedFromPlayer_Implementation();
 
+	UFUNCTION()
+	void OnAttachedPlayerDied(ADC_Entity* DeadEntitiy);
+
 public:
 	UDELEGATE()
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWantsToReturnToVolume);

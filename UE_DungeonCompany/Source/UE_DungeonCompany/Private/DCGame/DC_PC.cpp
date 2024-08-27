@@ -29,7 +29,7 @@ void ADC_PC::BeginPlay()
 
 	UVOIPStatics::SetMicThreshold(-20.f);
 	UDC_Statics::SetMicNoiseGateTreshold(-20.f);
-	UDC_Statics::SetMicInputGain(5.f);
+	UDC_Statics::SetMicInputGain(0.f);
 
 	GetWorld()->Exec(GetWorld(), TEXT("OSS.VoiceLoopback 1"));
 	
@@ -186,11 +186,14 @@ void ADC_PC::PawnLeavingGame()
 
 void ADC_PC::SwitchPlayerCharacterClass(TSubclassOf<APlayerCharacter> NewClass)
 {
-
+//on server
+	
 	APlayerCharacter* OldCharacter= Cast<APlayerCharacter>(GetPawn());
 	APlayerCharacter* NewCharacter = GetWorld()->SpawnActor<APlayerCharacter>(NewClass, OldCharacter->GetActorTransform());
 
-
+	if(IsValid(OldCharacter->GetCurrentlyHeldWorldItem()))
+		OldCharacter->GetCurrentlyHeldWorldItem()->Destroy(true,true);
+	
 	Possess(NewCharacter);
 	NewCharacter->TransferInventory(OldCharacter);
 

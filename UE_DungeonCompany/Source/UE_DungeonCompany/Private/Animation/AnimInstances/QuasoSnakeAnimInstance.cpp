@@ -24,15 +24,16 @@ void UQuasoSnakeAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
-	Velocity = OwningQuaso->GetVelocity() * (0.f < OwningQuaso->GetCharacterMovement()->GetCurrentAcceleration().
-	                                                            Length());
+	Velocity = OwningQuaso->GetVelocity();
 	Location = OwningQuaso->GetActorLocation();
+	
+	FVector worldTargetEyeVector = !IsValid(OwningQuaso->GetTargetPlayer())
+					  ? OwningQuaso->GetActorLocation() + OwningQuaso->GetActorForwardVector()
+					  : OwningQuaso->GetTargetPlayer()->GetMesh()->GetBoneLocation(FName("DEF_Head_001")) - GetSkelMeshComponent()->GetBoneLocation(
+						  FName("DEF_JOINT_008"));
 
-	TargetEyeRotation = !IsValid(OwningQuaso->GetTargetPlayer())
-		              ? FRotator::ZeroRotator
-		              : (OwningQuaso->GetTargetPlayer()->GetActorLocation() - GetSkelMeshComponent()->GetBoneLocation(
-			              FName("DEF_BODY_007"))).Rotation();
-
+	TargetEyeRotation = worldTargetEyeVector.Rotation() - OwningQuaso->GetActorRotation() ;
+	
 	bAttachedToPlayer = OwningQuaso->IsAttachedToPlayer();
 	bAttacking = bAttacking || bAttachedToPlayer;
 	bLurking = OwningQuaso->IsLurking();

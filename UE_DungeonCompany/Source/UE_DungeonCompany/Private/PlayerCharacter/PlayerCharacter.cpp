@@ -115,6 +115,14 @@ void APlayerCharacter::BeginPlay()
 	{
 		bResting = true;
 	});
+
+	ADC_PC* controller = Cast<ADC_PC>(GetController());
+	if(IsValid(controller)&& IsLocallyControlled()&& !controller->bHasGottenCallToAdventure)//if player has gotten call to adventure yet
+	{
+		UItemData* CTA = NewObject<UItemData>(GetTransientPackage(), CallToAdventureItemClassData);
+		AddItemToInventory(CTA);
+		controller->bHasGottenCallToAdventure=true;
+	}
 }
 
 // Called every frame
@@ -1307,16 +1315,22 @@ void APlayerCharacter::TriggerSecondaryItemAction()
 
 void APlayerCharacter::SetHasBackPack(bool bNewHasBackpack)
 {
+	//local
 	this->bHasBackPack = bNewHasBackpack;
-
-	if(!this->IsA(Cast<ADC_GM>(GetWorld()->GetAuthGameMode())->PlayerclassFarmer))
-	{
-		if (bNewHasBackpack)
-			this->AddBuffOrDebuff(NoSprintDebuff);
-		else
-			this->RemoveBuffOrDebuff(NoSprintDebuff);	
-	}
 	
+	TSubclassOf<APlayerCharacter> FarmerClass= Cast<ADC_PC>(Controller)->PlayerclassFarmer; 
+	
+	if(this->GetClass()!=FarmerClass)
+		AddBackPackDebuff(this->bHasBackPack);
+	
+}
+
+void APlayerCharacter::AddBackPackDebuff_Implementation(bool bHasBackpack)
+{
+	if (bHasBackpack)
+		this->AddBuffOrDebuff(NoSprintDebuff);
+	else
+		this->RemoveBuffOrDebuff(NoSprintDebuff);	
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
@@ -2001,6 +2015,23 @@ void APlayerCharacter::TransferInventory_Implementation(APlayerCharacter* OldCha
 void APlayerCharacter::SelfDestruct_Implementation()
 {
 	this->Destroy(true, true);
+}
+
+void APlayerCharacter::AddItemToInventory(UItemData* NewItem)
+{
+	UInventorySlot* FreeSlot = FindFreeSlot();
+	if(IsValid(FreeSlot))
+	{
+		FreeSlot->MyItem=NewItem;
+		if(FreeSlot==GetCurrentlyHeldInventorySlot())
+			TakeOutItem();
+
+		UpdateHeldItems();
+	}
+	else
+	{
+		SpawnDroppedWorldItem(NewItem->MyWorldItemClass, GetDropTransform(), "", false, FVector::Zero());
+	}
 }
 
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
