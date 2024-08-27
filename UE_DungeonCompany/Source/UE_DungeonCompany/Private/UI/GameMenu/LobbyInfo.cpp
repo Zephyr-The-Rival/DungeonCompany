@@ -12,10 +12,7 @@
 
 ULobbyInfo::ULobbyInfo()
 {
- 	//static ConstructorHelpers::FClassFinder<UPlayerOptions> PlayerOptionsClassFinder(
-	//	TEXT("/Game/_DungeonCompanyContent/Code/UI/GameMenu/WBP_PlayerOptions"));
-	//
-	//PlayerOptionsClass = PlayerOptionsClassFinder.Class;
+ 	
 }
 
 void ULobbyInfo::NativeConstruct()
@@ -36,8 +33,12 @@ void ULobbyInfo::NativeConstruct()
 
 void ULobbyInfo::AddPlayerOptionsForState(APlayerState* PlayerState)
 {
+	if(PlayerOptionsMap.Contains(PlayerState))
+		return;
+	
 	UPlayerOptions* playerOptions = WidgetTree->ConstructWidget<UPlayerOptions>(PlayerOptionsClass);
 	playerOptions->SetControllingPlayer(PlayerState);
 	LobbyOptionsVerticalBox->AddChild(playerOptions);
-	PlayerOptions.Add(playerOptions);
+	
+	PlayerOptionsMap.Add(PlayerState, playerOptions);
 }

@@ -47,10 +47,13 @@ void UPlayerOptions::OnVolumeSliderValueChanged(float NewValue)
 {
 	if(!IsControllingPlayerValid())
 		return;
-	
-	USoundClass* voiceClass = GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->GetVoiceClassForPlayer(
-		ControllingPlayer);
-	UGameplayStatics::SetSoundMixClassOverride(GetWorld(), MasterSoundMix, voiceClass, NewValue * 0.01);
+
+	GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->SetVolumeForPlayerState(ControllingPlayer, NewValue * 0.01);
+}
+
+float UPlayerOptions::GetVolumeFromPlayerState() const
+{
+	return GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->GetVolumeForPlayerState(ControllingPlayer);
 }
 
 void UPlayerOptions::KickPlayer()

@@ -43,6 +43,9 @@ protected:
 	UFUNCTION()
 	void OnVolumeSliderValueChanged(float NewValue);
 
+	UFUNCTION(BlueprintCallable)
+	float GetVolumeFromPlayerState() const;
+
 public:
 	UFUNCTION(BlueprintCallable)
 	void KickPlayer();

@@ -20,13 +20,12 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UVerticalBox* LobbyOptionsVerticalBox;
 
-private:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UPlayerOptions> PlayerOptionsClass;
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
-	TArray<UPlayerOptions*> PlayerOptions;
+	TMap<APlayerState*, UPlayerOptions*> PlayerOptionsMap;
 
 public:
 	ULobbyInfo();
