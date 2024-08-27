@@ -10,8 +10,7 @@
  * 
  */
 
- class ARope;
- class ALadder;
+class ARope;
 
 UCLASS()
 class UE_DUNGEONCOMPANY_API AClimbingHook : public AHook
@@ -21,12 +20,6 @@ class UE_DUNGEONCOMPANY_API AClimbingHook : public AHook
 private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ARope> RopeClass;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<ALadder> LadderClass;
-
-	UPROPERTY(EditAnywhere)
-	float MinLadderHeight = 100.f;
 
 	UPROPERTY(EditAnywhere)
 	float RopeAutoFreezeTime = 7.f;
@@ -46,5 +39,4 @@ protected:
 
 public:
 	virtual void Tick(float DeltaTime) override;
-
 };

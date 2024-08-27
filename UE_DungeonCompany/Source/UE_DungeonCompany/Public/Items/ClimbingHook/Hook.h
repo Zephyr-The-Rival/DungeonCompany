@@ -9,12 +9,14 @@
 /**
  * 
  */
-UENUM()
-enum class EHookState : uint8 {
-     InHand = 0 UMETA(DisplayName = "In Hand"),
-     InWorldInactive = 1  UMETA(DisplayName = "In World Inactive"),
-     InWorldActive = 2    UMETA(DisplayName = "In World Active"),
-	 InWorldAttached = 3  UMETA(DisplayName = "In World Attached")
+UENUM(meta = (ScriptName = EHookState))
+enum class EHookState : uint8
+{
+	InHand = 0 UMETA(DisplayName = "In Hand"),
+	InWorldInactive = 1 UMETA(DisplayName = "In World Inactive"),
+	InWorldActive = 2 UMETA(DisplayName = "In World Active"),
+	InWorldAttached = 3 UMETA(DisplayName = "In World Attached"),
+	InHandAfterThrow = 4 UMETA(DisplayName = "In Hand after throw"),
 };
 
 class USphereComponent;
@@ -24,8 +26,8 @@ class UE_DUNGEONCOMPANY_API AHook : public AWorldItem
 {
 	GENERATED_BODY()
 
-private:
-	UPROPERTY(EditAnywhere)
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* HookMesh;
 
 	UPROPERTY(EditAnywhere)
@@ -71,12 +73,19 @@ protected:
 
 protected:
 	UFUNCTION()
-	void OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	void OnHookHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	               FVector NormalImpulse, const FHitResult& Hit);
 
 protected:
 	FHitResult GetAttachHit(APlayerCharacter* User);
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void HookLetGo(APlayerCharacter* User);
+
+	UFUNCTION(BlueprintCallable)
+	void OnHookThrown(APlayerCharacter* User);
 };

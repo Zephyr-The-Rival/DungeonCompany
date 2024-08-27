@@ -50,6 +50,12 @@ private:
 
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
 	float OutOfRetrievingRangeDespawnTime = 10.f;
+	
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
+	float StealDelay = 0.6f;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing")
+	float ThrowUpDelay = 0.6f;
 
 	//Movement
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing|Movement")
@@ -60,7 +66,12 @@ private:
 
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0.f), Category = "Balancing|Movement")
 	float RetrievingSpeed = 350.f * 1.3f;
-	
+
+public:
+	inline float GetDefaultSpeed() const { return DefaultSpeed; }
+	inline float GetFleeingSpeed() const { return FleeingSpeed; }
+	inline float GetRetrievingSpeed() const { return RetrievingSpeed; }
+
 private:
 	ECatBurglarBehaviorState IdleBehaviorState;
 	ECatBurglarBehaviorState CurrentBehaviorState;
@@ -79,27 +90,53 @@ public:
 	ACatBurglar();
 
 private:
+	UMaterialInstanceDynamic* DynMaterialInstance;
+
+protected:
+	virtual void BeginPlay() override;
+
+public:
+	void ToggleEyesGlow(bool bInEyesGlow) const;
+
+private:
 	bool bInRetrievingRange;
 	FTimerHandle RetrieveHandle;
 
 protected:
-	virtual void Tick(float DeltaSeconds) override;	
+	virtual void Tick(float DeltaSeconds) override;
 	void Retrieve();
+
+private:
+	FTimerHandle StealHandle;
 
 public:
 	void StealItem(AWorldItem* StealingItem);
 	void StartFleeing();
 
 protected:
+	void ExecuteItemSteal(AWorldItem* StealingItem);
+
+protected:
 	void UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState);
 
-	void SetInFleeingRange(bool InInFleeingRange) const;
+	void SetInFleeingRangeBB(bool InInFleeingRange) const;
+	void SetIsStealingBB(bool InIsStealing) const;
+	void SetStoleItemBB(bool InStoleItem) const;
+	void SetTargetItemBB(AActor* InTargetItem) const;
 
 private:
 	bool bHealthBelowFleeingUpper = false;
 
 protected:
-	virtual void OnTookDamage() override;
+	virtual void OnTookDamage_Implementation() override;
+
+	UFUNCTION()
+	void ThrowUpItem();
+
+	inline const FTransform& GetDropTransform() const
+	{
+		return IsValid(DropTransform) ? DropTransform->GetComponentTransform() : GetActorTransform();
+	};
 
 protected:
 	virtual void OnPlayerAttackHit(APlayerCharacter* PlayerCharacter) override;
@@ -108,4 +145,11 @@ protected:
 	                              UBlackboardComponent* BlackboardComponent) override;
 	virtual void HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus,
 	                                UBlackboardComponent* BlackboardComponent) override;
+
+public:
+	inline bool IsStealingItem() const { return (AnimationFlags & FLAG_Custom_0) != 0; }
+	void SetIsStealingItem(bool InIsStealing);
+
+	inline bool AreEyesGlowing() const { return (AnimationFlags & FLAG_Custom_1) != 0; }
+	void SetAreEyesGlowing(bool InAreEyesGlowing);
 };

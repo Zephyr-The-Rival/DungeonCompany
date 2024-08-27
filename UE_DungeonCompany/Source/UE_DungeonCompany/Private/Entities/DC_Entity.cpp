@@ -28,6 +28,13 @@ ADC_Entity::ADC_Entity(const FObjectInitializer& ObjectInitializer)
 	
 }
 
+void ADC_Entity::BeginPlay()
+{
+	Super::BeginPlay();
+
+	HP = MaxHP;
+}
+
 void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FName BoneName, FVector hitPoint, FVector HitNormal)
 {
 	if (IsValid(this->bloodEffect))
@@ -37,7 +44,14 @@ void ADC_Entity::SpawnHitEffect_Implementation(USceneComponent* hitComponent, FN
 	}
 }
 
-void ADC_Entity::OnTookDamage()
+void ADC_Entity::Heal(float amount)
+{
+	this->HP+=amount;
+	if(HP>this->MaxHP)
+		HP=MaxHP;
+}
+
+void ADC_Entity::OnTookDamage_Implementation()
 {
 }
 
@@ -93,16 +107,17 @@ UBuffDebuffBase* ADC_Entity::AddBuffOrDebuff(TSubclassOf<class UBuffDebuffBase> 
 	
 	if (existingDeBuff && !existingDeBuff->IsStackable())
 	{
-		existingDeBuff->Timegate(ActiveTime);
-		existingDeBuff->IncrementAppliedCount();
+		existingDeBuff->ResetTimer();
 		
 		return existingDeBuff;
 	}
 
 	UBuffDebuffBase* deBuff = NewObject<UBuffDebuffBase>(this, BuffDebuffClass);
 
+	if(ActiveTime)
+		deBuff->SetActiveSeconds(ActiveTime);
+	
 	deBuff->RegisterComponent();
-	deBuff->Timegate(ActiveTime);
 
 	return deBuff;
 }

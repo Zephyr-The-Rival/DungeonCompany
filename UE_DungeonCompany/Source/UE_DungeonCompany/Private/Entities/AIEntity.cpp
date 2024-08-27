@@ -17,6 +17,7 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "EngineUtils.h"
+#include "Components/CapsuleComponent.h"
 
 AAIEntity::AAIEntity()
 {
@@ -27,7 +28,7 @@ AAIEntity::AAIEntity()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = 300.f;
 	GetCharacterMovement()->bUseRVOAvoidance = true;
-	GetCharacterMovement()->AvoidanceConsiderationRadius = 100.f;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 225.f;
 
 	GetMesh()->SetCollisionProfileName("EntityMesh");
 	GetMesh()->SetGenerateOverlapEvents(true);
@@ -94,15 +95,15 @@ void AAIEntity::RunBehaviorTree(UBehaviorTree* InBehaviorTree) const
 	aiController->RunBehaviorTree(InBehaviorTree);
 }
 
-void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
+void AAIEntity::AttackPlayer(APlayerCharacter* PlayerAttacking)
 {
-	if (TargetPlayer->IsDead())
+	if (PlayerAttacking->IsDead())
 	{
 		SetTargetPlayer(nullptr);
 		return;
 	}
 	
-	FVector attackDirection = TargetPlayer->GetActorLocation() - GetActorLocation();
+	FVector attackDirection = PlayerAttacking->GetActorLocation() - GetActorLocation();
 	attackDirection.Normalize();
 
 	FTimerDelegate delegate = FTimerDelegate::CreateUObject(this, &AAIEntity::ExecuteAttack, attackDirection);
@@ -111,10 +112,16 @@ void AAIEntity::AttackPlayer(APlayerCharacter* TargetPlayer)
 	SetInAttackOnBlackboard(true);
 
 	SetActorRotation(attackDirection.Rotation());
+
+	OnAttackingPlayer(TargetPlayer);
+
+	SetIsAttacking(true);
 }
 
 void AAIEntity::ExecuteAttack(FVector Direction)
 {
+	SetIsAttacking(false);
+
 	FCollisionShape shape = FCollisionShape::MakeSphere(AttackRadius);
 
 	TArray<FHitResult> hits;
@@ -126,8 +133,7 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 	params.AddIgnoredActor(this);
 
 	GetWorld()->SweepMultiByChannel(hits, start, end, FQuat(), ECC_GameTraceChannel4, shape, params);
-	DrawDebugSphereTraceSingle(GetWorld(), start, end, AttackRadius, EDrawDebugTrace::ForDuration, false, FHitResult(),
-	                           FColor::Blue, FLinearColor::Red, 0.5f);
+	//DrawDebugSphereTraceSingle(GetWorld(), start, end, AttackRadius, EDrawDebugTrace::ForDuration, false, FHitResult(),FColor::Blue, FLinearColor::Red, 0.5f);
 	DrawDebugLine(GetWorld(), start, end, FColor::Blue);
 	int hitsNum = hits.Num();
 
@@ -145,6 +151,15 @@ void AAIEntity::ExecuteAttack(FVector Direction)
 	}
 
 	SetInAttackOnBlackboard(false);
+	OnExecuteAttack(Direction);
+}
+
+void AAIEntity::OnAttackingPlayer_Implementation(APlayerCharacter* PlayerAttacking)
+{
+}
+
+void AAIEntity::OnExecuteAttack_Implementation(FVector Direction)
+{
 }
 
 void AAIEntity::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
@@ -152,20 +167,40 @@ void AAIEntity::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
 	PlayerCharacter->TakeDamage(AttackDamage);
 }
 
-void AAIEntity::SetInAttackOnBlackboard(bool InAttack)
+void AAIEntity::SetInAttackOnBlackboard(bool InAttack) const
 {
-	ADC_AIController* aiController = GetController<ADC_AIController>();
-
-	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsBool("AttackingPlayer", InAttack);
+	SetBlackboardBool("AttackingPlayer", InAttack);
 }
 
-void AAIEntity::SetTargetPlayer(APlayerCharacter* TargetPlayer) const
+void AAIEntity::SetTargetPlayer(APlayerCharacter* InTargetPlayer)
 {
 	ADC_AIController* aiController = GetController<ADC_AIController>();
 
-	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", TargetPlayer);
+	if (!aiController)
+		return;
+
+	aiController->GetBlackboardComponent()->SetValueAsObject("TargetPlayer", InTargetPlayer);
+	TargetPlayer = InTargetPlayer;
+}
+
+void AAIEntity::SetBlackboardBool(const FName& KeyName, bool InValue) const
+{
+	if (ADC_AIController* aiController = GetController<ADC_AIController>())
+		aiController->GetBlackboardComponent()->SetValueAsBool(KeyName, InValue);
+}
+
+void AAIEntity::SetBlackboardObject(const FName& KeyName, UObject* InValue) const
+{
+	if (ADC_AIController* aiController = GetController<ADC_AIController>())
+		aiController->GetBlackboardComponent()->SetValueAsObject(KeyName, InValue);
+}
+
+UObject* AAIEntity::GetBlackboardObject(const FName& KeyName) const
+{
+	if (ADC_AIController* aiController = GetController<ADC_AIController>())
+		return aiController->GetBlackboardComponent()->GetValueAsObject(KeyName);
+
+	return nullptr;
 }
 
 bool AAIEntity::IsVisibleToPlayers() const
@@ -212,6 +247,7 @@ void AAIEntity::HandleSenseUpdate(AActor* Actor, FAIStimulus const Stimulus, UBl
 
 void AAIEntity::OnTargetingPlayer_Implementation(APlayerCharacter* Target)
 {
+	TargetPlayer = Target;
 }
 
 APlayerCharacter* AAIEntity::GetClosestPlayer() const
@@ -273,7 +309,9 @@ APlayerCharacter* AAIEntity::GetClosestNavPlayer() const
 void AAIEntity::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
-	
+
+	GetCapsuleComponent()->SetCollisionProfileName(FName("IgnoreOnlyPawn"));
+
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	GetMesh()->SetAnimation(nullptr);
 
@@ -281,8 +319,9 @@ void AAIEntity::OnDeath_Implementation()
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->WakeAllRigidBodies();
-	
-	GetController()->Destroy();
+
+	if (HasAuthority())
+		GetController()->Destroy();
 }
 
 void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
@@ -291,11 +330,18 @@ void AAIEntity::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UBla
 
 	if (!playerCharacter)
 		return;
-
-	if (Stimulus.WasSuccessfullySensed() && !playerCharacter->IsDead())
-		BlackboardComponent->SetValueAsObject("TargetPlayer", Actor);
-	else
+	
+	if(!Stimulus.WasSuccessfullySensed() || playerCharacter->IsDead())
+	{
 		BlackboardComponent->ClearValue("TargetPlayer");
+		return;
+	}
+
+	AActor* currentTarget = Cast<AActor>(BlackboardComponent->GetValueAsObject("TargetPlayer"));
+	
+	if(!currentTarget || GetDistanceTo(currentTarget) < GetDistanceTo(Actor))
+		BlackboardComponent->SetValueAsObject("TargetPlayer", Actor);
+
 }
 
 void AAIEntity::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus, UBlackboardComponent* BlackboardComponent)
@@ -318,20 +364,28 @@ void AAIEntity::SetIsAttacking(bool InAttacking)
 void AAIEntity::SetAnimationBitFlag(EAnimationFlags InBit)
 {
 	AnimationFlags |= InBit;
+	OnAnimationFlagUpdated();
 }
 
 void AAIEntity::ClearAnimationBitFlag(EAnimationFlags InBit)
 {
 	AnimationFlags &= ~InBit;
+	OnAnimationFlagUpdated();
 }
 
 void AAIEntity::ToggleAnimationBitFlag(EAnimationFlags InBit)
 {
 	AnimationFlags ^= InBit;
+	OnAnimationFlagUpdated();
+}
+
+void AAIEntity::OnAnimationFlagUpdated_Implementation()
+{
 }
 
 void AAIEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AAIEntity, AnimationFlags);
+	DOREPLIFETIME(AAIEntity, TargetPlayer);
 }

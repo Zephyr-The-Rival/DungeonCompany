@@ -43,6 +43,19 @@ ACatBurglar::ACatBurglar()
 	DropTransform->SetRelativeLocation(FVector(150, 0, 20));
 }
 
+void ACatBurglar::BeginPlay()
+{
+	Super::BeginPlay();
+
+	DynMaterialInstance = UMaterialInstanceDynamic::Create(GetMesh()->GetMaterial(0), this);
+	GetMesh()->SetMaterial(0, DynMaterialInstance);
+}
+
+void ACatBurglar::ToggleEyesGlow(bool bInEyesGlow) const
+{
+	DynMaterialInstance->SetScalarParameterValue(FName("Emissive brightness"), bInEyesGlow);
+}
+
 void ACatBurglar::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -80,15 +93,37 @@ void ACatBurglar::Retrieve()
 
 void ACatBurglar::StealItem(AWorldItem* StealingItem)
 {
-	StolenItem = StealingItem->GetMyData();
-	StealingItem->Destroy();
+	SetBlackboardBool("ItemInStealRange", false);
+	FTimerDelegate stealDelegate = FTimerDelegate::CreateUObject(this, &ACatBurglar::ExecuteItemSteal, StealingItem);
+	SetIsStealingBB(true);
 
-	UpdateBehavior(ECatBurglarBehaviorState::Retrieving);
+	SetIsStealingItem(true);
+
+	GetWorld()->GetTimerManager().SetTimer(StealHandle, stealDelegate, StealDelay, false);
 }
 
 void ACatBurglar::StartFleeing()
 {
 	UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
+}
+
+void ACatBurglar::ExecuteItemSteal(AWorldItem* StealingItem)
+{
+	SetIsStealingBB(false);
+	SetTargetItemBB(nullptr);
+
+	if (!IsValid(StealingItem))
+	{
+		SetIsStealingItem(false);
+		return;
+	}
+
+	StolenItem = StealingItem->GetMyData();
+	StealingItem->Destroy();
+
+	UpdateBehavior(ECatBurglarBehaviorState::Retrieving);
+
+	SetStoleItemBB(true);
 }
 
 void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
@@ -97,8 +132,12 @@ void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 		return;
 
 	CurrentBehaviorState = NewBehaviorState;
-	SetInFleeingRange(NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
-	SetActorTickEnabled(NewBehaviorState == ECatBurglarBehaviorState::Retrieving || NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
+	SetInFleeingRangeBB(NewBehaviorState == ECatBurglarBehaviorState::Fleeing);
+	SetActorTickEnabled(
+		NewBehaviorState == ECatBurglarBehaviorState::Retrieving || NewBehaviorState ==
+		ECatBurglarBehaviorState::Fleeing);
+
+	ToggleEyesGlow(false);
 
 	switch (NewBehaviorState)
 	{
@@ -109,7 +148,7 @@ void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 	case ECatBurglarBehaviorState::Retrieving:
 		GetCharacterMovement()->MaxWalkSpeed = RetrievingSpeed;
 		break;
-		
+
 	default:
 		GetCharacterMovement()->MaxWalkSpeed = DefaultSpeed;
 	}
@@ -117,17 +156,37 @@ void ACatBurglar::UpdateBehavior(ECatBurglarBehaviorState NewBehaviorState)
 	RunBehaviorTree(BehaviorTreesForStates[NewBehaviorState]);
 }
 
-void ACatBurglar::SetInFleeingRange(bool InInFleeingRange) const
+void ACatBurglar::SetInFleeingRangeBB(bool InInFleeingRange) const
 {
-	ADC_AIController* aiController = GetController<ADC_AIController>();
-
-	if (aiController)
-		aiController->GetBlackboardComponent()->SetValueAsBool("InFleeingRange", InInFleeingRange);
+	SetBlackboardBool("InFleeingRange", InInFleeingRange);
 }
 
-void ACatBurglar::OnTookDamage()
+void ACatBurglar::SetIsStealingBB(bool InIsStealing) const
 {
-	Super::OnTookDamage();
+	SetBlackboardBool("IsStealing", InIsStealing);
+}
+
+void ACatBurglar::SetStoleItemBB(bool InStoleItem) const
+{
+	SetBlackboardBool("StoleItem", InStoleItem);
+}
+
+void ACatBurglar::SetTargetItemBB(AActor* InTargetItem) const
+{
+	SetBlackboardObject("TargetItem", InTargetItem);
+}
+
+void ACatBurglar::OnTookDamage_Implementation()
+{
+	Super::OnTookDamage_Implementation();
+	
+	if(FTimerManager& timerManager = GetWorld()->GetTimerManager(); timerManager.IsTimerActive(StealHandle) || GetBlackboardObject("TargetItem"))
+	{
+		timerManager.ClearTimer(StealHandle);
+		SetIsStealingBB(false);
+		SetIsStealingItem(false);
+		UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
+	}	
 
 	if (!bHealthBelowFleeingUpper && HP < StartFleeingHPUpper && CurrentBehaviorState <
 		ECatBurglarBehaviorState::Fleeing)
@@ -135,17 +194,28 @@ void ACatBurglar::OnTookDamage()
 		bHealthBelowFleeingUpper = true;
 		UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
 	}
-
+	
 	if (!StolenItem)
+		return;
+
+	FTimerHandle throwUpHandle;
+
+	GetWorld()->GetTimerManager().SetTimer(throwUpHandle, this, &ACatBurglar::ThrowUpItem, ThrowUpDelay);
+}
+
+void ACatBurglar::ThrowUpItem()
+{
+	if (!IsValid(StolenItem))
 		return;
 
 	ADC_GM* gameMode = GetWorld()->GetAuthGameMode<ADC_GM>();
 	if (!gameMode)
 		return;
 
-	gameMode->SpawnWorldItem(StolenItem->MyWorldItemClass, DropTransform->GetComponentTransform(),
+	gameMode->SpawnWorldItem(StolenItem->MyWorldItemClass, GetDropTransform(),
 	                         StolenItem->SerializeMyData());
 	StolenItem = nullptr;
+	SetIsStealingItem(false);
 }
 
 void ACatBurglar::OnPlayerAttackHit(APlayerCharacter* PlayerCharacter)
@@ -162,10 +232,7 @@ void ACatBurglar::HandleSightSense(AActor* Actor, FAIStimulus const Stimulus, UB
 {
 	AWorldItem* worldItem = Cast<AWorldItem>(Actor);
 	if (!worldItem)
-	{
-		Super::HandleSightSense(Actor, Stimulus, BlackboardComponent);
 		return;
-	}
 
 	if (!Stimulus.WasSuccessfullySensed())
 	{
@@ -197,4 +264,20 @@ void ACatBurglar::HandleHearingSense(AActor* Actor, FAIStimulus const Stimulus,
                                      UBlackboardComponent* BlackboardComponent)
 {
 	Super::HandleHearingSense(Actor, Stimulus, BlackboardComponent);
+}
+
+void ACatBurglar::SetIsStealingItem(bool InIsStealing)
+{
+	if (InIsStealing == IsStealingItem())
+		return;
+
+	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_0);
+}
+
+void ACatBurglar::SetAreEyesGlowing(bool InAreEyesGlowing)
+{
+	if (InAreEyesGlowing == AreEyesGlowing())
+		return;
+
+	ToggleAnimationBitFlag(AAIEntity::FLAG_Custom_1);
 }

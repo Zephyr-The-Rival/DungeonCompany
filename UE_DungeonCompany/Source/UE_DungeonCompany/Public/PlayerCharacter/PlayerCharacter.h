@@ -13,7 +13,7 @@
 
 class AWorldItem;
 class UItemData;
-class UVOIPTalker;
+class UDC_VOIPTalker;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
@@ -27,7 +27,7 @@ class AItemSocket;
 class AWeapon;
 class UFootstepSystemComponent;
 
-struct  FWeaponInfo;
+struct FWeaponInfo;
 
 USTRUCT()
 struct FHeldItem
@@ -37,6 +37,16 @@ struct FHeldItem
 	FString ItemData;
 };
 
+UENUM(BlueprintType)
+enum class ESendingStoneAnimatoinState : uint8
+{
+	Neutral UMETA(DisplayName = "Neutral"),
+	Up      UMETA(DisplayName = "Up"),
+	Down    UMETA(DisplayName = "Down"),
+	Left    UMETA(DisplayName = "Left"),
+	Right   UMETA(DisplayName = "Right")
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemDrop);
 
 UCLASS()
@@ -44,7 +54,7 @@ class UE_DUNGEONCOMPANY_API APlayerCharacter : public ADC_Entity
 {
 	GENERATED_BODY()
 
-private: 
+private:
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 
@@ -61,13 +71,13 @@ protected:
 	USceneComponent* DropTransform;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing")
-	float throwStrengh=800;
+	float ThrowStrengh = 800;
 
 	virtual void BeginPlay() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-public:	
+public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void LocalTick(float DeltaTime);
@@ -121,6 +131,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* InventoryAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input | Action")
+	UInputAction* SendingStoneInput;
+
 	//Inventory Input
 
 	UPROPERTY(EditAnywhere, Category = "Input | Mapping")
@@ -137,7 +150,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Input | Action")
 	UInputAction* DropItemInvAction;
-	
+
 public:
 	inline UInputMappingContext* GetCharacterInputMapping() const { return CharacterInputMapping; }
 	inline UInputMappingContext* GetInventoryInputMapping() const { return InventoryInputMapping; }
@@ -163,12 +176,12 @@ public:
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-private://interact
+private: //interact
 	IInteractable* CurrentInteractable;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing")
-	float InteractionRange=200;
+	float InteractionRange = 200;
 
 	void InteractorLineTrace();
 
@@ -183,22 +196,19 @@ public:
 	void ResetInteractPrompt();
 
 protected:
-
 	void InteractPressed();
 	void StartHoldInteract();
 	void StopHoldInteract();
 
 	void CheckHoldInteract();
-	bool bIsHoldingInteract=false;
-	float InteractHoldingSecondCounter=0;
+	bool bIsHoldingInteract = false;
+	float InteractHoldingSecondCounter = 0;
 
 public:
+	UFUNCTION(Blueprintable, BlueprintPure)
+	float GetInteractHoldingSecondsCounter() const { return this->InteractHoldingSecondCounter; }
 
-	UFUNCTION(Blueprintable,BlueprintPure)
-	float GetInteractHoldingSecondsCounter() const {return this->InteractHoldingSecondCounter;}
-	
 protected:
-	
 	UFUNCTION(Server, Unreliable)
 	void Server_Interact(UObject* Interactable);
 	void Server_Interact_Implementation(UObject* Interactable);
@@ -212,7 +222,7 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float WalkingSpeed = 350;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
 	float CrouchedWalkingSpeed = 150;
 
@@ -233,7 +243,7 @@ protected:
 private:
 	UPROPERTY(BlueprintGetter= GetIsSprinting)
 	bool bSprinting = false;
-	
+
 private:
 	void (*LookFunction)(const FVector2d& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
 
@@ -244,15 +254,14 @@ protected:
 	void Look(const FInputActionValue& Value);
 
 	void NoLook();
-	
+
 	virtual void Jump() override;
 
 public:
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bJumped= false;
-protected:
+	bool bJumped = false;
 
+protected:
 	void CrouchActionStarted();
 	void CrouchActionCompleted();
 
@@ -283,7 +292,7 @@ protected:
 
 public:
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
-	bool GetIsSprinting() const {return this->bSprinting;}
+	bool GetIsSprinting() const { return this->bSprinting; }
 
 	UFUNCTION(Server, Unreliable)
 	void Server_SetActorLocation(const FVector& InLocation);
@@ -300,8 +309,21 @@ protected:
 	void OnInputDeviceChanged(bool IsUsingGamepad);
 
 private:
-	bool bClimbing = false;
 	FVector ClimbUpVector = FVector::UpVector;
+
+	UPROPERTY(Replicated)
+	bool bClimbing = false;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	bool GetClimbing() const { return this->bClimbing; }
+
+	void SetClimbing(bool value);
+
+private:
+	UFUNCTION(Server, Unreliable)
+	void Server_SetClimbing(bool Value);
+	void Server_SetClimbing_Implementation(bool Value);
 
 public:
 	virtual bool CanJumpInternal_Implementation() const override;
@@ -319,6 +341,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Stamina")
 	float StaminaGainDelay = 3.f;
 
+public:
+	inline float GetStaminaGainDelay() const { return StaminaGainDelay; }
+	void SetStaminaGainDelay(float InDelaySeconds);
+
+	inline float GetStaminaGainPerSecond() const { return StaminaGainPerSecond; }
+	void SetStaminaGainPerSecond(float InStaminaGainPS);
+
 private:
 	UPROPERTY(BlueprintGetter=GetStamina)
 	float Stamina;
@@ -333,12 +362,12 @@ public:
 
 	void AddStamina(float AddingStamina);
 	void SubstractStamina(float SubStamina);
-	
+
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	float GetStamina() const { return Stamina; }
 
 private:
-	UVOIPTalker* VOIPTalker;
+	UDC_VOIPTalker* VOIPTalker;
 
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* VoiceSA;
@@ -355,7 +384,7 @@ private:
 public:
 	void DeactivateStimulus();
 
-protected://inventory & Backpack
+protected: //inventory & Backpack
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetInventory)
 	UInventory* Inventory;
 
@@ -376,7 +405,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	UInventorySlot* GetCurrentlyHeldInventorySlot();
-	
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	bool HasFreeSpace();
 
@@ -392,7 +421,9 @@ private:
 
 	UPROPERTY(Replicated)
 	AWorldItem* CurrentlyHeldWorldItem;
+
 public:
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	AWorldItem* GetCurrentlyHeldWorldItem() const {return this->CurrentlyHeldWorldItem;}
 protected:
 	UFUNCTION(BlueprintCallable)
@@ -418,13 +449,15 @@ protected:
 
 	void DropItem(FSlotData SlotToEmpty, bool bThrow);
 
+	FTransform GetDropTransform();
+
 public:
 	void DropRandomItem();
 
 	UFUNCTION(Client, Unreliable)
 	void Client_DropRandomItem();
 	void Client_DropRandomItem_Implementation();
-	
+
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnItemDrop OnDropItem;
@@ -454,7 +487,7 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> NoItemFirstPersonAnimationBlueprintClass;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<class UObject> NoItemThirdPersonAnimationBlueprintClass;
 
@@ -486,32 +519,45 @@ private:
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	bool GetHasBackPack() const {return this->bHasBackPack;}
+	bool GetHasBackPack() const { return this->bHasBackPack; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetHasBackPack(bool bNewHasBackpack);
 
+private:
+
+	UFUNCTION(Server, Unreliable)
+	void AddBackPackDebuff(bool bHasBackpack);
+	void AddBackPackDebuff_Implementation(bool bHasBackpack);
+	
+public:
+
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
 	UInventory* GetInventory() const { return Inventory; }
 
-	UFUNCTION(BlueprintPure,BlueprintInternalUseOnly)
-	UInventory* GetBackpack() const {return Backpack;}
+	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly)
+	UInventory* GetBackpack() const { return Backpack; }
 
-	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInventorySlot* HandSlotA;
-	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UInventorySlot* HandSlotB;
 	//bool BItemAIsInHand is protected
 
 private:
-	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData, bool bThrow, FVector CameraVector);
-	UFUNCTION(Server,Reliable)
-	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData, bool bThrow, FVector CameraVector);
-	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData, bool bThrow, FVector CameraVector);
+	void SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
+	                           const FString& SerializedData, bool bThrow, FVector CameraVector);
+	UFUNCTION(Server, Reliable)
+	void Server_SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
+	                                  const FString& SerializedData, bool bThrow, FVector CameraVector);
+	void Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
+	                                                 const FString& SerializedData, bool bThrow, FVector CameraVector);
 
-	UFUNCTION(Server,Reliable)
-	void Server_DropBackpack(const TArray<TSubclassOf<UItemData>>& Items, FTransform SpawnTransform, const  TArray<FString>& SerializedItemDatas);
-	void Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, FTransform SpawnTransform, const  TArray<FString>& SerializedItemDatas);
+	UFUNCTION(Server, Reliable)
+	void Server_DropBackpack(const TArray<TSubclassOf<UItemData>>& Items, FTransform SpawnTransform,
+	                         const TArray<FString>& SerializedItemDatas);
+	void Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, FTransform SpawnTransform,
+	                                        const TArray<FString>& SerializedItemDatas);
 
 public:
 	void ReportNoise(float Loudness);
@@ -531,7 +577,7 @@ protected:
 	void CheckForFallDamage();
 	float FallDamageCalculation(float deltaHeight);
 
-public://blockers
+public: //blockers
 
 	bool bSwitchHandAllowed = true;
 
@@ -539,8 +585,8 @@ public://blockers
 	bool bMoveAllowed = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bJumpAllowed=true;
-	
+	bool bJumpAllowed = true;
+
 	bool bLookAllowed = true;
 	bool bSprintAllowed = true;
 	bool bPrimaryActionAllowed = true;
@@ -548,12 +594,12 @@ public://blockers
 
 private:
 	float OverridenWalkingSpeed;
+
 protected:
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
-	float SlowedWalkingSpeed=100;
+	float SlowedWalkingSpeed = 100;
 
-public://fighting
+public: //fighting
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float AttackBlend = 0;
 
@@ -588,20 +634,24 @@ private:
 	UFUNCTION(Server, Unreliable)
 	void Server_DealHits(FWeaponInfo WeaponInfo);
 	void Server_DealHits_Implementation(FWeaponInfo WeaponInfo);
+
 public:
 	virtual void OnDeath_Implementation() override;
 
-public://cheat Stuff:
+public: //cheat Stuff:
 
 	UFUNCTION(BlueprintCallable)
 	void Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn);
-	
 
-public://buyingItems
+public: //buyingItems
 	void BuyItem(ABuyableItem* ItemToBuy);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Backpack")
 	TSubclassOf<UItemData> BackpackClass;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
+	USoundBase* BuySpound;
 
 
 
@@ -610,16 +660,17 @@ public:
 	void PlaceItemOnSocket(AItemSocket* Socket);
 	void PlaceItemOnSocket_Implementation(AItemSocket* Socket);
 
-protected://player hud
+protected: //player hud
 	UPlayerHud* MyPlayerHud;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UPlayerHud> PlayerHudClass;
+
 public:
 	void CreatePlayerHud();
 
-	UFUNCTION(BlueprintPure,BlueprintCallable)
-	UPlayerHud* GetMyHud() const {return MyPlayerHud;}
+	UFUNCTION(BlueprintPure, BlueprintCallable)
+	UPlayerHud* GetMyHud() const { return MyPlayerHud; }
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UFootstepSystemComponent* FootstepSystemComponent;
@@ -629,13 +680,12 @@ public:
 	void DropAllItems();
 
 protected:
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
 	USoundBase* JumpSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
 	USoundBase* LandingSound;
-	
+
 protected:
 	//Basic spawn sound functions (seem to work as long as the reference is in the same object)
 	UFUNCTION(Server, Unreliable)
@@ -645,12 +695,11 @@ protected:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SpawnSoundAtLocation(USoundBase* LocalSound, FVector Location);
 
-
 public:
-	bool bHasNoSprintDebuff=false;
+	bool bHasNoSprintDebuff = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool bIsExausted=false;
+	bool bIsExausted = false;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -659,41 +708,57 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UBuffDebuffBase> ExaustionDebuff;
 
+public:
+	UFUNCTION(BlueprintCallable)
 	void StartExaustionTimer();
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveExaustion();
+	
+protected:
 	FTimerHandle ExaustionTimer;
 	void ApplyExaustion();
 
+	UFUNCTION(Client, Unreliable)
+	void  Yawn();
+	void  Yawn_Implementation();
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void Yawn();
-	void Yawn_Implementation();
+	void BP_Yawn();
+	void BP_Yawn_Implementation();
+
+	UFUNCTION(Client, Unreliable)
+	void  StopYawn();
+	void  StopYawn_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void BP_StopYawn();
+	auto BP_StopYawn_Implementation() -> void;
 
 protected:
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
 	USoundBase* InventoryEquipSound;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
 	USoundBase* DropItemSound;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
 	USoundBase* FallingToDeathSound;
 
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
 	USoundBase* ThrowSound;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category="Sounds")
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sounds")
 	USoundBase* YawnSound;
 
 public:
-	
 	void TakeDamage(float Damage) override;
 
 protected:
-	
 	UFUNCTION(BlueprintNativeEvent)
 	void ShowHudDamageIndicator();
 
 public:
-
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void LeftBehind();
 	void LeftBehind_Implementation();
@@ -703,28 +768,117 @@ public:
 	UPROPERTY()
 	TArray<FHeldItem> HeldItems;
 
-
 protected:
-
 	UFUNCTION(BlueprintCallable)
 	void UpdateHeldItems();
-	
+
 private:
 	TArray<FHeldItem> GetHeldItems();
-	
+
 	UFUNCTION(Server, Reliable)
-	void Server_UpdateHeldItems(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas);
-	void Server_UpdateHeldItems_Implementation(const TArray<TSubclassOf<UItemData>>& ItemDataClasses, const TArray<FString>& SerializedItemDatas);
+	void Server_UpdateHeldItems(const TArray<TSubclassOf<UItemData>>& ItemDataClasses,
+	                            const TArray<FString>& SerializedItemDatas);
+	void Server_UpdateHeldItems_Implementation(const TArray<TSubclassOf<UItemData>>& ItemDataClasses,
+	                                           const TArray<FString>& SerializedItemDatas);
 
 public:
 	UFUNCTION(BlueprintCallable)
-	UUserWidget* StartSelectionWheel(TArray<FString>Options);
+	UUserWidget* StartSelectionWheel(TArray<FString> Options);
 
 	UFUNCTION(BlueprintCallable)
 	int EndSelectionWheel();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FVector2f MouseValue;
+
+	bool bUsingSelectionWheel = false;
+
+public: //potionStuff
+	UFUNCTION(BlueprintCallable)
+	void OnPotionDrunk();
+
+	UFUNCTION(BlueprintCallable)
+	void StartDrinkingPotion();
+
+	UFUNCTION(BlueprintCallable)
+	void StopDrinkingPotion();
+
+
+
+protected:
+	UFUNCTION(Server, Unreliable)
+	void Server_OnPotionDrunk();
+	void Server_OnPotionDrunk_Implementation();
+
+private:
+
+	UFUNCTION(Client, Reliable)
+	void Client_StartDrinkingPotion();
+	void Client_StartDrinkingPotion_Implementation();
+
+	UFUNCTION(Client, Reliable)
+	void Client_StopDrinkingPotion();
+	void Client_StopDrinkingPotion_Implementation();
 	
-	bool bUsingSelectionWheel=false;
+protected:
+	void SpawnCorpse();
+
+	UFUNCTION(Server, Unreliable)
+	void Server_SpawnCorpse();
+	void Server_SpawnCorpse_Implementation();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AActor> CorpseClass;
+
+public:
+	bool bIsUsingSendingStone=false;
+
+private:
+	void SendindStoneInputPressed(const FInputActionValue& Value);
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	 ESendingStoneAnimatoinState SendingStoneAnimatoinState;
+
+	UFUNCTION(BlueprintCallable)
+	void SendSendingStoneSignal(ESendingStoneAnimatoinState Signal);
+	
+	UFUNCTION(Server, Unreliable)
+	void Server_SendSendingStoneSignal(ESendingStoneAnimatoinState Signal);
+	void Server_SendSendingStoneSignal_Implementation(ESendingStoneAnimatoinState Signal);
+
+public:
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool HasItemOfClass(TSubclassOf<UItemData> Item);
+
+protected:
+	virtual void Destroyed() override;
+
+public:
+	void SetAttackBlend(float NewBlend);
+protected:
+	UFUNCTION(Server, Reliable)
+	void Server_SetAttackBlend(float NewBlend);
+	void Server_SetAttackBlend_Implementation(float NewBlend);
+
+public:
+
+	UFUNCTION(Client, Reliable)
+	void TransferInventory(APlayerCharacter* OldCharacter);
+	void TransferInventory_Implementation(APlayerCharacter* OldCharacter);
+
+private:
+	UFUNCTION(Server, Reliable)
+	void SelfDestruct();
+	void SelfDestruct_Implementation();
+
+protected:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UItemData> CallToAdventureItemClassData;
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	void AddItemToInventory(UItemData* NewItem);
 };

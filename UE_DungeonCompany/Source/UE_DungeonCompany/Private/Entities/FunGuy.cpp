@@ -13,6 +13,9 @@
 #include "Perception/AISense_Hearing.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Items/WorldItem.h"
+#include "UI/PlayerHud/PlayerHud.h"
 
 AFunGuy::AFunGuy()
 {
@@ -25,6 +28,10 @@ AFunGuy::AFunGuy()
 	CloudNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("CloudNiagara"));
 	CloudNiagara->SetupAttachment(RootComponent);
 
+	FloorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FloorMesh"));
+	FloorMesh->SetupAttachment(GetCapsuleComponent());
+	FloorMesh->SetCollisionProfileName(FName("EntityMesh"));
+
 	CloudMesh->SetCollisionProfileName("NoCollision");
 	CloudSphere->SetCollisionProfileName("AOECollision");
 
@@ -32,6 +39,9 @@ AFunGuy::AFunGuy()
 	GetCharacterMovement()->MaxFlySpeed = 50.f;
 
 	PoisonGasDebuffClass = UDebuffPoisonGas::StaticClass();
+
+	bInteractOnServer = true;
+	bNeedsHolding = true;
 }
 
 void AFunGuy::OnConstruction(const FTransform& Transform)
@@ -44,6 +54,10 @@ void AFunGuy::OnConstruction(const FTransform& Transform)
 void AFunGuy::BeginPlay()
 {
 	Super::BeginPlay();
+
+	HoldInteractTime = HoldInteractTimeToPick;
+
+	GetMesh()->SetVisibility(false);
 
 	auto material = GetMesh()->GetMaterial(0);
 
@@ -125,6 +139,9 @@ void AFunGuy::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	if (IsDead())
+		return;
+
 	if (HasAuthority() || AgeSeconds < MaxSizeAgeSeconds)
 		AgeSeconds += DeltaSeconds * AgingMultiplier;
 
@@ -139,23 +156,37 @@ void AFunGuy::Tick(float DeltaSeconds)
 		GetCapsuleComponent()->SetRelativeScale3D(newScale);
 	}
 
-	if (!HasAuthority())
-		return;
-
-	if (bLifted)
+	if (bLifted && HasAuthority())
 	{
 		AddMovementInput(FVector::UpVector, FMath::Sin(AgeSeconds) * WobblingScale);
 		return;
 	}
 
+	if (bLifted)
+		return;
+
 	if (AgeSeconds < LiftoffAge)
 		return;
 
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
-
 	bLifted = true;
+
+	GetMesh()->SetVisibility(true);
+	FloorMesh->DestroyComponent();
+	bInteractable = false;
+
+	if (MeshSwitchEffect)
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), MeshSwitchEffect, GetMesh()->GetComponentLocation(),
+		                                               GetMesh()->GetComponentRotation());
+
+	OnLiftOff();
+
+	if (!HasAuthority())
+		return;
+
 	Cast<ADC_AIController>(GetController())->GetBlackboardComponent()->SetValueAsVector(
 		FName("MoveLocation"), GetActorLocation() + FVector::UpVector * LiftoffHeight);
+
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
 }
 
 void AFunGuy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -163,6 +194,10 @@ void AFunGuy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AFunGuy, AgeSeconds);
+}
+
+void AFunGuy::OnLiftOff_Implementation()
+{
 }
 
 void AFunGuy::OnCloudBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -213,16 +248,35 @@ void AFunGuy::OnSafeTimerElapsed(APlayerCharacter* PlayerCharacter) const
 void AFunGuy::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
-	TArray<AActor*> overlappingActors;
-	CloudSphere->GetOverlappingActors(overlappingActors);
 
-	int overlappingActorsNum = overlappingActors.Num();
+	if (HasAuthority())
+	{
+		TArray<AActor*> overlappingActors;
+		CloudSphere->GetOverlappingActors(overlappingActors);
 
-	for (int i = 0; i < overlappingActorsNum; ++i)
-		OnCloudEndOverlap(nullptr, overlappingActors[i], nullptr, 0);
+		int overlappingActorsNum = overlappingActors.Num();
+
+		for (int i = 0; i < overlappingActorsNum; ++i)
+			OnCloudEndOverlap(nullptr, overlappingActors[i], nullptr, 0);
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(UpdateTimerHandle);
+	SetActorTickEnabled(false);
 
 	CloudSphere->DestroyComponent();
 	CloudMesh->DestroyComponent();
+}
+
+void AFunGuy::AuthorityInteract(APawn* InteractingPawn)
+{
+	GetWorld()->SpawnActor<AWorldItem>(FunGuyWorldItemClass, GetActorLocation(), GetActorRotation());
+
+	Destroy();
+}
+
+void AFunGuy::OnHovered(APlayerCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetMyHud()->ShowTextInteractPrompt("Pluck Mushroom");
 }
 
 TMap<APlayerCharacter*, FTimerHandle> AFunGuy::PlayerTimerHandles;

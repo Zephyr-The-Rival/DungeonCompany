@@ -33,8 +33,8 @@ void AWallGenerator::SpawnBricks(TArray<UStaticMeshComponent*> Bricks, FString N
 		
 		AStaticMeshActor* SMA =Cast<AStaticMeshActor>( GetWorld()->SpawnActor(AStaticMeshActor::StaticClass() ,&Brick->GetComponentTransform()));
 		SMA->GetStaticMeshComponent()->SetStaticMesh(Brick->GetStaticMesh());
-		SMA->SetActorLabel("WallBrick"+ NameSuffix);
-		SMA->SetFolderPath("GeneratedBrickWalls");
+		//SMA->SetActorLabel("WallBrick"+ NameSuffix);
+		//SMA->SetFolderPath("GeneratedBrickWalls");
 	}
 }
 
