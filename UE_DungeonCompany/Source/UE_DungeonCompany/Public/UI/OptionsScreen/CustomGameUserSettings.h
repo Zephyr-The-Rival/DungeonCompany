@@ -103,5 +103,11 @@ public:
 	virtual void ApplySettings(bool bCheckForCommandLineOverride) override;
 
 	UFUNCTION(BlueprintCallable)
+	void ApplyGammaSettings();
+
+	UFUNCTION(BlueprintCallable)
 	void ApplyAudioSettings();
+
+
+
 };

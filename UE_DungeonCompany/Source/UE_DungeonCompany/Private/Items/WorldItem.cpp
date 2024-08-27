@@ -103,9 +103,12 @@ void AWorldItem::AttachToPlayer()
 			this->AttachToComponent(MyCharacterToAttachTo->GetFirstPersonMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_L_001");
 	}		
 	else
-	{	
-		this->AttachToComponent(MyCharacterToAttachTo->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_R_001");
-	}
+	{
+		if(bAttachesToRightHand)
+			this->AttachToComponent(MyCharacterToAttachTo->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_R_001");
+		else
+			this->AttachToComponent(MyCharacterToAttachTo->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true), "ItemHandle_L_001");
+	}			
 	
 	this->SetActorScale3D(FVector(1, 1, 1));
 
