@@ -6,6 +6,7 @@
 #include "CommonActivatableWidget.h"
 #include "PlayerOptions.generated.h"
 
+class UCommonButtonBase;
 class UCommonValueChanger;
 class USoundMix;
 
@@ -15,12 +16,20 @@ class UE_DUNGEONCOMPANY_API UPlayerOptions : public UCommonActivatableWidget
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(BlueprintReadWrite, meta =(BindWidget))
+	UCommonButtonBase* KickButton;
+	
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, meta = (BindWidget))
 	UCommonValueChanger* VolumeSlider;
-
-private:
+	
+	UPROPERTY(BlueprintReadOnly)
 	APlayerState* ControllingPlayer;
+	
+private:
 	USoundMix* MasterSoundMix;
+
+public:
+	void SetControllingPlayer(APlayerState* PlayerState);
 
 public:
 	UPlayerOptions();

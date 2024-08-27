@@ -10,6 +10,13 @@
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/GameSession.h"
 #include "GameFramework/PlayerState.h"
+#include "CommonButtonBase.h"
+#include "Sound/SoundClass.h"
+
+void UPlayerOptions::SetControllingPlayer(APlayerState* PlayerState)
+{
+	ControllingPlayer = PlayerState;
+}
 
 UPlayerOptions::UPlayerOptions()
 {
@@ -21,6 +28,8 @@ UPlayerOptions::UPlayerOptions()
 void UPlayerOptions::NativeConstruct()
 {
 	Super::NativeConstruct();
+
+	KickButton->SetVisibility(GetOwningPlayer()->HasAuthority()? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 
 	VolumeSlider->OnValueChangedEvent.AddDynamic(this, &UPlayerOptions::OnVolumeSliderValueChanged);
 }
