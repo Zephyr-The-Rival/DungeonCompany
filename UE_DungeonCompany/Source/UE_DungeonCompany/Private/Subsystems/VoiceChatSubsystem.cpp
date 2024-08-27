@@ -18,7 +18,7 @@ USoundClass* UVoiceChatSubsystem::GetVoiceClassForPlayer(APlayerState* PlayerSta
 		RegisterPlayerState(PlayerState);
 	}
 
-	return VoiceClassMap[PlayerState];
+	return VoiceClassMap.Contains(PlayerState)? VoiceClassMap[PlayerState] : nullptr;
 }
 
 void UVoiceChatSubsystem::RegisterPlayerState(APlayerState* PlayerState)

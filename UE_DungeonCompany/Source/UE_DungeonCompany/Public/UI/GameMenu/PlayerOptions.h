@@ -28,8 +28,13 @@ public:
 protected:
 	virtual void NativeConstruct() override;
 
+	bool IsControllingPlayerValid();
+
 protected:
 	UFUNCTION()
 	void OnVolumeSliderValueChanged(float NewValue);
-	
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void KickPlayer();
 };
