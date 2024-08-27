@@ -64,10 +64,11 @@ void AQuasoSnake::StopLurking()
 {
 	SetIsLurking(false);
 
-	if(!JumpOutOfWallEffect)
+	if (!JumpOutOfWallEffect)
 		return;
-	
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), JumpOutOfWallEffect, GetActorLocation(), GetActorRotation());
+
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), JumpOutOfWallEffect, GetActorLocation(),
+	                                               GetActorRotation());
 }
 
 void AQuasoSnake::AttackPlayer(APlayerCharacter* PlayerAttacking)
@@ -185,6 +186,7 @@ void AQuasoSnake::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	AttachToComponent(character->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 	                  TEXT("QuasoSocket"));
 	PlayerAttachedTo = character;
+	PlayerAttachedTo->OnEntityDeath.AddDynamic(this, &AQuasoSnake::OnAttachedPlayerDied);
 
 	SetIsAttachedToPlayer(true);
 
@@ -206,17 +208,26 @@ void AQuasoSnake::Multicast_OnAttachedToPlayer_Implementation(APlayerCharacter* 
 
 	FirstPersonAttach->RegisterComponent();
 	FirstPersonAttach->SetAnimationMode(EAnimationMode::AnimationSingleNode);
-	FirstPersonAttach->SetAnimation(FirstPersonChoke);
+	//FirstPersonAttach->SetAnimation(FirstPersonChoke);
+	FirstPersonAttach->PlayAnimation(FirstPersonChoke, false);
 }
 
 void AQuasoSnake::Multicast_OnDetachedFromPlayer_Implementation()
 {
 	GetCapsuleComponent()->SetCollisionProfileName("Pawn", true);
 
-	if (!IsValid(FirstPersonAttach))
+	if (!FirstPersonAttach || !IsValid(FirstPersonAttach))
 		return;
 
 	FirstPersonAttach->DestroyComponent();
+}
+
+void AQuasoSnake::OnAttachedPlayerDied(ADC_Entity* DeadEntitiy)
+{
+	if (IsValid(PlayerAttachedTo))
+		PlayerAttachedTo->OnEntityDeath.RemoveAll(this);
+
+	DetachFromPlayer();
 }
 
 void AQuasoSnake::ReturnToVolume()
@@ -250,10 +261,9 @@ void AQuasoSnake::OnDeath_Implementation()
 		return;
 
 	GetWorld()->GetTimerManager().ClearTimer(StageProgressHandle);
-	
+
 	ResetPlayerEffects();
 	DetachFromPlayer();
-	
 }
 
 void AQuasoSnake::ProgressStage()
@@ -280,7 +290,6 @@ void AQuasoSnake::ProgressStage()
 
 	case 3:
 		PlayerAttachedTo->TakeDamage(100000.f);
-		DetachFromPlayer();
 		CurrentStage = -1;
 		break;
 
@@ -316,9 +325,10 @@ void AQuasoSnake::DetachFromPlayer()
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 
 	bInAttack = false;
-
 	SetIsAttachedToPlayer(false);
 
+	PlayerAttachedTo = nullptr;
+	
 	ADC_AIController* aiController = Cast<ADC_AIController>(GetController());
 	if (!aiController)
 		return;
