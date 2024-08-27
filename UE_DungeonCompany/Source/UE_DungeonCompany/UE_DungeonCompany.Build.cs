@@ -24,7 +24,8 @@ public class UE_DungeonCompany : ModuleRules
 			"CableComponent",
 			"PhysicsCore",
 			"SlateCore",
-			"Slate"
+			"Slate",
+			"CommonUI"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
