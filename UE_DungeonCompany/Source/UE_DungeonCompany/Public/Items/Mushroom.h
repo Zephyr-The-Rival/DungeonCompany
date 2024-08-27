@@ -14,8 +14,8 @@ class UE_DUNGEONCOMPANY_API AMushroom : public AWorldItem
 {
 	GENERATED_BODY()
 
-private:
-	UPROPERTY(EditDefaultsOnly)
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UStaticMeshComponent* MushroomMesh;
 
 public:

@@ -14,6 +14,7 @@ class UPlayerHud;
 class UVOIPTalker;
 class UInputMappingContext;
 class UInputAction;
+class APlayerCharacter;
 
 UENUM(BlueprintType)
 enum class EPawnType : uint8
@@ -116,6 +117,17 @@ protected:
 	virtual void PawnLeavingGame() override;
 
 public:
-
 	void SwitchPlayerCharacterClass(TSubclassOf<APlayerCharacter> NewClass);
+
+public:
+	
+	bool bHasGottenCallToAdventure=false;
+
+public://player classes bc blueprints ig
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<APlayerCharacter> PlayerclassFarmer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<APlayerCharacter> PlayerclassMercenary;
 };

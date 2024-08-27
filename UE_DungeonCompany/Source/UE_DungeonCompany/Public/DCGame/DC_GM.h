@@ -57,13 +57,6 @@ protected:
 
 	template <class T>
 	T* SpawnAIEntity(UClass* Class, FVector Location, FRotator Rotation = FRotator::ZeroRotator) const;
-
-public://player classes bc blueprints ig
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<APlayerCharacter> PlayerclassFarmer;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<APlayerCharacter> PlayerclassMercenary;
+	
 	
 };
