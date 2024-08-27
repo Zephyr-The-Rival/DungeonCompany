@@ -31,7 +31,8 @@ void UPlayerOptions::NativeConstruct()
 
 	KickButton->SetVisibility(GetOwningPlayer()->HasAuthority()? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 
-	VolumeSlider->OnValueChangedEvent.AddDynamic(this, &UPlayerOptions::OnVolumeSliderValueChanged);
+	if(!VolumeSlider->OnValueChangedEvent.IsBound())
+		VolumeSlider->OnValueChangedEvent.AddDynamic(this, &UPlayerOptions::OnVolumeSliderValueChanged);
 }
 
 bool UPlayerOptions::IsControllingPlayerValid()
