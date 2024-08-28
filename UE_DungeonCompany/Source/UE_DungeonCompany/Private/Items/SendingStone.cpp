@@ -29,7 +29,7 @@ void ASendingStone::Tick(float DeltaTime)
 void ASendingStone::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* User)
 {
 	Super::TriggerLocalPrimaryAction_Implementation(User);
-	User->AttackBlend=1;
+	User->SetAttackBlend(1);
 	User->bSwitchHandAllowed=false;
 	User->bIsUsingSendingStone=true;
 	this->ToggleTutorial(true);
@@ -38,7 +38,7 @@ void ASendingStone::TriggerLocalPrimaryAction_Implementation(APlayerCharacter* U
 void ASendingStone::EndLocalPrimaryActionHold_Implementation(APlayerCharacter* User)
 {
 	Super::EndLocalPrimaryActionHold_Implementation(User);
-	User->AttackBlend=0;
+	User->SetAttackBlend(0);
 	User->bSwitchHandAllowed=true;
 	User->bIsUsingSendingStone=false;
 	this->ToggleTutorial(false);
