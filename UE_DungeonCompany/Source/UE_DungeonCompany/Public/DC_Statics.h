@@ -18,7 +18,10 @@ class UE_DUNGEONCOMPANY_API UDC_Statics : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 	//Voice Settings
-public:	
+public:
+	UFUNCTION(BlueprintCallable, Category="Voice")
+	static float GetMicInputGain();
+	
 	UFUNCTION(BlueprintCallable, Category="Voice")
 	static void SetMicInputGain(float Value);
 

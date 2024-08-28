@@ -8,6 +8,12 @@
 #include "GameFramework/PlayerState.h"
 #include "Subsystems/VoiceChatSubsystem.h"
 
+float UDC_Statics::GetMicInputGain()
+{
+	static IConsoleVariable* micInputGain = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicInputGain"));
+	return micInputGain->GetFloat();
+}
+
 void UDC_Statics::SetMicInputGain(float Value)
 {
 	static IConsoleVariable* micInputGain = IConsoleManager::Get().FindConsoleVariable(TEXT("voice.MicInputGain"));
