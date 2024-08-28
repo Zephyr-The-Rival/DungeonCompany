@@ -25,7 +25,6 @@ EBTNodeResult::Type UBTTask_ChaseLocation::ExecuteTask(UBehaviorTreeComponent& O
 	if (!bMoveToLocation)
 	{
 		AActor* pawnActor = aiController->GetPawn();
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::SanitizeFloat((targetLocation - pawnActor->GetActorLocation()).Length()));
 		bMoveToLocation = !pawnActor || (targetLocation - pawnActor->GetActorLocation()).Length() > MinMoveDistance;
 	}
 

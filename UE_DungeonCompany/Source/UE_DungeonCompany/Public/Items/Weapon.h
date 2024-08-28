@@ -21,6 +21,14 @@ struct FWeaponInfo
 	TArray<FVector> TraceEnds;
 };
 
+UENUM(BlueprintType)
+enum EWeaponType
+{
+	None UMETA(DisplayName = "None"),
+	Blade UMETA(DisplayName = "Blade"),
+	Tool UMETA(DisplayName = "Tool")
+};
+
 class APlayerCharacter;
 
 UCLASS()
@@ -28,12 +36,18 @@ class UE_DUNGEONCOMPANY_API AWeapon : public AWorldItem
 {
 	GENERATED_BODY()
 
+private:
+	UPROPERTY(EditDefaultsOnly)
+	TEnumAsByte<EWeaponType> WeaponType = None;
+
 protected:
 	virtual void BeginPlay() override;
 
 public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintPure)
 	FWeaponInfo GetWeaponInfo();
+
+	inline EWeaponType GetWeaponType() const { return WeaponType; }
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Debugging")
