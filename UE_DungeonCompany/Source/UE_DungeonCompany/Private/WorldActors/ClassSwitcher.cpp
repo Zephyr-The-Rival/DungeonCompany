@@ -35,12 +35,12 @@ void AClassSwitcher::OnHovered(APlayerCharacter* PlayerCharacter)
 	ASharedStatsManager* wallet = Cast<ASharedStatsManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
 	
 	if (wallet->Money < this->Price)
-		this->InteractPromptText="Not Enough Money (25)";
+		this->InteractPromptText="Not enough money (25)";
 	else
-		this->InteractPromptText="Hire To Mercenary (25)";
+		this->InteractPromptText="Hire class (25)";
 	
 	if(PlayerCharacter->IsA(ClassToSwitchTo))
-		this->InteractPromptText="Already a Mercenary";
+		this->InteractPromptText="Already this class";
 	
 	Super::OnHovered(PlayerCharacter);
 	
