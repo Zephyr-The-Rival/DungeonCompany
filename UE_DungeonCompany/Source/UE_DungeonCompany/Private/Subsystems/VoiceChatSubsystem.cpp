@@ -13,16 +13,16 @@
 #include "Components/AudioComponent.h"
 
 void UVoiceChatSubsystem::RegisterAudioComponentForPlayerState(APlayerState* PlayerState,
-	UAudioComponent* AudioComponent)
+                                                               UAudioComponent* AudioComponent)
 {
-	if(!IsValid(AudioComponent))
-		return;
-	
-	bool bAlreadyRegistered = AudioComponentMap.Contains(PlayerState);
-	if(bAlreadyRegistered && AudioComponentMap[PlayerState] == AudioComponent)
+	if (!IsValid(AudioComponent))
 		return;
 
-	if(bAlreadyRegistered)
+	bool bAlreadyRegistered = AudioComponentMap.Contains(PlayerState);
+	if (bAlreadyRegistered && AudioComponentMap[PlayerState] == AudioComponent)
+		return;
+
+	if (bAlreadyRegistered)
 		AudioComponentMap.Remove(PlayerState);
 
 	AudioComponentMap.Add(PlayerState, AudioComponent);
@@ -31,18 +31,29 @@ void UVoiceChatSubsystem::RegisterAudioComponentForPlayerState(APlayerState* Pla
 
 float UVoiceChatSubsystem::GetVolumeForPlayerState(APlayerState* PlayerState)
 {
-	if(!VolumeMap.Contains(PlayerState))
+	if (!VolumeMap.Contains(PlayerState))
 		VolumeMap.Add(PlayerState, 1.0f);
 
-	return VolumeMap[PlayerState];		
+	return VolumeMap[PlayerState];
 }
 
 void UVoiceChatSubsystem::SetVolumeForPlayerState(APlayerState* PlayerState, float Volume)
 {
 	VolumeMap.FindOrAdd(PlayerState) = Volume;
-	
-	if(AudioComponentMap.Contains(PlayerState))
-		AudioComponentMap[PlayerState]->SetVolumeMultiplier(Volume);
+
+	if (!AudioComponentMap.Contains(PlayerState))
+		return;
+
+	if (!IsValid(PlayerState))
+	{
+		AudioComponentMap.Remove(PlayerState);
+		return;
+	}
+
+	UAudioComponent* audioComponent = AudioComponentMap[PlayerState];
+
+	if (IsValid(audioComponent))
+		audioComponent->SetVolumeMultiplier(Volume);
 }
 
 void UVoiceChatSubsystem::MutePlayer(const APlayerState* PlayerState) const
