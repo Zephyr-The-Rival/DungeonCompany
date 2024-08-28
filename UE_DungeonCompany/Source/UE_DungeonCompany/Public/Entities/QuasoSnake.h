@@ -86,7 +86,7 @@ public:
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	           FVector NormalImpulse, const FHitResult& Hit);
 
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_OnAttachedToPlayer(APlayerCharacter* AttachedPlayer);
 	void Multicast_OnAttachedToPlayer_Implementation(APlayerCharacter* AttachedPlayer);
 
@@ -104,7 +104,7 @@ protected:
 
 	void DetachFromPlayer();
 
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_OnDetachedFromPlayer();
 	void Multicast_OnDetachedFromPlayer_Implementation();
 
