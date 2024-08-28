@@ -62,10 +62,6 @@ public:
 	static void SetVoiceDebugPrintAmplitude(bool Value);
 
 public:
-	UFUNCTION(BlueprintCallable, Category="Voice")
-	static USoundClass* GetVoiceSoundClassForPlayer(APlayerState* PlayerState);
-
-public:
 	/* Remote Controllers will only be checked via their pawns rotation. */
 	UFUNCTION(BlueprintCallable, Category = "Vision")
 	static bool IsLocationInViewportOfPlayer(APlayerController* PlayerController, const FVector& Location);

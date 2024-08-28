@@ -10,32 +10,39 @@
 #include "Interfaces/VoiceInterface.h"
 #include "Sound/SoundClass.h"
 #include "OnlineSubsystemUtils.h"
+#include "Components/AudioComponent.h"
 
-USoundClass* UVoiceChatSubsystem::GetVoiceClassForPlayer(APlayerState* PlayerState)
+void UVoiceChatSubsystem::RegisterAudioComponentForPlayerState(APlayerState* PlayerState,
+	UAudioComponent* AudioComponent)
 {
-	if (!VoiceClassMap.Contains(PlayerState))
-	{
-		RegisterPlayerState(PlayerState);
-	}
-
-	return VoiceClassMap[PlayerState];
-}
-
-void UVoiceChatSubsystem::RegisterPlayerState(APlayerState* PlayerState)
-{
-	if (!IsValid(PlayerState) || AvailableVoiceClasses.IsEmpty() || VoiceClassMap.Contains(PlayerState))
+	if(!IsValid(AudioComponent))
+		return;
+	
+	bool bAlreadyRegistered = AudioComponentMap.Contains(PlayerState);
+	if(bAlreadyRegistered && AudioComponentMap[PlayerState] == AudioComponent)
 		return;
 
-	VoiceClassMap.Add(PlayerState, AvailableVoiceClasses.Pop());
+	if(bAlreadyRegistered)
+		AudioComponentMap.Remove(PlayerState);
+
+	AudioComponentMap.Add(PlayerState, AudioComponent);
+	AudioComponent->SetVolumeMultiplier(GetVolumeForPlayerState(PlayerState));
 }
 
-void UVoiceChatSubsystem::UnregisterPlayerState(const APlayerState* PlayerState)
+float UVoiceChatSubsystem::GetVolumeForPlayerState(APlayerState* PlayerState)
 {
-	if (!VoiceClassMap.Contains(PlayerState))
-		return;
+	if(!VolumeMap.Contains(PlayerState))
+		VolumeMap.Add(PlayerState, 1.0f);
 
-	AvailableVoiceClasses.Push(VoiceClassMap[PlayerState]);
-	VoiceClassMap.Remove(PlayerState);
+	return VolumeMap[PlayerState];		
+}
+
+void UVoiceChatSubsystem::SetVolumeForPlayerState(APlayerState* PlayerState, float Volume)
+{
+	VolumeMap.FindOrAdd(PlayerState) = Volume;
+	
+	if(AudioComponentMap.Contains(PlayerState))
+		AudioComponentMap[PlayerState]->SetVolumeMultiplier(Volume);
 }
 
 void UVoiceChatSubsystem::MutePlayer(const APlayerState* PlayerState) const
@@ -58,21 +65,4 @@ void UVoiceChatSubsystem::UnmuteAllPlayers() const
 {
 	for (TActorIterator<APlayerState> It(GetWorld()); It; ++It)
 		UnmutePlayer(*It);
-}
-
-void UVoiceChatSubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-
-	UObjectLibrary* objectLibrary = UObjectLibrary::CreateLibrary(USoundClass::StaticClass(), false, GIsEditor);
-
-	if (!objectLibrary)
-		return;
-
-	objectLibrary->AddToRoot();
-
-	FString path = TEXT("/Game/_DungeonCompanyContent/Audio/VoiceClasses/");
-	int voiceClassesNum = objectLibrary->LoadAssetsFromPath(path);
-
-	objectLibrary->GetObjects<USoundClass>(AvailableVoiceClasses);
 }
