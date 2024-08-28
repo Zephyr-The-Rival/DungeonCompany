@@ -30,6 +30,7 @@ private:
 	TArray<APlayerCharacter*> PlayerCharacters;
 	int SpecatingPlayerIndex = 0;
 
+	UPROPERTY()
 	UDC_VOIPTalker* VOIPTalker;
 
 public:
@@ -94,6 +95,7 @@ protected:
 public:
 	void CreateSpectatorHud();
 
+	UPROPERTY()
 	USpectatorHud* MySpectatorHud;
 
 protected:
