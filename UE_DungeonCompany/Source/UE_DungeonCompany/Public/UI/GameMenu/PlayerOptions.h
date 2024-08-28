@@ -18,21 +18,15 @@ class UE_DUNGEONCOMPANY_API UPlayerOptions : public UCommonActivatableWidget
 protected:
 	UPROPERTY(BlueprintReadWrite, meta =(BindWidget))
 	UCommonButtonBase* KickButton;
-	
+
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, meta = (BindWidget))
 	UCommonValueChanger* VolumeSlider;
-	
+
 	UPROPERTY(BlueprintReadOnly)
 	APlayerState* ControllingPlayer;
-	
-private:
-	USoundMix* MasterSoundMix;
 
 public:
 	void SetControllingPlayer(APlayerState* PlayerState);
-
-public:
-	UPlayerOptions();
 
 protected:
 	virtual void NativeConstruct() override;
