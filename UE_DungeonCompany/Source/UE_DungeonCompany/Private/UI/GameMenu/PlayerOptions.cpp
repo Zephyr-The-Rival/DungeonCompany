@@ -18,13 +18,6 @@ void UPlayerOptions::SetControllingPlayer(APlayerState* PlayerState)
 	ControllingPlayer = PlayerState;
 }
 
-UPlayerOptions::UPlayerOptions()
-{
-	static ConstructorHelpers::FObjectFinder<USoundMix> MasterSoundMixFinder(
-		TEXT("/Script/Engine.SoundMix'/Game/_DungeonCompanyContent/Audio/MasterSoundMix.MasterSoundMix'"));
-	MasterSoundMix = MasterSoundMixFinder.Object;
-}
-
 void UPlayerOptions::NativeConstruct()
 {
 	Super::NativeConstruct();
