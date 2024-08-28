@@ -11,6 +11,7 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "PlayerCharacter.generated.h"
 
+enum EWeaponType : int;
 class AWorldItem;
 class UItemData;
 class UDC_VOIPTalker;
@@ -611,6 +612,9 @@ public: //blockers
 
 private:
 	float OverridenWalkingSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Balancing", meta = (ClampMin = 0.f))
+	TMap<TEnumAsByte<EWeaponType>, float> StaminaMultiplierForWeaponTypes;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Balancing/Movement")
