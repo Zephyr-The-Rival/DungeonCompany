@@ -15,20 +15,17 @@ class UE_DUNGEONCOMPANY_API UVoiceChatSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 private:
-	TArray<USoundClass*> AvailableVoiceClasses;
-	TMap<APlayerState*, USoundClass*> VoiceClassMap;
+	TMap<APlayerState*, UAudioComponent*> AudioComponentMap;
+	TMap<APlayerState*, float> VolumeMap;
 
 public:
-	USoundClass* GetVoiceClassForPlayer(APlayerState* PlayerState);
-	
-	void RegisterPlayerState(APlayerState* PlayerState);
-	void UnregisterPlayerState(const APlayerState* PlayerState);
+	void RegisterAudioComponentForPlayerState(APlayerState* PlayerState, UAudioComponent* AudioComponent);
+
+	float GetVolumeForPlayerState(APlayerState* PlayerState);
+	void SetVolumeForPlayerState(APlayerState* PlayerState, float Volume);
 
 	void MutePlayer(const APlayerState* PlayerState) const;
 	void UnmutePlayer(const APlayerState* PlayerState) const;
 	
 	void UnmuteAllPlayers() const;
-
-public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 };

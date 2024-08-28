@@ -92,14 +92,6 @@ void UDC_Statics::SetVoiceDebugPrintAmplitude(bool Value)
 	printAmplitude->Set(Value);
 }
 
-USoundClass* UDC_Statics::GetVoiceSoundClassForPlayer(APlayerState* PlayerState)
-{
-	if(!IsValid(PlayerState))
-		return nullptr;
-	
-	return PlayerState->GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->GetVoiceClassForPlayer(PlayerState);
-}
-
 bool UDC_Statics::IsLocationInViewportOfPlayer(APlayerController* PlayerController, const FVector& Location)
 {
 	APawn* playerPawn = PlayerController->GetPawn();

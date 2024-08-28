@@ -13,8 +13,5 @@ UCLASS()
 class UE_DUNGEONCOMPANY_API ADC_PS : public APlayerState
 {
 	GENERATED_BODY()
-
-protected:
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 };

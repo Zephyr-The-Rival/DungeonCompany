@@ -29,7 +29,7 @@ void ADC_PC::BeginPlay()
 
 	UVOIPStatics::SetMicThreshold(-20.f);
 	UDC_Statics::SetMicNoiseGateTreshold(-20.f);
-	UDC_Statics::SetMicInputGain(0.f);
+	UDC_Statics::SetMicInputGain(3.f);
 
 	GetWorld()->Exec(GetWorld(), TEXT("OSS.VoiceLoopback 1"));
 	
