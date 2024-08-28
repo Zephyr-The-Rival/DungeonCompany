@@ -19,4 +19,8 @@ private:
 
 public:
 	virtual void OnTalkingBegin(UAudioComponent* AudioComponent) override;
+
+protected:
+	virtual void BeginPlay() override;
+	void HandleNetworkFailure(UWorld * World, UNetDriver * NetDriver, ENetworkFailure::Type FailureType, const FString & ErrorString);
 };
