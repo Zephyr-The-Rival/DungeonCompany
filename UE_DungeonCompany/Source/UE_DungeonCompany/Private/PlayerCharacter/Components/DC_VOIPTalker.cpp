@@ -9,15 +9,14 @@ void UDC_VOIPTalker::OnTalkingBegin(UAudioComponent* AudioComponent)
 {
 	Super::OnTalkingBegin(AudioComponent);
 	
-	if (!IsValid(AudioComponent) || TalkerAudioComponent == AudioComponent)
+	if (!IsValid(AudioComponent))
 		return;
 
 	TalkerAudioComponent = AudioComponent;
-
+	
 	APawn* ownerPawn = GetOwner<APawn>();
 	if (!ownerPawn)
 		return;
-
-	TalkerAudioComponent->SoundClassOverride = GetWorld()->GetGameInstance()->GetSubsystem<
-		UVoiceChatSubsystem>()->GetVoiceClassForPlayer(ownerPawn->GetPlayerState());
+	
+	GetWorld()->GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->RegisterAudioComponentForPlayerState(ownerPawn->GetPlayerState(), TalkerAudioComponent);
 }
