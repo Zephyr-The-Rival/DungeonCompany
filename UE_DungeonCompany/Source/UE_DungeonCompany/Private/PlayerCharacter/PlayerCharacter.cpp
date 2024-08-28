@@ -1325,6 +1325,28 @@ void APlayerCharacter::SetHasBackPack(bool bNewHasBackpack)
 	
 }
 
+<<<<<<< Updated upstream
+=======
+void APlayerCharacter::Server_SpawnBackpackOnBack_Implementation()
+{
+	const USkeletalMeshSocket* Socket= this->GetMesh()->GetSocketByName("Backpack_Socket");
+	this->AttachedBackpack = GetWorld()->SpawnActor<AActor>(BackpackActorToAttach, this->GetMesh()->GetSocketTransform("Backpack_Socket"));
+
+
+	FAttachmentTransformRules Rules=FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+
+	if(IsValid(AttachedBackpack))
+		this->AttachedBackpack->AttachToComponent(this->GetMesh(),Rules,"Backpack_Socket");
+	
+}
+
+void APlayerCharacter::Server_DestroyBackPackOnBack_Implementation()
+{
+	if(IsValid(this->AttachedBackpack))
+		this->AttachedBackpack->Destroy(true, true);
+}
+
+>>>>>>> Stashed changes
 void APlayerCharacter::AddBackPackDebuff_Implementation(bool bHasBackpack)
 {
 	if (bHasBackpack)
