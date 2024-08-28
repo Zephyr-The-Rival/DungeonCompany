@@ -41,8 +41,8 @@ void AWorldItem::BeginPlay()
 	if (IsValid(MyCharacterToAttachTo))
 	{
 		AttachToPlayer();
-		if(IsValid(MyCharacterToAttachTo->GetCurrentlyHeldInventorySlot()->MyItem))
-			this->MyData = MyCharacterToAttachTo->GetCurrentlyHeldInventorySlot()->MyItem;//when player spawns item in hand so it doesnt create a new item data
+		if(UInventorySlot* inventorySlot = MyCharacterToAttachTo->GetCurrentlyHeldInventorySlot(); IsValid(inventorySlot) && IsValid(inventorySlot->MyItem))
+			this->MyData = inventorySlot->MyItem;//when player spawns item in hand so it doesnt create a new item data
 	}
 
 	if (IsValid(this->ItemDataClass) && this->MyData==NULL)

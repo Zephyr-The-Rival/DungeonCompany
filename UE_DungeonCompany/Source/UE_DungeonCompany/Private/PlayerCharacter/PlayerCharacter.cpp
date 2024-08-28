@@ -1474,10 +1474,13 @@ void APlayerCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
 
-	VOIPTalker->DestroyComponent();
+	if(IsValid(VOIPTalker))
+		VOIPTalker->DestroyComponent();
 
 	GetCapsuleComponent()->SetCollisionProfileName("DeadPawn", true);
-	StimulusSource->DestroyComponent(false);
+
+	if(IsValid(StimulusSource))
+		StimulusSource->DestroyComponent();
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	GetMesh()->SetAnimation(nullptr);

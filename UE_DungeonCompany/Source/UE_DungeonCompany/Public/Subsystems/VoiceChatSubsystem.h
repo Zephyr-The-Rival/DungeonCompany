@@ -28,4 +28,6 @@ public:
 	void UnmutePlayer(const APlayerState* PlayerState) const;
 	
 	void UnmuteAllPlayers() const;
+
+	void ClearSubsystem();
 };
