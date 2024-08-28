@@ -22,6 +22,9 @@ private:
 	TSubclassOf<UBindingOptionsItem> BOItemClass;
 
 	UPROPERTY(EditAnywhere)
+	bool bAutoDetectWhatToBind = true;
+	
+	UPROPERTY(EditAnywhere, meta = (EditCondition = "!bAutoDetectWhatToBind"))
 	bool bBindGamepad = false;
 
 	UPROPERTY(meta = (BindWidget))
@@ -41,6 +44,7 @@ private:
 
 protected:
 	virtual void NativeConstruct() override;
+	static void RemoveAllChildrenOfContainer(UVerticalBox* InContainer);
 
 private:
 	TArray<UBindingOptionsItem*> BindingOptionsItems;

@@ -22,7 +22,7 @@ struct FWeaponInfo
 };
 
 UENUM(BlueprintType)
-enum EWeaponType
+enum EWeaponType : int
 {
 	None UMETA(DisplayName = "None"),
 	Blade UMETA(DisplayName = "Blade"),
