@@ -4,6 +4,7 @@
 #include "MainMenu/MainMenuGM.h"
 #include "GenericGame/MultiDevice_PC.h"
 #include "Subsystems/SessionSubsystem.h"
+#include "Subsystems/VoiceChatSubsystem.h"
 
 AMainMenuGM::AMainMenuGM()
 {
@@ -15,5 +16,6 @@ void AMainMenuGM::BeginPlay()
 	Super::BeginPlay();
 
 	GetGameInstance()->GetSubsystem<USessionSubsystem>()->DestroyCurrentSession();
+	GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->ClearSubsystem();
 
 }
