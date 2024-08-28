@@ -118,11 +118,12 @@ void APlayerCharacter::BeginPlay()
 	});
 
 	ADC_PC* controller = Cast<ADC_PC>(GetController());
-	if(IsValid(controller)&& IsLocallyControlled()&& !controller->bHasGottenCallToAdventure)//if player has gotten call to adventure yet
+	if (IsValid(controller) && IsLocallyControlled() && !controller->bHasGottenCallToAdventure)
+	//if player has gotten call to adventure yet
 	{
 		UItemData* CTA = NewObject<UItemData>(GetTransientPackage(), CallToAdventureItemClassData);
 		AddItemToInventory(CTA);
-		controller->bHasGottenCallToAdventure=true;
+		controller->bHasGottenCallToAdventure = true;
 	}
 }
 
@@ -361,9 +362,9 @@ void APlayerCharacter::NoLook()
 
 void APlayerCharacter::InteractorLineTrace()
 {
-	if(!IsValid(MyPlayerHud))
+	if (!IsValid(MyPlayerHud))
 		return;
-	
+
 	//raycast to pick up and interact with stuff
 	FHitResult Hit;
 	FVector Start = this->FirstPersonCamera->GetComponentLocation();
@@ -371,7 +372,7 @@ void APlayerCharacter::InteractorLineTrace()
 
 	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility);
 
-	
+
 	if (Hit.bBlockingHit)
 	{
 		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
@@ -778,22 +779,22 @@ bool APlayerCharacter::CanJumpInternal_Implementation() const
 void APlayerCharacter::SetStaminaGainDelay(float InDelaySeconds)
 {
 	FTimerManager& timerManager = GetWorld()->GetTimerManager();
-	
+
 	StaminaGainDelay = InDelaySeconds;
-	
+
 	bool bTimerAlreadyRunning = bTimerAlreadyRunning = timerManager.IsTimerActive(RestDelayTimerHandle);
 
-	if(!bTimerAlreadyRunning)
+	if (!bTimerAlreadyRunning)
 		return;
 
 	float nextDelay = InDelaySeconds - timerManager.GetTimerElapsed(RestDelayTimerHandle);
-	
-	if(nextDelay <= 0.f)
+
+	if (nextDelay <= 0.f)
 	{
 		timerManager.ClearTimer(RestDelayTimerHandle);
 		bResting = true;
 	}
-	
+
 	timerManager.SetTimer(RestDelayTimerHandle, RestDelegate, nextDelay, false);
 }
 
@@ -1319,32 +1320,33 @@ void APlayerCharacter::SetHasBackPack(bool bNewHasBackpack)
 	//local
 	this->bHasBackPack = bNewHasBackpack;
 
-	if(this->bHasBackPack)
+	if (this->bHasBackPack)
 		Server_SpawnBackpackOnBack();
 	else
 		Server_DestroyBackPackOnBack();
 
-	TSubclassOf<APlayerCharacter> FarmerClass= Cast<ADC_PC>(Controller)->PlayerclassFarmer; 
-	if(this->GetClass()!=FarmerClass)
+	TSubclassOf<APlayerCharacter> FarmerClass = Cast<ADC_PC>(Controller)->PlayerclassFarmer;
+	if (this->GetClass() != FarmerClass)
 		AddBackPackDebuff(this->bHasBackPack);
-	
 }
 
 void APlayerCharacter::Server_SpawnBackpackOnBack_Implementation()
 {
-	const USkeletalMeshSocket* Socket= this->GetMesh()->GetSocketByName("Backpack_Socket");
-	this->AttachedBackpack = GetWorld()->SpawnActor<AActor>(BackpackActorToAttach, this->GetMesh()->GetSocketTransform("Backpack_Socket"));
+	const USkeletalMeshSocket* Socket = this->GetMesh()->GetSocketByName("Backpack_Socket");
+	this->AttachedBackpack = GetWorld()->SpawnActor<AActor>(BackpackActorToAttach,
+	                                                        this->GetMesh()->GetSocketTransform("Backpack_Socket"));
 
 
-	FAttachmentTransformRules Rules=FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
-	
-	this->AttachedBackpack->AttachToComponent(this->GetMesh(),Rules,"Backpack_Socket");
-	
+	FAttachmentTransformRules Rules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget,
+	                                                            EAttachmentRule::SnapToTarget,
+	                                                            EAttachmentRule::KeepWorld, false);
+
+	this->AttachedBackpack->AttachToComponent(this->GetMesh(), Rules, "Backpack_Socket");
 }
 
 void APlayerCharacter::Server_DestroyBackPackOnBack_Implementation()
 {
-	if(IsValid(this->AttachedBackpack))
+	if (IsValid(this->AttachedBackpack))
 		this->AttachedBackpack->Destroy(true, true);
 }
 
@@ -1353,7 +1355,7 @@ void APlayerCharacter::AddBackPackDebuff_Implementation(bool bHasBackpack)
 	if (bHasBackpack)
 		this->AddBuffOrDebuff(NoSprintDebuff);
 	else
-		this->RemoveBuffOrDebuff(NoSprintDebuff);	
+		this->RemoveBuffOrDebuff(NoSprintDebuff);
 }
 
 void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
@@ -1474,12 +1476,12 @@ void APlayerCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
 
-	if(IsValid(VOIPTalker))
+	if (IsValid(VOIPTalker))
 		VOIPTalker->DestroyComponent();
 
 	GetCapsuleComponent()->SetCollisionProfileName("DeadPawn", true);
 
-	if(IsValid(StimulusSource))
+	if (IsValid(StimulusSource))
 		StimulusSource->DestroyComponent();
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
@@ -1588,11 +1590,22 @@ void APlayerCharacter::AttackStart()
 	OverridenWalkingSpeed = WalkingSpeed;
 	GetCharacterMovement()->MaxWalkSpeed = SlowedWalkingSpeed;
 
-	if (IsLocallyControlled())
-	{
-		StopSprint();
-		SubstractStamina(Cast<AWeapon>(CurrentlyHeldWorldItem)->GetStaminaCost());
-	}
+	if (!IsLocallyControlled())
+		return;
+
+	StopSprint();
+
+	AWeapon* weapon = Cast<AWeapon>(CurrentlyHeldWorldItem);
+
+	if (!weapon)
+		return;
+
+	float staminaCost = weapon->GetStaminaCost();
+
+	if (StaminaMultiplierForWeaponTypes.Contains(weapon->GetWeaponType()))
+		staminaCost *= StaminaMultiplierForWeaponTypes[weapon->GetWeaponType()];
+
+	SubstractStamina(staminaCost);
 }
 
 
@@ -1866,7 +1879,7 @@ int APlayerCharacter::EndSelectionWheel()
 void APlayerCharacter::OnPotionDrunk()
 {
 	Server_OnPotionDrunk();
-	
+
 	if (APotion* Potion = Cast<APotion>(GetCurrentlyHeldWorldItem()))
 	{
 		Potion->Local_ApplyEffect(this);
@@ -1982,15 +1995,15 @@ bool APlayerCharacter::HasItemOfClass(TSubclassOf<UItemData> Item)
 
 void APlayerCharacter::Destroyed()
 {
-	if(IsValid(MyPlayerHud))
+	if (IsValid(MyPlayerHud))
 		MyPlayerHud->RemoveFromParent();
-	
+
 	Super::Destroyed();
 }
 
 void APlayerCharacter::SetAttackBlend(float NewBlend)
 {
-	if(HasAuthority())
+	if (HasAuthority())
 		Server_SetAttackBlend_Implementation(NewBlend);
 	else
 		Server_SetAttackBlend(NewBlend);
@@ -1998,15 +2011,15 @@ void APlayerCharacter::SetAttackBlend(float NewBlend)
 
 void APlayerCharacter::Server_SetAttackBlend_Implementation(float NewBlend)
 {
-	this->AttackBlend=NewBlend;
+	this->AttackBlend = NewBlend;
 }
 
 void APlayerCharacter::TransferInventory_Implementation(APlayerCharacter* OldCharacter)
 {
-	if(!IsValid(OldCharacter))
+	if (!IsValid(OldCharacter))
 		return;
-	
-	this->SetHasBackPack(OldCharacter->bHasBackPack); 
+
+	this->SetHasBackPack(OldCharacter->bHasBackPack);
 
 	for (int i = 0; i < OldCharacter->Inventory->GetSlots().Num(); i++)
 	{
@@ -2016,7 +2029,7 @@ void APlayerCharacter::TransferInventory_Implementation(APlayerCharacter* OldCha
 		this->Inventory->GetSlots()[i]->MyItem = OldCharacter->GetInventory()->GetSlots()[i]->MyItem;
 	}
 
-	if(this->bHasBackPack)
+	if (this->bHasBackPack)
 	{
 		for (int i = 0; i < OldCharacter->Backpack->GetSlots().Num(); i++)
 		{
@@ -2024,15 +2037,15 @@ void APlayerCharacter::TransferInventory_Implementation(APlayerCharacter* OldCha
 				continue;
 
 			this->GetBackpack()->GetSlots()[i]->MyItem = OldCharacter->Backpack->GetSlots()[i]->MyItem;
-		}	
+		}
 	}
 
-	if(IsValid(OldCharacter->HandSlotA->MyItem))
-		this->HandSlotA->MyItem=OldCharacter->HandSlotA->MyItem;
+	if (IsValid(OldCharacter->HandSlotA->MyItem))
+		this->HandSlotA->MyItem = OldCharacter->HandSlotA->MyItem;
 
-	if(IsValid(OldCharacter->HandSlotB->MyItem))
-	this->HandSlotB->MyItem=OldCharacter->HandSlotB->MyItem;
-	
+	if (IsValid(OldCharacter->HandSlotB->MyItem))
+		this->HandSlotB->MyItem = OldCharacter->HandSlotB->MyItem;
+
 	TakeOutItem();
 
 	OldCharacter->SelfDestruct();
@@ -2046,10 +2059,10 @@ void APlayerCharacter::SelfDestruct_Implementation()
 void APlayerCharacter::AddItemToInventory(UItemData* NewItem)
 {
 	UInventorySlot* FreeSlot = FindFreeSlot();
-	if(IsValid(FreeSlot))
+	if (IsValid(FreeSlot))
 	{
-		FreeSlot->MyItem=NewItem;
-		if(FreeSlot==GetCurrentlyHeldInventorySlot())
+		FreeSlot->MyItem = NewItem;
+		if (FreeSlot == GetCurrentlyHeldInventorySlot())
 			TakeOutItem();
 
 		UpdateHeldItems();
