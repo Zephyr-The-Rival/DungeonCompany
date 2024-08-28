@@ -66,3 +66,9 @@ void UVoiceChatSubsystem::UnmuteAllPlayers() const
 	for (TActorIterator<APlayerState> It(GetWorld()); It; ++It)
 		UnmutePlayer(*It);
 }
+
+void UVoiceChatSubsystem::ClearSubsystem()
+{
+	AudioComponentMap.Empty();
+	VolumeMap.Empty();
+}
