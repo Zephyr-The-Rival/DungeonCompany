@@ -22,7 +22,10 @@
 #include "Items/Torch_Data.h"
 #include "WorldActors/FirstDoorPuzzle/ItemSocket.h"
 #include "Engine/World.h"
-#include "GameFramework/Actor.h"
+#include "DCGame/DC_PostMortemPawn.h"
+#include "Items/Potion.h"
+#include "Items/WorldCurrency_Data.h"
+#include "PlayerCharacter/Components/DC_VOIPTalker.h"
 #include "EngineUtils.h"
 
 #include "Components/CapsuleComponent.h"
@@ -33,12 +36,15 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
-#include "AssetTypeActions/AssetDefinition_SoundBase.h"
 #include "BuffSystem/DebuffExaustion.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Subsystems/VoiceChatSubsystem.h"
 #include "DCGame/DC_PostMortemPawn.h"
+#include "Engine/SkeletalMeshSocket.h"
+#include "Items/Potion.h"
+#include "Items/SendingStone.h"
 #include "Items/WorldCurrency_Data.h"
 #include "WorldActors/ResetManager.h"
 
@@ -59,14 +65,6 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	DropTransform->SetupAttachment(FirstPersonCamera);
 	DropTransform->SetRelativeLocation(FVector(150, 0, -20));
 
-	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
-	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
-	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
-	GetCharacterMovement<UDC_CMC>()->MaxClimbSpeed = ClimbingSpeed;
-	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
-	GetCharacterMovement()->bUseControllerDesiredRotation = false;
-	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
 
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationPitch = false;
@@ -76,7 +74,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 		TEXT("/Game/_DungeonCompanyContent/Audio/Player/VoiceSA.VoiceSA"));
 	VoiceSA = voiceSA.Object;
 
-	VOIPTalker = CreateDefaultSubobject<UVOIPTalker>(TEXT("VOIPTalker"));
+	VOIPTalker = CreateDefaultSubobject<UDC_VOIPTalker>(TEXT("VOIPTalker"));
 
 	this->Inventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
 	this->Backpack = CreateDefaultSubobject<UInventory>(TEXT("BackpackComponent"));
@@ -99,6 +97,15 @@ void APlayerCharacter::BeginPlay()
 	this->HP = this->MaxHP;
 	this->Stamina = this->MaxStamina; //doesnt seem to take the blueprint changes during construction
 
+	GetCharacterMovement()->BrakingDecelerationFlying = 5000.f;
+	GetCharacterMovement()->MaxWalkSpeed = this->WalkingSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = this->CrouchedWalkingSpeed;
+	GetCharacterMovement<UDC_CMC>()->MaxClimbSpeed = ClimbingSpeed;
+	GetCharacterMovement()->JumpZVelocity = JumpVelocity;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, -1.0f, 0.0f);
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
+
 	this->HandSlotA = NewObject<UInventorySlot>();
 	this->HandSlotB = NewObject<UInventorySlot>();
 
@@ -110,14 +117,20 @@ void APlayerCharacter::BeginPlay()
 		bResting = true;
 	});
 
-	StartExaustionTimer();
+	ADC_PC* controller = Cast<ADC_PC>(GetController());
+	if(IsValid(controller)&& IsLocallyControlled()&& !controller->bHasGottenCallToAdventure)//if player has gotten call to adventure yet
+	{
+		UItemData* CTA = NewObject<UItemData>(GetTransientPackage(), CallToAdventureItemClassData);
+		AddItemToInventory(CTA);
+		controller->bHasGottenCallToAdventure=true;
+	}
 }
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	float voiceLevel = VOIPTalker->GetVoiceLevel();
 
 	CheckForFallDamage();
@@ -172,7 +185,7 @@ void APlayerCharacter::Restart()
 		return;
 
 	inputLocalPlayer->AddMappingContext(CharacterInputMapping, 0);
-	
+
 	if (!MyPlayerHud)
 		CreatePlayerHud();
 }
@@ -182,6 +195,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(APlayerCharacter, CurrentlyHeldWorldItem);
 	DOREPLIFETIME(APlayerCharacter, AttackBlend);
+	DOREPLIFETIME(APlayerCharacter, bClimbing);
 }
 
 
@@ -287,6 +301,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	EIC->BindAction(NavigateInventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::NavigateInventory);
 	EIC->BindAction(EquipItemInvAction, ETriggerEvent::Started, this, &APlayerCharacter::EquipItem);
 	EIC->BindAction(DropItemInvAction, ETriggerEvent::Started, this, &APlayerCharacter::DropItemInvPressed);
+
+	EIC->BindAction(SendingStoneInput, ETriggerEvent::Triggered, this, &APlayerCharacter::SendindStoneInputPressed);
 }
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
@@ -296,9 +312,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 	FVector2D localMoveVector = Value.Get<FVector2D>();
 
-	FVector worldMoveVector;
-
-	worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
+	FVector worldMoveVector = GetActorRightVector() * localMoveVector.X + GetActorForwardVector() * localMoveVector.Y;
 
 	if (bSprinting && (localMoveVector.Y <= 0.f || GetCharacterMovement()->MovementMode == MOVE_Flying))
 		StopSprint();
@@ -314,10 +328,20 @@ void APlayerCharacter::NoMove()
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
+	if (bUsingSelectionWheel)
+	{
+		MouseValue.X = Value.Get<FVector2d>().X;
+		MouseValue.Y = Value.Get<FVector2d>().Y;
+		return;
+	}
 	if (!bLookAllowed)
 		return;
 
-	(*LookFunction)(Value, this);
+	FVector2d lookVector = Value.Get<FVector2d>();
+	if (GetCharacterMovement<UDC_CMC>()->IsClimbing())
+		lookVector.X = 0.f;
+
+	(*LookFunction)(lookVector, this);
 
 	FRotator newRotation = FRotator(0, 0, 0);
 	newRotation.Pitch = GetControlRotation().Euler().Y;
@@ -337,6 +361,9 @@ void APlayerCharacter::NoLook()
 
 void APlayerCharacter::InteractorLineTrace()
 {
+	if(!IsValid(MyPlayerHud))
+		return;
+	
 	//raycast to pick up and interact with stuff
 	FHitResult Hit;
 	FVector Start = this->FirstPersonCamera->GetComponentLocation();
@@ -344,6 +371,7 @@ void APlayerCharacter::InteractorLineTrace()
 
 	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility);
 
+	
 	if (Hit.bBlockingHit)
 	{
 		IInteractable* i = Cast<IInteractable>(Hit.GetActor());
@@ -419,43 +447,42 @@ void APlayerCharacter::ResetInteractPrompt()
 
 void APlayerCharacter::InteractPressed()
 {
-	if(CurrentInteractable!=NULL && !CurrentInteractable-> GetNeedsHolding())
+	if (CurrentInteractable != NULL && !CurrentInteractable->GetNeedsHolding())
 		Interact();
 }
 
 void APlayerCharacter::StartHoldInteract()
 {
-	if(CurrentInteractable==NULL || !CurrentInteractable-> GetNeedsHolding())
+	if (CurrentInteractable == NULL || !CurrentInteractable->GetNeedsHolding())
 		return;
-	
-	this->bIsHoldingInteract=true;
+
+	this->bIsHoldingInteract = true;
 	MyPlayerHud->ShowInteractProgressBar(CurrentInteractable->GetHoldInteractTime());
 }
 
 void APlayerCharacter::StopHoldInteract()
 {
-	if(!this->bIsHoldingInteract)
+	if (!this->bIsHoldingInteract)
 		return;
-		
-	this->bIsHoldingInteract=false;
-	InteractHoldingSecondCounter=0;
+
+	this->bIsHoldingInteract = false;
+	InteractHoldingSecondCounter = 0;
 	MyPlayerHud->HideInteractProgressBar();
 }
 
 void APlayerCharacter::CheckHoldInteract()
 {
-	if(CurrentInteractable==NULL)
+	if (CurrentInteractable == NULL)
 		return;
-	
-	if(bIsHoldingInteract)
+
+	if (bIsHoldingInteract)
 	{
-		InteractHoldingSecondCounter+=GetWorld()->GetDeltaSeconds();
-		if(CurrentInteractable->GetHoldInteractTime()<=InteractHoldingSecondCounter)
+		InteractHoldingSecondCounter += GetWorld()->GetDeltaSeconds();
+		if (CurrentInteractable->GetHoldInteractTime() <= InteractHoldingSecondCounter)
 		{
 			Interact();
 			StopHoldInteract();
 		}
-			
 	}
 }
 
@@ -482,7 +509,8 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 	{
 		if (!this->bHasBackPack)
 		{
-			Server_SpawnSoundAtLocation(WorldItem->GetPickupSound(), WorldItem->GetRootComponent()->GetComponentLocation());
+			Server_SpawnSoundAtLocation(WorldItem->GetPickupSound(),
+			                            WorldItem->GetRootComponent()->GetComponentLocation());
 			PickUpBackpack(Cast<ABackPack>(WorldItem));
 		}
 
@@ -498,10 +526,16 @@ void APlayerCharacter::PickUpItem(AWorldItem* WorldItem)
 		//rn only local but maybe that even stays that way
 		freeSlot->MyItem = WorldItem->GetMyData();
 		DestroyWorldItem(WorldItem);
-
+		UpdateHeldItems();
 
 		if (freeSlot == GetCurrentlyHeldInventorySlot())
 			TakeOutItem();
+
+		if (UTorch_Data* torch = Cast<UTorch_Data>(freeSlot->MyItem))
+		{
+			if (freeSlot != GetCurrentlyHeldInventorySlot())
+				torch->bOn = false;
+		}
 	}
 }
 
@@ -531,15 +565,17 @@ void APlayerCharacter::Jump()
 	if (GetCharacterMovement()->MovementMode != MOVE_Walking)
 	{
 		Super::Jump();
+		this->bJumped = true;
 		if (!GetMovementComponent()->IsFalling())
 			Server_SpawnSoundAtLocation(this->JumpSound, GetActorLocation());
 		return;
 	}
 
-	if (Stamina <= 0.f || GetCharacterMovement()->IsCrouching())
+	if (Stamina <= 0.f || GetCharacterMovement()->IsCrouching() || !bJumpAllowed)
 		return;
 
 	SubstractStamina(JumpStaminaDrain);
+	this->bJumped = true;
 	Super::Jump();
 	if (!GetMovementComponent()->IsFalling())
 		Server_SpawnSoundAtLocation(this->JumpSound, GetActorLocation());
@@ -572,27 +608,25 @@ void APlayerCharacter::ToggleCrouch()
 		UnCrouch(true);
 	else
 		Crouch(true);
-	
 }
 
 void APlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
 	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
 
-	if(IsLocallyControlled())
+	if (IsLocallyControlled())
 		this->MyPlayerHud->UpdateCrouchIcon();
-	
+
 	Server_SpawnSoundAtLocation(this->CrouchSound, GetActorLocation());
-	
 }
 
 void APlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
 	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
 
-	if(IsLocallyControlled())
+	if (IsLocallyControlled())
 		this->MyPlayerHud->UpdateCrouchIcon();
-	
+
 	Server_SpawnSoundAtLocation(this->CrouchSound, GetActorLocation());
 }
 
@@ -688,13 +722,13 @@ void APlayerCharacter::AddStamina(float AddingStamina)
 		return;
 	}
 
-	if(this->bIsExausted)
+	if (this->bIsExausted)
 	{
-		float Factor= Cast<UDebuffExaustion>(ExaustionDebuff.GetDefaultObject())->GetStaminaRecoveryFactor();
-		AddingStamina= AddingStamina * Factor;
+		float Factor = Cast<UDebuffExaustion>(ExaustionDebuff.GetDefaultObject())->GetStaminaRecoveryFactor();
+		AddingStamina = AddingStamina * Factor;
 	}
-		
-			
+
+
 	Stamina += AddingStamina;
 
 	if (Stamina > MaxStamina)
@@ -726,9 +760,46 @@ void APlayerCharacter::SubstractStamina(float SubStamina)
 		ToggleSprint();
 }
 
+void APlayerCharacter::SetClimbing(bool value)
+{
+	this->Server_SetClimbing(value);
+}
+
+void APlayerCharacter::Server_SetClimbing_Implementation(bool Value)
+{
+	this->bClimbing = Value;
+}
+
 bool APlayerCharacter::CanJumpInternal_Implementation() const
 {
 	return JumpIsAllowedInternal();
+}
+
+void APlayerCharacter::SetStaminaGainDelay(float InDelaySeconds)
+{
+	FTimerManager& timerManager = GetWorld()->GetTimerManager();
+	
+	StaminaGainDelay = InDelaySeconds;
+	
+	bool bTimerAlreadyRunning = bTimerAlreadyRunning = timerManager.IsTimerActive(RestDelayTimerHandle);
+
+	if(!bTimerAlreadyRunning)
+		return;
+
+	float nextDelay = InDelaySeconds - timerManager.GetTimerElapsed(RestDelayTimerHandle);
+	
+	if(nextDelay <= 0.f)
+	{
+		timerManager.ClearTimer(RestDelayTimerHandle);
+		bResting = true;
+	}
+	
+	timerManager.SetTimer(RestDelayTimerHandle, RestDelegate, nextDelay, false);
+}
+
+void APlayerCharacter::SetStaminaGainPerSecond(float InStaminaGainPS)
+{
+	StaminaGainPerSecond = InStaminaGainPS;
 }
 
 void APlayerCharacter::SetVoiceEffect(USoundEffectSourcePresetChain* SoundEffect)
@@ -747,19 +818,20 @@ void APlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlaye
 
 void APlayerCharacter::AddMoneyToWallet_Implementation(int32 Amount)
 {
-	
 	ASharedStatsManager* wallet = Cast<ASharedStatsManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), ASharedStatsManager::StaticClass()));
 	wallet->Money += Amount;
 	wallet->OnMoneyChanged.Broadcast();
 }
 
-void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items, FTransform SpawnTransform,
+void APlayerCharacter::Server_DropBackpack_Implementation(const TArray<TSubclassOf<UItemData>>& Items,
+                                                          FTransform SpawnTransform,
                                                           const TArray<FString>& SerializedItemDatas)
 {
 	ABackPack* a = GetWorld()->SpawnActorDeferred<ABackPack>(BackpackActor, SpawnTransform);
 	a->Items = Items;
 	a->ItemDatas = SerializedItemDatas;
+	a->SetWasDroppedByPlayer(true);
 	a->FinishSpawning(SpawnTransform);
 }
 
@@ -779,7 +851,7 @@ void APlayerCharacter::Cough()
 
 void APlayerCharacter::ToggleInventory()
 {
-	if (!bSwitchHandAllowed)
+	if (!bSwitchHandAllowed || GetCharacterMovement<UDC_CMC>()->IsClimbing())
 		return;
 
 	this->bInventoryIsOn = !bInventoryIsOn;
@@ -808,20 +880,21 @@ UInventorySlot* APlayerCharacter::GetCurrentlyHeldInventorySlot()
 
 void APlayerCharacter::ClearCurrentlyHeldInventorySlot_Implementation()
 {
-	GetCurrentlyHeldInventorySlot()->MyItem = nullptr;
+	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
+	//GetCurrentlyHeldInventorySlot()->MyItem = nullptr;
 }
 
 TArray<UInventorySlot*> APlayerCharacter::GetAllSlots()
 {
-	if(!IsLocallyControlled())
+	if (!IsLocallyControlled())
 	{
 		return TArray<UInventorySlot*>();
 	}
-	
+
 	TArray<UInventorySlot*> AllSlots;
 	AllSlots = this->Inventory->GetSlots();
 
-	if(this->bHasBackPack)
+	if (this->bHasBackPack)
 		AllSlots.Append(this->Backpack->GetSlots());
 
 	AllSlots.Add(this->HandSlotA);
@@ -931,13 +1004,13 @@ void APlayerCharacter::Server_SpawnItemInHand_Implementation(TSubclassOf<AWorldI
 	//this property is replicated and the item will attach on begin play
 	CurrentlyHeldWorldItem->SerializedStringData = SerializedData;
 	CurrentlyHeldWorldItem->FinishSpawning(SpawnTransform);
-	CurrentlyHeldWorldItem->bIsHeldByPlayer=true;
+	CurrentlyHeldWorldItem->bIsHeldByPlayer = true;
 }
 
 
 void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 {
-	if (SlotToEmpty.bIsBackpackSlot)
+	if (SlotToEmpty.bIsBackpackSlot) //
 	{
 		SetHasBackPack(false);
 		if (this->bInventoryIsOn)
@@ -961,23 +1034,97 @@ void APlayerCharacter::DropItem(FSlotData SlotToEmpty, bool bThrow)
 
 		OnDropItem.Broadcast();
 		Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
-		Server_DropBackpack(ItemClasses, this->DropTransform->GetComponentTransform(), ItemDatas);
+		Server_DropBackpack(ItemClasses, GetDropTransform(), ItemDatas);
 		return;
 	}
 
 	if (IsValid(SlotToEmpty.Slot->MyItem))
 	{
-		if(bThrow)
+		// if (UTorch_Data* torch = Cast<UTorch_Data>(SlotToEmpty.Slot->MyItem))
+		// 	if (SlotToEmpty.Slot != GetCurrentlyHeldInventorySlot())
+		// 		torch->bOn = false;
+
+		if (bThrow)
 			Server_SpawnSoundAtLocation(ThrowSound, this->DropTransform->GetComponentLocation());
 		else
 			Server_SpawnSoundAtLocation(DropItemSound, this->DropTransform->GetComponentLocation());
-		
-		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, this->DropTransform->GetComponentTransform(), SlotToEmpty.Slot->MyItem->SerializeMyData(),
+
+		SpawnDroppedWorldItem(SlotToEmpty.Slot->MyItem->MyWorldItemClass, GetDropTransform(),
+		                      SlotToEmpty.Slot->MyItem->SerializeMyData(),
 		                      bThrow, FirstPersonCamera->GetForwardVector());
 
 		this->RemoveItemFromInventorySlot(SlotToEmpty.Slot);
 		OnDropItem.Broadcast();
+		UpdateHeldItems();
 	}
+}
+
+FTransform APlayerCharacter::GetDropTransform()
+{
+	FVector TraceStart = this->FirstPersonCamera->GetComponentLocation();
+	FVector TraceEnd = this->DropTransform->GetComponentLocation();
+
+
+	FHitResult OutHit;
+
+	// Perform the line trace
+	bool bHit = GetWorld()->LineTraceSingleByChannel(OutHit, TraceStart, TraceEnd, ECC_Visibility);
+
+	//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, bHit ? FColor::Green : FColor::Red, false, 3.0f, 0, 1.0f);
+
+	if (bHit)
+		return FTransform(DropTransform->GetComponentRotation(), OutHit.Location, FVector(1.0f, 1.0f, 1.0f));
+	else
+		return FTransform(DropTransform->GetComponentRotation(), TraceEnd, FVector(1.0f, 1.0f, 1.0f));
+}
+
+void APlayerCharacter::DropRandomItem()
+{
+	if (IsLocallyControlled())
+	{
+		Client_DropRandomItem_Implementation();
+		return;
+	}
+
+	if (HasAuthority())
+		Client_DropRandomItem();
+}
+
+void APlayerCharacter::Client_DropRandomItem_Implementation()
+{
+	auto invSlots = Inventory->GetSlots();
+
+	TArray<UInventorySlot*> filledInventorySlots;
+
+	if (!AttackBlend && GetCurrentlyHeldInventorySlot() != HandSlotA)
+		invSlots.Add(HandSlotA);
+
+	if (!AttackBlend && GetCurrentlyHeldInventorySlot() != HandSlotB)
+		invSlots.Add(HandSlotB);
+
+	int invSlotsNum = invSlots.Num();
+
+	for (int i = 0; i < invSlotsNum; ++i)
+	{
+		if (!invSlots[i]->MyItem)
+			continue;
+
+		filledInventorySlots.Add(invSlots[i]);
+	}
+
+	if (filledInventorySlots.Num() < 1)
+		return;
+
+	int droppingSlotIndex = FMath::RandRange(0, filledInventorySlots.Num() - 1);
+
+	if (!filledInventorySlots[droppingSlotIndex])
+		return;
+
+	FSlotData dropSlotData;
+	dropSlotData.Slot = filledInventorySlots[droppingSlotIndex];
+	dropSlotData.bIsBackpackSlot = false;
+
+	DropItem(dropSlotData, false);
 }
 
 void APlayerCharacter::RemoveItemFromInventorySlot(UInventorySlot* SlotToEmpty)
@@ -1001,7 +1148,7 @@ void APlayerCharacter::SwitchHand()
 		return;
 	}
 
-	if (!bSwitchHandAllowed || bInventoryIsOn)
+	if (!bSwitchHandAllowed || bInventoryIsOn || GetCharacterMovement<UDC_CMC>()->IsClimbing())
 		return;
 
 	bSwitchHandAllowed = false;
@@ -1035,12 +1182,22 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 	if (MyPlayerHud->GetHighlightedSlot().bIsBackpackSlot)
 		return;
 
+	if (UTorch_Data* torch = Cast<UTorch_Data>(MyPlayerHud->GetHighlightedSlot().Slot->MyItem))
+		//taken out torch is turned off
+		torch->bOn = false;
+
 	UInventorySlot* slot;
 
 	if (BToA)
 		slot = HandSlotA;
 	else
 		slot = HandSlotB;
+
+	if (UTorch_Data* torch = Cast<UTorch_Data>(slot->MyItem)) //storedTorch is turned off
+		torch->bOn = false;
+
+	if (UTorch_Data* torch = Cast<UTorch_Data>(MyPlayerHud->GetHighlightedSlot().Slot->MyItem))
+		torch->bOn = false;
 
 	//switch
 	UItemData* tmp = MyPlayerHud->GetHighlightedSlot().Slot->MyItem;
@@ -1058,7 +1215,7 @@ void APlayerCharacter::EquipCurrentInventorySelection(bool BToA)
 
 void APlayerCharacter::DropItemPressed()
 {
-	if (AttackBlend)
+	if (AttackBlend || bIsUsingSendingStone)
 		return;
 
 	FSlotData SD;
@@ -1069,7 +1226,7 @@ void APlayerCharacter::DropItemPressed()
 
 void APlayerCharacter::ThrowItemPressed()
 {
-	if (AttackBlend)
+	if (AttackBlend || bIsUsingSendingStone)
 		return;
 
 	FSlotData SD;
@@ -1159,15 +1316,48 @@ void APlayerCharacter::TriggerSecondaryItemAction()
 
 void APlayerCharacter::SetHasBackPack(bool bNewHasBackpack)
 {
-	this->bHasBackPack=bNewHasBackpack;
-	
-	if(bNewHasBackpack)
-		this->AddBuffOrDebuff(NoSprintDebuff);
+	//local
+	this->bHasBackPack = bNewHasBackpack;
+
+	if(this->bHasBackPack)
+		Server_SpawnBackpackOnBack();
 	else
-		this->RemoveBuffOrDebuff(NoSprintDebuff);
+		Server_DestroyBackPackOnBack();
+
+	TSubclassOf<APlayerCharacter> FarmerClass= Cast<ADC_PC>(Controller)->PlayerclassFarmer; 
+	if(this->GetClass()!=FarmerClass)
+		AddBackPackDebuff(this->bHasBackPack);
+	
 }
 
-void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform, const FString& SerializedData, bool bThrow, FVector CameraVector)
+void APlayerCharacter::Server_SpawnBackpackOnBack_Implementation()
+{
+	const USkeletalMeshSocket* Socket= this->GetMesh()->GetSocketByName("Backpack_Socket");
+	this->AttachedBackpack = GetWorld()->SpawnActor<AActor>(BackpackActorToAttach, this->GetMesh()->GetSocketTransform("Backpack_Socket"));
+
+
+	FAttachmentTransformRules Rules=FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+	
+	this->AttachedBackpack->AttachToComponent(this->GetMesh(),Rules,"Backpack_Socket");
+	
+}
+
+void APlayerCharacter::Server_DestroyBackPackOnBack_Implementation()
+{
+	if(IsValid(this->AttachedBackpack))
+		this->AttachedBackpack->Destroy(true, true);
+}
+
+void APlayerCharacter::AddBackPackDebuff_Implementation(bool bHasBackpack)
+{
+	if (bHasBackpack)
+		this->AddBuffOrDebuff(NoSprintDebuff);
+	else
+		this->RemoveBuffOrDebuff(NoSprintDebuff);	
+}
+
+void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
+                                             const FString& SerializedData, bool bThrow, FVector CameraVector)
 {
 	if (!HasAuthority())
 		Server_SpawnDroppedWorldItem(ItemToSpawn, SpawnTransform, SerializedData, bThrow, CameraVector);
@@ -1175,19 +1365,21 @@ void APlayerCharacter::SpawnDroppedWorldItem(TSubclassOf<AWorldItem> ItemToSpawn
 		Server_SpawnDroppedWorldItem_Implementation(ItemToSpawn, SpawnTransform, SerializedData, bThrow, CameraVector);
 }
 
-void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn, FTransform SpawnTransform,
+void APlayerCharacter::Server_SpawnDroppedWorldItem_Implementation(TSubclassOf<AWorldItem> ItemToSpawn,
+                                                                   FTransform SpawnTransform,
                                                                    const FString& SerializedData, bool bThrow,
                                                                    FVector CameraVector)
 {
 	AWorldItem* i = GetWorld()->SpawnActorDeferred<AWorldItem>(ItemToSpawn, SpawnTransform);
 	i->SerializedStringData = SerializedData;
+	i->SetWasDroppedByPlayer(true);
 	i->FinishSpawning(SpawnTransform);
 
 	if (bThrow)
 	{
 		if (UMeshComponent* u = Cast<UMeshComponent>(i->GetRootComponent()))
 		{
-			u->AddImpulse(CameraVector * this->throwStrengh * u->GetMass());
+			u->AddImpulse(CameraVector * this->ThrowStrengh * u->GetMass());
 		}
 	}
 }
@@ -1199,6 +1391,7 @@ void APlayerCharacter::CheckForFallDamage()
 
 	if (GetMovementComponent()->Velocity.Z == 0 && BWasFallingInLastFrame) //frame of impact
 	{
+		this->bJumped = false; //ignore me i am only for the animation blueprint
 		float deltaZ = LastStandingHeight - this->RootComponent->GetComponentLocation().Z + 20;
 		//+20 artificially because the capsule curvature lets the player stand lower
 
@@ -1206,12 +1399,11 @@ void APlayerCharacter::CheckForFallDamage()
 		float damage = this->FallDamageCalculation(deltaZ);
 		if (damage > 0)
 		{
-			if(damage>= this->HP)
+			if (damage >= this->HP)
 				Server_SpawnSoundAtLocation(FallingToDeathSound, this->GetActorLocation());
-			
-			TakeDamage(damage);
 
-		}			
+			TakeDamage(damage);
+		}
 
 		//FString message = 
 		//	"\n\nStart height:\t"+FString::SanitizeFloat(LastStandingHeight)+
@@ -1228,7 +1420,7 @@ void APlayerCharacter::CheckForFallDamage()
 
 float APlayerCharacter::FallDamageCalculation(float deltaHeight)
 {
-	const float free = 300;
+	const float free = 400;
 	const float max = 1000;
 
 	if (deltaHeight <= free)
@@ -1245,7 +1437,7 @@ void APlayerCharacter::NavigateInventory(const FInputActionValue& Value)
 	FVector2D input = Value.Get<FVector2D>();
 
 
-	if (!MyPlayerHud)
+	if (!MyPlayerHud || bIsUsingSendingStone)
 		return;
 
 
@@ -1282,24 +1474,36 @@ void APlayerCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
 
+	if(IsValid(VOIPTalker))
+		VOIPTalker->DestroyComponent();
+
 	GetCapsuleComponent()->SetCollisionProfileName("DeadPawn", true);
-	StimulusSource->DestroyComponent(false);
+
+	if(IsValid(StimulusSource))
+		StimulusSource->DestroyComponent();
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 	GetMesh()->SetAnimation(nullptr);
 
-	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
-	GetMesh()->SetAllBodiesSimulatePhysics(true);
-	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->WakeAllRigidBodies();
+	// GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	// GetMesh()->SetAllBodiesSimulatePhysics(true);
+	// GetMesh()->SetSimulatePhysics(true);
+	// GetMesh()->WakeAllRigidBodies();
+
+	GetMesh()->SetVisibility(false);
+
+	if (HasAuthority())
+		SpawnCorpse();
 
 	if (IsLocallyControlled())
 	{
 		this->MyPlayerHud->RemoveFromParent();
 		DeactivateCharacterInputMappings();
-		dropAllItems();
+		DropAllItems();
 		if (IsValid(CurrentlyHeldWorldItem))
 			DestroyWorldItem(CurrentlyHeldWorldItem);
+
+		GetGameInstance()->GetSubsystem<UVoiceChatSubsystem>()->UnmuteAllPlayers();
 	}
 
 
@@ -1318,12 +1522,13 @@ void APlayerCharacter::OnDeath_Implementation()
 			break;
 		}
 	}
-	
+
 	if (bAllDead)
 	{
-		if(AResetManager* ResetManager = Cast<AResetManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AResetManager::StaticClass())))
+		if (AResetManager* ResetManager = Cast<AResetManager>(
+			UGameplayStatics::GetActorOfClass(GetWorld(), AResetManager::StaticClass())))
 			ResetManager->Server_ResetDungeon();
-		
+
 		return;
 	}
 
@@ -1366,7 +1571,10 @@ void APlayerCharacter::StartAttacking()
 
 void APlayerCharacter::AttackStart()
 {
-	if (AttackBlend != 0  || this->Stamina <=0) //so a new attack only stars when the old one is already over
+	if (GetCharacterMovement<UDC_CMC>()->IsClimbing())
+		return;
+
+	if (AttackBlend != 0 || this->Stamina <= 0) //so a new attack only stars when the old one is already over
 		return;
 	//different attack when sprinting?
 	//attack needs to cost stamina
@@ -1378,15 +1586,13 @@ void APlayerCharacter::AttackStart()
 	this->bSprintAllowed = false;
 
 	OverridenWalkingSpeed = WalkingSpeed;
-	WalkingSpeed = 100;
-	GetCharacterMovement()->MaxWalkSpeed = 100;
+	GetCharacterMovement()->MaxWalkSpeed = SlowedWalkingSpeed;
 
 	if (IsLocallyControlled())
 	{
 		StopSprint();
 		SubstractStamina(Cast<AWeapon>(CurrentlyHeldWorldItem)->GetStaminaCost());
 	}
-		
 }
 
 
@@ -1405,7 +1611,8 @@ void APlayerCharacter::Multicast_AttackStart_Implementation()
 
 void APlayerCharacter::Cheat_SpawnItem(TSubclassOf<AWorldItem> ItemToSpawn)
 {
-	Server_SpawnDroppedWorldItem(ItemToSpawn,DropTransform->GetComponentTransform(), FString(), false, FVector(0, 0, 0));
+	Server_SpawnDroppedWorldItem(ItemToSpawn, GetDropTransform(), FString(), false,
+	                             FVector(0, 0, 0));
 }
 
 void APlayerCharacter::AttackLanded()
@@ -1430,7 +1637,6 @@ void APlayerCharacter::OnAttackOver()
 		Server_EndAttack();
 }
 
-
 void APlayerCharacter::Server_EndAttack_Implementation()
 {
 	Multicast_EndAttack();
@@ -1452,6 +1658,8 @@ void APlayerCharacter::Multicast_EndAttack_Implementation()
 
 void APlayerCharacter::BuyItem(ABuyableItem* ItemToBuy)
 {
+	Server_SpawnSoundAtLocation(BuySpound, ItemToBuy->GetActorLocation());
+
 	if (ItemToBuy->MyItemDataClass == BackpackClass)
 	{
 		if (!this->bHasBackPack)
@@ -1489,44 +1697,78 @@ void APlayerCharacter::CreatePlayerHud()
 	this->MyPlayerHud->AddToViewport();
 }
 
-void APlayerCharacter::dropAllItems()
+void APlayerCharacter::DropAllItems()
 {
-	TArray<UInventorySlot*> AllSlots= GetAllSlots();
-
-	for (UInventorySlot* IS : AllSlots)
+	if (IsLocallyControlled())
 	{
-		if (IsValid(IS->MyItem))
+		TArray<UInventorySlot*> AllSlots = GetAllSlots();
+
+		for (UInventorySlot* IS : AllSlots)
 		{
-			UItemData* data = IS->MyItem;
-			SpawnDroppedWorldItem(data->MyWorldItemClass, DropTransform->GetComponentTransform(), data->SerializeMyData(), false, FVector::Zero());
+			if (IsValid(IS->MyItem))
+			{
+				UItemData* data = IS->MyItem;
+				SpawnDroppedWorldItem(data->MyWorldItemClass, GetDropTransform(),
+				                      data->SerializeMyData(), false, FVector::Zero());
+			}
+		}
+		if (bHasBackPack)
+		{
+			//backpack is spawning without items in it. Its items drop like the others
+			Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), GetDropTransform(),
+			                    TArray<FString>());
 		}
 	}
-	if (bHasBackPack)
+	else
 	{
-		//backpack is spawning without items in it. Its items drop like the others
-		Server_DropBackpack(TArray<TSubclassOf<UItemData>>(), DropTransform->GetComponentTransform(), TArray<FString>());
+		for (FHeldItem HeldItem : this->HeldItems)
+		{
+			LogWarning("TryingToSpawnDroppedItem...");
+			SpawnDroppedWorldItem(HeldItem.ItemDataClass.GetDefaultObject()->MyWorldItemClass,
+			                      GetDropTransform(), HeldItem.ItemData, false, FVector::Zero());
+		}
 	}
 }
 
 
-void APlayerCharacter::Server_SpawnSoundAtLocation_Implementation(USoundBase* LocalSound,  FVector Location)
+void APlayerCharacter::Server_SpawnSoundAtLocation_Implementation(USoundBase* LocalSound, FVector Location)
 {
 	Multicast_SpawnSoundAtLocation(LocalSound, Location);
 }
 
 void APlayerCharacter::StartExaustionTimer()
 {
-	float Time= Cast<UDebuffExaustion>(ExaustionDebuff.GetDefaultObject())->GetTimeUntulExaustion();
-	GetWorld()->GetTimerManager().SetTimer(ExaustionTimer, this, &APlayerCharacter::ApplyExaustion,Time , false);
+	float Time = Cast<UDebuffExaustion>(ExaustionDebuff.GetDefaultObject())->GetTimeUntulExaustion();
+	GetWorld()->GetTimerManager().SetTimer(ExaustionTimer, this, &APlayerCharacter::ApplyExaustion, Time, false);
+}
+
+void APlayerCharacter::RemoveExaustion()
+{
+	this->RemoveBuffOrDebuff(ExaustionDebuff);
+	StopYawn();
 }
 
 void APlayerCharacter::ApplyExaustion()
 {
 	this->AddBuffOrDebuff(ExaustionDebuff);
-	Yawn();	
+	Yawn();
 }
 
 void APlayerCharacter::Yawn_Implementation()
+{
+	BP_Yawn();
+}
+
+void APlayerCharacter::BP_Yawn_Implementation()
+{
+}
+
+void APlayerCharacter::StopYawn_Implementation()
+{
+	BP_StopYawn();
+}
+
+auto APlayerCharacter::BP_StopYawn_Implementation() -> void
 {
 }
 
@@ -1541,6 +1783,283 @@ void APlayerCharacter::LeftBehind_Implementation()
 {
 }
 
+TArray<FHeldItem> APlayerCharacter::GetHeldItems()
+{
+	TArray<FHeldItem> TemporaryArray;
+	for (UInventorySlot* s : GetAllSlots())
+	{
+		if (!IsValid(s->MyItem))
+			continue;
+
+		FHeldItem TemporaryHeldItem;
+		TemporaryHeldItem.ItemDataClass = s->MyItem->GetClass();
+		TemporaryHeldItem.ItemData = s->MyItem->SerializeMyData();
+		TemporaryArray.Add(TemporaryHeldItem);
+	}
+	if (bHasBackPack)
+	{
+		FHeldItem backpack;
+		backpack.ItemDataClass = BackpackClass;
+		backpack.ItemData = " ";
+		TemporaryArray.Add(backpack);
+	}
+	return TemporaryArray;
+}
+
+void APlayerCharacter::UpdateHeldItems()
+{
+	TArray<FHeldItem> heldItems = GetHeldItems();
+
+	TArray<TSubclassOf<UItemData>> ItemDataClasses;
+	TArray<FString> SerializedItemDatas;
+
+	for (FHeldItem tmp : heldItems)
+	{
+		ItemDataClasses.Add(tmp.ItemDataClass);
+		SerializedItemDatas.Add(tmp.ItemData);
+	}
+
+	if (HasAuthority())
+		Server_UpdateHeldItems_Implementation(ItemDataClasses, SerializedItemDatas);
+	else
+		Server_UpdateHeldItems(ItemDataClasses, SerializedItemDatas);
+}
+
+void APlayerCharacter::Server_UpdateHeldItems_Implementation(const TArray<TSubclassOf<UItemData>>& ItemDataClasses,
+                                                             const TArray<FString>& SerializedItemDatas)
+{
+	TArray<FHeldItem> newHeldItems = TArray<FHeldItem>();
+
+	for (int i = 0; i < ItemDataClasses.Num(); i++)
+	{
+		FHeldItem tmpHeldItem;
+		tmpHeldItem.ItemDataClass = ItemDataClasses[i];
+		tmpHeldItem.ItemData = SerializedItemDatas[i];
+		newHeldItems.Add(tmpHeldItem);
+	}
+
+	this->HeldItems = newHeldItems;
+}
+
+UUserWidget* APlayerCharacter::StartSelectionWheel(TArray<FString> Options)
+{
+	bMoveAllowed = false;
+	bLookAllowed = false;
+	bJumpAllowed = false;
+	bSwitchHandAllowed = false;
+
+	bUsingSelectionWheel = true;
+	return GetMyHud()->ShowSelectionWheel(Options);
+}
+
+int APlayerCharacter::EndSelectionWheel()
+{
+	bMoveAllowed = true;
+	bLookAllowed = true;
+	bJumpAllowed = true;
+	bSwitchHandAllowed = true;
+
+	bUsingSelectionWheel = false;
+	return GetMyHud()->DestroySelectionWheel();
+}
+
+void APlayerCharacter::OnPotionDrunk()
+{
+	Server_OnPotionDrunk();
+	
+	if (APotion* Potion = Cast<APotion>(GetCurrentlyHeldWorldItem()))
+	{
+		Potion->Local_ApplyEffect(this);
+	}
+}
+
+void APlayerCharacter::StartDrinkingPotion()
+{
+	//onServer
+	this->SetAttackBlend(1);
+	Client_StartDrinkingPotion();
+}
+
+void APlayerCharacter::Client_StartDrinkingPotion_Implementation()
+{
+	this->bSwitchHandAllowed = false;
+	this->bPrimaryActionAllowed = false;
+}
+
+void APlayerCharacter::StopDrinkingPotion()
+{
+	this->SetAttackBlend(0);
+	Client_StopDrinkingPotion();
+}
+
+
+void APlayerCharacter::Client_StopDrinkingPotion_Implementation()
+{
+	this->bSwitchHandAllowed = true;
+	this->bPrimaryActionAllowed = true;
+	RemoveItemFromInventorySlot(GetCurrentlyHeldInventorySlot());
+}
+
+void APlayerCharacter::Server_OnPotionDrunk_Implementation()
+{
+	if (APotion* Potion = Cast<APotion>(GetCurrentlyHeldWorldItem()))
+	{
+		Potion->Authority_ApplyEffect(this);
+	}
+}
+
+void APlayerCharacter::SpawnCorpse()
+{
+	if (HasAuthority())
+		Server_SpawnCorpse_Implementation();
+	else
+		Server_SpawnCorpse();
+}
+
+void APlayerCharacter::Server_SpawnCorpse_Implementation()
+{
+	if (IsValid(CorpseClass) && HasAuthority())
+	{
+		GetWorld()->SpawnActor<AActor>(CorpseClass, this->GetActorTransform());
+	}
+}
+
+void APlayerCharacter::SendindStoneInputPressed(const FInputActionValue& Value)
+{
+	if (!bIsUsingSendingStone || SendingStoneAnimatoinState != ESendingStoneAnimatoinState::Neutral)
+		return;
+
+	FVector2d InputValue = Value.Get<FVector2d>();
+	if (InputValue.X == 1)
+	{
+		this->SendingStoneAnimatoinState = ESendingStoneAnimatoinState::Up;
+		return;
+	}
+	if (InputValue.X == -1)
+	{
+		this->SendingStoneAnimatoinState = ESendingStoneAnimatoinState::Down;
+		return;
+	}
+
+	if (InputValue.Y == 1)
+	{
+		this->SendingStoneAnimatoinState = ESendingStoneAnimatoinState::Right;
+		return;
+	}
+
+	if (InputValue.Y == -1)
+	{
+		this->SendingStoneAnimatoinState = ESendingStoneAnimatoinState::Left;
+		return;
+	}
+}
+
+void APlayerCharacter::SendSendingStoneSignal(ESendingStoneAnimatoinState Signal)
+{
+	if (HasAuthority())
+		Server_SendSendingStoneSignal_Implementation(Signal);
+	else
+		Server_SendSendingStoneSignal(Signal);
+}
+
+void APlayerCharacter::Server_SendSendingStoneSignal_Implementation(ESendingStoneAnimatoinState Signal)
+{
+	if (ASendingStone* SendingStone = Cast<ASendingStone>(GetCurrentlyHeldWorldItem()))
+	{
+		SendingStone->Server_SendSignal(Signal);
+	}
+}
+
+bool APlayerCharacter::HasItemOfClass(TSubclassOf<UItemData> Item)
+{
+	for (FHeldItem f : this->HeldItems)
+	{
+		if (f.ItemDataClass == Item)
+			return true;
+	}
+	return false;
+}
+
+void APlayerCharacter::Destroyed()
+{
+	if(IsValid(MyPlayerHud))
+		MyPlayerHud->RemoveFromParent();
+	
+	Super::Destroyed();
+}
+
+void APlayerCharacter::SetAttackBlend(float NewBlend)
+{
+	if(HasAuthority())
+		Server_SetAttackBlend_Implementation(NewBlend);
+	else
+		Server_SetAttackBlend(NewBlend);
+}
+
+void APlayerCharacter::Server_SetAttackBlend_Implementation(float NewBlend)
+{
+	this->AttackBlend=NewBlend;
+}
+
+void APlayerCharacter::TransferInventory_Implementation(APlayerCharacter* OldCharacter)
+{
+	if(!IsValid(OldCharacter))
+		return;
+	
+	this->SetHasBackPack(OldCharacter->bHasBackPack); 
+
+	for (int i = 0; i < OldCharacter->Inventory->GetSlots().Num(); i++)
+	{
+		if (!IsValid(OldCharacter->Inventory->GetSlots()[i]->MyItem))
+			continue;
+
+		this->Inventory->GetSlots()[i]->MyItem = OldCharacter->GetInventory()->GetSlots()[i]->MyItem;
+	}
+
+	if(this->bHasBackPack)
+	{
+		for (int i = 0; i < OldCharacter->Backpack->GetSlots().Num(); i++)
+		{
+			if (!IsValid(OldCharacter->Backpack->GetSlots()[i]->MyItem))
+				continue;
+
+			this->GetBackpack()->GetSlots()[i]->MyItem = OldCharacter->Backpack->GetSlots()[i]->MyItem;
+		}	
+	}
+
+	if(IsValid(OldCharacter->HandSlotA->MyItem))
+		this->HandSlotA->MyItem=OldCharacter->HandSlotA->MyItem;
+
+	if(IsValid(OldCharacter->HandSlotB->MyItem))
+	this->HandSlotB->MyItem=OldCharacter->HandSlotB->MyItem;
+	
+	TakeOutItem();
+
+	OldCharacter->SelfDestruct();
+}
+
+void APlayerCharacter::SelfDestruct_Implementation()
+{
+	this->Destroy(true, true);
+}
+
+void APlayerCharacter::AddItemToInventory(UItemData* NewItem)
+{
+	UInventorySlot* FreeSlot = FindFreeSlot();
+	if(IsValid(FreeSlot))
+	{
+		FreeSlot->MyItem=NewItem;
+		if(FreeSlot==GetCurrentlyHeldInventorySlot())
+			TakeOutItem();
+
+		UpdateHeldItems();
+	}
+	else
+	{
+		SpawnDroppedWorldItem(NewItem->MyWorldItemClass, GetDropTransform(), "", false, FVector::Zero());
+	}
+}
+
 void APlayerCharacter::ShowHudDamageIndicator_Implementation()
 {
 }
@@ -1550,7 +2069,7 @@ void APlayerCharacter::Multicast_SpawnSoundAtLocation_Implementation(USoundBase*
 	if (IsValid(LocalSound))
 		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), LocalSound, Location);
 
-	
+
 	FString text = "playing at: " + this->GetRootComponent()->GetComponentLocation().ToString();
 
 	if (HasAuthority())

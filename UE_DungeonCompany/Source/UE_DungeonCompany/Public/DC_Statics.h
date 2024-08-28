@@ -10,18 +10,24 @@
 #define LogWarning(Message) UE_LOG(LogTemp, Warning, TEXT("%s"),Message)
 #define PrintMessage(Message, DisplayLength) GEngine->AddOnScreenDebugMessage(-1, DisplayLength, FColor::Green, Message)
 
+class APlayerCharacter;
+
 UCLASS()
 class UE_DUNGEONCOMPANY_API UDC_Statics : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
+	//Voice Settings
 public:
+	UFUNCTION(BlueprintCallable, Category="Voice")
+	static float GetMicInputGain();
+	
 	UFUNCTION(BlueprintCallable, Category="Voice")
 	static void SetMicInputGain(float Value);
 
 	UFUNCTION(BlueprintCallable, Category="Voice")
-	static void SetMicNoiseGateTreshold(float Value); 
-	
+	static void SetMicNoiseGateTreshold(float Value);
+
 	UFUNCTION(BlueprintCallable, Category = "Voice")
 	static void SetMicNoiseAttackTime(float Value);
 
@@ -36,7 +42,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Voice")
 	static void SetVoiceSilenceDetectionAttackTime(float Value);
-	
+
 	UFUNCTION(BlueprintCallable, Category="Voice")
 	static void SetVoiceSilenceDetectionReleaseTime(float Value);
 
@@ -58,4 +64,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Voice")
 	static void SetVoiceDebugPrintAmplitude(bool Value);
 
+public:
+	/* Remote Controllers will only be checked via their pawns rotation. */
+	UFUNCTION(BlueprintCallable, Category = "Vision")
+	static bool IsLocationInViewportOfPlayer(APlayerController* PlayerController, const FVector& Location);
+
+	UFUNCTION(BlueprintCallable, Category = "Vision")
+	static bool IsLocationVisibleToPlayer(APlayerController* PlayerController, const FVector& Location);
+
+	UFUNCTION(BlueprintCallable, Category = "Vision")
+	static bool IsActorVisibleToPlayer(APlayerController* PlayerController, const AActor* Actor);
 };

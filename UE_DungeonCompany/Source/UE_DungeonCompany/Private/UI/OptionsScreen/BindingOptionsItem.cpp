@@ -43,8 +43,11 @@ void UBindingOptionsItem::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	KeySelector->OnKeySelected.AddDynamic(this, &UBindingOptionsItem::OnKeySelected);
-	KeySelector->OnIsSelectingKeyChanged.AddDynamic(this, &UBindingOptionsItem::OnIsSelectingKeyChanged);
+	
+	if(!KeySelector->OnKeySelected.IsBound())
+		KeySelector->OnKeySelected.AddDynamic(this, &UBindingOptionsItem::OnKeySelected);
+	if(!KeySelector->OnIsSelectingKeyChanged.IsBound())
+		KeySelector->OnIsSelectingKeyChanged.AddDynamic(this, &UBindingOptionsItem::OnIsSelectingKeyChanged);
 
 	AMultiDevice_PC* owner = GetOwningPlayer<AMultiDevice_PC>();
 
@@ -54,8 +57,10 @@ void UBindingOptionsItem::NativeConstruct()
 	KeyText->SetText(MappableKey.GetPlayerMappableKeySettings()->DisplayName);
 	KeySelector->SetSelectedKey(owner->GetCurrentKeyForMapping(MappableKey.GetPlayerMappableKeySettings()->Name));
 
-	ResetButton->OnPressed.AddDynamic(this, &UBindingOptionsItem::ResetMapping);
-	UnbindButton->OnPressed.AddDynamic(this, &UBindingOptionsItem::ClearMapping);
+	if(!ResetButton->OnPressed.IsBound())
+		ResetButton->OnPressed.AddDynamic(this, &UBindingOptionsItem::ResetMapping);
+	if(!UnbindButton->OnPressed.IsBound())
+		UnbindButton->OnPressed.AddDynamic(this, &UBindingOptionsItem::ClearMapping);
 }
 
 void UBindingOptionsItem::OnKeySelected(FInputChord SelectedKey)

@@ -40,4 +40,14 @@ void UPlayerHud::MoveHighlightScroll_Implementation(bool up)
 	LogWarning(TEXT("UPlayerHud::MoveHighlight_ScrollImplementation has not been overidden"));
 }
 
+UUserWidget* UPlayerHud::ShowSelectionWheel_Implementation(const  TArray<FString>& Options)
+{
+	return nullptr;
+}
+
+int UPlayerHud::DestroySelectionWheel_Implementation()
+{
+	return -1;
+}
+
 

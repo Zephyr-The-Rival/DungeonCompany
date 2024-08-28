@@ -60,6 +60,16 @@ UItemData* UInventory::GetItemAtIndex(int32 Index)
 	return Slots[Index]->MyItem;
 }
 
+bool UInventory::ContainsItem(TSubclassOf<UItemData> ItemClass)
+{
+	for(UInventorySlot* slot : this->Slots )
+	{
+		if(IsValid(slot->MyItem)&&slot->MyItem->IsA(ItemClass))
+			return true;
+	}
+	return false;
+}
+
 void UInventory::RemoveItem(UItemData* ItemToRemove)
 {
 	for (UInventorySlot* s : this->Slots)

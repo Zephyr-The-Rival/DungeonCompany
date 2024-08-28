@@ -10,7 +10,7 @@
 class APlayerCharacter;
 class ADC_Entity;
 
-class UVOIPTalker;
+class UDC_VOIPTalker;
 class UInputMappingContext;
 class UInputAction;
 class USpectatorHud;
@@ -29,8 +29,8 @@ private:
 private:
 	TArray<APlayerCharacter*> PlayerCharacters;
 	int SpecatingPlayerIndex = 0;
-	
-	UVOIPTalker* VOIPTalker;
+
+	UDC_VOIPTalker* VOIPTalker;
 
 public:
 	// Sets default values for this pawn's properties
@@ -46,7 +46,9 @@ protected:
 
 	void StopSpectatingPlayer(APlayerCharacter* InPlayer);
 
-public:	
+	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
+
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -80,7 +82,7 @@ protected:
 	void OnInputDeviceChanged(bool IsUsingGamepad);
 
 private:
-	void (*LookFunction)(const FInputActionValue& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
+	void (*LookFunction)(const FVector2d& Value, APawn* Player) = &UInputFunctionLibrary::LookGamepad;
 
 protected:
 	void Look(const FInputActionValue& Value);
@@ -89,11 +91,11 @@ protected:
 	void SpectatePreviousPlayer();
 	void SpectateNextPlayer();
 
-
 public:
 	void CreateSpectatorHud();
 
 	USpectatorHud* MySpectatorHud;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<USpectatorHud> SpectatorHudClass;
@@ -102,6 +104,5 @@ protected:
 	FOnSpectatingSwitch OnSpectatingSwitch;
 
 protected:
-
 	virtual void Destroyed() override;
 };

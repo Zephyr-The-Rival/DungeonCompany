@@ -12,13 +12,6 @@ UBuffDebuffBase::UBuffDebuffBase()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	SetIsReplicatedByDefault(true);
-
-}
-
-
-void UBuffDebuffBase::IncrementAppliedCount()
-{
-	++AppliedCount;
 }
 
 void UBuffDebuffBase::BeginPlay()
@@ -34,7 +27,6 @@ void UBuffDebuffBase::BeginPlay()
 	}
 
 	Apply();
-
 }
 
 void UBuffDebuffBase::Apply()
@@ -44,19 +36,17 @@ void UBuffDebuffBase::Apply()
 
 	if (OuterEntity->HasAuthority())
 		AuthorityApply();
-
 }
 
 void UBuffDebuffBase::AuthorityApply()
 {
 	Timegate(ActiveSeconds);
-
 }
 
 void UBuffDebuffBase::LocalApply()
 {
-	this->bIsActive=true;
-	
+	this->bIsActive = true;
+
 	if (APlayerCharacter* player = Cast<APlayerCharacter>(OuterEntity))
 		player->GetMyHud()->UpdateBuffs();
 }
@@ -65,11 +55,10 @@ void UBuffDebuffBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	if(!IsValid(OuterEntity))
+	if (!IsValid(OuterEntity))
 		return;
 
 	Remove();
-
 }
 
 void UBuffDebuffBase::Remove()
@@ -77,29 +66,29 @@ void UBuffDebuffBase::Remove()
 	if (OuterEntity->IsLocallyControlled())
 		LocalRemove();
 
-	if(OuterEntity->HasAuthority())
+	if (OuterEntity->HasAuthority())
 		AuthorityRemove();
 }
 
 void UBuffDebuffBase::AuthorityRemove()
 {
-	
 }
 
 void UBuffDebuffBase::LocalRemove()
 {
-	this->bIsActive=false;
+	this->bIsActive = false;
 	if (APlayerCharacter* player = Cast<APlayerCharacter>(OuterEntity))
-		player->GetMyHud()->UpdateBuffs();
+	{
+		if(IsValid(player->GetMyHud())&& player->GetMyHud()->GetParent()!=nullptr)
+		{
+			player->GetMyHud()->UpdateBuffs();
+		}		
+	}
+	
 }
 
 void UBuffDebuffBase::Destroy()
 {
-	--AppliedCount;
-	
-	if(AppliedCount)
-		return;
-		
 	GetWorld()->GetTimerManager().ClearTimer(ActiveTimerHandle);
 
 	Super::DestroyComponent(false);
@@ -107,6 +96,16 @@ void UBuffDebuffBase::Destroy()
 
 void UBuffDebuffBase::Timegate(float TimeSeconds)
 {
-	if(TimeSeconds > 0.f)
+	if (TimeSeconds > 0.f)
 		GetWorld()->GetTimerManager().SetTimer(ActiveTimerHandle, this, &UBuffDebuffBase::Destroy, TimeSeconds, false);
+}
+
+void UBuffDebuffBase::SetActiveSeconds(float InActiveSeconds)
+{
+	ActiveSeconds = InActiveSeconds;
+}
+
+void UBuffDebuffBase::ResetTimer()
+{
+	Timegate(ActiveSeconds);
 }
