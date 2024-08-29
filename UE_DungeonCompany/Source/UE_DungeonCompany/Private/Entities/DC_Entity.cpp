@@ -61,6 +61,11 @@ void ADC_Entity::CheckIfDead()
 		OnDeath();
 }
 
+void ADC_Entity::DamageEntity(float Damage)
+{
+	TakeDamage(Damage);
+}
+
 void ADC_Entity::TakeDamage(float Damage)
 {
 	//blood particle have to be spawned speperately look at this->SpawnHitEffect

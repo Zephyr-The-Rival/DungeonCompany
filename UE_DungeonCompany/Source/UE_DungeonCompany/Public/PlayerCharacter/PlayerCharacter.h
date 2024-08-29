@@ -368,6 +368,7 @@ public:
 	float GetStamina() const { return Stamina; }
 
 private:
+	UPROPERTY()
 	UDC_VOIPTalker* VOIPTalker;
 
 	UPROPERTY(EditAnywhere)
@@ -682,6 +683,7 @@ public:
 	void PlaceItemOnSocket_Implementation(AItemSocket* Socket);
 
 protected: //player hud
+	UPROPERTY()
 	UPlayerHud* MyPlayerHud;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

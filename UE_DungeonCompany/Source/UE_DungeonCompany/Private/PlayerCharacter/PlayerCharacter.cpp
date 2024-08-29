@@ -87,6 +87,7 @@ APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	this->Stamina = this->MaxStamina;
 
 	FootstepSystemComponent = CreateDefaultSubobject<UFootstepSystemComponent>(TEXT("FootstepSystem"));
+	bAlwaysRelevant = true;
 }
 
 // Called when the game starts or when spawned
@@ -1499,7 +1500,9 @@ void APlayerCharacter::OnDeath_Implementation()
 
 	if (IsLocallyControlled())
 	{
-		this->MyPlayerHud->RemoveFromParent();
+		if(IsValid(MyPlayerHud))
+			this->MyPlayerHud->RemoveFromParent();
+		
 		DeactivateCharacterInputMappings();
 		DropAllItems();
 		if (IsValid(CurrentlyHeldWorldItem))
@@ -1518,7 +1521,7 @@ void APlayerCharacter::OnDeath_Implementation()
 	bool bAllDead = true;
 	for (TActorIterator<APlayerCharacter> It(GetWorld()); It; ++It)
 	{
-		if (!It->IsDead())
+		if (IsValid(*It) && !It->IsDead())
 		{
 			bAllDead = false;
 			break;

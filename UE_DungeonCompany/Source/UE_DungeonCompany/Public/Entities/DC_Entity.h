@@ -38,6 +38,9 @@ public:
 	UFUNCTION(BlueprintPure, BlueprintCallable)
 	inline bool IsDead() const { return HP <= 0.f; }
 
+	UFUNCTION(BlueprintCallable)
+	void DamageEntity(float Damage);
+
 	using Super::TakeDamage;
 	virtual void TakeDamage(float Damage);
 
@@ -62,7 +65,7 @@ protected:
 	void CheckIfDead();
 
 public:
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent)
 	void OnDeath();
 	virtual void OnDeath_Implementation();
 
