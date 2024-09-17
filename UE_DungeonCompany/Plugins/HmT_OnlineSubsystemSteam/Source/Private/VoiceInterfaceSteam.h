@@ -3,7 +3,7 @@
 #pragma once
 
 #include "VoiceInterfaceImpl.h"
-#include "VoiceEngineSteam.h"
+#include "VoiceEngineSteamHmT.h"
 
 /**
  * The Steam implementation of the voice interface 
@@ -26,7 +26,7 @@ public:
 
 	virtual IVoiceEnginePtr CreateVoiceEngine() override
 	{
-		return MakeShareable(new FVoiceEngineSteam(OnlineSubsystem));
+		return MakeShareable(new FVoiceEngineSteamHmT(OnlineSubsystem));
 	}
 
 	/** Virtual destructor to force proper child cleanup */

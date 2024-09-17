@@ -12,7 +12,7 @@ class FUniqueNetIdSteam;
 /**
 * Generic implementation of voice engine, using Voice module for capture/codec
 */
-class FVoiceEngineSteam : public FVoiceEngineImpl
+class FVoiceEngineSteamHmT : public FVoiceEngineImpl
 {
 	/** Steam User interface */
 	class ISteamUser* SteamUserPtr;
@@ -26,16 +26,21 @@ class FVoiceEngineSteam : public FVoiceEngineImpl
 	virtual void StoppedRecording() const override;
 
 PACKAGE_SCOPE:
-
 	/** Constructor */
-	FVoiceEngineSteam() :
+	FVoiceEngineSteamHmT() :
 		FVoiceEngineImpl(),
 		SteamUserPtr(nullptr),
 		SteamFriendsPtr(nullptr)
-	{};
+	{
+	};
 
 public:
+	FVoiceEngineSteamHmT(IOnlineSubsystem* InSubsystem);
+	virtual ~FVoiceEngineSteamHmT();
 
-	FVoiceEngineSteam(IOnlineSubsystem* InSubsystem);
-	virtual ~FVoiceEngineSteam();
+private:
+	FString CaptureDeviceName;
+
+public:
+	virtual void UseCaptureDevice(const FString& DeviceName);
 };
