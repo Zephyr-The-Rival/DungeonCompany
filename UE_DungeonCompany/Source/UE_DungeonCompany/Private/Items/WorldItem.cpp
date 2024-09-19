@@ -8,6 +8,7 @@
 #include "UI/PlayerHud/PlayerHud.h"
 #include "Net/UnrealNetwork.h"
 #include "Inventory/InventorySlot.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Sight.h"
@@ -26,8 +27,11 @@ AWorldItem::AWorldItem()
 	bAlwaysRelevant = true;
 	bAttachesToRightHand=true;
 
-	static ConstructorHelpers::FObjectFinder<USoundBase> basicSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
-	this->PickUpSound = basicSound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundBase> basicPickUpSound(TEXT("/Game/_DungeonCompanyContent/Audio/PickUpSounds/PickUpGeneric"));
+	this->PickUpSound = basicPickUpSound.Object;
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> basicImpactSound(TEXT("/Game/_DungeonCompanyContent/Audio/ItemImpactSounds/BasicItemImpactSound_Cue")); 
+	this->ImpactSound = basicImpactSound.Object;
 	
 	StimulusSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimulus"));
 	StimulusSource->RegisterForSense(UAISense_Sight::StaticClass());
@@ -38,23 +42,38 @@ AWorldItem::AWorldItem()
 // Called when the game starts or when spawned
 void AWorldItem::BeginPlay()
 {
-	if (IsValid(MyCharacterToAttachTo))
+	if (IsValid(MyCharacterToAttachTo))//attach to players hand
 	{
 		AttachToPlayer();
 		if(UInventorySlot* inventorySlot = MyCharacterToAttachTo->GetCurrentlyHeldInventorySlot(); IsValid(inventorySlot) && IsValid(inventorySlot->MyItem))
 			this->MyData = inventorySlot->MyItem;//when player spawns item in hand so it doesnt create a new item data
 	}
+	else
+	{
+		//these things didnt get applied during construction
+		this->bNeedsHolding=this->bNeedsHoldToPickUp; 
+		this->HoldInteractTime= this->HoldInteractTime;
 
-	if (IsValid(this->ItemDataClass) && this->MyData==NULL)
+		if(UMeshComponent* Mesh= Cast<UMeshComponent>(this->GetRootComponent()))
+		{
+			Mesh->SetNotifyRigidBodyCollision(true);
+		}
+		else
+		{
+			FString Warning= this->GetClass()->GetName()+" root component is not a mesh component";
+			LogWarning(*Warning);
+		}
+	}
+
+	if (IsValid(this->ItemDataClass) && this->MyData==NULL) // creates item data if it cant be carried over
 		this->MyData = NewObject<UItemData>(GetTransientPackage(), *ItemDataClass);
 
-	if (!SerializedStringData.IsEmpty())
+	if (!SerializedStringData.IsEmpty())//Serialized string data is supposed to be set when spawning so the new data can be applied
 	{
 		MyData->DeserializeMyData(SerializedStringData);
 	}
 	
-	this->bNeedsHolding=this->bNeedsHoldToPickUp;
-	this->HoldInteractTime= this->HoldInteractTime;
+
 	
 	Super::BeginPlay();
 }
@@ -169,6 +188,23 @@ void AWorldItem::TriggerSecondaryAction_Implementation(APlayerCharacter* User)
 void AWorldItem::TriggerLocalSecondaryAction_Implementation(APlayerCharacter* User)
 {
 	LogWarning(TEXT("World Item parent local secondary action was called"));
+}
+
+void AWorldItem::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved,
+	FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+{
+	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	if(MyComp!=GetRootComponent())//root component is supposed to be main mesh component
+		return;
+	
+	if (NormalImpulse.Length() > this->ImpactSoundVelocityThreshold)
+	{
+		FString text= this->GetName()+ "Hit something with " + FString::SanitizeFloat(NormalImpulse.Length());
+		LogWarning(*text);
+		
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), ImpactSound, HitLocation);
+	}
 }
 
 
