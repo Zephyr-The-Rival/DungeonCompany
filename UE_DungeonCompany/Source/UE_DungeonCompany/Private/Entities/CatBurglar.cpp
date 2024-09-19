@@ -15,7 +15,8 @@
 
 void ACatBurglar::SetIdleBehaviorState(ECatBurglarBehaviorState NewIdleState)
 {
-	IdleBehaviorState = NewIdleState;
+	if(!BehaviorTreesForStates.Contains(NewIdleState))
+		return;
 
 	if (CurrentBehaviorState > ECatBurglarBehaviorState::Harassing)
 		return;
@@ -77,7 +78,7 @@ void ACatBurglar::Tick(float DeltaSeconds)
 
 void ACatBurglar::Retrieve()
 {
-	if (!StolenItem)
+	if (!IsValid(StolenItem) || !StolenItem->GetClass())
 	{
 		Destroy();
 		return;
