@@ -11,7 +11,7 @@ ALostItemsCollection::ALostItemsCollection()
 
 void ALostItemsCollection::AddLostItem(UItemData* InLostItem)
 {
-	if(!IsValid(InLostItem))
+	if(!IsValid(InLostItem) || !IsValid(InLostItem->GetClass()))
 		return;
 	
 	LostItems.Add({InLostItem->GetClass(), InLostItem->SerializeMyData()});
