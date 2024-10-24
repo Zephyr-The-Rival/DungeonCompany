@@ -15,7 +15,8 @@
 
 void ACatBurglar::SetIdleBehaviorState(ECatBurglarBehaviorState NewIdleState)
 {
-	IdleBehaviorState = NewIdleState;
+	if (!BehaviorTreesForStates.Contains(NewIdleState))
+		return;
 
 	if (CurrentBehaviorState > ECatBurglarBehaviorState::Harassing)
 		return;
@@ -77,7 +78,7 @@ void ACatBurglar::Tick(float DeltaSeconds)
 
 void ACatBurglar::Retrieve()
 {
-	if (!StolenItem)
+	if (!IsValid(StolenItem) || !StolenItem->GetClass())
 	{
 		Destroy();
 		return;
@@ -179,14 +180,15 @@ void ACatBurglar::SetTargetItemBB(AActor* InTargetItem) const
 void ACatBurglar::OnTookDamage_Implementation()
 {
 	Super::OnTookDamage_Implementation();
-	
-	if(FTimerManager& timerManager = GetWorld()->GetTimerManager(); timerManager.IsTimerActive(StealHandle) || GetBlackboardObject("TargetItem"))
+
+	if (FTimerManager& timerManager = GetWorld()->GetTimerManager(); timerManager.IsTimerActive(StealHandle) ||
+		GetBlackboardObject("TargetItem"))
 	{
 		timerManager.ClearTimer(StealHandle);
 		SetIsStealingBB(false);
 		SetIsStealingItem(false);
 		UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
-	}	
+	}
 
 	if (!bHealthBelowFleeingUpper && HP < StartFleeingHPUpper && CurrentBehaviorState <
 		ECatBurglarBehaviorState::Fleeing)
@@ -194,7 +196,7 @@ void ACatBurglar::OnTookDamage_Implementation()
 		bHealthBelowFleeingUpper = true;
 		UpdateBehavior(ECatBurglarBehaviorState::Fleeing);
 	}
-	
+
 	if (!StolenItem)
 		return;
 
