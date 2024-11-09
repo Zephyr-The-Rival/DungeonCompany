@@ -42,7 +42,7 @@ void USessionSubsystem::OnCreateSessionComplete(FName SessionName, bool Succeede
 	if (!Succeeded)
 		return;
 
-	GetWorld()->ServerTravel("/Game/_DungeonCompanyContent/Maps/KathisMap_02_Section_03?listen");
+	GetWorld()->ServerTravel("/Game/_DungeonCompanyContent/Maps/MainDungeonBaked_Kathi?listen");
 }
 
 void USessionSubsystem::OnFindSessionComplete(bool Succeeded)
