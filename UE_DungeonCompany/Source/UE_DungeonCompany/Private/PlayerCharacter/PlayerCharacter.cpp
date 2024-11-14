@@ -133,9 +133,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	float voiceLevel = VOIPTalker->GetVoiceLevel();
-
-
+	const float voiceLevel = IsValid(VOIPTalker) ? VOIPTalker->GetVoiceLevel() : 0.f;
 
 	if (voiceLevel > 0.f)
 		ReportNoise(voiceLevel);
