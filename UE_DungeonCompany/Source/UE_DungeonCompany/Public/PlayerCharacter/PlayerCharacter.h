@@ -907,5 +907,5 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TArray<TAssetSubclassOf<UItemData>> StarterItems;
+	TArray<TSoftClassPtr<UItemData>> StarterItems;
 };
