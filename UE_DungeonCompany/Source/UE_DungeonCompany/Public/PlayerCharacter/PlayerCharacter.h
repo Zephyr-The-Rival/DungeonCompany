@@ -904,4 +904,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void AddItemToInventory(UItemData* NewItem);
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TArray<TSoftClassPtr<UItemData>> StarterItems;
 };

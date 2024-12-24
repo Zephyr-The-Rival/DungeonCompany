@@ -133,9 +133,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	float voiceLevel = VOIPTalker->GetVoiceLevel();
-
-	CheckForFallDamage();
+	const float voiceLevel = IsValid(VOIPTalker) ? VOIPTalker->GetVoiceLevel() : 0.f;
 
 	if (voiceLevel > 0.f)
 		ReportNoise(voiceLevel);
@@ -149,6 +147,7 @@ void APlayerCharacter::LocalTick(float DeltaTime)
 	this->InteractorLineTrace();
 	StaminaTick(DeltaTime);
 	CheckHoldInteract();
+	CheckForFallDamage();
 }
 
 void APlayerCharacter::StaminaTick(float DeltaTime)

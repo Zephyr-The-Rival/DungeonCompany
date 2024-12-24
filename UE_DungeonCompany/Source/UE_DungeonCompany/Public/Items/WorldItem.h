@@ -107,7 +107,7 @@ public://item actions
 	void EndLocalPrimaryActionHold(APlayerCharacter* User);
 	virtual void EndLocalPrimaryActionHold_Implementation(APlayerCharacter* User);
 	
-//secondary
+	//secondary
 	UFUNCTION(BlueprintNativeEvent)
 	void TriggerSecondaryAction(APlayerCharacter* User);
 	virtual void TriggerSecondaryAction_Implementation(APlayerCharacter* User);
@@ -149,4 +149,14 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString HoveredMessage = "Pick Up";
+
+protected:
+	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ImpactSoundVelocityThreshold = 500;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* ImpactSound;
+
 };
