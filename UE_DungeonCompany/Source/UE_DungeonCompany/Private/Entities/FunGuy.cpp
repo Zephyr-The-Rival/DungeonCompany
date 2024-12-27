@@ -260,6 +260,12 @@ void AFunGuy::OnDeath_Implementation()
 			OnCloudEndOverlap(nullptr, overlappingActors[i], nullptr, 0);
 	}
 
+	// Stop Niagara effects and clear timers
+	if (CloudNiagara)
+	{
+		CloudNiagara->Deactivate(); // Stop Niagara effects and associated sounds.
+	}
+
 	GetWorld()->GetTimerManager().ClearTimer(UpdateTimerHandle);
 	SetActorTickEnabled(false);
 
