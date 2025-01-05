@@ -21,7 +21,7 @@ private:
 	FTimerHandle CoughHandle;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Damage")
-	float DamageIntervalSeconds = 0.2f;
+	float DamageIntervalSeconds = 0.7f;
 
 	UPROPERTY(EditAnywhere, Category = "Balancing|Damage")
 	float DamagePerSecond = 2.5f;
